@@ -6,11 +6,11 @@ import (
 
 // Config represents the main configuration structure
 type Config struct {
-	Server     ServerConfig     `yaml:"server"`
-	Monitoring MonitoringConfig `yaml:"monitoring"`
-	Database   DatabaseConfig   `yaml:"database"`
-	Telegram   TelegramConfig   `yaml:"telegram"`
-	Services   []ServiceConfig  `yaml:"services"`
+	Server        ServerConfig        `yaml:"server"`
+	Monitoring    MonitoringConfig    `yaml:"monitoring"`
+	Database      DatabaseConfig      `yaml:"database"`
+	Notifications NotificationsConfig `yaml:"notifications"`
+	Services      []ServiceConfig     `yaml:"services"`
 }
 
 // ServerConfig holds web server configuration
@@ -36,11 +36,10 @@ type DatabaseConfig struct {
 	Path string `yaml:"path"`
 }
 
-// TelegramConfig holds Telegram bot configuration
-type TelegramConfig struct {
-	BotToken string `yaml:"bot_token"`
-	ChatID   string `yaml:"chat_id"`
-	Enabled  bool   `yaml:"enabled"`
+// NotificationsConfig holds notification settings for multiple providers
+type NotificationsConfig struct {
+	Enabled bool     `yaml:"enabled"`
+	URLs    []string `yaml:"urls"`
 }
 
 // ServiceConfig represents configuration for a single service

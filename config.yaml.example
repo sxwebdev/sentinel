@@ -1,0 +1,69 @@
+server:
+  port: 8080
+  host: "0.0.0.0"
+
+monitoring:
+  global:
+    default_interval: 30s
+    default_timeout: 10s
+    default_retries: 3
+
+database:
+  path: "./data/incidents.db"
+
+notifications:
+  enabled: true
+  urls:
+    # Telegram
+    - "telegram://${TELEGRAM_BOT_TOKEN}/${TELEGRAM_CHAT_ID}"
+    # Discord
+    - "discord://${DISCORD_WEBHOOK_ID}/${DISCORD_WEBHOOK_TOKEN}"
+    # Slack
+    - "slack://${SLACK_TOKEN_A}/${SLACK_TOKEN_B}/${SLACK_TOKEN_C}"
+    # Email
+    - "smtp://${SMTP_USERNAME}:${SMTP_PASSWORD}@${SMTP_HOST}:${SMTP_PORT}?from=${SMTP_FROM}&to=${SMTP_TO}"
+    # Webhook
+    - "webhook://${WEBHOOK_URL}"
+
+services:
+  - name: "example-api"
+    protocol: "http"
+    endpoint: "https://api.example.com/health"
+    interval: 60s
+    timeout: 5s
+    retries: 2
+    tags: ["api", "critical"]
+    config:
+      method: "GET"
+      expected_status: 200
+
+  - name: "example-database"
+    protocol: "tcp"
+    endpoint: "db.example.com:5432"
+    interval: 30s
+    timeout: 5s
+    retries: 3
+    tags: ["database", "postgres"]
+
+  - name: "example-redis"
+    protocol: "redis"
+    endpoint: "redis.example.com:6379"
+    interval: 30s
+    timeout: 5s
+    retries: 3
+    tags: ["cache", "redis"]
+    config:
+      password: "${REDIS_PASSWORD}"
+      db: 0
+
+  - name: "example-grpc"
+    protocol: "grpc"
+    endpoint: "grpc.example.com:50051"
+    interval: 30s
+    timeout: 10s
+    retries: 3
+    tags: ["grpc", "backend"]
+    config:
+      check_type: "health"
+      tls: true
+      insecure_tls: false 

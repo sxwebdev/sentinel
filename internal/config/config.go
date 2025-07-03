@@ -139,13 +139,16 @@ func (c *Config) validate() error {
 		}
 	}
 
-	// Validate Telegram config if enabled
-	if c.Telegram.Enabled {
-		if c.Telegram.BotToken == "" {
-			return fmt.Errorf("telegram bot token is required when telegram is enabled")
+	// Validate notifications config if enabled
+	if c.Notifications.Enabled {
+		if len(c.Notifications.URLs) == 0 {
+			return fmt.Errorf("notification URLs are required when notifications are enabled")
 		}
-		if c.Telegram.ChatID == "" {
-			return fmt.Errorf("telegram chat ID is required when telegram is enabled")
+
+		for i, url := range c.Notifications.URLs {
+			if url == "" {
+				return fmt.Errorf("notification URL at index %d cannot be empty", i)
+			}
 		}
 	}
 

@@ -34,11 +34,12 @@ func main() {
 
 	// Initialize notifier
 	var notif notifier.Notifier
-	if cfg.Telegram.Enabled {
-		notif, err = notifier.NewTelegramNotifier(cfg.Telegram.BotToken, cfg.Telegram.ChatID)
+	if cfg.Notifications.Enabled {
+		notif, err = notifier.NewNotifier(cfg.Notifications.URLs)
 		if err != nil {
-			log.Fatalf("Failed to initialize telegram notifier: %v", err)
+			log.Fatalf("Failed to initialize notifier: %v", err)
 		}
+		log.Printf("Initialized notifications with %d providers", len(cfg.Notifications.URLs))
 	}
 
 	// Initialize monitor service

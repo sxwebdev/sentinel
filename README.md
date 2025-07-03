@@ -7,7 +7,7 @@ Sentinel is a lightweight, multi-protocol service monitoring system written in G
 - **Multi-Protocol Support**: HTTP/HTTPS, TCP, gRPC, Redis
 - **Real-time Monitoring**: Configurable check intervals and timeouts
 - **Incident Management**: Automatic incident creation and resolution
-- **Telegram Notifications**: Alert and recovery notifications
+- **Multi-Provider Notifications**: Alert and recovery notifications via multiple providers (Telegram, Discord, Slack, Email, Webhooks, etc.)
 - **Web Dashboard**: Clean, responsive web interface
 - **REST API**: Full API for integration with other tools
 - **Persistent Storage**: Incident history using SQLite
@@ -28,7 +28,7 @@ cd sentinel
 
 ```bash
 cp .env.example .env
-# Edit .env with your Telegram bot credentials
+# Edit .env with your notification provider credentials
 ```
 
 3. Start the services:
@@ -55,8 +55,18 @@ go build -o sentinel ./cmd/server
 4. Set environment variables:
 
 ```bash
+# Telegram
 export TELEGRAM_BOT_TOKEN="your_bot_token"
 export TELEGRAM_CHAT_ID="your_chat_id"
+
+# Discord (optional)
+export DISCORD_WEBHOOK_ID="your_webhook_id"
+export DISCORD_WEBHOOK_TOKEN="your_webhook_token"
+
+# Slack (optional)
+export SLACK_TOKEN_A="your_slack_token_a"
+export SLACK_TOKEN_B="your_slack_token_b"
+export SLACK_TOKEN_C="your_slack_token_c"
 ```
 
 5. Run:
@@ -85,10 +95,15 @@ monitoring:
 database:
   path: "./data/db.sqlite3"
 
-telegram:
-  enabled: false
-  bot_token: "${TELEGRAM_BOT_TOKEN}"
-  chat_id: "${TELEGRAM_CHAT_ID}"
+notifications:
+  enabled: true
+  urls:
+    # Telegram
+    - "telegram://${TELEGRAM_BOT_TOKEN}/${TELEGRAM_CHAT_ID}"
+    # Discord (optional)
+    - "discord://${DISCORD_WEBHOOK_ID}/${DISCORD_WEBHOOK_TOKEN}"
+    # Slack (optional)
+    - "slack://${SLACK_TOKEN_A}/${SLACK_TOKEN_B}/${SLACK_TOKEN_C}"
 
 services:
   - name: "my-api"
@@ -178,7 +193,11 @@ The gRPC monitor supports three types of checks:
 2. **Reflection Check** (`check_type: "reflection"`): Checks gRPC reflection availability
 3. **Connectivity Check** (`check_type: "connectivity"`): Simple connection test
 
-## Telegram Setup
+## Notification Setup
+
+Sentinel uses [Shoutrrr](https://github.com/containrrr/shoutrrr) for notifications, which supports multiple providers:
+
+### Telegram Setup
 
 1. Create a Telegram bot:
 
@@ -200,13 +219,47 @@ export TELEGRAM_BOT_TOKEN="1234567890:ABCdefGHIjklMNOpqrsTUVwxyz"
 export TELEGRAM_CHAT_ID="-1001234567890"
 ```
 
-4. Enable Telegram in config:
+4. Configure in `config.yaml`:
 
 ```yaml
-telegram:
+notifications:
   enabled: true
-  bot_token: "${TELEGRAM_BOT_TOKEN}"
-  chat_id: "${TELEGRAM_CHAT_ID}"
+  urls:
+    - "telegram://${TELEGRAM_BOT_TOKEN}/${TELEGRAM_CHAT_ID}"
+```
+
+### Discord Setup
+
+1. Create a Discord webhook in your server settings
+2. Use the webhook URL format: `discord://webhook_id/webhook_token`
+
+### Slack Setup
+
+1. Create a Slack app and get the tokens
+2. Use the Slack URL format: `slack://token-a/token-b/token-c`
+
+### Email Setup
+
+1. Configure SMTP settings
+2. Use the SMTP URL format: `smtp://username:password@host:port?from=sender&to=recipient`
+
+### Webhook Setup
+
+1. Set up your webhook endpoint
+2. Use the webhook URL format: `webhook://your-webhook-url`
+
+### Multiple Providers
+
+You can configure multiple notification providers simultaneously. If one provider fails, notifications will still be sent to the others:
+
+```yaml
+notifications:
+  enabled: true
+  urls:
+    - "telegram://${TELEGRAM_BOT_TOKEN}/${TELEGRAM_CHAT_ID}"
+    - "discord://${DISCORD_WEBHOOK_ID}/${DISCORD_WEBHOOK_TOKEN}"
+    - "slack://${SLACK_TOKEN_A}/${SLACK_TOKEN_B}/${SLACK_TOKEN_C}"
+    - "smtp://${SMTP_USER}:${SMTP_PASS}@${SMTP_HOST}:587?from=${SMTP_FROM}&to=${SMTP_TO}"
 ```
 
 ## API Reference
