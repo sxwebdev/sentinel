@@ -16,26 +16,43 @@ var migrations = []Migration{
 	{
 		Version: 1,
 		SQL: `
+		-- Create services table with ULID, JSONB config and state
+		CREATE TABLE IF NOT EXISTS services (
+			id TEXT PRIMARY KEY,
+			name TEXT NOT NULL UNIQUE,
+			protocol TEXT NOT NULL,
+			endpoint TEXT NOT NULL,
+			interval TEXT NOT NULL,
+			timeout TEXT NOT NULL,
+			retries INTEGER NOT NULL DEFAULT 3,
+			tags TEXT NOT NULL DEFAULT '[]',
+			config TEXT NOT NULL DEFAULT '{}',
+			state TEXT NOT NULL DEFAULT '{}',
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		);
+
+		-- Create incidents table with ULID
 		CREATE TABLE IF NOT EXISTS incidents (
 			id TEXT PRIMARY KEY,
-			service_name TEXT NOT NULL,
+			service_id TEXT NOT NULL,
 			start_time DATETIME NOT NULL,
 			end_time DATETIME,
 			error TEXT NOT NULL,
 			duration_ns INTEGER,
 			resolved BOOLEAN NOT NULL DEFAULT FALSE,
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			FOREIGN KEY (service_id) REFERENCES services(id) ON DELETE CASCADE
 		);
-		`,
-	},
-	{
-		Version: 2,
-		SQL: `
-		CREATE INDEX IF NOT EXISTS idx_incidents_service_name ON incidents(service_name);
+
+		-- Create indexes for performance
+		CREATE INDEX IF NOT EXISTS idx_services_name ON services(name);
+		CREATE INDEX IF NOT EXISTS idx_services_protocol ON services(protocol);
+		CREATE INDEX IF NOT EXISTS idx_incidents_service_id ON incidents(service_id);
 		CREATE INDEX IF NOT EXISTS idx_incidents_start_time ON incidents(start_time);
 		CREATE INDEX IF NOT EXISTS idx_incidents_resolved ON incidents(resolved);
-		CREATE INDEX IF NOT EXISTS idx_incidents_service_resolved ON incidents(service_name, resolved);
+		CREATE INDEX IF NOT EXISTS idx_incidents_service_resolved ON incidents(service_id, resolved);
 		`,
 	},
 }

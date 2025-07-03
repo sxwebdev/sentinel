@@ -5,56 +5,59 @@ import (
 	"fmt"
 
 	"github.com/redis/go-redis/v9"
-	"github.com/sxwebdev/sentinel/internal/config"
+	"github.com/sxwebdev/sentinel/internal/storage"
 )
 
-// RedisMonitor monitors Redis instances
+// RedisMonitor monitors Redis endpoints
 type RedisMonitor struct {
 	BaseMonitor
-	client *redis.Client
+	password string
+	db       int
 }
 
 // NewRedisMonitor creates a new Redis monitor
-func NewRedisMonitor(cfg config.ServiceConfig) (*RedisMonitor, error) {
-	password := getConfigString(cfg.Config, "password", "")
-	db := getConfigInt(cfg.Config, "db", 0)
+func NewRedisMonitor(cfg storage.Service) (*RedisMonitor, error) {
+	// Extract Redis config
+	var redisConfig *storage.RedisConfig
+	if cfg.Config.Redis != nil {
+		redisConfig = cfg.Config.Redis
+	}
 
-	// Create Redis client
-	client := redis.NewClient(&redis.Options{
-		Addr:         cfg.Endpoint,
-		Password:     password,
-		DB:           db,
-		DialTimeout:  cfg.Timeout,
-		ReadTimeout:  cfg.Timeout,
-		WriteTimeout: cfg.Timeout,
-	})
-
-	return &RedisMonitor{
+	monitor := &RedisMonitor{
 		BaseMonitor: NewBaseMonitor(cfg),
-		client:      client,
-	}, nil
+		db:          0,
+	}
+
+	// Apply Redis-specific config if available
+	if redisConfig != nil {
+		monitor.password = redisConfig.Password
+		monitor.db = redisConfig.DB
+	}
+
+	return monitor, nil
 }
 
 // Check performs the Redis health check
 func (r *RedisMonitor) Check(ctx context.Context) error {
-	// Perform PING command
-	result, err := r.client.Ping(ctx).Result()
+	// Create Redis client
+	client := redis.NewClient(&redis.Options{
+		Addr:         r.config.Endpoint,
+		Password:     r.password,
+		DB:           r.db,
+		DialTimeout:  r.config.Timeout,
+		ReadTimeout:  r.config.Timeout,
+		WriteTimeout: r.config.Timeout,
+	})
+	defer client.Close()
+
+	// Test connection with PING command
+	ctx, cancel := context.WithTimeout(ctx, r.config.Timeout)
+	defer cancel()
+
+	_, err := client.Ping(ctx).Result()
 	if err != nil {
-		return fmt.Errorf("redis ping failed: %w", err)
+		return fmt.Errorf("Redis ping failed: %w", err)
 	}
 
-	// Check if response is expected "PONG"
-	if result != "PONG" {
-		return fmt.Errorf("unexpected ping response: %s", result)
-	}
-
-	return nil
-}
-
-// Close closes the Redis connection
-func (r *RedisMonitor) Close() error {
-	if r.client != nil {
-		return r.client.Close()
-	}
 	return nil
 }

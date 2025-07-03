@@ -1,6 +1,6 @@
 # Sentinel - Service Monitoring System
 
-Sentinel is a lightweight, multi-protocol service monitoring system written in Go. It monitors HTTP/HTTPS, TCP, gRPC, and Redis services, providing real-time status updates and incident management with Telegram notifications.
+Sentinel is a lightweight, multi-protocol service monitoring system written in Go. It monitors HTTP/HTTPS, TCP, gRPC, and Redis services, providing real-time status updates and incident management with multi-provider notifications.
 
 ## Features
 
@@ -8,10 +8,11 @@ Sentinel is a lightweight, multi-protocol service monitoring system written in G
 - **Real-time Monitoring**: Configurable check intervals and timeouts
 - **Incident Management**: Automatic incident creation and resolution
 - **Multi-Provider Notifications**: Alert and recovery notifications via multiple providers (Telegram, Discord, Slack, Email, Webhooks, etc.)
-- **Web Dashboard**: Clean, responsive web interface
+- **Web Dashboard**: Clean, responsive web interface with YAML configuration
 - **REST API**: Full API for integration with other tools
-- **Persistent Storage**: Incident history using SQLite
+- **Persistent Storage**: Incident history using SQLite with improved concurrency handling
 - **Configuration**: YAML-based configuration with environment variable support
+- **Clean Logging**: Minimal logging focused on check results and notifications
 
 ## Quick Start
 
@@ -24,11 +25,11 @@ git clone https://github.com/sxwebdev/sentinel
 cd sentinel
 ```
 
-2. Create environment file:
+2. Create configuration file:
 
 ```bash
-cp .env.example .env
-# Edit .env with your notification provider credentials
+cp config.yaml.example config.yaml
+# Edit config.yaml with your notification provider credentials
 ```
 
 3. Start the services:
@@ -52,9 +53,8 @@ go build -o sentinel ./cmd/server
 ```
 
 3. Configure your services in `config.yaml`
-4. Configure your services in `config.yaml`
-5. Set up notification providers (see Notification Setup section below)
-6. Run:
+4. Set up notification providers (see Notification Setup section below)
+5. Run:
 
 ```bash
 ./sentinel
@@ -176,9 +176,70 @@ services:
 
 The gRPC monitor supports three types of checks:
 
-1. **Health Check** (`check_type: "health"`): Uses standard gRPC health service
+1. **Health Check** (`check_type: "health"`): Uses standard gRPC health service (`grpc.health.v1.Health`)
 2. **Reflection Check** (`check_type: "reflection"`): Checks gRPC reflection availability
 3. **Connectivity Check** (`check_type: "connectivity"`): Simple connection test
+
+**Available check types:**
+
+- `health` - Standard gRPC health service check
+- `reflection` - gRPC reflection service check
+- `connectivity` - Basic connectivity test
+
+## Web Interface
+
+### Dashboard Features
+
+- **Service Management**: Add, edit, and delete services through the web interface
+- **YAML Configuration**: Configure services using YAML format directly in the UI
+- **Real-time Status**: Live status updates with auto-refresh every 30 seconds
+- **Manual Checks**: Trigger manual health checks for any service
+- **Incident Management**: View and resolve incidents
+- **Service Details**: Detailed view with incident history and statistics
+
+### Service Configuration via UI
+
+When creating or editing services through the web interface:
+
+1. **Protocol Selection**: Choose from HTTP/HTTPS, TCP, gRPC, or Redis
+2. **YAML Configuration**: Enter protocol-specific configuration in YAML format
+3. **Default Templates**: UI provides default YAML templates for each protocol
+4. **Validation**: Configuration is validated before saving
+
+Example YAML configurations for each protocol:
+
+**HTTP/HTTPS:**
+
+```yaml
+method: "GET"
+expected_status: 200
+headers:
+  User-Agent: "Sentinel Monitor"
+  Authorization: "Bearer token"
+```
+
+**TCP:**
+
+```yaml
+send_data: "ping"
+expect_data: "pong"
+```
+
+**gRPC:**
+
+```yaml
+check_type: "health"
+service_name: "myapp.MyService"
+tls: true
+insecure_tls: false
+```
+
+**Redis:**
+
+```yaml
+password: "your_password"
+db: 0
+```
 
 ## Notification Setup
 
@@ -250,25 +311,79 @@ GET /api/services
 ### Get Service Details
 
 ```bash
-GET /api/services/{name}
+GET /api/services/{id}
+```
+
+### Get Service Configuration
+
+```bash
+GET /api/services/config/{id}
 ```
 
 ### Get Service Incidents
 
 ```bash
-GET /api/services/{name}/incidents
+GET /api/services/{id}/incidents
 ```
 
 ### Get Service Statistics
 
 ```bash
-GET /api/services/{name}/stats?days=30
+GET /api/services/{id}/stats?days=30
 ```
 
 ### Trigger Manual Check
 
 ```bash
-POST /api/services/{name}/check
+POST /api/services/{id}/check
+```
+
+### Resolve Incidents
+
+```bash
+POST /api/services/{id}/resolve
+```
+
+### Create Service
+
+```bash
+POST /api/services
+Content-Type: application/json
+
+{
+  "name": "my-service",
+  "protocol": "http",
+  "endpoint": "https://example.com/health",
+  "interval": "30s",
+  "timeout": "10s",
+  "retries": 3,
+  "tags": ["api", "critical"],
+  "config": "method: \"GET\"\nexpected_status: 200"
+}
+```
+
+### Update Service
+
+```bash
+PUT /api/services/{id}
+Content-Type: application/json
+
+{
+  "name": "my-service",
+  "protocol": "http",
+  "endpoint": "https://example.com/health",
+  "interval": "30s",
+  "timeout": "10s",
+  "retries": 3,
+  "tags": ["api", "critical"],
+  "config": "method: \"GET\"\nexpected_status: 200"
+}
+```
+
+### Delete Service
+
+```bash
+DELETE /api/services/{id}
 ```
 
 ### Get Recent Incidents
@@ -277,18 +392,14 @@ POST /api/services/{name}/check
 GET /api/incidents?limit=50
 ```
 
-## Web Interface
-
-- **Dashboard** (`/`): Overview of all services
-- **Service Detail** (`/service/{name}`): Detailed view with incident history
-- **Auto-refresh**: Dashboard refreshes every 30 seconds
-
 ## Monitoring Logic
 
 1. **Health Checks**: Each service is checked at configured intervals
 2. **Retry Logic**: Failed checks are retried with exponential backoff
 3. **State Changes**: Status changes trigger incident creation/resolution
 4. **Notifications**: Alerts sent only on status changes (UP ↔ DOWN)
+5. **Concurrent Access**: Improved SQLite handling for concurrent operations
+6. **Clean Logging**: Minimal logging focused on check results and notifications
 
 ## Development
 
@@ -303,11 +414,11 @@ sentinel/
 ├── internal/
 │   ├── config/          # Configuration management
 │   ├── monitors/        # Protocol-specific monitors
-│   ├── storage/         # Data persistence (SQLite)
+│   ├── storage/         # Data persistence (SQLite with retry logic)
 │   ├── notifier/        # Notification system
 │   ├── scheduler/       # Monitoring scheduler
 │   ├── service/         # Business logic
-│   └── web/             # Web interface
+│   └── web/             # Web interface with YAML configuration
 ├── data/                # SQLite database files
 ├── config.yaml          # Configuration file
 └── docker-compose.yml   # Docker services
@@ -404,6 +515,16 @@ docker run -d \
   -v ./data:/root/data \
   sentinel
 ```
+
+## Logging
+
+Sentinel uses minimal logging focused on essential information:
+
+- **Check Results**: Success/failure of each service check
+- **Notifications**: Success/failure of notification delivery
+- **Errors**: Critical errors that require attention
+
+Debug logging has been removed to keep logs clean and focused.
 
 ## Contributing
 

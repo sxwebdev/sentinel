@@ -8,7 +8,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/sxwebdev/sentinel/internal/config"
+	"github.com/sxwebdev/sentinel/internal/storage"
 )
 
 // HTTPMonitor monitors HTTP/HTTPS endpoints
@@ -23,14 +23,31 @@ type HTTPMonitor struct {
 }
 
 // NewHTTPMonitor creates a new HTTP monitor
-func NewHTTPMonitor(cfg config.ServiceConfig) (*HTTPMonitor, error) {
+func NewHTTPMonitor(cfg storage.Service) (*HTTPMonitor, error) {
+	// Extract HTTP config
+	var httpConfig *storage.HTTPConfig
+	if cfg.Config.HTTP != nil {
+		httpConfig = cfg.Config.HTTP
+	}
+
 	monitor := &HTTPMonitor{
 		BaseMonitor:    NewBaseMonitor(cfg),
-		method:         getConfigString(cfg.Config, "method", "GET"),
-		expectedStatus: getConfigInt(cfg.Config, "expected_status", 200),
-		headers:        getConfigHeaders(cfg.Config),
-		body:           getConfigString(cfg.Config, "body", ""),
-		expectedText:   getConfigString(cfg.Config, "expected_text", ""),
+		method:         "GET",
+		expectedStatus: 200,
+		headers:        make(map[string]string),
+	}
+
+	// Apply HTTP-specific config if available
+	if httpConfig != nil {
+		if httpConfig.Method != "" {
+			monitor.method = httpConfig.Method
+		}
+		if httpConfig.ExpectedStatus != 0 {
+			monitor.expectedStatus = httpConfig.ExpectedStatus
+		}
+		if httpConfig.Headers != nil {
+			monitor.headers = httpConfig.Headers
+		}
 	}
 
 	// Create HTTP client with timeout

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/sxwebdev/sentinel/internal/config"
+	"github.com/sxwebdev/sentinel/internal/storage"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"
 	"google.golang.org/grpc/credentials"
@@ -17,28 +17,33 @@ import (
 // GRPCMonitor monitors gRPC services
 type GRPCMonitor struct {
 	BaseMonitor
-	serviceName string
-	useTLS      bool
-	conn        *grpc.ClientConn
-	checkType   string // "health", "reflection", "connectivity"
+	conf storage.GRPCConfig
+	conn *grpc.ClientConn
 }
 
 // NewGRPCMonitor creates a new gRPC monitor
-func NewGRPCMonitor(cfg config.ServiceConfig) (*GRPCMonitor, error) {
+func NewGRPCMonitor(cfg storage.Service) (*GRPCMonitor, error) {
 	monitor := &GRPCMonitor{
 		BaseMonitor: NewBaseMonitor(cfg),
-		serviceName: getConfigString(cfg.Config, "service_name", ""),
-		useTLS:      getConfigBool(cfg.Config, "tls", false),
-		checkType:   getConfigString(cfg.Config, "check_type", "health"),
+	}
+
+	if cfg.Config.GRPC != nil {
+		monitor.conf = *cfg.Config.GRPC
+	} else {
+		monitor.conf = storage.GRPCConfig{
+			TLS:         true,
+			InsecureTLS: false,
+			CheckType:   "health",
+		}
 	}
 
 	// Create gRPC connection options
 	var opts []grpc.DialOption
 
-	if monitor.useTLS {
+	if monitor.conf.TLS {
 		// Use TLS credentials
 		tlsConfig := &tls.Config{}
-		if getConfigBool(cfg.Config, "insecure_tls", false) {
+		if monitor.conf.InsecureTLS {
 			tlsConfig.InsecureSkipVerify = true
 		}
 		opts = append(opts, grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)))
@@ -65,7 +70,7 @@ func (g *GRPCMonitor) Check(ctx context.Context) error {
 	}
 
 	// Perform check based on type
-	switch g.checkType {
+	switch g.conf.CheckType {
 	case "health":
 		return g.performHealthCheck(ctx)
 	case "reflection":
@@ -73,7 +78,7 @@ func (g *GRPCMonitor) Check(ctx context.Context) error {
 	case "connectivity":
 		return nil
 	default:
-		return fmt.Errorf("unsupported check type: %s", g.checkType)
+		return fmt.Errorf("unsupported check type: %s", g.conf.CheckType)
 	}
 }
 
@@ -138,8 +143,8 @@ func (g *GRPCMonitor) performHealthCheck(ctx context.Context) error {
 	client := grpc_health_v1.NewHealthClient(g.conn)
 
 	req := &grpc_health_v1.HealthCheckRequest{}
-	if g.serviceName != "" {
-		req.Service = g.serviceName
+	if g.conf.ServiceName != "" {
+		req.Service = g.conf.ServiceName
 	}
 
 	resp, err := client.Check(ctx, req)

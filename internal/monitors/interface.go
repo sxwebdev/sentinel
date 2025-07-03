@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/sxwebdev/sentinel/internal/config"
+	"github.com/sxwebdev/sentinel/internal/storage"
 )
 
 // ServiceMonitor defines the interface for all service monitors
@@ -13,11 +13,11 @@ type ServiceMonitor interface {
 	Name() string
 	Protocol() string
 	Check(ctx context.Context) error
-	Config() config.ServiceConfig
+	Config() storage.Service
 }
 
 // NewMonitor creates a new monitor based on the service configuration
-func NewMonitor(cfg config.ServiceConfig) (ServiceMonitor, error) {
+func NewMonitor(cfg storage.Service) (ServiceMonitor, error) {
 	protocol := strings.ToLower(cfg.Protocol)
 
 	switch protocol {
@@ -38,10 +38,10 @@ func NewMonitor(cfg config.ServiceConfig) (ServiceMonitor, error) {
 type BaseMonitor struct {
 	name     string
 	protocol string
-	config   config.ServiceConfig
+	config   storage.Service
 }
 
-func NewBaseMonitor(cfg config.ServiceConfig) BaseMonitor {
+func NewBaseMonitor(cfg storage.Service) BaseMonitor {
 	return BaseMonitor{
 		name:     cfg.Name,
 		protocol: cfg.Protocol,
@@ -57,7 +57,7 @@ func (b *BaseMonitor) Protocol() string {
 	return b.protocol
 }
 
-func (b *BaseMonitor) Config() config.ServiceConfig {
+func (b *BaseMonitor) Config() storage.Service {
 	return b.config
 }
 

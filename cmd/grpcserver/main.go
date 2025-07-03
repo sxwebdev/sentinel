@@ -46,26 +46,24 @@ func run() error {
 	healthServer.SetServingStatus("health", grpc_health_v1.HealthCheckResponse_SERVING)
 	healthServer.SetServingStatus("test-service", grpc_health_v1.HealthCheckResponse_SERVING)
 
-	log.Printf("gRPC server listening on port %d", *port)
-	log.Printf("Health check endpoint: grpc://localhost:%d/grpc.health.v1.Health/Check", *port)
-	log.Printf("Available services: '', 'health', 'test-service'")
-
 	// Start server in a goroutine
+	serverErr := make(chan error, 1)
 	go func() {
 		if err := grpcServer.Serve(lis); err != nil {
-			log.Printf("Failed to serve: %v", err)
+			serverErr <- fmt.Errorf("failed to serve: %w", err)
 		}
 	}()
 
-	// Simulate service status changes for testing
-	// go simulateServiceStatusChanges(healthServer)
-
-	// Wait for interrupt signal
+	// Wait for interrupt signal or server error
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
-	<-sigChan
 
-	log.Println("Shutting down gRPC server...")
+	select {
+	case <-sigChan:
+		// Graceful shutdown
+	case err := <-serverErr:
+		return err
+	}
 
 	// Graceful shutdown
 	grpcServer.GracefulStop()

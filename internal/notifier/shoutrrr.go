@@ -2,18 +2,17 @@ package notifier
 
 import (
 	"fmt"
-	"log"
 	"sync"
 	"time"
 
 	"github.com/containrrr/shoutrrr"
-	"github.com/sxwebdev/sentinel/internal/config"
+	"github.com/sxwebdev/sentinel/internal/storage"
 )
 
 // Notifier определяет интерфейс для отправки уведомлений
 type Notifier interface {
-	SendAlert(serviceName string, incident *config.Incident) error
-	SendRecovery(serviceName string, incident *config.Incident) error
+	SendAlert(serviceName string, incident *storage.Incident) error
+	SendRecovery(serviceName string, incident *storage.Incident) error
 }
 
 var _ Notifier = (*NotifierImpl)(nil)
@@ -31,19 +30,19 @@ func NewNotifier(urls []string) (Notifier, error) {
 }
 
 // SendAlert sends an alert notification when a service goes down
-func (s *NotifierImpl) SendAlert(serviceName string, incident *config.Incident) error {
+func (s *NotifierImpl) SendAlert(serviceName string, incident *storage.Incident) error {
 	message := s.formatAlertMessage(serviceName, incident)
 	return s.sendMessage(message)
 }
 
 // SendRecovery sends a recovery notification when a service comes back up
-func (s *NotifierImpl) SendRecovery(serviceName string, incident *config.Incident) error {
+func (s *NotifierImpl) SendRecovery(serviceName string, incident *storage.Incident) error {
 	message := s.formatRecoveryMessage(serviceName, incident)
 	return s.sendMessage(message)
 }
 
 // sendMessage sends a message to all configured providers
-// If one provider fails, it continues with others and logs the error
+// If one provider fails, it continues with others and returns partial errors
 func (s *NotifierImpl) sendMessage(message string) error {
 	// Send to all providers concurrently
 	var wg sync.WaitGroup
@@ -57,8 +56,7 @@ func (s *NotifierImpl) sendMessage(message string) error {
 			// Create individual sender for this provider
 			sender, err := shoutrrr.CreateSender(providerURL)
 			if err != nil {
-				log.Printf("Failed to create sender for provider %d: %v", index, err)
-				errors <- fmt.Errorf("provider %d: %w", index, err)
+				errors <- fmt.Errorf("provider %d: failed to create sender: %w", index, err)
 				return
 			}
 
@@ -80,13 +78,9 @@ func (s *NotifierImpl) sendMessage(message string) error {
 				}
 
 				if hasErrors {
-					log.Printf("Failed to send notification to provider %d: %v", index, errs)
-					errors <- fmt.Errorf("provider %d: %v", index, errs)
-				} else {
-					log.Printf("Successfully sent notification to provider %d", index)
+					errors <- fmt.Errorf("provider %d: failed to send: %v", index, errs)
 				}
 			case <-time.After(30 * time.Second):
-				log.Printf("Timeout sending notification to provider %d", index)
 				errors <- fmt.Errorf("provider %d: timeout", index)
 			}
 		}(i, url)
@@ -106,16 +100,16 @@ func (s *NotifierImpl) sendMessage(message string) error {
 		return fmt.Errorf("all notification providers failed: %v", allErrors)
 	}
 
-	// If some providers failed, log but don't return error
+	// If some providers failed, return partial error
 	if len(allErrors) > 0 {
-		log.Printf("Some notification providers failed (%d/%d), but others succeeded", len(allErrors), len(s.urls))
+		return fmt.Errorf("some notification providers failed (%d/%d): %v", len(allErrors), len(s.urls), allErrors)
 	}
 
 	return nil
 }
 
 // formatAlertMessage formats an alert message
-func (s *NotifierImpl) formatAlertMessage(serviceName string, incident *config.Incident) string {
+func (s *NotifierImpl) formatAlertMessage(serviceName string, incident *storage.Incident) string {
 	return fmt.Sprintf(
 		"🔴 [ALERT] %s is DOWN\n\n"+
 			"• Service: %s\n"+
@@ -131,7 +125,7 @@ func (s *NotifierImpl) formatAlertMessage(serviceName string, incident *config.I
 }
 
 // formatRecoveryMessage formats a recovery message
-func (s *NotifierImpl) formatRecoveryMessage(serviceName string, incident *config.Incident) string {
+func (s *NotifierImpl) formatRecoveryMessage(serviceName string, incident *storage.Incident) string {
 	var duration string
 	if incident.Duration != nil {
 		duration = formatDuration(*incident.Duration)
