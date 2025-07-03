@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{.Title}}</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <!-- Header -->
+      <div class="header">
+        {{if .BackLink}}
+        <a href="{{.BackLink}}" class="back-link">← {{.BackLinkText}}</a>
+        {{end}}
+        <h1>{{.Title}}</h1>
+        {{if .Actions}}
+        <div class="header-actions">
+          {{range .Actions}}
+          <button class="btn {{.Class}}" onclick="{{.OnClick}}">
+            {{.Text}}
+          </button>
+          {{end}}
+        </div>
+        {{end}}
+      </div>
+
+      <!-- Service Info Card -->
+      <div class="card">
+        <div class="card-header">
+          <h3>Service Information</h3>
+        </div>
+        <div class="card-body">
+          <div class="service-info">
+            <div class="service-info-item">
+              <span class="service-info-label">Status:</span>
+              <span class="badge badge-{{.Service.Status | statusToLower}}">
+                {{.Service.Status | statusToString}}
+              </span>
+            </div>
+            <div class="service-info-item">
+              <span class="service-info-label">Protocol:</span>
+              <span class="service-info-value">{{.Service.Protocol}}</span>
+            </div>
+            <div class="service-info-item">
+              <span class="service-info-label">Endpoint:</span>
+              <span class="service-info-value">{{.Service.Endpoint}}</span>
+            </div>
+            <div class="service-info-item">
+              <span class="service-info-label">Last Check:</span>
+              <span class="service-info-value"
+                >{{.Service.LastCheck | formatDateTime}}</span
+              >
+            </div>
+            {{if .Service.LastError}}
+            <div class="service-error">
+              <strong>Last Error:</strong> {{.Service.LastError}}
+            </div>
+            {{end}}
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats Grid -->
+      {{if .Stats}}
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value">{{.Stats.TotalIncidents}}</div>
+          <div class="stat-label">Total Incidents</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">
+            {{printf "%.1f" .Stats.UptimePercentage}}%
+          </div>
+          <div class="stat-label">Uptime</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">{{.Stats.TotalDowntime}}</div>
+          <div class="stat-label">Total Downtime</div>
+        </div>
+      </div>
+      {{end}}
+
+      <!-- Incidents List -->
+      <div class="card">
+        <div class="card-header">
+          <h3>Recent Incidents</h3>
+        </div>
+        <div class="card-body">
+          {{if .Incidents}} {{range .Incidents}}
+          <div class="incident-item">
+            <div class="incident-header">
+              <span class="incident-time">{{.StartTime | formatDateTime}}</span>
+              {{if .Resolved}}
+              <span class="incident-status resolved">Resolved</span>
+              {{else}}
+              <span class="incident-status active">Active</span>
+              {{end}}
+            </div>
+            {{if .Error}}
+            <div class="incident-error">{{.Error}}</div>
+            {{end}} {{if .Duration}}
+            <div class="incident-duration">Duration: {{.Duration}}</div>
+            {{end}}
+          </div>
+          {{end}} {{else}}
+          <p>No incidents found.</p>
+          {{end}}
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function triggerCheck() {
+        fetch(`/api/services/{{.Service.Name}}/check`, {
+          method: "POST",
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.message) {
+              location.reload();
+            }
+          })
+          .catch((error) => {
+            console.error("Failed to trigger check:", error);
+          });
+      }
+    </script>
+  </body>
+</html>

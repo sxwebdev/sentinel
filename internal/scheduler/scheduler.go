@@ -86,16 +86,25 @@ func (s *Scheduler) RemoveService(serviceName string) {
 
 // Start begins monitoring all configured services
 func (s *Scheduler) Start(ctx context.Context) {
+	// Get all services under read lock
 	s.mu.RLock()
-	defer s.mu.RUnlock()
-
+	services := make([]*ServiceJob, 0, len(s.services))
 	for _, job := range s.services {
+		services = append(services, job)
+	}
+	s.mu.RUnlock()
+
+	log.Printf("Starting scheduler with %d services", len(services))
+
+	// Start monitoring for all services
+	for _, job := range services {
 		s.wg.Add(1)
 		go s.monitorService(ctx, job)
 	}
 
 	// Wait for context cancellation
 	<-ctx.Done()
+	log.Println("Scheduler received shutdown signal")
 
 	// Stop all services
 	s.stopAll()
@@ -180,7 +189,9 @@ func (s *Scheduler) stopAll() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	for _, job := range s.services {
+	log.Printf("Stopping %d services", len(s.services))
+	for name, job := range s.services {
+		log.Printf("Stopping service: %s", name)
 		close(job.StopChan)
 		if job.Ticker != nil {
 			job.Ticker.Stop()
