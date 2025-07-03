@@ -102,6 +102,7 @@ func (s *Server) setupRoutes() {
 	api.Get("/services/:name/incidents", s.handleAPIServiceIncidents)
 	api.Get("/services/:name/stats", s.handleAPIServiceStats)
 	api.Post("/services/:name/check", s.handleAPIServiceCheck)
+	api.Post("/services/:name/resolve", s.handleAPIServiceResolve)
 	api.Get("/incidents", s.handleAPIRecentIncidents)
 }
 
@@ -169,9 +170,12 @@ func (s *Server) handleServiceDetail(c *fiber.Ctx) error {
 		"BackLinkText": "Back to Dashboard",
 		"Actions": []fiber.Map{
 			{
-				"Text":    "Trigger Check",
-				"Class":   "",
-				"OnClick": "triggerCheck()",
+				"Text":  "Trigger Check",
+				"Class": "",
+			},
+			{
+				"Text":  "Resolve Incidents",
+				"Class": "btn-secondary",
 			},
 		},
 	})
@@ -295,6 +299,33 @@ func (s *Server) handleAPIServiceCheck(c *fiber.Ctx) error {
 
 	return c.JSON(fiber.Map{
 		"message": "check triggered successfully",
+	})
+}
+
+// handleAPIServiceResolve resolves a service incident
+func (s *Server) handleAPIServiceResolve(c *fiber.Ctx) error {
+	serviceName := c.Params("name")
+	if serviceName == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "service name is required",
+		})
+	}
+
+	// URL decode the service name
+	decodedName, err := url.QueryUnescape(serviceName)
+	if err != nil {
+		decodedName = serviceName // fallback to original if decoding fails
+	}
+
+	err = s.monitorService.ForceResolveIncidents(c.Context(), decodedName)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"message": "incident resolved successfully",
 	})
 }
 

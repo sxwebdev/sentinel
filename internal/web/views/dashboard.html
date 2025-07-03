@@ -14,7 +14,7 @@
         {{if .Actions}}
         <div class="header-actions">
           {{range .Actions}}
-          <button class="btn {{.Class}}" onclick="window.location.reload()">
+          <button class="btn {{.Class}}" onclick="location.reload()">
             {{.Text}}
           </button>
           {{end}}
@@ -56,7 +56,7 @@
                       {{$service.Status | statusToString}}
                     </span>
                   </td>
-                  <td>{{$service.Protocol}}://{{$service.Endpoint}}</td>
+                  <td>{{$service.Endpoint}}</td>
                   <td>{{$service.LastCheck | formatDateTime}}</td>
                   <td>
                     <button
@@ -91,8 +91,8 @@
           });
       }
 
-      // Auto-refresh every 30 seconds
-      setTimeout(() => location.reload(), 30000);
+      // Auto-refresh every 5 seconds
+      setTimeout(() => location.reload(), 5000);
     </script>
   </body>
 </html>

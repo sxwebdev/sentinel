@@ -16,11 +16,17 @@
         <h1>{{.Title}}</h1>
         {{if .Actions}}
         <div class="header-actions">
-          {{range .Actions}}
-          <button class="btn {{.Class}}" onclick="{{.OnClick}}">
+          {{range .Actions}} {{if eq .Text "Trigger Check"}}
+          <button class="btn {{.Class}}" onclick="triggerCheck()">
             {{.Text}}
           </button>
-          {{end}}
+          {{else if eq .Text "Resolve Incidents"}}
+          <button class="btn {{.Class}}" onclick="resolveIncidents()">
+            {{.Text}}
+          </button>
+          {{else}}
+          <button class="btn {{.Class}}">{{.Text}}</button>
+          {{end}} {{end}}
         </div>
         {{end}}
       </div>
@@ -124,6 +130,29 @@
           .catch((error) => {
             console.error("Failed to trigger check:", error);
           });
+      }
+
+      function resolveIncidents() {
+        if (
+          confirm(
+            "Are you sure you want to resolve all active incidents for this service?"
+          )
+        ) {
+          fetch(`/api/services/{{.Service.Name}}/resolve`, {
+            method: "POST",
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.message) {
+                alert("Incidents resolved successfully");
+                location.reload();
+              }
+            })
+            .catch((error) => {
+              console.error("Failed to resolve incidents:", error);
+              alert("Failed to resolve incidents: " + error);
+            });
+        }
       }
     </script>
   </body>

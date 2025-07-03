@@ -55,11 +55,11 @@ func main() {
 		}
 	}
 
-	// Start scheduler
+	// Start scheduler with initial check
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	go sched.Start(ctx)
+	go sched.StartWithInitialCheck(ctx)
 
 	// Initialize web server
 	webServer, err := web.NewServer(monitorService, cfg)
