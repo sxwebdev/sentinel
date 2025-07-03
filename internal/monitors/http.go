@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"slices"
 	"strings"
 
 	"github.com/sxwebdev/sentinel/internal/config"
@@ -47,13 +48,7 @@ func NewHTTPMonitor(cfg config.ServiceConfig) (*HTTPMonitor, error) {
 	// Validate method
 	validMethods := []string{"GET", "POST", "PUT", "DELETE", "HEAD", "OPTIONS"}
 	method := strings.ToUpper(monitor.method)
-	valid := false
-	for _, m := range validMethods {
-		if m == method {
-			valid = true
-			break
-		}
-	}
+	valid := slices.Contains(validMethods, method)
 	if !valid {
 		return nil, fmt.Errorf("invalid HTTP method: %s", monitor.method)
 	}

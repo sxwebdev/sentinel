@@ -23,3 +23,12 @@ type Storage interface {
 	// Cleanup
 	Close() error
 }
+
+// ServiceStats holds statistics for a service
+type ServiceStats struct {
+	ServiceName      string        `json:"service_name"`
+	TotalIncidents   int           `json:"total_incidents"`
+	TotalDowntime    time.Duration `json:"total_downtime"`
+	UptimePercentage float64       `json:"uptime_percentage"`
+	Period           time.Duration `json:"period"`
+}

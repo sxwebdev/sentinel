@@ -62,7 +62,7 @@ func (b *BaseMonitor) Config() config.ServiceConfig {
 }
 
 // getConfigString safely gets a string value from config map
-func getConfigString(cfg map[string]interface{}, key string, defaultValue string) string {
+func getConfigString(cfg map[string]any, key string, defaultValue string) string {
 	if cfg == nil {
 		return defaultValue
 	}
@@ -75,7 +75,7 @@ func getConfigString(cfg map[string]interface{}, key string, defaultValue string
 }
 
 // getConfigInt safely gets an int value from config map
-func getConfigInt(cfg map[string]interface{}, key string, defaultValue int) int {
+func getConfigInt(cfg map[string]any, key string, defaultValue int) int {
 	if cfg == nil {
 		return defaultValue
 	}
@@ -91,7 +91,7 @@ func getConfigInt(cfg map[string]interface{}, key string, defaultValue int) int 
 }
 
 // getConfigBool safely gets a bool value from config map
-func getConfigBool(cfg map[string]interface{}, key string, defaultValue bool) bool {
+func getConfigBool(cfg map[string]any, key string, defaultValue bool) bool {
 	if cfg == nil {
 		return defaultValue
 	}
@@ -104,14 +104,14 @@ func getConfigBool(cfg map[string]interface{}, key string, defaultValue bool) bo
 }
 
 // getConfigHeaders safely gets headers from config map
-func getConfigHeaders(cfg map[string]interface{}) map[string]string {
+func getConfigHeaders(cfg map[string]any) map[string]string {
 	headers := make(map[string]string)
 	if cfg == nil {
 		return headers
 	}
 
 	if val, ok := cfg["headers"]; ok {
-		if headerMap, ok := val.(map[string]interface{}); ok {
+		if headerMap, ok := val.(map[string]any); ok {
 			for k, v := range headerMap {
 				if str, ok := v.(string); ok {
 					headers[k] = str

@@ -45,14 +45,14 @@ type TelegramConfig struct {
 
 // ServiceConfig represents configuration for a single service
 type ServiceConfig struct {
-	Name     string                 `yaml:"name"`
-	Protocol string                 `yaml:"protocol"`
-	Endpoint string                 `yaml:"endpoint"`
-	Interval time.Duration          `yaml:"interval"`
-	Timeout  time.Duration          `yaml:"timeout"`
-	Retries  int                    `yaml:"retries"`
-	Tags     []string               `yaml:"tags"`
-	Config   map[string]interface{} `yaml:"config"`
+	Name     string         `yaml:"name"`
+	Protocol string         `yaml:"protocol"`
+	Endpoint string         `yaml:"endpoint"`
+	Interval time.Duration  `yaml:"interval"`
+	Timeout  time.Duration  `yaml:"timeout"`
+	Retries  int            `yaml:"retries"`
+	Tags     []string       `yaml:"tags"`
+	Config   map[string]any `yaml:"config"`
 }
 
 // ServiceStatus represents the current status of a service
