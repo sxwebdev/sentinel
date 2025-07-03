@@ -127,6 +127,7 @@ func (s *Server) setupRoutes() {
 	api.Post("/services/:id/check", s.handleAPIServiceCheck)
 	api.Post("/services/:id/resolve", s.handleAPIServiceResolve)
 	api.Get("/incidents", s.handleAPIRecentIncidents)
+	api.Get("/dashboard/stats", s.handleAPIDashboardStats)
 
 	// Service management API
 	api.Post("/services", s.handleAPICreateService)
@@ -349,6 +350,114 @@ func (s *Server) handleAPIRecentIncidents(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(incidents)
+}
+
+// handleAPIDashboardStats returns dashboard statistics
+func (s *Server) handleAPIDashboardStats(c *fiber.Ctx) error {
+	// Get all services
+	services, err := s.monitorService.GetAllServiceConfigs(c.Context())
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	// Get recent incidents
+	recentIncidents, err := s.monitorService.GetRecentIncidents(c.Context(), 100)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	// Calculate statistics
+	stats := fiber.Map{
+		"total_services":    len(services),
+		"services_up":       0,
+		"services_down":     0,
+		"services_unknown":  0,
+		"protocols":         make(map[string]int),
+		"recent_incidents":  len(recentIncidents),
+		"active_incidents":  0,
+		"avg_response_time": 0,
+		"total_checks":      0,
+		"uptime_percentage": 0,
+		"last_check_time":   nil,
+		"checks_per_minute": 0,
+	}
+
+	// Calculate service status distribution and protocol distribution
+	totalResponseTime := time.Duration(0)
+	totalChecks := 0
+	upServices := 0
+	var lastCheckTime *time.Time
+
+	for _, service := range services {
+		// Count by status
+		if service.State != nil {
+			switch service.State.Status {
+			case storage.StatusUp:
+				stats["services_up"] = stats["services_up"].(int) + 1
+				upServices++
+			case storage.StatusDown:
+				stats["services_down"] = stats["services_down"].(int) + 1
+			case storage.StatusUnknown:
+				stats["services_unknown"] = stats["services_unknown"].(int) + 1
+			}
+
+			// Sum response times and checks
+			if service.State.ResponseTime > 0 {
+				totalResponseTime += service.State.ResponseTime
+			}
+			totalChecks += service.State.TotalChecks
+
+			// Track last check time
+			if service.State.LastCheck != nil {
+				if lastCheckTime == nil || service.State.LastCheck.After(*lastCheckTime) {
+					lastCheckTime = service.State.LastCheck
+				}
+			}
+		}
+
+		// Count by protocol
+		protocol := service.Protocol
+		if protocol == "" {
+			protocol = "unknown"
+		}
+		stats["protocols"].(map[string]int)[protocol]++
+	}
+
+	// Calculate averages
+	if upServices > 0 {
+		stats["uptime_percentage"] = float64(upServices) / float64(len(services)) * 100
+	}
+	if totalChecks > 0 {
+		stats["avg_response_time"] = totalResponseTime.Milliseconds() / int64(totalChecks)
+	}
+	stats["total_checks"] = totalChecks
+
+	// Count active incidents
+	activeIncidents := 0
+	for _, incident := range recentIncidents {
+		if !incident.Resolved {
+			activeIncidents++
+		}
+	}
+	stats["active_incidents"] = activeIncidents
+
+	// Set last check time
+	stats["last_check_time"] = lastCheckTime
+
+	// Calculate checks per minute (estimate based on intervals)
+	checksPerMinute := 0
+	for _, service := range services {
+		if service.Interval > 0 {
+			checksPerMinute += int(time.Minute / service.Interval)
+		}
+	}
+	stats["checks_per_minute"] = checksPerMinute
+
+	return c.JSON(stats)
 }
 
 // handleAPICreateService creates a new service

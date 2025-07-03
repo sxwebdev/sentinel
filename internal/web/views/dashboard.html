@@ -25,6 +25,62 @@
         {{end}}
       </div>
 
+      <!-- Dashboard Statistics -->
+      <div class="stats-grid">
+        <div class="dashboard-stat-card info">
+          <div class="stat-icon">📊</div>
+          <div class="stat-value" id="totalServices">-</div>
+          <div class="stat-label">Всего сервисов</div>
+        </div>
+        <div class="dashboard-stat-card success">
+          <div class="stat-icon">✅</div>
+          <div class="stat-value" id="servicesUp">-</div>
+          <div class="stat-label">Работают</div>
+        </div>
+        <div class="dashboard-stat-card danger">
+          <div class="stat-icon">❌</div>
+          <div class="stat-value" id="servicesDown">-</div>
+          <div class="stat-label">Не работают</div>
+        </div>
+        <div class="dashboard-stat-card info">
+          <div class="stat-icon">📈</div>
+          <div class="stat-value" id="uptimePercentage">-</div>
+          <div class="stat-label">Время работы (%)</div>
+        </div>
+        <div class="dashboard-stat-card warning">
+          <div class="stat-icon">⚠️</div>
+          <div class="stat-value" id="activeIncidents">-</div>
+          <div class="stat-label">Активные инциденты</div>
+        </div>
+        <div class="dashboard-stat-card info">
+          <div class="stat-icon">⚡</div>
+          <div class="stat-value" id="avgResponseTime">-</div>
+          <div class="stat-label">Среднее время ответа (мс)</div>
+        </div>
+        <div class="dashboard-stat-card info">
+          <div class="stat-icon">🔍</div>
+          <div class="stat-value" id="totalChecks">-</div>
+          <div class="stat-label">Всего проверок</div>
+        </div>
+        <div class="dashboard-stat-card info">
+          <div class="stat-icon">🔄</div>
+          <div class="stat-value" id="checksPerMinute">-</div>
+          <div class="stat-label">Проверок в минуту</div>
+        </div>
+      </div>
+
+      <!-- Protocol Distribution -->
+      <div class="card" style="margin-bottom: 1.5rem">
+        <div class="card-header">
+          <h3>Распределение по протоколам</h3>
+        </div>
+        <div class="card-body">
+          <div class="protocol-stats" id="protocolStats">
+            <div class="loading">Загрузка...</div>
+          </div>
+        </div>
+      </div>
+
       <!-- Services Table -->
       <div class="card">
         <div class="card-header">
@@ -189,6 +245,131 @@
 
     <script>
       let currentServiceId = null;
+
+      // Load dashboard statistics
+      function loadDashboardStats() {
+        fetch("/api/dashboard/stats")
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+          })
+          .then((stats) => {
+            // Update main statistics
+            document.getElementById("totalServices").textContent =
+              stats.total_services;
+            document.getElementById("servicesUp").textContent =
+              stats.services_up;
+            document.getElementById("servicesDown").textContent =
+              stats.services_down;
+            document.getElementById("uptimePercentage").textContent =
+              stats.uptime_percentage.toFixed(1) + "%";
+            document.getElementById("activeIncidents").textContent =
+              stats.active_incidents;
+            document.getElementById("avgResponseTime").textContent =
+              stats.avg_response_time;
+            document.getElementById("totalChecks").textContent =
+              stats.total_checks;
+            document.getElementById("checksPerMinute").textContent =
+              stats.checks_per_minute;
+
+            // Update card colors based on values
+            updateStatCardColors(stats);
+
+            // Update protocol distribution
+            updateProtocolStats(stats.protocols);
+          })
+          .catch((error) => {
+            console.error("Failed to load dashboard stats:", error);
+          });
+      }
+
+      // Update protocol statistics
+      function updateProtocolStats(protocols) {
+        const container = document.getElementById("protocolStats");
+        if (!container) return;
+
+        if (Object.keys(protocols).length === 0) {
+          container.innerHTML = '<div class="no-data">Нет данных</div>';
+          return;
+        }
+
+        let html = '<div class="protocol-grid">';
+        for (const [protocol, count] of Object.entries(protocols)) {
+          const protocolName = getProtocolDisplayName(protocol);
+          const percentage = (
+            (count / Object.values(protocols).reduce((a, b) => a + b, 0)) *
+            100
+          ).toFixed(1);
+
+          html += `
+            <div class="protocol-item">
+              <div class="protocol-name">${protocolName}</div>
+              <div class="protocol-count">${count}</div>
+              <div class="protocol-bar">
+                <div class="protocol-bar-fill" style="width: ${percentage}%"></div>
+              </div>
+              <div class="protocol-percentage">${percentage}%</div>
+            </div>
+          `;
+        }
+        html += "</div>";
+        container.innerHTML = html;
+      }
+
+      // Get display name for protocol
+      function getProtocolDisplayName(protocol) {
+        const names = {
+          http: "HTTP/HTTPS",
+          tcp: "TCP",
+          grpc: "gRPC",
+          redis: "Redis",
+          unknown: "Неизвестно",
+        };
+        return names[protocol] || protocol.toUpperCase();
+      }
+
+      // Update stat card colors based on values
+      function updateStatCardColors(stats) {
+        // Update uptime percentage color
+        const uptimeCard = document
+          .getElementById("uptimePercentage")
+          .closest(".dashboard-stat-card");
+        if (stats.uptime_percentage >= 99) {
+          uptimeCard.className = "dashboard-stat-card success";
+        } else if (stats.uptime_percentage >= 95) {
+          uptimeCard.className = "dashboard-stat-card warning";
+        } else {
+          uptimeCard.className = "dashboard-stat-card danger";
+        }
+
+        // Update active incidents color
+        const incidentsCard = document
+          .getElementById("activeIncidents")
+          .closest(".dashboard-stat-card");
+        if (stats.active_incidents === 0) {
+          incidentsCard.className = "dashboard-stat-card success";
+        } else if (stats.active_incidents <= 2) {
+          incidentsCard.className =
+            "dashboard-stat-card warning has-active-incidents";
+        } else {
+          incidentsCard.className =
+            "dashboard-stat-card danger has-active-incidents";
+        }
+
+        // Update response time color
+        const responseCard = document
+          .getElementById("avgResponseTime")
+          .closest(".dashboard-stat-card");
+        if (stats.avg_response_time <= 100) {
+          responseCard.className = "dashboard-stat-card success";
+        } else if (stats.avg_response_time <= 500) {
+          responseCard.className = "dashboard-stat-card warning";
+        } else {
+          responseCard.className = "dashboard-stat-card danger";
+        }
+      }
 
       function triggerCheck(serviceId) {
         fetch(`/api/services/${serviceId}/check`, {
@@ -483,6 +664,9 @@ db: 0`;
               `;
               tbody.appendChild(row);
             });
+
+            // Also refresh dashboard stats
+            loadDashboardStats();
           })
           .catch((error) => {
             console.error("Failed to refresh services:", error);
@@ -491,6 +675,9 @@ db: 0`;
 
       // Start auto-refresh
       setInterval(refreshServicesTable, 30000);
+
+      // Load initial data
+      loadDashboardStats();
 
       // Helper function to format datetime
       function formatDateTime(dateString) {
