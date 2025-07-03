@@ -9,21 +9,19 @@ monitoring:
     default_retries: 3
 
 database:
-  path: "./data/incidents.db"
+  path: "./data/db.sqlite3"
 
 notifications:
   enabled: true
   urls:
     # Telegram
-    - "telegram://${TELEGRAM_BOT_TOKEN}/${TELEGRAM_CHAT_ID}"
+    - "telegram://token@telegram?chats=@channel-1[,chat-id-1,...]"
     # Discord
-    - "discord://${DISCORD_WEBHOOK_ID}/${DISCORD_WEBHOOK_TOKEN}"
+    - "discord://token@id"
     # Slack
-    - "slack://${SLACK_TOKEN_A}/${SLACK_TOKEN_B}/${SLACK_TOKEN_C}"
+    - "slack://[botname@]token-a/token-b/token-c"
     # Email
-    - "smtp://${SMTP_USERNAME}:${SMTP_PASSWORD}@${SMTP_HOST}:${SMTP_PORT}?from=${SMTP_FROM}&to=${SMTP_TO}"
-    # Webhook
-    - "webhook://${WEBHOOK_URL}"
+    - "smtp://username:password@host:port/?from=fromAddress&to=recipient1[,recipient2,...]"
 
 services:
   - name: "example-api"

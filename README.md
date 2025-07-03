@@ -52,24 +52,9 @@ go build -o sentinel ./cmd/server
 ```
 
 3. Configure your services in `config.yaml`
-4. Set environment variables:
-
-```bash
-# Telegram
-export TELEGRAM_BOT_TOKEN="your_bot_token"
-export TELEGRAM_CHAT_ID="your_chat_id"
-
-# Discord (optional)
-export DISCORD_WEBHOOK_ID="your_webhook_id"
-export DISCORD_WEBHOOK_TOKEN="your_webhook_token"
-
-# Slack (optional)
-export SLACK_TOKEN_A="your_slack_token_a"
-export SLACK_TOKEN_B="your_slack_token_b"
-export SLACK_TOKEN_C="your_slack_token_c"
-```
-
-5. Run:
+4. Configure your services in `config.yaml`
+5. Set up notification providers (see Notification Setup section below)
+6. Run:
 
 ```bash
 ./sentinel
@@ -99,11 +84,13 @@ notifications:
   enabled: true
   urls:
     # Telegram
-    - "telegram://${TELEGRAM_BOT_TOKEN}/${TELEGRAM_CHAT_ID}"
+    - "telegram://token@telegram?chats=@channel-1[,chat-id-1,...]"
     # Discord (optional)
-    - "discord://${DISCORD_WEBHOOK_ID}/${DISCORD_WEBHOOK_TOKEN}"
+    - "discord://token@id"
     # Slack (optional)
-    - "slack://${SLACK_TOKEN_A}/${SLACK_TOKEN_B}/${SLACK_TOKEN_C}"
+    - "slack://[botname@]token-a/token-b/token-c"
+    # Email (optional)
+    - "smtp://username:password@host:port/?from=fromAddress&to=recipient1[,recipient2,...]"
 
 services:
   - name: "my-api"
@@ -205,48 +192,34 @@ Sentinel uses [Shoutrrr](https://github.com/containrrr/shoutrrr) for notificatio
    - Send `/newbot` and follow instructions
    - Save the bot token
 
-2. Get your chat ID:
+2. Get your chat ID or channel username:
 
-   - Add the bot to your group/channel
-   - Send a message to the bot
-   - Visit `https://api.telegram.org/bot<TOKEN>/getUpdates`
-   - Find your chat ID in the response
+   - For private chats: Add the bot to your group/channel, send a message, then visit `https://api.telegram.org/bot<TOKEN>/getUpdates`
+   - For public channels: Use the channel username (e.g., `@mychannel`)
 
-3. Set environment variables:
-
-```bash
-export TELEGRAM_BOT_TOKEN="1234567890:ABCdefGHIjklMNOpqrsTUVwxyz"
-export TELEGRAM_CHAT_ID="-1001234567890"
-```
-
-4. Configure in `config.yaml`:
+3. Configure in `config.yaml`:
 
 ```yaml
 notifications:
   enabled: true
   urls:
-    - "telegram://${TELEGRAM_BOT_TOKEN}/${TELEGRAM_CHAT_ID}"
+    - "telegram://token@telegram?chats=@channel-1[,chat-id-1,...]"
 ```
 
 ### Discord Setup
 
 1. Create a Discord webhook in your server settings
-2. Use the webhook URL format: `discord://webhook_id/webhook_token`
+2. Use the webhook URL format: `discord://token@id`
 
 ### Slack Setup
 
 1. Create a Slack app and get the tokens
-2. Use the Slack URL format: `slack://token-a/token-b/token-c`
+2. Use the Slack URL format: `slack://[botname@]token-a/token-b/token-c`
 
 ### Email Setup
 
 1. Configure SMTP settings
-2. Use the SMTP URL format: `smtp://username:password@host:port?from=sender&to=recipient`
-
-### Webhook Setup
-
-1. Set up your webhook endpoint
-2. Use the webhook URL format: `webhook://your-webhook-url`
+2. Use the SMTP URL format: `smtp://username:password@host:port/?from=fromAddress&to=recipient1[,recipient2,...]`
 
 ### Multiple Providers
 
@@ -256,10 +229,14 @@ You can configure multiple notification providers simultaneously. If one provide
 notifications:
   enabled: true
   urls:
-    - "telegram://${TELEGRAM_BOT_TOKEN}/${TELEGRAM_CHAT_ID}"
-    - "discord://${DISCORD_WEBHOOK_ID}/${DISCORD_WEBHOOK_TOKEN}"
-    - "slack://${SLACK_TOKEN_A}/${SLACK_TOKEN_B}/${SLACK_TOKEN_C}"
-    - "smtp://${SMTP_USER}:${SMTP_PASS}@${SMTP_HOST}:587?from=${SMTP_FROM}&to=${SMTP_TO}"
+    # Telegram
+    - "telegram://token@telegram?chats=@channel-1[,chat-id-1,...]"
+    # Discord
+    - "discord://token@id"
+    # Slack
+    - "slack://[botname@]token-a/token-b/token-c"
+    # Email
+    - "smtp://username:password@host:port/?from=fromAddress&to=recipient1[,recipient2,...]"
 ```
 
 ## API Reference
