@@ -51,6 +51,41 @@ func (m *MonitorService) InitializeService(cfg config.ServiceConfig) {
 	log.Printf("Initialized monitoring for service %s", cfg.Name)
 }
 
+// InitializeWithActiveIncidents initializes the service and checks for active incidents
+func (m *MonitorService) InitializeWithActiveIncidents(ctx context.Context, cfg config.ServiceConfig) {
+	// First initialize the service normally
+	m.InitializeService(cfg)
+
+	// Check for active incidents for this service
+	activeIncidents, err := m.storage.GetActiveIncidents(ctx)
+	if err != nil {
+		log.Printf("Failed to get active incidents during initialization for %s: %v", cfg.Name, err)
+		return
+	}
+
+	log.Println("Active incidents: ", len(activeIncidents))
+
+	// Check if there's an active incident for this service
+	hasActiveIncident := false
+	for _, incident := range activeIncidents {
+		if incident.ServiceName == cfg.Name && !incident.Resolved {
+			hasActiveIncident = true
+			break
+		}
+	}
+
+	// If there's an active incident, set status to down initially
+	// The actual check will determine if the service is really down or if the incident should be resolved
+	if hasActiveIncident {
+		m.mu.Lock()
+		if state, exists := m.states[cfg.Name]; exists {
+			state.Status = config.StatusDown
+			log.Printf("Service %s has active incident, status set to DOWN initially", cfg.Name)
+		}
+		m.mu.Unlock()
+	}
+}
+
 // RecordSuccess records a successful health check
 func (m *MonitorService) RecordSuccess(ctx context.Context, serviceName string, responseTime time.Duration) {
 	m.mu.Lock()
@@ -76,9 +111,12 @@ func (m *MonitorService) RecordSuccess(ctx context.Context, serviceName string, 
 
 	log.Printf("Service %s: SUCCESS (response time: %v)", serviceName, responseTime)
 
-	// If service was down and now up, resolve incident and send recovery notification
+	// If service was down and now up, resolve all active incidents for this service
 	if wasDown {
-		m.resolveActiveIncident(ctx, serviceName)
+		m.resolveAllActiveIncidents(ctx, serviceName)
+	} else {
+		// Even if service was already up, check for any lingering active incidents and resolve them
+		m.resolveAllActiveIncidents(ctx, serviceName)
 	}
 }
 
@@ -147,7 +185,8 @@ func (m *MonitorService) resolveActiveIncident(ctx context.Context, serviceName 
 		return
 	}
 
-	// Find active incident for this service
+	// Find and resolve all active incidents for this service
+	resolvedCount := 0
 	for _, incident := range incidents {
 		if incident.ServiceName == serviceName && !incident.Resolved {
 			// Resolve the incident
@@ -172,8 +211,12 @@ func (m *MonitorService) resolveActiveIncident(ctx context.Context, serviceName 
 			}
 
 			log.Printf("Resolved incident %s for service %s (downtime: %v)", incident.ID, serviceName, duration)
-			break
+			resolvedCount++
 		}
+	}
+
+	if resolvedCount > 0 {
+		log.Printf("Resolved %d active incidents for service %s", resolvedCount, serviceName)
 	}
 }
 
@@ -241,9 +284,46 @@ func (m *MonitorService) TriggerCheck(ctx context.Context, serviceName string) e
 		return fmt.Errorf("service %s not found", serviceName)
 	}
 
-	// For now, just log that a manual check was triggered
-	// In a real implementation, you might want to immediately run the check
 	log.Printf("Manual check triggered for service %s (current status: %s)", serviceName, state.Status)
+
+	// Note: In a real implementation, you would want to trigger an immediate check
+	// For now, we just log the request. The actual check will happen on the next scheduled interval.
+	// To implement immediate checks, you would need to add a channel or method to communicate
+	// with the scheduler to trigger an immediate check.
+
+	return nil
+}
+
+// resolveAllActiveIncidents resolves all active incidents for a service
+func (m *MonitorService) resolveAllActiveIncidents(ctx context.Context, serviceName string) {
+	// Get active incidents for the service
+	incidents, err := m.storage.GetActiveIncidents(ctx)
+	if err != nil {
+		log.Printf("Failed to get active incidents: %v", err)
+		return
+	}
+
+	// Find active incidents for this service
+	for _, incident := range incidents {
+		if incident.ServiceName == serviceName && !incident.Resolved {
+			// Resolve the incident
+			m.resolveActiveIncident(ctx, serviceName)
+		}
+	}
+}
+
+// ForceResolveIncidents forcibly resolves all active incidents for a service
+func (m *MonitorService) ForceResolveIncidents(ctx context.Context, serviceName string) error {
+	// Get service state to check if it exists
+	state, err := m.GetServiceState(serviceName)
+	if err != nil {
+		return fmt.Errorf("service %s not found", serviceName)
+	}
+
+	log.Printf("Force resolving incidents for service %s (current status: %s)", serviceName, state.Status)
+
+	// Resolve all active incidents for this service
+	m.resolveActiveIncident(ctx, serviceName)
 
 	return nil
 }

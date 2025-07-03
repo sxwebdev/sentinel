@@ -112,6 +112,40 @@ func (s *Scheduler) Start(ctx context.Context) {
 	log.Println("Scheduler stopped")
 }
 
+// StartWithInitialCheck begins monitoring with an immediate check of all services
+func (s *Scheduler) StartWithInitialCheck(ctx context.Context) {
+	// Get all services under read lock
+	s.mu.RLock()
+	services := make([]*ServiceJob, 0, len(s.services))
+	for _, job := range s.services {
+		services = append(services, job)
+	}
+	s.mu.RUnlock()
+
+	log.Printf("Starting scheduler with %d services and initial check", len(services))
+
+	// Start monitoring for all services
+	for _, job := range services {
+		s.wg.Add(1)
+		go s.monitorService(ctx, job)
+	}
+
+	// Perform immediate check for all services
+	log.Println("Performing initial check for all services...")
+	for _, job := range services {
+		s.performCheck(ctx, job)
+	}
+
+	// Wait for context cancellation
+	<-ctx.Done()
+	log.Println("Scheduler received shutdown signal")
+
+	// Stop all services
+	s.stopAll()
+	s.wg.Wait()
+	log.Println("Scheduler stopped")
+}
+
 // monitorService runs the monitoring loop for a single service
 func (s *Scheduler) monitorService(ctx context.Context, job *ServiceJob) {
 	defer s.wg.Done()
@@ -119,8 +153,8 @@ func (s *Scheduler) monitorService(ctx context.Context, job *ServiceJob) {
 	serviceName := job.Config.Name
 	log.Printf("Starting monitoring for service %s", serviceName)
 
-	// Initialize service state
-	s.monitorSvc.InitializeService(job.Config)
+	// Initialize service state with active incidents check
+	s.monitorSvc.InitializeWithActiveIncidents(ctx, job.Config)
 
 	// Create ticker for regular checks
 	job.Ticker = time.NewTicker(job.Config.Interval)
@@ -211,7 +245,7 @@ func (s *Scheduler) GetServices() []string {
 	return services
 }
 
-// CheckService performs an immediate check for a specific service
+// CheckService manually triggers a check for a specific service
 func (s *Scheduler) CheckService(ctx context.Context, serviceName string) error {
 	s.mu.RLock()
 	job, exists := s.services[serviceName]
@@ -221,6 +255,12 @@ func (s *Scheduler) CheckService(ctx context.Context, serviceName string) error 
 		return ErrServiceNotFound
 	}
 
+	log.Printf("Manual check triggered for service %s", serviceName)
 	s.performCheck(ctx, job)
 	return nil
+}
+
+// TriggerCheck is an alias for CheckService for consistency
+func (s *Scheduler) TriggerCheck(ctx context.Context, serviceName string) error {
+	return s.CheckService(ctx, serviceName)
 }
