@@ -10,7 +10,7 @@ Sentinel is a lightweight, multi-protocol service monitoring system written in G
 - **Telegram Notifications**: Alert and recovery notifications
 - **Web Dashboard**: Clean, responsive web interface
 - **REST API**: Full API for integration with other tools
-- **Persistent Storage**: Incident history using ChainDB
+- **Persistent Storage**: Incident history using SQLite
 - **Configuration**: YAML-based configuration with environment variable support
 
 ## Quick Start
@@ -83,12 +83,12 @@ monitoring:
     default_retries: 3
 
 database:
-  path: "./data/incidents.db"
+  path: "./data/db.sqlite3"
 
 telegram:
+  enabled: false
   bot_token: "${TELEGRAM_BOT_TOKEN}"
   chat_id: "${TELEGRAM_CHAT_ID}"
-  enabled: true
 
 services:
   - name: "my-api"
@@ -101,8 +101,6 @@ services:
     config:
       method: "GET"
       expected_status: 200
-      headers:
-        Authorization: "Bearer token"
 ```
 
 ### Protocol-Specific Configuration
@@ -113,13 +111,16 @@ services:
 - name: "web-service"
   protocol: "http"
   endpoint: "https://example.com/health"
+  interval: 30s
+  timeout: 10s
+  retries: 3
+  tags: ["web", "critical"]
   config:
     method: "GET" # HTTP method
     expected_status: 200 # Expected status code
-    expected_text: "OK" # Optional: text to find in response
     headers: # Optional: custom headers
-      User-Agent: "Sentinel"
-    body: '{"ping": "pong"}' # Optional: request body
+      User-Agent: "Sentinel Monitor"
+      Authorization: "Bearer token"
 ```
 
 #### TCP
@@ -128,6 +129,10 @@ services:
 - name: "database"
   protocol: "tcp"
   endpoint: "db.example.com:5432"
+  interval: 30s
+  timeout: 5s
+  retries: 3
+  tags: ["database", "postgres"]
   config:
     send_data: "ping" # Optional: data to send
     expect_data: "pong" # Optional: expected response
@@ -139,10 +144,14 @@ services:
 - name: "grpc-service"
   protocol: "grpc"
   endpoint: "grpc.example.com:50051"
+  interval: 30s
+  timeout: 10s
+  retries: 3
+  tags: ["grpc", "backend"]
   config:
+    check_type: "health" # "health", "reflection", "connectivity"
     service_name: "myapp.MyService" # Optional: specific service name
     tls: true # Use TLS
-    server_name: "grpc.example.com" # TLS server name
     insecure_tls: false # Skip TLS verification
 ```
 
@@ -152,10 +161,22 @@ services:
 - name: "redis-cache"
   protocol: "redis"
   endpoint: "redis.example.com:6379"
+  interval: 30s
+  timeout: 5s
+  retries: 3
+  tags: ["cache", "redis"]
   config:
-    password: "secret" # Optional: Redis password
+    password: "${REDIS_PASSWORD}" # Optional: Redis password
     db: 0 # Redis database number
 ```
+
+### gRPC Check Types
+
+The gRPC monitor supports three types of checks:
+
+1. **Health Check** (`check_type: "health"`): Uses standard gRPC health service
+2. **Reflection Check** (`check_type: "reflection"`): Checks gRPC reflection availability
+3. **Connectivity Check** (`check_type: "connectivity"`): Simple connection test
 
 ## Telegram Setup
 
@@ -177,6 +198,15 @@ services:
 ```bash
 export TELEGRAM_BOT_TOKEN="1234567890:ABCdefGHIjklMNOpqrsTUVwxyz"
 export TELEGRAM_CHAT_ID="-1001234567890"
+```
+
+4. Enable Telegram in config:
+
+```yaml
+telegram:
+  enabled: true
+  bot_token: "${TELEGRAM_BOT_TOKEN}"
+  chat_id: "${TELEGRAM_CHAT_ID}"
 ```
 
 ## API Reference
@@ -236,32 +266,33 @@ GET /api/incidents?limit=50
 
 ```
 sentinel/
-├── cmd/server/           # Main application
+├── cmd/
+│   ├── server/          # Main application
+│   ├── tcpserver/       # TCP server for testing
+│   └── grpcserver/      # gRPC server for testing
 ├── internal/
 │   ├── config/          # Configuration management
 │   ├── monitors/        # Protocol-specific monitors
-│   ├── storage/         # Data persistence
+│   ├── storage/         # Data persistence (SQLite)
 │   ├── notifier/        # Notification system
 │   ├── scheduler/       # Monitoring scheduler
 │   ├── service/         # Business logic
 │   └── web/             # Web interface
-├── web/
-│   ├── static/          # CSS, JS, images
-│   └── templates/       # HTML templates
-└── config.yaml          # Configuration file
+├── data/                # SQLite database files
+├── config.yaml          # Configuration file
+└── docker-compose.yml   # Docker services
 ```
-
-### Adding New Protocols
-
-1. Implement the `ServiceMonitor` interface in `internal/monitors/`
-2. Add protocol detection in `monitors.NewMonitor()`
-3. Update configuration validation in `config/config.go`
 
 ### Building
 
 ```bash
-# Development build
+# Build all binaries
+make build
+
+# Build specific binary
 go build -o sentinel ./cmd/server
+go build -o tcpserver ./cmd/tcpserver
+go build -o grpcserver ./cmd/grpcserver
 
 # Production build with optimizations
 CGO_ENABLED=0 go build -ldflags="-w -s" -o sentinel ./cmd/server
@@ -270,7 +301,33 @@ CGO_ENABLED=0 go build -ldflags="-w -s" -o sentinel ./cmd/server
 GOOS=linux GOARCH=amd64 go build -o sentinel-linux ./cmd/server
 ```
 
+### Testing
+
+```bash
+# Run all tests
+go test ./...
+
+# Run tests with coverage
+go test -cover ./...
+
+# Run specific test
+go test ./internal/storage
+```
+
 ## Deployment
+
+### Docker Compose (Recommended)
+
+```bash
+# Start all services
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop services
+docker-compose down
+```
 
 ### Systemd Service
 

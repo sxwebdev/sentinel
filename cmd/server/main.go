@@ -26,7 +26,7 @@ func main() {
 	}
 
 	// Initialize storage
-	stor, err := storage.NewChainDBStorage(cfg.Database.Path)
+	stor, err := storage.NewStorage(storage.StorageTypeSQLite, cfg.Database.Path)
 	if err != nil {
 		log.Fatalf("Failed to initialize storage: %v", err)
 	}

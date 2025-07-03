@@ -1,6 +1,6 @@
 # Makefile for Sentinel
 
-.PHONY: build clean test run docker-build docker-run dev deps lint format help
+.PHONY: build clean test run docker-build docker-run dev deps lint format help proto
 
 # Variables
 BINARY_NAME=sentinel
@@ -23,13 +23,19 @@ dev: ## Run in development mode with auto-reload
 run: build ## Build and run the application
 	./$(BUILD_DIR)/$(BINARY_NAME)
 
-runtest:
-	go run ./cmd/testserver
+runtcpserver:
+	go run ./cmd/tcpserver
+
+rungrpcserver:
+	go run ./cmd/grpcserver
 
 # Build targets
 build: deps ## Build the application
 	@mkdir -p $(BUILD_DIR)
 	go build $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME) $(MAIN_PATH)
+	go build $(LDFLAGS) -o $(BUILD_DIR)/tcpserver ./cmd/tcpserver
+	go build $(LDFLAGS) -o $(BUILD_DIR)/grpcserver ./cmd/grpcserver
+
 
 build-linux: deps ## Build for Linux
 	@mkdir -p $(BUILD_DIR)
@@ -112,4 +118,3 @@ init-config: ## Copy example configuration
 release: clean build-all test ## Create release build
 	@echo "Release $(VERSION) built successfully"
 	@ls -la $(BUILD_DIR)/
-
