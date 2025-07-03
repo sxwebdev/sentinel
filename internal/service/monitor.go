@@ -226,3 +226,24 @@ func (m *MonitorService) GetServiceStats(ctx context.Context, serviceName string
 func generateIncidentID() string {
 	return fmt.Sprintf("%d", time.Now().UnixNano())
 }
+
+// GetAllServices returns all services (alias for GetAllServiceStates for web compatibility)
+func (m *MonitorService) GetAllServices() (map[string]*config.ServiceState, error) {
+	states := m.GetAllServiceStates()
+	return states, nil
+}
+
+// TriggerCheck manually triggers a health check for a service
+func (m *MonitorService) TriggerCheck(ctx context.Context, serviceName string) error {
+	// Get service state to check if it exists
+	state, err := m.GetServiceState(serviceName)
+	if err != nil {
+		return fmt.Errorf("service %s not found", serviceName)
+	}
+
+	// For now, just log that a manual check was triggered
+	// In a real implementation, you might want to immediately run the check
+	log.Printf("Manual check triggered for service %s (current status: %s)", serviceName, state.Status)
+
+	return nil
+}

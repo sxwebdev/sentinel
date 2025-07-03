@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -63,18 +62,17 @@ func main() {
 	go sched.Start(ctx)
 
 	// Initialize web server
-	webServer := web.NewServer(monitorService, cfg)
-
-	// Start web server
-	srv := &http.Server{
-		Addr:    fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port),
-		Handler: webServer.Router(),
+	webServer, err := web.NewServer(monitorService, cfg)
+	if err != nil {
+		log.Fatalf("Failed to initialize web server: %v", err)
 	}
 
+	// Start Fiber server
+	addr := fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port)
 	go func() {
-		log.Printf("Starting web server on %s", srv.Addr)
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("Failed to start web server: %v", err)
+		log.Printf("Starting Fiber server on %s", addr)
+		if err := webServer.App().Listen(addr); err != nil {
+			log.Fatalf("Failed to start Fiber server: %v", err)
 		}
 	}()
 
@@ -86,13 +84,18 @@ func main() {
 	log.Println("Shutting down...")
 
 	// Graceful shutdown
-	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 30*time.Second)
+
+	// Cancel context first to stop scheduler
+	log.Println("Stopping scheduler...")
+	cancel()
+	log.Println("Scheduler stopped")
+
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
 	defer shutdownCancel()
 
-	if err := srv.Shutdown(shutdownCtx); err != nil {
-		log.Printf("Failed to shutdown web server: %v", err)
+	if err := webServer.App().ShutdownWithContext(shutdownCtx); err != nil {
+		log.Printf("Failed to shutdown Fiber server: %v", err)
 	}
 
-	cancel() // Stop scheduler
 	log.Println("Shutdown complete")
 }

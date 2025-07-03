@@ -1,809 +1,317 @@
 package web
 
 import (
-	"encoding/json"
-	"html/template"
+	"embed"
 	"net/http"
-	"path/filepath"
+	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
-	"github.com/gorilla/mux"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/template/html/v2"
 	"github.com/sxwebdev/sentinel/internal/config"
 	"github.com/sxwebdev/sentinel/internal/service"
 )
+
+//go:embed views/*
+var viewsFS embed.FS
 
 // Server represents the web server
 type Server struct {
 	monitorService *service.MonitorService
 	config         *config.Config
-	templates      *template.Template
+	app            *fiber.App
 }
 
 // NewServer creates a new web server
-func NewServer(monitorService *service.MonitorService, cfg *config.Config) *Server {
-	return &Server{
+func NewServer(monitorService *service.MonitorService, cfg *config.Config) (*Server, error) {
+	// Create template engine with embedded templates
+	templateEngine := html.NewFileSystem(http.FS(viewsFS), ".html")
+
+	// Add template functions
+	templateEngine.
+		AddFunc("lower", strings.ToLower).
+		AddFunc("statusToString", func(status config.ServiceStatus) string {
+			return status.String()
+		}).
+		AddFunc("statusToLower", func(status config.ServiceStatus) string {
+			return strings.ToLower(status.String())
+		}).
+		AddFunc("formatDateTime", func(t time.Time) string {
+			return t.Format("2006-01-02 15:04:05")
+		}).
+		AddFunc("urlquery", url.QueryEscape)
+
+	if err := templateEngine.Load(); err != nil {
+		return nil, err
+	}
+
+	// Create Fiber app
+	app := fiber.New(fiber.Config{
+		Views: templateEngine,
+	})
+
+	app.Use(cors.New())
+
+	// Serve static files from embed
+	app.Get("/static/*", func(c *fiber.Ctx) error {
+		filePath := c.Params("*")
+		if filePath == "" {
+			return c.Status(404).SendString("File not found")
+		}
+
+		content, err := viewsFS.ReadFile("views/static/" + filePath)
+		if err != nil {
+			return c.Status(404).SendString("File not found")
+		}
+
+		// Set content type based on file extension
+		if strings.HasSuffix(filePath, ".css") {
+			c.Set("Content-Type", "text/css")
+		} else if strings.HasSuffix(filePath, ".js") {
+			c.Set("Content-Type", "application/javascript")
+		}
+
+		return c.Send(content)
+	})
+
+	server := &Server{
 		monitorService: monitorService,
 		config:         cfg,
-		templates:      loadTemplates(),
+		app:            app,
 	}
+
+	// Setup routes
+	server.setupRoutes()
+
+	return server, nil
 }
 
-// Router returns the configured router
-func (s *Server) Router() *mux.Router {
-	r := mux.NewRouter()
-
-	// Static files
-	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("web/static/"))))
-
+// setupRoutes configures all routes
+func (s *Server) setupRoutes() {
 	// Web UI routes
-	r.HandleFunc("/", s.handleDashboard).Methods("GET")
-	r.HandleFunc("/service/{name}", s.handleServiceDetail).Methods("GET")
+	s.app.Get("/", s.handleDashboard)
+	s.app.Get("/service/:name", s.handleServiceDetail)
 
 	// API routes
-	api := r.PathPrefix("/api").Subrouter()
-	api.HandleFunc("/services", s.handleAPIServices).Methods("GET")
-	api.HandleFunc("/services/{name}", s.handleAPIServiceDetail).Methods("GET")
-	api.HandleFunc("/services/{name}/incidents", s.handleAPIServiceIncidents).Methods("GET")
-	api.HandleFunc("/services/{name}/stats", s.handleAPIServiceStats).Methods("GET")
-	api.HandleFunc("/services/{name}/check", s.handleAPIServiceCheck).Methods("POST")
-	api.HandleFunc("/incidents", s.handleAPIRecentIncidents).Methods("GET")
+	api := s.app.Group("/api")
+	api.Get("/services", s.handleAPIServices)
+	api.Get("/services/:name", s.handleAPIServiceDetail)
+	api.Get("/services/:name/incidents", s.handleAPIServiceIncidents)
+	api.Get("/services/:name/stats", s.handleAPIServiceStats)
+	api.Post("/services/:name/check", s.handleAPIServiceCheck)
+	api.Get("/incidents", s.handleAPIRecentIncidents)
+}
 
-	return r
+// App returns the Fiber app instance
+func (s *Server) App() *fiber.App {
+	return s.app
 }
 
 // handleDashboard renders the main dashboard
-func (s *Server) handleDashboard(w http.ResponseWriter, r *http.Request) {
-	states := s.monitorService.GetAllServiceStates()
-
-	data := struct {
-		Services map[string]*config.ServiceState
-		Title    string
-	}{
-		Services: states,
-		Title:    "Service Monitor Dashboard",
+func (s *Server) handleDashboard(c *fiber.Ctx) error {
+	services, err := s.monitorService.GetAllServices()
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
 	}
 
-	if err := s.templates.ExecuteTemplate(w, "dashboard.html", data); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	return c.Render("views/dashboard", fiber.Map{
+		"Services": services,
+		"Title":    "Sentinel Dashboard",
+		"Actions": []fiber.Map{
+			{
+				"Text":  "Refresh",
+				"Class": "btn-secondary",
+			},
+		},
+	})
 }
 
-// handleServiceDetail renders the service detail page
-func (s *Server) handleServiceDetail(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	serviceName := vars["name"]
+// handleServiceDetail renders service detail page
+func (s *Server) handleServiceDetail(c *fiber.Ctx) error {
+	serviceName := c.Params("name")
+	if serviceName == "" {
+		return c.Status(fiber.StatusBadRequest).SendString("service name is required")
+	}
 
-	state, err := s.monitorService.GetServiceState(serviceName)
+	// URL decode the service name
+	decodedName, err := url.QueryUnescape(serviceName)
 	if err != nil {
-		http.NotFound(w, r)
-		return
+		decodedName = serviceName // fallback to original if decoding fails
 	}
 
-	incidents, err := s.monitorService.GetServiceIncidents(r.Context(), serviceName)
+	// Get service state
+	state, err := s.monitorService.GetServiceState(decodedName)
 	if err != nil {
-		incidents = []*config.Incident{}
+		return c.Status(fiber.StatusNotFound).SendString("service not found: " + decodedName)
 	}
 
-	// Get stats for the last 30 days
-	stats, err := s.monitorService.GetServiceStats(r.Context(), serviceName, time.Now().AddDate(0, 0, -30))
+	// Get recent incidents
+	incidents, err := s.monitorService.GetServiceIncidents(c.Context(), decodedName)
 	if err != nil {
-		stats = nil
+		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
 	}
 
-	data := struct {
-		Service   *config.ServiceState
-		Incidents []*config.Incident
-		Stats     interface{}
-		Title     string
-	}{
-		Service:   state,
-		Incidents: incidents,
-		Stats:     stats,
-		Title:     "Service: " + serviceName,
+	// Get service stats
+	stats, err := s.monitorService.GetServiceStats(c.Context(), decodedName, time.Now().AddDate(0, 0, -30))
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
 	}
 
-	if err := s.templates.ExecuteTemplate(w, "service-detail.html", data); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	return c.Render("views/service_detail", fiber.Map{
+		"Service":      state,
+		"Incidents":    incidents,
+		"Stats":        stats,
+		"Title":        "Service: " + decodedName,
+		"BackLink":     "/",
+		"BackLinkText": "Back to Dashboard",
+		"Actions": []fiber.Map{
+			{
+				"Text":    "Trigger Check",
+				"Class":   "",
+				"OnClick": "triggerCheck()",
+			},
+		},
+	})
 }
 
-// API Handlers
-
-// handleAPIServices returns all services status
-func (s *Server) handleAPIServices(w http.ResponseWriter, r *http.Request) {
-	states := s.monitorService.GetAllServiceStates()
-	s.writeJSON(w, states)
-}
-
-// handleAPIServiceDetail returns detailed info for a specific service
-func (s *Server) handleAPIServiceDetail(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	serviceName := vars["name"]
-
-	state, err := s.monitorService.GetServiceState(serviceName)
+// handleAPIServices returns all services
+func (s *Server) handleAPIServices(c *fiber.Ctx) error {
+	services, err := s.monitorService.GetAllServices()
 	if err != nil {
-		http.NotFound(w, r)
-		return
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
 	}
 
-	s.writeJSON(w, state)
+	return c.JSON(services)
 }
 
-// handleAPIServiceIncidents returns incidents for a specific service
-func (s *Server) handleAPIServiceIncidents(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	serviceName := vars["name"]
-
-	incidents, err := s.monitorService.GetServiceIncidents(r.Context(), serviceName)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+// handleAPIServiceDetail returns service details
+func (s *Server) handleAPIServiceDetail(c *fiber.Ctx) error {
+	serviceName := c.Params("name")
+	if serviceName == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "service name is required",
+		})
 	}
 
-	s.writeJSON(w, incidents)
+	// URL decode the service name
+	decodedName, err := url.QueryUnescape(serviceName)
+	if err != nil {
+		decodedName = serviceName // fallback to original if decoding fails
+	}
+
+	state, err := s.monitorService.GetServiceState(decodedName)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "service not found: " + decodedName,
+		})
+	}
+
+	return c.JSON(state)
 }
 
-// handleAPIServiceStats returns statistics for a specific service
-func (s *Server) handleAPIServiceStats(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	serviceName := vars["name"]
+// handleAPIServiceIncidents returns service incidents
+func (s *Server) handleAPIServiceIncidents(c *fiber.Ctx) error {
+	serviceName := c.Params("name")
+	if serviceName == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "service name is required",
+		})
+	}
 
-	// Parse days parameter
-	daysStr := r.URL.Query().Get("days")
-	days := 30 // default
-	if daysStr != "" {
-		if d, err := strconv.Atoi(daysStr); err == nil && d > 0 {
-			days = d
-		}
+	// URL decode the service name
+	decodedName, err := url.QueryUnescape(serviceName)
+	if err != nil {
+		decodedName = serviceName // fallback to original if decoding fails
+	}
+
+	incidents, err := s.monitorService.GetServiceIncidents(c.Context(), decodedName)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(incidents)
+}
+
+// handleAPIServiceStats returns service statistics
+func (s *Server) handleAPIServiceStats(c *fiber.Ctx) error {
+	serviceName := c.Params("name")
+	if serviceName == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "service name is required",
+		})
+	}
+
+	// URL decode the service name
+	decodedName, err := url.QueryUnescape(serviceName)
+	if err != nil {
+		decodedName = serviceName // fallback to original if decoding fails
+	}
+
+	daysStr := c.Query("days", "30")
+	days, err := strconv.Atoi(daysStr)
+	if err != nil {
+		days = 30
 	}
 
 	since := time.Now().AddDate(0, 0, -days)
-	stats, err := s.monitorService.GetServiceStats(r.Context(), serviceName, since)
+	stats, err := s.monitorService.GetServiceStats(c.Context(), decodedName, since)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
 	}
 
-	s.writeJSON(w, stats)
+	return c.JSON(stats)
 }
 
-// handleAPIServiceCheck triggers an immediate check for a service
-func (s *Server) handleAPIServiceCheck(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	serviceName := vars["name"]
-
-	// This would require access to the scheduler, which we don't have here
-	// For now, return a simple response
-	response := map[string]string{
-		"message": "Check triggered for " + serviceName,
-		"status":  "accepted",
+// handleAPIServiceCheck triggers a manual check
+func (s *Server) handleAPIServiceCheck(c *fiber.Ctx) error {
+	serviceName := c.Params("name")
+	if serviceName == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "service name is required",
+		})
 	}
 
-	s.writeJSON(w, response)
-}
-
-// handleAPIRecentIncidents returns recent incidents across all services
-func (s *Server) handleAPIRecentIncidents(w http.ResponseWriter, r *http.Request) {
-	limitStr := r.URL.Query().Get("limit")
-	limit := 50 // default
-	if limitStr != "" {
-		if l, err := strconv.Atoi(limitStr); err == nil && l > 0 {
-			limit = l
-		}
-	}
-
-	incidents, err := s.monitorService.GetRecentIncidents(r.Context(), limit)
+	// URL decode the service name
+	decodedName, err := url.QueryUnescape(serviceName)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		decodedName = serviceName // fallback to original if decoding fails
 	}
 
-	s.writeJSON(w, incidents)
+	err = s.monitorService.TriggerCheck(c.Context(), decodedName)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"message": "check triggered successfully",
+	})
 }
 
-// writeJSON writes a JSON response
-func (s *Server) writeJSON(w http.ResponseWriter, data interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(data); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-}
-
-// loadTemplates loads HTML templates
-func loadTemplates() *template.Template {
-	// Define template functions
-	funcMap := template.FuncMap{
-		"formatTime": func(t time.Time) string {
-			if t.IsZero() {
-				return "Never"
-			}
-			return t.Format("2006-01-02 15:04:05")
-		},
-		"formatDuration": func(d time.Duration) string {
-			if d == 0 {
-				return "0s"
-			}
-			if d < time.Minute {
-				return d.Truncate(time.Second).String()
-			}
-			if d < time.Hour {
-				return d.Truncate(time.Minute).String()
-			}
-			return d.Truncate(time.Hour).String()
-		},
-		"statusClass": func(status config.ServiceStatus) string {
-			switch status {
-			case config.StatusUp:
-				return "success"
-			case config.StatusDown:
-				return "danger"
-			case config.StatusMaintenance:
-				return "warning"
-			default:
-				return "secondary"
-			}
-		},
-		"statusIcon": func(status config.ServiceStatus) string {
-			switch status {
-			case config.StatusUp:
-				return "✅"
-			case config.StatusDown:
-				return "❌"
-			case config.StatusMaintenance:
-				return "🔧"
-			default:
-				return "❓"
-			}
-		},
-		"add": func(a, b int) int {
-			return a + b
-		},
-		"eq": func(a, b interface{}) bool {
-			return a == b
-		},
+// handleAPIRecentIncidents returns recent incidents
+func (s *Server) handleAPIRecentIncidents(c *fiber.Ctx) error {
+	limitStr := c.Query("limit", "50")
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil || limit <= 0 {
+		limit = 50
 	}
 
-	// Load templates from embedded files or filesystem
-	tmpl := template.New("").Funcs(funcMap)
-
-	// Try to load from filesystem
-	pattern := filepath.Join("web", "templates", "*.html")
-	if templates, err := tmpl.ParseGlob(pattern); err == nil {
-		return templates
+	incidents, err := s.monitorService.GetRecentIncidents(c.Context(), limit)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
 	}
 
-	// Fallback to embedded templates if filesystem loading fails
-	return loadEmbeddedTemplates(tmpl)
-}
-
-// loadEmbeddedTemplates loads templates embedded in the binary
-func loadEmbeddedTemplates(tmpl *template.Template) *template.Template {
-	// Dashboard template
-	dashboardTmpl := `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <title>{{.Title}}</title>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <meta http-equiv="refresh" content="30">
-    <style>
-        body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        .container {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            backdrop-filter: blur(10px);
-            margin-top: 20px;
-            margin-bottom: 20px;
-            padding: 2rem;
-        }
-        .page-title {
-            color: #2c3e50;
-            font-weight: 700;
-            margin-bottom: 2rem;
-            text-align: center;
-            font-size: 2.5rem;
-        }
-        .service-card {
-            border: none;
-            border-radius: 15px;
-            transition: all 0.3s ease;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-            background: linear-gradient(145deg, #ffffff, #f8f9fa);
-            margin-bottom: 1.5rem;
-            overflow: hidden;
-        }
-        .service-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
-        }
-        .service-card .card-body {
-            padding: 1.5rem;
-        }
-        .service-title {
-            font-size: 1.3rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .status-icon {
-            font-size: 1.5rem;
-        }
-        .badge {
-            font-size: 0.75rem;
-            padding: 0.5rem 1rem;
-            border-radius: 50px;
-            font-weight: 600;
-        }
-        .bg-success { background: linear-gradient(45deg, #28a745, #20c997) !important; }
-        .bg-danger { background: linear-gradient(45deg, #dc3545, #e74c3c) !important; }
-        .bg-warning { background: linear-gradient(45deg, #ffc107, #fd7e14) !important; }
-        .bg-secondary { background: linear-gradient(45deg, #6c757d, #495057) !important; }
-        .service-info {
-            line-height: 1.8;
-            color: #6c757d;
-        }
-        .service-info strong {
-            color: #495057;
-            font-weight: 600;
-        }
-        .btn-details {
-            background: linear-gradient(45deg, #007bff, #0056b3);
-            border: none;
-            border-radius: 25px;
-            padding: 0.5rem 1.5rem;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-        .btn-details:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,123,255,0.3);
-        }
-        .stats-bar {
-            background: rgba(255,255,255,0.9);
-            border-radius: 15px;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-            text-align: center;
-        }
-        .stat-item {
-            display: inline-block;
-            margin: 0 2rem;
-        }
-        .stat-number {
-            font-size: 2rem;
-            font-weight: 700;
-            color: #2c3e50;
-        }
-        .stat-label {
-            color: #6c757d;
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        @media (max-width: 768px) {
-            .page-title { font-size: 2rem; }
-            .stat-item { margin: 0 1rem; }
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1 class="page-title">
-            <i class="fas fa-shield-alt text-primary"></i>
-            Service Monitor Dashboard
-        </h1>
-        
-        <div class="stats-bar">
-            {{$totalServices := len .Services}}
-            {{$upServices := 0}}
-            {{$downServices := 0}}
-            {{range .Services}}
-                {{if eq .Status "up"}}{{$upServices = add $upServices 1}}{{end}}
-                {{if eq .Status "down"}}{{$downServices = add $downServices 1}}{{end}}
-            {{end}}
-            <div class="stat-item">
-                <div class="stat-number text-primary">{{$totalServices}}</div>
-                <div class="stat-label">Total Services</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-number text-success">{{$upServices}}</div>
-                <div class="stat-label">Online</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-number text-danger">{{$downServices}}</div>
-                <div class="stat-label">Offline</div>
-            </div>
-        </div>
-        
-        <div class="row">
-            {{range .Services}}
-            <div class="col-lg-4 col-md-6">
-                <div class="card service-card">
-                    <div class="card-body">
-                        <h5 class="service-title">
-                            <span class="status-icon">{{statusIcon .Status}}</span>
-                            {{.Name}}
-                            <span class="badge bg-{{statusClass .Status}} ms-auto">{{.Status}}</span>
-                        </h5>
-                        <div class="service-info">
-                            <div class="mb-2">
-                                <i class="fas fa-network-wired text-muted me-2"></i>
-                                <strong>Protocol:</strong> {{.Protocol}}
-                            </div>
-                            <div class="mb-2">
-                                <i class="fas fa-globe text-muted me-2"></i>
-                                <strong>Endpoint:</strong> 
-                                <span class="text-break">{{.Endpoint}}</span>
-                            </div>
-                            <div class="mb-2">
-                                <i class="fas fa-clock text-muted me-2"></i>
-                                <strong>Last Check:</strong> {{formatTime .LastCheck}}
-                            </div>
-                            <div class="mb-2">
-                                <i class="fas fa-tachometer-alt text-muted me-2"></i>
-                                <strong>Response Time:</strong> {{formatDuration .ResponseTime}}
-                            </div>
-                            {{if .LastError}}
-                            <div class="mb-2">
-                                <i class="fas fa-exclamation-triangle text-danger me-2"></i>
-                                <strong>Error:</strong> 
-                                <span class="text-danger">{{.LastError}}</span>
-                            </div>
-                            {{end}}
-                        </div>
-                        <div class="d-grid mt-3">
-                            <a href="/service/{{.Name}}" class="btn btn-primary btn-details">
-                                <i class="fas fa-info-circle me-2"></i>View Details
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {{end}}
-        </div>
-        
-        <div class="text-center mt-4">
-            <small class="text-muted">
-                <i class="fas fa-sync-alt me-1"></i>
-                Auto-refresh every 30 seconds
-            </small>
-        </div>
-    </div>
-    
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
-`
-
-	// Service detail template
-	serviceDetailTmpl := `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <title>{{.Title}}</title>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <style>
-        body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        .container {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            backdrop-filter: blur(10px);
-            margin-top: 20px;
-            margin-bottom: 20px;
-            padding: 2rem;
-        }
-        .breadcrumb {
-            background: linear-gradient(45deg, #f8f9fa, #e9ecef);
-            border-radius: 15px;
-            padding: 1rem 1.5rem;
-            margin-bottom: 2rem;
-        }
-        .breadcrumb-item a {
-            color: #6c757d;
-            text-decoration: none;
-            font-weight: 500;
-        }
-        .breadcrumb-item a:hover {
-            color: #007bff;
-        }
-        .page-title {
-            color: #2c3e50;
-            font-weight: 700;
-            margin-bottom: 2rem;
-            font-size: 2.5rem;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-        .info-card {
-            border: none;
-            border-radius: 15px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-            background: linear-gradient(145deg, #ffffff, #f8f9fa);
-            margin-bottom: 1.5rem;
-        }
-        .card-header {
-            background: linear-gradient(45deg, #007bff, #0056b3);
-            color: white;
-            border-radius: 15px 15px 0 0 !important;
-            padding: 1rem 1.5rem;
-            font-weight: 600;
-            font-size: 1.1rem;
-        }
-        .table-borderless td {
-            padding: 0.75rem 0;
-            border: none;
-            vertical-align: middle;
-        }
-        .table-borderless td:first-child {
-            font-weight: 600;
-            color: #495057;
-            width: 40%;
-        }
-        .badge {
-            font-size: 0.8rem;
-            padding: 0.5rem 1rem;
-            border-radius: 50px;
-            font-weight: 600;
-        }
-        .bg-success { background: linear-gradient(45deg, #28a745, #20c997) !important; }
-        .bg-danger { background: linear-gradient(45deg, #dc3545, #e74c3c) !important; }
-        .bg-warning { background: linear-gradient(45deg, #ffc107, #fd7e14) !important; }
-        .bg-secondary { background: linear-gradient(45deg, #6c757d, #495057) !important; }
-        .incidents-section {
-            margin-top: 2rem;
-        }
-        .section-title {
-            color: #2c3e50;
-            font-weight: 600;
-            margin-bottom: 1.5rem;
-            font-size: 1.8rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .table-responsive {
-            border-radius: 15px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-            overflow: hidden;
-        }
-        .table {
-            margin-bottom: 0;
-        }
-        .table thead th {
-            background: linear-gradient(45deg, #343a40, #495057);
-            color: white;
-            border: none;
-            padding: 1rem;
-            font-weight: 600;
-        }
-        .table tbody tr {
-            transition: all 0.3s ease;
-        }
-        .table tbody tr:hover {
-            background-color: rgba(0,123,255,0.05);
-            transform: scale(1.01);
-        }
-        .table tbody td {
-            padding: 1rem;
-            border: none;
-            border-bottom: 1px solid #f1f3f4;
-            vertical-align: middle;
-        }
-        .uptime-circle {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: white;
-            margin: 0 auto 1rem;
-            background: conic-gradient(#28a745 0% {{.Stats.UptimePercentage}}%, #dc3545 {{.Stats.UptimePercentage}}% 100%);
-        }
-        .no-incidents {
-            text-align: center;
-            padding: 3rem;
-            color: #6c757d;
-            background: rgba(40, 167, 69, 0.1);
-            border-radius: 15px;
-            margin-top: 1rem;
-        }
-        .status-indicator {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 0.5rem;
-        }
-        .status-up { background-color: #28a745; }
-        .status-down { background-color: #dc3545; }
-        .status-maintenance { background-color: #ffc107; }
-        @media (max-width: 768px) {
-            .page-title { font-size: 2rem; }
-            .uptime-circle { width: 80px; height: 80px; font-size: 1rem; }
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item">
-                    <a href="/"><i class="fas fa-home me-1"></i>Dashboard</a>
-                </li>
-                <li class="breadcrumb-item active">{{.Service.Name}}</li>
-            </ol>
-        </nav>
-        
-        <h1 class="page-title">
-            <span class="status-icon">{{statusIcon .Service.Status}}</span>
-            {{.Service.Name}}
-            <span class="badge bg-{{statusClass .Service.Status}}">{{.Service.Status}}</span>
-        </h1>
-        
-        <div class="row">
-            <div class="col-lg-6">
-                <div class="card info-card">
-                    <div class="card-header">
-                        <i class="fas fa-info-circle me-2"></i>
-                        Service Information
-                    </div>
-                    <div class="card-body">
-                        <table class="table table-borderless">
-                            <tr>
-                                <td><i class="fas fa-circle status-indicator status-{{.Service.Status}}"></i>Status:</td>
-                                <td><span class="badge bg-{{statusClass .Service.Status}}">{{.Service.Status}}</span></td>
-                            </tr>
-                            <tr>
-                                <td><i class="fas fa-network-wired text-muted me-2"></i>Protocol:</td>
-                                <td>{{.Service.Protocol}}</td>
-                            </tr>
-                            <tr>
-                                <td><i class="fas fa-globe text-muted me-2"></i>Endpoint:</td>
-                                <td class="text-break">{{.Service.Endpoint}}</td>
-                            </tr>
-                            <tr>
-                                <td><i class="fas fa-clock text-muted me-2"></i>Last Check:</td>
-                                <td>{{formatTime .Service.LastCheck}}</td>
-                            </tr>
-                            <tr>
-                                <td><i class="fas fa-tachometer-alt text-muted me-2"></i>Response Time:</td>
-                                <td>{{formatDuration .Service.ResponseTime}}</td>
-                            </tr>
-                            <tr>
-                                <td><i class="fas fa-chart-line text-muted me-2"></i>Total Checks:</td>
-                                <td>{{.Service.TotalChecks}}</td>
-                            </tr>
-                            <tr>
-                                <td><i class="fas fa-exclamation-triangle text-muted me-2"></i>Consecutive Fails:</td>
-                                <td>{{.Service.ConsecutiveFails}}</td>
-                            </tr>
-                            {{if .Service.LastError}}
-                            <tr>
-                                <td><i class="fas fa-bug text-danger me-2"></i>Last Error:</td>
-                                <td><span class="text-danger">{{.Service.LastError}}</span></td>
-                            </tr>
-                            {{end}}
-                        </table>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-lg-6">
-                {{if .Stats}}
-                <div class="card info-card">
-                    <div class="card-header">
-                        <i class="fas fa-chart-pie me-2"></i>
-                        Statistics (Last 30 Days)
-                    </div>
-                    <div class="card-body text-center">
-                        <div class="uptime-circle">
-                            {{printf "%.1f%%" .Stats.UptimePercentage}}
-                        </div>
-                        <table class="table table-borderless">
-                            <tr>
-                                <td><i class="fas fa-percentage text-muted me-2"></i>Uptime:</td>
-                                <td><strong class="text-success">{{printf "%.2f%%" .Stats.UptimePercentage}}</strong></td>
-                            </tr>
-                            <tr>
-                                <td><i class="fas fa-exclamation-circle text-muted me-2"></i>Total Incidents:</td>
-                                <td><strong class="text-warning">{{.Stats.TotalIncidents}}</strong></td>
-                            </tr>
-                            <tr>
-                                <td><i class="fas fa-clock text-muted me-2"></i>Total Downtime:</td>
-                                <td><strong class="text-danger">{{formatDuration .Stats.TotalDowntime}}</strong></td>
-                            </tr>
-                        </table>
-                    </div>
-                </div>
-                {{end}}
-            </div>
-        </div>
-        
-        <div class="incidents-section">
-            <h3 class="section-title">
-                <i class="fas fa-history"></i>
-                Recent Incidents
-            </h3>
-            {{if .Incidents}}
-            <div class="table-responsive">
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th><i class="fas fa-play me-2"></i>Start Time</th>
-                            <th><i class="fas fa-stop me-2"></i>End Time</th>
-                            <th><i class="fas fa-hourglass-half me-2"></i>Duration</th>
-                            <th><i class="fas fa-exclamation me-2"></i>Error</th>
-                            <th><i class="fas fa-flag me-2"></i>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {{range .Incidents}}
-                        <tr>
-                            <td>{{formatTime .StartTime}}</td>
-                            <td>{{if .EndTime}}{{formatTime .EndTime}}{{else}}<em class="text-muted">Ongoing</em>{{end}}</td>
-                            <td>{{if .Duration}}{{formatDuration .Duration}}{{else}}<em class="text-muted">Ongoing</em>{{end}}</td>
-                            <td class="text-break">{{.Error}}</td>
-                            <td>
-                                {{if .Resolved}}
-                                    <span class="badge bg-success"><i class="fas fa-check me-1"></i>Resolved</span>
-                                {{else}}
-                                    <span class="badge bg-danger"><i class="fas fa-exclamation me-1"></i>Active</span>
-                                {{end}}
-                            </td>
-                        </tr>
-                        {{end}}
-                    </tbody>
-                </table>
-            </div>
-            {{else}}
-            <div class="no-incidents">
-                <i class="fas fa-check-circle text-success" style="font-size: 3rem; margin-bottom: 1rem;"></i>
-                <h4 class="text-success">Great news!</h4>
-                <p class="mb-0">No incidents recorded for this service.</p>
-            </div>
-            {{end}}
-        </div>
-        
-        <div class="text-center mt-4">
-            <a href="/" class="btn btn-outline-primary">
-                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
-            </a>
-        </div>
-    </div>
-    
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
-`
-
-	template.Must(tmpl.New("dashboard.html").Parse(dashboardTmpl))
-	template.Must(tmpl.New("service-detail.html").Parse(serviceDetailTmpl))
-
-	return tmpl
+	return c.JSON(incidents)
 }

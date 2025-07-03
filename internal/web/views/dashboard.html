@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{.Title}}</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <!-- Header -->
+      <div class="header">
+        <h1>{{.Title}}</h1>
+        {{if .Actions}}
+        <div class="header-actions">
+          {{range .Actions}}
+          <button class="btn {{.Class}}" onclick="window.location.reload()">
+            {{.Text}}
+          </button>
+          {{end}}
+        </div>
+        {{end}}
+      </div>
+
+      <!-- Services Table -->
+      <div class="card">
+        <div class="card-header">
+          <h3>Services Overview</h3>
+        </div>
+        <div class="card-body">
+          <div class="table-container">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Service</th>
+                  <th>Status</th>
+                  <th>Endpoint</th>
+                  <th>Last Check</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {{range $name, $service := .Services}}
+                <tr>
+                  <td>
+                    <a
+                      href="/service/{{$service.Name | urlquery}}"
+                      class="service-name"
+                      >{{$service.Name}}</a
+                    >
+                  </td>
+                  <td>
+                    <span
+                      class="badge badge-{{$service.Status | statusToLower}}"
+                    >
+                      {{$service.Status | statusToString}}
+                    </span>
+                  </td>
+                  <td>{{$service.Protocol}}://{{$service.Endpoint}}</td>
+                  <td>{{$service.LastCheck | formatDateTime}}</td>
+                  <td>
+                    <button
+                      class="btn btn-secondary"
+                      onclick="triggerCheck('{{$service.Name}}')"
+                    >
+                      Check
+                    </button>
+                  </td>
+                </tr>
+                {{end}}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function triggerCheck(serviceName) {
+        fetch(`/api/services/${serviceName}/check`, {
+          method: "POST",
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.message) {
+              location.reload();
+            }
+          })
+          .catch((error) => {
+            console.error("Failed to trigger check:", error);
+          });
+      }
+
+      // Auto-refresh every 30 seconds
+      setTimeout(() => location.reload(), 30000);
+    </script>
+  </body>
+</html>
