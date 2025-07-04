@@ -2,6 +2,7 @@ package web
 
 import (
 	"embed"
+	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -13,10 +14,26 @@ import (
 	"github.com/gofiber/template/html/v2"
 	"github.com/sxwebdev/sentinel/internal/config"
 	"github.com/sxwebdev/sentinel/internal/service"
+	"github.com/sxwebdev/sentinel/internal/storage"
+	"gopkg.in/yaml.v3"
 )
 
 //go:embed views/*
 var viewsFS embed.FS
+
+// FlatServiceConfig represents a service with flat config structure
+type FlatServiceConfig struct {
+	ID       string                `json:"id"`
+	Name     string                `json:"name"`
+	Protocol string                `json:"protocol"`
+	Endpoint string                `json:"endpoint"`
+	Interval time.Duration         `json:"interval"`
+	Timeout  time.Duration         `json:"timeout"`
+	Retries  int                   `json:"retries"`
+	Tags     []string              `json:"tags"`
+	Config   string                `json:"config"` // YAML string
+	State    *storage.ServiceState `json:"state,omitempty"`
+}
 
 // Server represents the web server
 type Server struct {
@@ -33,13 +50,19 @@ func NewServer(monitorService *service.MonitorService, cfg *config.Config) (*Ser
 	// Add template functions
 	templateEngine.
 		AddFunc("lower", strings.ToLower).
-		AddFunc("statusToString", func(status config.ServiceStatus) string {
+		AddFunc("statusToString", func(status storage.ServiceStatus) string {
 			return status.String()
 		}).
-		AddFunc("statusToLower", func(status config.ServiceStatus) string {
+		AddFunc("statusToLower", func(status storage.ServiceStatus) string {
 			return strings.ToLower(status.String())
 		}).
 		AddFunc("formatDateTime", func(t time.Time) string {
+			return t.Format("2006-01-02 15:04:05")
+		}).
+		AddFunc("formatDateTimePtr", func(t *time.Time) string {
+			if t == nil {
+				return "Never"
+			}
 			return t.Format("2006-01-02 15:04:05")
 		}).
 		AddFunc("urlquery", url.QueryEscape)
@@ -93,17 +116,24 @@ func NewServer(monitorService *service.MonitorService, cfg *config.Config) (*Ser
 func (s *Server) setupRoutes() {
 	// Web UI routes
 	s.app.Get("/", s.handleDashboard)
-	s.app.Get("/service/:name", s.handleServiceDetail)
+	s.app.Get("/service/:id", s.handleServiceDetail)
 
 	// API routes
 	api := s.app.Group("/api")
 	api.Get("/services", s.handleAPIServices)
-	api.Get("/services/:name", s.handleAPIServiceDetail)
-	api.Get("/services/:name/incidents", s.handleAPIServiceIncidents)
-	api.Get("/services/:name/stats", s.handleAPIServiceStats)
-	api.Post("/services/:name/check", s.handleAPIServiceCheck)
-	api.Post("/services/:name/resolve", s.handleAPIServiceResolve)
+	api.Get("/services/:id", s.handleAPIServiceDetail)
+	api.Get("/services/:id/incidents", s.handleAPIServiceIncidents)
+	api.Get("/services/:id/stats", s.handleAPIServiceStats)
+	api.Post("/services/:id/check", s.handleAPIServiceCheck)
+	api.Post("/services/:id/resolve", s.handleAPIServiceResolve)
 	api.Get("/incidents", s.handleAPIRecentIncidents)
+	api.Get("/dashboard/stats", s.handleAPIDashboardStats)
+
+	// Service management API
+	api.Post("/services", s.handleAPICreateService)
+	api.Put("/services/:id", s.handleAPIUpdateService)
+	api.Delete("/services/:id", s.handleAPIDeleteService)
+	api.Get("/services/config/:id", s.handleAPIGetServiceConfig)
 }
 
 // App returns the Fiber app instance
@@ -113,7 +143,8 @@ func (s *Server) App() *fiber.App {
 
 // handleDashboard renders the main dashboard
 func (s *Server) handleDashboard(c *fiber.Ctx) error {
-	services, err := s.monitorService.GetAllServices()
+	// Get all services with their states
+	services, err := s.monitorService.GetAllServiceConfigs(c.Context())
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
 	}
@@ -132,40 +163,35 @@ func (s *Server) handleDashboard(c *fiber.Ctx) error {
 
 // handleServiceDetail renders service detail page
 func (s *Server) handleServiceDetail(c *fiber.Ctx) error {
-	serviceName := c.Params("name")
-	if serviceName == "" {
-		return c.Status(fiber.StatusBadRequest).SendString("service name is required")
+	serviceID := c.Params("id")
+	if serviceID == "" {
+		return c.Status(fiber.StatusBadRequest).SendString("service ID is required")
 	}
 
-	// URL decode the service name
-	decodedName, err := url.QueryUnescape(serviceName)
+	// Get service by ID
+	targetService, err := s.monitorService.GetServiceByID(c.Context(), serviceID)
 	if err != nil {
-		decodedName = serviceName // fallback to original if decoding fails
-	}
-
-	// Get service state
-	state, err := s.monitorService.GetServiceState(decodedName)
-	if err != nil {
-		return c.Status(fiber.StatusNotFound).SendString("service not found: " + decodedName)
+		return c.Status(fiber.StatusNotFound).SendString("service not found: " + serviceID)
 	}
 
 	// Get recent incidents
-	incidents, err := s.monitorService.GetServiceIncidents(c.Context(), decodedName)
+	incidents, err := s.monitorService.GetServiceIncidents(c.Context(), targetService.ID)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
 	}
 
 	// Get service stats
-	stats, err := s.monitorService.GetServiceStats(c.Context(), decodedName, time.Now().AddDate(0, 0, -30))
+	stats, err := s.monitorService.GetServiceStats(c.Context(), targetService.ID, time.Now().AddDate(0, 0, -30))
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
 	}
 
 	return c.Render("views/service_detail", fiber.Map{
-		"Service":      state,
+		"Service":      targetService,
+		"State":        targetService.State,
 		"Incidents":    incidents,
 		"Stats":        stats,
-		"Title":        "Service: " + decodedName,
+		"Title":        "Service: " + targetService.Name,
 		"BackLink":     "/",
 		"BackLinkText": "Back to Dashboard",
 		"Actions": []fiber.Map{
@@ -183,7 +209,8 @@ func (s *Server) handleServiceDetail(c *fiber.Ctx) error {
 
 // handleAPIServices returns all services
 func (s *Server) handleAPIServices(c *fiber.Ctx) error {
-	services, err := s.monitorService.GetAllServices()
+	// Get all services with their states
+	services, err := s.monitorService.GetAllServiceConfigs(c.Context())
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
@@ -195,45 +222,33 @@ func (s *Server) handleAPIServices(c *fiber.Ctx) error {
 
 // handleAPIServiceDetail returns service details
 func (s *Server) handleAPIServiceDetail(c *fiber.Ctx) error {
-	serviceName := c.Params("name")
-	if serviceName == "" {
+	serviceID := c.Params("id")
+	if serviceID == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "service name is required",
+			"error": "service ID is required",
 		})
 	}
 
-	// URL decode the service name
-	decodedName, err := url.QueryUnescape(serviceName)
-	if err != nil {
-		decodedName = serviceName // fallback to original if decoding fails
-	}
-
-	state, err := s.monitorService.GetServiceState(decodedName)
+	targetService, err := s.monitorService.GetServiceByID(c.Context(), serviceID)
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"error": "service not found: " + decodedName,
+			"error": "service not found: " + serviceID,
 		})
 	}
 
-	return c.JSON(state)
+	return c.JSON(targetService)
 }
 
 // handleAPIServiceIncidents returns service incidents
 func (s *Server) handleAPIServiceIncidents(c *fiber.Ctx) error {
-	serviceName := c.Params("name")
-	if serviceName == "" {
+	serviceID := c.Params("id")
+	if serviceID == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "service name is required",
+			"error": "service ID is required",
 		})
 	}
 
-	// URL decode the service name
-	decodedName, err := url.QueryUnescape(serviceName)
-	if err != nil {
-		decodedName = serviceName // fallback to original if decoding fails
-	}
-
-	incidents, err := s.monitorService.GetServiceIncidents(c.Context(), decodedName)
+	incidents, err := s.monitorService.GetServiceIncidents(c.Context(), serviceID)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
@@ -245,17 +260,11 @@ func (s *Server) handleAPIServiceIncidents(c *fiber.Ctx) error {
 
 // handleAPIServiceStats returns service statistics
 func (s *Server) handleAPIServiceStats(c *fiber.Ctx) error {
-	serviceName := c.Params("name")
-	if serviceName == "" {
+	serviceID := c.Params("id")
+	if serviceID == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "service name is required",
+			"error": "service ID is required",
 		})
-	}
-
-	// URL decode the service name
-	decodedName, err := url.QueryUnescape(serviceName)
-	if err != nil {
-		decodedName = serviceName // fallback to original if decoding fails
 	}
 
 	daysStr := c.Query("days", "30")
@@ -265,7 +274,7 @@ func (s *Server) handleAPIServiceStats(c *fiber.Ctx) error {
 	}
 
 	since := time.Now().AddDate(0, 0, -days)
-	stats, err := s.monitorService.GetServiceStats(c.Context(), decodedName, since)
+	stats, err := s.monitorService.GetServiceStats(c.Context(), serviceID, since)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
@@ -277,20 +286,22 @@ func (s *Server) handleAPIServiceStats(c *fiber.Ctx) error {
 
 // handleAPIServiceCheck triggers a manual check
 func (s *Server) handleAPIServiceCheck(c *fiber.Ctx) error {
-	serviceName := c.Params("name")
-	if serviceName == "" {
+	serviceID := c.Params("id")
+	if serviceID == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "service name is required",
+			"error": "service ID is required",
 		})
 	}
 
-	// URL decode the service name
-	decodedName, err := url.QueryUnescape(serviceName)
+	// First check if service exists
+	_, err := s.monitorService.GetServiceByID(c.Context(), serviceID)
 	if err != nil {
-		decodedName = serviceName // fallback to original if decoding fails
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "service not found: " + serviceID,
+		})
 	}
 
-	err = s.monitorService.TriggerCheck(c.Context(), decodedName)
+	err = s.monitorService.TriggerCheck(c.Context(), serviceID)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
@@ -304,20 +315,14 @@ func (s *Server) handleAPIServiceCheck(c *fiber.Ctx) error {
 
 // handleAPIServiceResolve resolves a service incident
 func (s *Server) handleAPIServiceResolve(c *fiber.Ctx) error {
-	serviceName := c.Params("name")
-	if serviceName == "" {
+	serviceID := c.Params("id")
+	if serviceID == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "service name is required",
+			"error": "service ID is required",
 		})
 	}
 
-	// URL decode the service name
-	decodedName, err := url.QueryUnescape(serviceName)
-	if err != nil {
-		decodedName = serviceName // fallback to original if decoding fails
-	}
-
-	err = s.monitorService.ForceResolveIncidents(c.Context(), decodedName)
+	err := s.monitorService.ForceResolveIncidents(c.Context(), serviceID)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
@@ -345,4 +350,534 @@ func (s *Server) handleAPIRecentIncidents(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(incidents)
+}
+
+// handleAPIDashboardStats returns dashboard statistics
+func (s *Server) handleAPIDashboardStats(c *fiber.Ctx) error {
+	// Get all services
+	services, err := s.monitorService.GetAllServiceConfigs(c.Context())
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	// Get recent incidents
+	recentIncidents, err := s.monitorService.GetRecentIncidents(c.Context(), 100)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	// Calculate statistics
+	stats := fiber.Map{
+		"total_services":    len(services),
+		"services_up":       0,
+		"services_down":     0,
+		"services_unknown":  0,
+		"protocols":         make(map[string]int),
+		"recent_incidents":  len(recentIncidents),
+		"active_incidents":  0,
+		"avg_response_time": 0,
+		"total_checks":      0,
+		"uptime_percentage": 0,
+		"last_check_time":   nil,
+		"checks_per_minute": 0,
+	}
+
+	// Calculate service status distribution and protocol distribution
+	totalResponseTime := time.Duration(0)
+	totalChecks := 0
+	upServices := 0
+	var lastCheckTime *time.Time
+
+	for _, service := range services {
+		// Count by status
+		if service.State != nil {
+			switch service.State.Status {
+			case storage.StatusUp:
+				stats["services_up"] = stats["services_up"].(int) + 1
+				upServices++
+			case storage.StatusDown:
+				stats["services_down"] = stats["services_down"].(int) + 1
+			case storage.StatusUnknown:
+				stats["services_unknown"] = stats["services_unknown"].(int) + 1
+			}
+
+			// Sum response times and checks
+			if service.State.ResponseTime > 0 {
+				totalResponseTime += service.State.ResponseTime
+			}
+			totalChecks += service.State.TotalChecks
+
+			// Track last check time
+			if service.State.LastCheck != nil {
+				if lastCheckTime == nil || service.State.LastCheck.After(*lastCheckTime) {
+					lastCheckTime = service.State.LastCheck
+				}
+			}
+		}
+
+		// Count by protocol
+		protocol := service.Protocol
+		if protocol == "" {
+			protocol = "unknown"
+		}
+		stats["protocols"].(map[string]int)[protocol]++
+	}
+
+	// Calculate averages
+	if upServices > 0 {
+		stats["uptime_percentage"] = float64(upServices) / float64(len(services)) * 100
+	}
+	if totalChecks > 0 {
+		stats["avg_response_time"] = totalResponseTime.Milliseconds() / int64(totalChecks)
+	}
+	stats["total_checks"] = totalChecks
+
+	// Count active incidents
+	activeIncidents := 0
+	for _, incident := range recentIncidents {
+		if !incident.Resolved {
+			activeIncidents++
+		}
+	}
+	stats["active_incidents"] = activeIncidents
+
+	// Set last check time
+	stats["last_check_time"] = lastCheckTime
+
+	// Calculate checks per minute (estimate based on intervals)
+	checksPerMinute := 0
+	for _, service := range services {
+		if service.Interval > 0 {
+			checksPerMinute += int(time.Minute / service.Interval)
+		}
+	}
+	stats["checks_per_minute"] = checksPerMinute
+
+	return c.JSON(stats)
+}
+
+// handleAPICreateService creates a new service
+func (s *Server) handleAPICreateService(c *fiber.Ctx) error {
+	var flatService FlatServiceConfig
+	if err := c.BodyParser(&flatService); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid request body: " + err.Error(),
+		})
+	}
+
+	// Validate required fields
+	if flatService.Name == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Service name is required",
+		})
+	}
+	if flatService.Protocol == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Protocol is required",
+		})
+	}
+	if flatService.Endpoint == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Endpoint is required",
+		})
+	}
+
+	// Convert to storage.Service
+	service := storage.Service{
+		ID:       flatService.ID,
+		Name:     flatService.Name,
+		Protocol: flatService.Protocol,
+		Endpoint: flatService.Endpoint,
+		Interval: flatService.Interval,
+		Timeout:  flatService.Timeout,
+		Retries:  flatService.Retries,
+		Tags:     flatService.Tags,
+		State:    flatService.State,
+	}
+
+	// Set default values
+	if service.Interval == 0 {
+		service.Interval = s.config.Monitoring.Global.DefaultInterval
+	}
+	if service.Timeout == 0 {
+		service.Timeout = s.config.Monitoring.Global.DefaultTimeout
+	}
+	if service.Retries == 0 {
+		service.Retries = s.config.Monitoring.Global.DefaultRetries
+	}
+
+	// Convert flat config to proper MonitorConfig structure
+	config, err := s.convertFlatConfigToMonitorConfig(flatService.Protocol, flatService.Config)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid config: " + err.Error(),
+		})
+	}
+	service.Config = config
+
+	// Add service
+	if err := s.monitorService.AddService(c.Context(), &service); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to create service: " + err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(service)
+}
+
+// handleAPIUpdateService updates an existing service
+func (s *Server) handleAPIUpdateService(c *fiber.Ctx) error {
+	id := c.Params("id")
+	if id == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Service ID is required",
+		})
+	}
+
+	var flatService FlatServiceConfig
+	if err := c.BodyParser(&flatService); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid request body: " + err.Error(),
+		})
+	}
+
+	// Convert to storage.Service
+	service := storage.Service{
+		ID:       id,
+		Name:     flatService.Name,
+		Protocol: flatService.Protocol,
+		Endpoint: flatService.Endpoint,
+		Interval: flatService.Interval,
+		Timeout:  flatService.Timeout,
+		Retries:  flatService.Retries,
+		Tags:     flatService.Tags,
+		State:    flatService.State,
+	}
+
+	// Convert flat config to proper MonitorConfig structure
+	config, err := s.convertFlatConfigToMonitorConfig(flatService.Protocol, flatService.Config)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid config: " + err.Error(),
+		})
+	}
+	service.Config = config
+
+	// Validate required fields
+	if service.Name == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Service name is required",
+		})
+	}
+	if service.Protocol == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Protocol is required",
+		})
+	}
+	if service.Endpoint == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Endpoint is required",
+		})
+	}
+
+	// Set default values if not provided
+	if service.Interval == 0 {
+		service.Interval = s.config.Monitoring.Global.DefaultInterval
+	}
+	if service.Timeout == 0 {
+		service.Timeout = s.config.Monitoring.Global.DefaultTimeout
+	}
+	if service.Retries == 0 {
+		service.Retries = s.config.Monitoring.Global.DefaultRetries
+	}
+
+	// Update service
+	if err := s.monitorService.UpdateService(c.Context(), &service); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to update service: " + err.Error(),
+		})
+	}
+
+	return c.JSON(service)
+}
+
+// handleAPIDeleteService deletes a service
+func (s *Server) handleAPIDeleteService(c *fiber.Ctx) error {
+	id := c.Params("id")
+	if id == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Service ID is required",
+		})
+	}
+
+	if err := s.monitorService.DeleteService(c.Context(), id); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to delete service: " + err.Error(),
+		})
+	}
+
+	return c.SendStatus(fiber.StatusNoContent)
+}
+
+// handleAPIGetServiceConfig gets service configuration by ID
+func (s *Server) handleAPIGetServiceConfig(c *fiber.Ctx) error {
+	id := c.Params("id")
+	if id == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Service ID is required",
+		})
+	}
+
+	service, err := s.monitorService.GetServiceByID(c.Context(), id)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "Service not found: " + err.Error(),
+		})
+	}
+
+	return c.JSON(service)
+}
+
+// convertFlatConfigToMonitorConfig converts YAML config string to proper MonitorConfig structure
+func (s *Server) convertFlatConfigToMonitorConfig(protocol string, yamlConfig string) (storage.MonitorConfig, error) {
+	if yamlConfig == "" {
+		// Return default config based on protocol
+		return s.getDefaultConfig(protocol), nil
+	}
+
+	// Parse YAML into map
+	var configMap map[string]interface{}
+	if err := yaml.Unmarshal([]byte(yamlConfig), &configMap); err != nil {
+		return storage.MonitorConfig{}, fmt.Errorf("failed to parse YAML config: %w", err)
+	}
+
+	// Validate and convert based on protocol
+	switch protocol {
+	case "http", "https":
+		return s.parseHTTPConfig(configMap)
+	case "tcp":
+		return s.parseTCPConfig(configMap)
+	case "grpc":
+		return s.parseGRPCConfig(configMap)
+	case "redis":
+		return s.parseRedisConfig(configMap)
+	default:
+		return storage.MonitorConfig{}, fmt.Errorf("unsupported protocol: %s", protocol)
+	}
+}
+
+// getDefaultConfig returns default config for a protocol
+func (s *Server) getDefaultConfig(protocol string) storage.MonitorConfig {
+	switch protocol {
+	case "http", "https":
+		return storage.MonitorConfig{
+			HTTP: &storage.HTTPConfig{
+				Method:         "GET",
+				ExpectedStatus: 200,
+				Headers:        make(map[string]string),
+			},
+		}
+	case "tcp":
+		return storage.MonitorConfig{
+			TCP: &storage.TCPConfig{
+				SendData:   "",
+				ExpectData: "",
+			},
+		}
+	case "grpc":
+		return storage.MonitorConfig{
+			GRPC: &storage.GRPCConfig{
+				CheckType:   "health",
+				ServiceName: "",
+				TLS:         false,
+				InsecureTLS: false,
+			},
+		}
+	case "redis":
+		return storage.MonitorConfig{
+			Redis: &storage.RedisConfig{
+				Password: "",
+				DB:       0,
+			},
+		}
+	default:
+		return storage.MonitorConfig{}
+	}
+}
+
+// parseHTTPConfig parses and validates HTTP config
+func (s *Server) parseHTTPConfig(configMap map[string]interface{}) (storage.MonitorConfig, error) {
+	httpConfig := &storage.HTTPConfig{
+		Method:         "GET",
+		ExpectedStatus: 200,
+		Headers:        make(map[string]string),
+	}
+
+	// Extract and validate method
+	if method, ok := configMap["method"].(string); ok {
+		method = strings.ToUpper(method)
+		if method != "GET" && method != "POST" && method != "PUT" && method != "DELETE" && method != "HEAD" && method != "OPTIONS" {
+			return storage.MonitorConfig{}, fmt.Errorf("invalid HTTP method: %s", method)
+		}
+		httpConfig.Method = method
+	}
+
+	// Extract and validate expected status
+	if expectedStatus, ok := configMap["expected_status"].(int); ok {
+		if expectedStatus < 100 || expectedStatus > 599 {
+			return storage.MonitorConfig{}, fmt.Errorf("invalid HTTP status code: %d", expectedStatus)
+		}
+		httpConfig.ExpectedStatus = expectedStatus
+	} else if expectedStatus, ok := configMap["expected_status"].(float64); ok {
+		status := int(expectedStatus)
+		if status < 100 || status > 599 {
+			return storage.MonitorConfig{}, fmt.Errorf("invalid HTTP status code: %d", status)
+		}
+		httpConfig.ExpectedStatus = status
+	}
+
+	// Extract headers
+	if headers, ok := configMap["headers"].(map[string]interface{}); ok {
+		for key, value := range headers {
+			if strValue, ok := value.(string); ok {
+				httpConfig.Headers[key] = strValue
+			} else {
+				return storage.MonitorConfig{}, fmt.Errorf("invalid header value for %s: must be string", key)
+			}
+		}
+	}
+
+	// Check for unknown fields
+	allowedFields := map[string]bool{"method": true, "expected_status": true, "headers": true}
+	for field := range configMap {
+		if !allowedFields[field] {
+			return storage.MonitorConfig{}, fmt.Errorf("unknown field in HTTP config: %s", field)
+		}
+	}
+
+	return storage.MonitorConfig{HTTP: httpConfig}, nil
+}
+
+// parseTCPConfig parses and validates TCP config
+func (s *Server) parseTCPConfig(configMap map[string]interface{}) (storage.MonitorConfig, error) {
+	tcpConfig := &storage.TCPConfig{
+		SendData:   "",
+		ExpectData: "",
+	}
+
+	// Extract send_data
+	if sendData, ok := configMap["send_data"].(string); ok {
+		tcpConfig.SendData = sendData
+	}
+
+	// Extract expect_data
+	if expectData, ok := configMap["expect_data"].(string); ok {
+		tcpConfig.ExpectData = expectData
+	}
+
+	// Check for unknown fields
+	allowedFields := map[string]bool{"send_data": true, "expect_data": true}
+	for field := range configMap {
+		if !allowedFields[field] {
+			return storage.MonitorConfig{}, fmt.Errorf("unknown field in TCP config: %s", field)
+		}
+	}
+
+	return storage.MonitorConfig{TCP: tcpConfig}, nil
+}
+
+// parseGRPCConfig parses and validates gRPC config
+func (s *Server) parseGRPCConfig(configMap map[string]interface{}) (storage.MonitorConfig, error) {
+	grpcConfig := &storage.GRPCConfig{
+		CheckType:   "health",
+		ServiceName: "",
+		TLS:         false,
+		InsecureTLS: false,
+	}
+
+	// Extract check_type
+	if checkType, ok := configMap["check_type"].(string); ok {
+		if checkType != "health" && checkType != "reflection" && checkType != "connectivity" {
+			return storage.MonitorConfig{}, fmt.Errorf("invalid gRPC check type: %s", checkType)
+		}
+		grpcConfig.CheckType = checkType
+	}
+
+	// Extract service_name
+	if serviceName, ok := configMap["service_name"].(string); ok {
+		grpcConfig.ServiceName = serviceName
+	}
+
+	// Extract TLS settings
+	if tls, ok := configMap["tls"].(bool); ok {
+		grpcConfig.TLS = tls
+	}
+	if insecureTLS, ok := configMap["insecure_tls"].(bool); ok {
+		grpcConfig.InsecureTLS = insecureTLS
+	}
+
+	// Check for unknown fields
+	allowedFields := map[string]bool{"check_type": true, "service_name": true, "tls": true, "insecure_tls": true}
+	for field := range configMap {
+		if !allowedFields[field] {
+			return storage.MonitorConfig{}, fmt.Errorf("unknown field in gRPC config: %s", field)
+		}
+	}
+
+	return storage.MonitorConfig{GRPC: grpcConfig}, nil
+}
+
+// parseRedisConfig parses and validates Redis config
+func (s *Server) parseRedisConfig(configMap map[string]interface{}) (storage.MonitorConfig, error) {
+	redisConfig := &storage.RedisConfig{
+		Password: "",
+		DB:       0,
+	}
+
+	// Extract password
+	if password, ok := configMap["password"].(string); ok {
+		redisConfig.Password = password
+	}
+
+	// Extract DB number
+	if db, ok := configMap["db"].(int); ok {
+		if db < 0 || db > 15 {
+			return storage.MonitorConfig{}, fmt.Errorf("invalid Redis DB number: %d (must be 0-15)", db)
+		}
+		redisConfig.DB = db
+	} else if db, ok := configMap["db"].(float64); ok {
+		dbNum := int(db)
+		if dbNum < 0 || dbNum > 15 {
+			return storage.MonitorConfig{}, fmt.Errorf("invalid Redis DB number: %d (must be 0-15)", dbNum)
+		}
+		redisConfig.DB = dbNum
+	}
+
+	// Check for unknown fields
+	allowedFields := map[string]bool{"password": true, "db": true}
+	for field := range configMap {
+		if !allowedFields[field] {
+			return storage.MonitorConfig{}, fmt.Errorf("unknown field in Redis config: %s", field)
+		}
+	}
+
+	return storage.MonitorConfig{Redis: redisConfig}, nil
+}
+
+// convertConfigToYAML converts MonitorConfig to YAML string for storage
+func (s *Server) convertConfigToYAML(config storage.MonitorConfig) (string, error) {
+	if config.HTTP == nil && config.TCP == nil && config.GRPC == nil && config.Redis == nil {
+		return "", nil
+	}
+
+	yamlData, err := yaml.Marshal(config)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal config to YAML: %w", err)
+	}
+
+	return string(yamlData), nil
 }

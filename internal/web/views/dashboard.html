@@ -14,12 +14,71 @@
         {{if .Actions}}
         <div class="header-actions">
           {{range .Actions}}
-          <button class="btn {{.Class}}" onclick="location.reload()">
+          <button class="btn {{.Class}}" onclick="refreshServicesTable()">
             {{.Text}}
           </button>
           {{end}}
+          <button class="btn btn-primary" onclick="openAddServiceModal()">
+            Add Service
+          </button>
         </div>
         {{end}}
+      </div>
+
+      <!-- Dashboard Statistics -->
+      <div class="stats-grid">
+        <div class="dashboard-stat-card info">
+          <div class="stat-icon">📊</div>
+          <div class="stat-value" id="totalServices">-</div>
+          <div class="stat-label">Всего сервисов</div>
+        </div>
+        <div class="dashboard-stat-card success">
+          <div class="stat-icon">✅</div>
+          <div class="stat-value" id="servicesUp">-</div>
+          <div class="stat-label">Работают</div>
+        </div>
+        <div class="dashboard-stat-card danger">
+          <div class="stat-icon">❌</div>
+          <div class="stat-value" id="servicesDown">-</div>
+          <div class="stat-label">Не работают</div>
+        </div>
+        <div class="dashboard-stat-card info">
+          <div class="stat-icon">📈</div>
+          <div class="stat-value" id="uptimePercentage">-</div>
+          <div class="stat-label">Время работы (%)</div>
+        </div>
+        <div class="dashboard-stat-card warning">
+          <div class="stat-icon">⚠️</div>
+          <div class="stat-value" id="activeIncidents">-</div>
+          <div class="stat-label">Активные инциденты</div>
+        </div>
+        <div class="dashboard-stat-card info">
+          <div class="stat-icon">⚡</div>
+          <div class="stat-value" id="avgResponseTime">-</div>
+          <div class="stat-label">Среднее время ответа (мс)</div>
+        </div>
+        <div class="dashboard-stat-card info">
+          <div class="stat-icon">🔍</div>
+          <div class="stat-value" id="totalChecks">-</div>
+          <div class="stat-label">Всего проверок</div>
+        </div>
+        <div class="dashboard-stat-card info">
+          <div class="stat-icon">🔄</div>
+          <div class="stat-value" id="checksPerMinute">-</div>
+          <div class="stat-label">Проверок в минуту</div>
+        </div>
+      </div>
+
+      <!-- Protocol Distribution -->
+      <div class="card" style="margin-bottom: 1.5rem">
+        <div class="card-header">
+          <h3>Распределение по протоколам</h3>
+        </div>
+        <div class="card-body">
+          <div class="protocol-stats" id="protocolStats">
+            <div class="loading">Загрузка...</div>
+          </div>
+        </div>
       </div>
 
       <!-- Services Table -->
@@ -40,30 +99,40 @@
                 </tr>
               </thead>
               <tbody>
-                {{range $name, $service := .Services}}
+                {{range $service := .Services}}
                 <tr>
                   <td>
-                    <a
-                      href="/service/{{$service.Name | urlquery}}"
-                      class="service-name"
+                    <a href="/service/{{$service.ID}}" class="service-name"
                       >{{$service.Name}}</a
                     >
                   </td>
                   <td>
                     <span
-                      class="badge badge-{{$service.Status | statusToLower}}"
+                      class="badge badge-{{$service.State.Status | statusToLower}}"
                     >
-                      {{$service.Status | statusToString}}
+                      {{$service.State.Status | statusToString}}
                     </span>
                   </td>
                   <td>{{$service.Endpoint}}</td>
-                  <td>{{$service.LastCheck | formatDateTime}}</td>
+                  <td>{{$service.State.LastCheck | formatDateTimePtr}}</td>
                   <td>
                     <button
                       class="btn btn-secondary"
-                      onclick="triggerCheck('{{$service.Name}}')"
+                      onclick="triggerCheck('{{$service.ID}}')"
                     >
                       Check
+                    </button>
+                    <button
+                      class="btn btn-warning"
+                      onclick="editService('{{$service.ID}}')"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      class="btn btn-danger"
+                      onclick="deleteService('{{$service.ID}}', '{{$service.Name}}')"
+                    >
+                      Delete
                     </button>
                   </td>
                 </tr>
@@ -75,15 +144,242 @@
       </div>
     </div>
 
+    <!-- Add/Edit Service Modal -->
+    <div id="serviceModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="modalTitle">Add Service</h2>
+          <span class="close" onclick="closeModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+          <form id="serviceForm">
+            <div class="form-group">
+              <label for="name">Service Name *</label>
+              <input type="text" id="name" name="name" required />
+            </div>
+            <div class="form-group">
+              <label for="protocol">Protocol *</label>
+              <select
+                id="protocol"
+                name="protocol"
+                required
+                onchange="updateConfigFields()"
+              >
+                <option value="">Select Protocol</option>
+                <option value="http">HTTP/HTTPS</option>
+                <option value="tcp">TCP</option>
+                <option value="grpc">gRPC</option>
+                <option value="redis">Redis</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="endpoint">Endpoint *</label>
+              <input type="text" id="endpoint" name="endpoint" required />
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="interval">Interval (seconds)</label>
+                <input
+                  type="number"
+                  id="interval"
+                  name="interval"
+                  value="30"
+                  min="1"
+                />
+              </div>
+              <div class="form-group">
+                <label for="timeout">Timeout (seconds)</label>
+                <input
+                  type="number"
+                  id="timeout"
+                  name="timeout"
+                  value="10"
+                  min="1"
+                />
+              </div>
+              <div class="form-group">
+                <label for="retries">Retries</label>
+                <input
+                  type="number"
+                  id="retries"
+                  name="retries"
+                  value="3"
+                  min="0"
+                />
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="tags">Tags (comma-separated)</label>
+              <input
+                type="text"
+                id="tags"
+                name="tags"
+                placeholder="api, critical, production"
+              />
+            </div>
+            <div class="form-group">
+              <label for="config">Configuration (YAML)</label>
+              <textarea
+                id="config"
+                name="config"
+                rows="8"
+                placeholder="# Protocol-specific configuration"
+              ></textarea>
+            </div>
+            <div class="form-actions">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                onclick="closeModal()"
+              >
+                Cancel
+              </button>
+              <button type="submit" class="btn btn-primary">
+                Save Service
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
     <script>
-      function triggerCheck(serviceName) {
-        fetch(`/api/services/${serviceName}/check`, {
+      let currentServiceId = null;
+
+      // Load dashboard statistics
+      function loadDashboardStats() {
+        fetch("/api/dashboard/stats")
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+          })
+          .then((stats) => {
+            // Update main statistics
+            document.getElementById("totalServices").textContent =
+              stats.total_services;
+            document.getElementById("servicesUp").textContent =
+              stats.services_up;
+            document.getElementById("servicesDown").textContent =
+              stats.services_down;
+            document.getElementById("uptimePercentage").textContent =
+              stats.uptime_percentage.toFixed(1) + "%";
+            document.getElementById("activeIncidents").textContent =
+              stats.active_incidents;
+            document.getElementById("avgResponseTime").textContent =
+              stats.avg_response_time;
+            document.getElementById("totalChecks").textContent =
+              stats.total_checks;
+            document.getElementById("checksPerMinute").textContent =
+              stats.checks_per_minute;
+
+            // Update card colors based on values
+            updateStatCardColors(stats);
+
+            // Update protocol distribution
+            updateProtocolStats(stats.protocols);
+          })
+          .catch((error) => {
+            console.error("Failed to load dashboard stats:", error);
+          });
+      }
+
+      // Update protocol statistics
+      function updateProtocolStats(protocols) {
+        const container = document.getElementById("protocolStats");
+        if (!container) return;
+
+        if (Object.keys(protocols).length === 0) {
+          container.innerHTML = '<div class="no-data">Нет данных</div>';
+          return;
+        }
+
+        let html = '<div class="protocol-grid">';
+        for (const [protocol, count] of Object.entries(protocols)) {
+          const protocolName = getProtocolDisplayName(protocol);
+          const percentage = (
+            (count / Object.values(protocols).reduce((a, b) => a + b, 0)) *
+            100
+          ).toFixed(1);
+
+          html += `
+            <div class="protocol-item">
+              <div class="protocol-name">${protocolName}</div>
+              <div class="protocol-count">${count}</div>
+              <div class="protocol-bar">
+                <div class="protocol-bar-fill" style="width: ${percentage}%"></div>
+              </div>
+              <div class="protocol-percentage">${percentage}%</div>
+            </div>
+          `;
+        }
+        html += "</div>";
+        container.innerHTML = html;
+      }
+
+      // Get display name for protocol
+      function getProtocolDisplayName(protocol) {
+        const names = {
+          http: "HTTP/HTTPS",
+          tcp: "TCP",
+          grpc: "gRPC",
+          redis: "Redis",
+          unknown: "Неизвестно",
+        };
+        return names[protocol] || protocol.toUpperCase();
+      }
+
+      // Update stat card colors based on values
+      function updateStatCardColors(stats) {
+        // Update uptime percentage color
+        const uptimeCard = document
+          .getElementById("uptimePercentage")
+          .closest(".dashboard-stat-card");
+        if (stats.uptime_percentage >= 99) {
+          uptimeCard.className = "dashboard-stat-card success";
+        } else if (stats.uptime_percentage >= 95) {
+          uptimeCard.className = "dashboard-stat-card warning";
+        } else {
+          uptimeCard.className = "dashboard-stat-card danger";
+        }
+
+        // Update active incidents color
+        const incidentsCard = document
+          .getElementById("activeIncidents")
+          .closest(".dashboard-stat-card");
+        if (stats.active_incidents === 0) {
+          incidentsCard.className = "dashboard-stat-card success";
+        } else if (stats.active_incidents <= 2) {
+          incidentsCard.className =
+            "dashboard-stat-card warning has-active-incidents";
+        } else {
+          incidentsCard.className =
+            "dashboard-stat-card danger has-active-incidents";
+        }
+
+        // Update response time color
+        const responseCard = document
+          .getElementById("avgResponseTime")
+          .closest(".dashboard-stat-card");
+        if (stats.avg_response_time <= 100) {
+          responseCard.className = "dashboard-stat-card success";
+        } else if (stats.avg_response_time <= 500) {
+          responseCard.className = "dashboard-stat-card warning";
+        } else {
+          responseCard.className = "dashboard-stat-card danger";
+        }
+      }
+
+      function triggerCheck(serviceId) {
+        fetch(`/api/services/${serviceId}/check`, {
           method: "POST",
         })
           .then((response) => response.json())
           .then((data) => {
             if (data.message) {
-              location.reload();
+              // Refresh only the table instead of reloading the page
+              refreshServicesTable();
             }
           })
           .catch((error) => {
@@ -91,8 +387,304 @@
           });
       }
 
-      // Auto-refresh every 5 seconds
-      setTimeout(() => location.reload(), 5000);
+      function openAddServiceModal() {
+        currentServiceId = null;
+        document.getElementById("modalTitle").textContent = "Add Service";
+        document.getElementById("serviceForm").reset();
+        document.getElementById("config").value = "";
+        document.getElementById("serviceModal").style.display = "block";
+      }
+
+      function editService(serviceId) {
+        currentServiceId = serviceId;
+        document.getElementById("modalTitle").textContent = "Edit Service";
+
+        // Load service config for editing
+        fetch(`/api/services/config/${serviceId}`)
+          .then((response) => response.json())
+          .then((serviceConfig) => {
+            document.getElementById("name").value = serviceConfig.name;
+            document.getElementById("protocol").value = serviceConfig.protocol;
+            document.getElementById("endpoint").value = serviceConfig.endpoint;
+            document.getElementById("interval").value = Math.floor(
+              serviceConfig.interval / 1000000000
+            ); // Convert from nanoseconds
+            document.getElementById("timeout").value = Math.floor(
+              serviceConfig.timeout / 1000000000
+            );
+            document.getElementById("retries").value = serviceConfig.retries;
+            document.getElementById("tags").value =
+              serviceConfig.tags.join(", ");
+
+            // Convert config object to YAML string
+            let configYaml = "";
+            if (serviceConfig.config) {
+              if (serviceConfig.config.http) {
+                configYaml = `method: "${
+                  serviceConfig.config.http.method || "GET"
+                }"\nexpected_status: ${
+                  serviceConfig.config.http.expected_status || 200
+                }`;
+                if (serviceConfig.config.http.headers) {
+                  configYaml += "\nheaders:";
+                  for (const [key, value] of Object.entries(
+                    serviceConfig.config.http.headers
+                  )) {
+                    configYaml += `\n  ${key}: "${value}"`;
+                  }
+                }
+              } else if (serviceConfig.config.tcp) {
+                configYaml = `send_data: "${
+                  serviceConfig.config.tcp.send_data || ""
+                }"\nexpect_data: "${
+                  serviceConfig.config.tcp.expect_data || ""
+                }"`;
+              } else if (serviceConfig.config.grpc) {
+                configYaml = `check_type: "${
+                  serviceConfig.config.grpc.check_type || "health"
+                }"\nservice_name: "${
+                  serviceConfig.config.grpc.service_name || ""
+                }"\ntls: ${
+                  serviceConfig.config.grpc.tls || false
+                }\ninsecure_tls: ${
+                  serviceConfig.config.grpc.insecure_tls || false
+                }`;
+              } else if (serviceConfig.config.redis) {
+                configYaml = `password: "${
+                  serviceConfig.config.redis.password || ""
+                }"\ndb: ${serviceConfig.config.redis.db || 0}`;
+              }
+            }
+            document.getElementById("config").value = configYaml;
+            updateConfigFields();
+            document.getElementById("serviceModal").style.display = "block";
+          })
+          .catch((error) => {
+            console.error("Failed to load service config:", error);
+            alert("Failed to load service config");
+          });
+      }
+
+      function deleteService(serviceId, serviceName) {
+        if (
+          confirm(`Are you sure you want to delete service "${serviceName}"?`)
+        ) {
+          fetch(`/api/services/${serviceId}`, {
+            method: "DELETE",
+          })
+            .then((response) => {
+              if (response.ok) {
+                // Refresh only the table instead of reloading the page
+                refreshServicesTable();
+              } else {
+                return response.json();
+              }
+            })
+            .then((data) => {
+              if (data && data.error) {
+                alert("Failed to delete service: " + data.error);
+              }
+            })
+            .catch((error) => {
+              console.error("Failed to delete service:", error);
+              alert("Failed to delete service");
+            });
+        }
+      }
+
+      function closeModal() {
+        document.getElementById("serviceModal").style.display = "none";
+      }
+
+      function updateConfigFields() {
+        const protocol = document.getElementById("protocol").value;
+        const configTextarea = document.getElementById("config");
+
+        // Если поле конфигурации пустое или содержит только базовый placeholder,
+        // устанавливаем дефолтное значение для выбранного протокола
+        const currentValue = configTextarea.value.trim();
+        if (
+          currentValue === "" ||
+          currentValue === "{}" ||
+          currentValue === "# Protocol-specific configuration"
+        ) {
+          let exampleConfig = "";
+          switch (protocol) {
+            case "http":
+              exampleConfig = `method: "GET"
+expected_status: 200
+headers:
+  User-Agent: "Sentinel Monitor"
+  Authorization: "Bearer token"`;
+              break;
+            case "tcp":
+              exampleConfig = `send_data: "ping"
+expect_data: "pong"`;
+              break;
+            case "grpc":
+              exampleConfig = `check_type: "health"
+service_name: "myapp.MyService"
+tls: true
+insecure_tls: false`;
+              break;
+            case "redis":
+              exampleConfig = `password: "your_password"
+db: 0`;
+              break;
+          }
+          configTextarea.value = exampleConfig;
+        }
+      }
+
+      document
+        .getElementById("serviceForm")
+        .addEventListener("submit", function (e) {
+          e.preventDefault();
+
+          const formData = new FormData(e.target);
+          const service = {
+            name: formData.get("name"),
+            protocol: formData.get("protocol"),
+            endpoint: formData.get("endpoint"),
+            interval: parseInt(formData.get("interval")) * 1000000000, // Convert to nanoseconds
+            timeout: parseInt(formData.get("timeout")) * 1000000000,
+            retries: parseInt(formData.get("retries")),
+            tags: formData
+              .get("tags")
+              .split(",")
+              .map((tag) => tag.trim())
+              .filter((tag) => tag),
+            config: formData.get("config") || "",
+          };
+
+          const url = currentServiceId
+            ? `/api/services/${currentServiceId}`
+            : "/api/services";
+          const method = currentServiceId ? "PUT" : "POST";
+
+          fetch(url, {
+            method: method,
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(service),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.error) {
+                alert("Failed to save service: " + data.error);
+              } else {
+                closeModal();
+                // Wait a bit for the service to be fully initialized, then refresh the table
+                setTimeout(() => {
+                  refreshServicesTable();
+                }, 1000);
+              }
+            })
+            .catch((error) => {
+              console.error("Failed to save service:", error);
+              alert("Failed to save service");
+            });
+        });
+
+      // Close modal when clicking outside
+      window.onclick = function (event) {
+        const modal = document.getElementById("serviceModal");
+        if (event.target === modal) {
+          closeModal();
+        }
+      };
+
+      // Auto-refresh table every 30 seconds
+      function refreshServicesTable() {
+        fetch("/api/services")
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+          })
+          .then((services) => {
+            const tbody = document.querySelector(".table tbody");
+            if (!tbody) {
+              return;
+            }
+            tbody.innerHTML = "";
+
+            // Handle both array and object formats
+            let servicesArray = [];
+            if (Array.isArray(services)) {
+              servicesArray = services;
+            } else if (typeof services === "object" && services !== null) {
+              servicesArray = Object.values(services);
+            } else {
+              return;
+            }
+
+            servicesArray.forEach((service, index) => {
+              const row = document.createElement("tr");
+
+              // Get status and last check from state
+              const status = service.state ? service.state.status : "unknown";
+              const lastCheck =
+                service.state && service.state.last_check
+                  ? service.state.last_check
+                  : null;
+
+              row.innerHTML = `
+                <td>
+                  <a href="/service/${service.id}" class="service-name">${
+                service.name
+              }</a>
+                </td>
+                <td>
+                  <span class="badge badge-${status.toLowerCase()}">
+                    ${status.toUpperCase()}
+                  </span>
+                </td>
+                <td>${service.endpoint}</td>
+                <td>${formatDateTime(lastCheck)}</td>
+                <td>
+                  <button class="btn btn-secondary" onclick="triggerCheck('${
+                    service.id
+                  }')">
+                    Check
+                  </button>
+                  <button class="btn btn-warning" onclick="editService('${
+                    service.id
+                  }')">
+                    Edit
+                  </button>
+                  <button class="btn btn-danger" onclick="deleteService('${
+                    service.id
+                  }', '${service.name}')">
+                    Delete
+                  </button>
+                </td>
+              `;
+              tbody.appendChild(row);
+            });
+
+            // Also refresh dashboard stats
+            loadDashboardStats();
+          })
+          .catch((error) => {
+            console.error("Failed to refresh services:", error);
+          });
+      }
+
+      // Start auto-refresh
+      setInterval(refreshServicesTable, 30000);
+
+      // Load initial data
+      loadDashboardStats();
+
+      // Helper function to format datetime
+      function formatDateTime(dateString) {
+        if (!dateString) return "Never";
+        const date = new Date(dateString);
+        return date.toLocaleString();
+      }
     </script>
   </body>
 </html>

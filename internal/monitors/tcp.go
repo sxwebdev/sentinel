@@ -4,12 +4,13 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"strings"
 	"time"
 
-	"github.com/sxwebdev/sentinel/internal/config"
+	"github.com/sxwebdev/sentinel/internal/storage"
 )
 
-// TCPMonitor monitors TCP connections
+// TCPMonitor monitors TCP endpoints
 type TCPMonitor struct {
 	BaseMonitor
 	sendData   string
@@ -17,53 +18,66 @@ type TCPMonitor struct {
 }
 
 // NewTCPMonitor creates a new TCP monitor
-func NewTCPMonitor(cfg config.ServiceConfig) (*TCPMonitor, error) {
-	return &TCPMonitor{
+func NewTCPMonitor(cfg storage.Service) (*TCPMonitor, error) {
+	// Extract TCP config
+	var tcpConfig *storage.TCPConfig
+	if cfg.Config.TCP != nil {
+		tcpConfig = cfg.Config.TCP
+	}
+
+	monitor := &TCPMonitor{
 		BaseMonitor: NewBaseMonitor(cfg),
-		sendData:    getConfigString(cfg.Config, "send_data", ""),
-		expectData:  getConfigString(cfg.Config, "expect_data", ""),
-	}, nil
+	}
+
+	// Apply TCP-specific config if available
+	if tcpConfig != nil {
+		monitor.sendData = tcpConfig.SendData
+		monitor.expectData = tcpConfig.ExpectData
+	}
+
+	return monitor, nil
 }
 
-// Check performs the TCP connection check
+// Check performs the TCP health check
 func (t *TCPMonitor) Check(ctx context.Context) error {
-	// Create dialer with timeout
-	dialer := &net.Dialer{
+	// Create connection with timeout
+	dialer := net.Dialer{
 		Timeout: t.config.Timeout,
 	}
 
-	// Establish connection
 	conn, err := dialer.DialContext(ctx, "tcp", t.config.Endpoint)
 	if err != nil {
 		return fmt.Errorf("failed to connect: %w", err)
 	}
 	defer conn.Close()
 
-	// Set deadline for the entire operation
-	deadline := time.Now().Add(t.config.Timeout)
-	if err := conn.SetDeadline(deadline); err != nil {
-		return fmt.Errorf("failed to set deadline: %w", err)
-	}
-
 	// Send data if specified
 	if t.sendData != "" {
-		_, err := conn.Write([]byte(t.sendData))
+		_, err = conn.Write([]byte(t.sendData))
 		if err != nil {
 			return fmt.Errorf("failed to send data: %w", err)
 		}
+	}
 
-		// If we expect data back, read it
-		if t.expectData != "" {
-			buffer := make([]byte, 1024)
-			n, err := conn.Read(buffer)
-			if err != nil {
-				return fmt.Errorf("failed to read response: %w", err)
-			}
+	// Expect data if specified
+	if t.expectData != "" {
+		// Set read deadline
+		deadline := time.Now().Add(t.config.Timeout)
+		err = conn.SetReadDeadline(deadline)
+		if err != nil {
+			return fmt.Errorf("failed to set read deadline: %w", err)
+		}
 
-			response := string(buffer[:n])
-			if response != t.expectData {
-				return fmt.Errorf("unexpected response: got %q, expected %q", response, t.expectData)
-			}
+		// Read response
+		buffer := make([]byte, 1024)
+		n, err := conn.Read(buffer)
+		if err != nil {
+			return fmt.Errorf("failed to read response: %w", err)
+		}
+
+		response := string(buffer[:n])
+		if !strings.Contains(response, t.expectData) {
+			return fmt.Errorf("expected data not found in response: %s", t.expectData)
 		}
 	}
 

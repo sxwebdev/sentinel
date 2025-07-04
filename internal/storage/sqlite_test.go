@@ -5,8 +5,6 @@ import (
 	"os"
 	"testing"
 	"time"
-
-	"github.com/sxwebdev/sentinel/internal/config"
 )
 
 func TestSQLiteStorage(t *testing.T) {
@@ -27,12 +25,12 @@ func TestSQLiteStorage(t *testing.T) {
 	ctx := context.Background()
 
 	// Test 1: Save incident
-	incident := &config.Incident{
-		ID:          "test-1",
-		ServiceName: "test-service",
-		StartTime:   time.Now(),
-		Error:       "test error",
-		Resolved:    false,
+	incident := &Incident{
+		ServiceID: "test-service",
+		ID:        "test-1",
+		StartTime: time.Now(),
+		Error:     "test error",
+		Resolved:  false,
 	}
 
 	err = storage.SaveIncident(ctx, incident)
@@ -124,12 +122,12 @@ func TestSQLiteORM(t *testing.T) {
 	orm := storage.orm
 
 	// Create incident through ORM
-	incident := &config.Incident{
-		ID:          "orm-test-1",
-		ServiceName: "orm-service",
-		StartTime:   time.Now(),
-		Error:       "ORM test error",
-		Resolved:    false,
+	incident := &Incident{
+		ServiceID: "orm-service",
+		ID:        "orm-test-1",
+		StartTime: time.Now(),
+		Error:     "ORM test error",
+		Resolved:  false,
 	}
 
 	err = orm.CreateIncident(ctx, incident)
@@ -143,8 +141,8 @@ func TestSQLiteORM(t *testing.T) {
 		t.Errorf("Failed to get incident through ORM: %v", err)
 	}
 
-	if retrieved.ServiceName != "orm-service" {
-		t.Errorf("Expected service name 'orm-service', got '%s'", retrieved.ServiceName)
+	if retrieved.ServiceID != "orm-service" {
+		t.Errorf("Expected service name 'orm-service', got '%s'", retrieved.ServiceID)
 	}
 
 	// Test QueryIncidents

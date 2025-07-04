@@ -1,6 +1,6 @@
 # Sentinel - Service Monitoring System
 
-Sentinel is a lightweight, multi-protocol service monitoring system written in Go. It monitors HTTP/HTTPS, TCP, gRPC, and Redis services, providing real-time status updates and incident management with Telegram notifications.
+Sentinel is a lightweight, multi-protocol service monitoring system written in Go. It monitors HTTP/HTTPS, TCP, gRPC, and Redis services, providing real-time status updates and incident management with multi-provider notifications.
 
 ## Features
 
@@ -8,10 +8,11 @@ Sentinel is a lightweight, multi-protocol service monitoring system written in G
 - **Real-time Monitoring**: Configurable check intervals and timeouts
 - **Incident Management**: Automatic incident creation and resolution
 - **Multi-Provider Notifications**: Alert and recovery notifications via multiple providers (Telegram, Discord, Slack, Email, Webhooks, etc.)
-- **Web Dashboard**: Clean, responsive web interface
+- **Web Dashboard**: Clean, responsive web interface with YAML configuration
 - **REST API**: Full API for integration with other tools
-- **Persistent Storage**: Incident history using SQLite
+- **Persistent Storage**: Incident history using SQLite with improved concurrency handling
 - **Configuration**: YAML-based configuration with environment variable support
+- **Clean Logging**: Minimal logging focused on check results and notifications
 
 ## Quick Start
 
@@ -24,11 +25,11 @@ git clone https://github.com/sxwebdev/sentinel
 cd sentinel
 ```
 
-2. Create environment file:
+2. Create configuration file:
 
 ```bash
-cp .env.example .env
-# Edit .env with your notification provider credentials
+cp config.yaml.example config.yaml
+# Edit config.yaml with your notification provider credentials
 ```
 
 3. Start the services:
@@ -52,23 +53,7 @@ go build -o sentinel ./cmd/server
 ```
 
 3. Configure your services in `config.yaml`
-4. Set environment variables:
-
-```bash
-# Telegram
-export TELEGRAM_BOT_TOKEN="your_bot_token"
-export TELEGRAM_CHAT_ID="your_chat_id"
-
-# Discord (optional)
-export DISCORD_WEBHOOK_ID="your_webhook_id"
-export DISCORD_WEBHOOK_TOKEN="your_webhook_token"
-
-# Slack (optional)
-export SLACK_TOKEN_A="your_slack_token_a"
-export SLACK_TOKEN_B="your_slack_token_b"
-export SLACK_TOKEN_C="your_slack_token_c"
-```
-
+4. Set up notification providers (see Notification Setup section below)
 5. Run:
 
 ```bash
@@ -99,11 +84,13 @@ notifications:
   enabled: true
   urls:
     # Telegram
-    - "telegram://${TELEGRAM_BOT_TOKEN}/${TELEGRAM_CHAT_ID}"
+    - "telegram://token@telegram?chats=@channel-1[,chat-id-1,...]"
     # Discord (optional)
-    - "discord://${DISCORD_WEBHOOK_ID}/${DISCORD_WEBHOOK_TOKEN}"
+    - "discord://token@id"
     # Slack (optional)
-    - "slack://${SLACK_TOKEN_A}/${SLACK_TOKEN_B}/${SLACK_TOKEN_C}"
+    - "slack://[botname@]token-a/token-b/token-c"
+    # Email (optional)
+    - "smtp://username:password@host:port/?from=fromAddress&to=recipient1[,recipient2,...]"
 
 services:
   - name: "my-api"
@@ -189,9 +176,70 @@ services:
 
 The gRPC monitor supports three types of checks:
 
-1. **Health Check** (`check_type: "health"`): Uses standard gRPC health service
+1. **Health Check** (`check_type: "health"`): Uses standard gRPC health service (`grpc.health.v1.Health`)
 2. **Reflection Check** (`check_type: "reflection"`): Checks gRPC reflection availability
 3. **Connectivity Check** (`check_type: "connectivity"`): Simple connection test
+
+**Available check types:**
+
+- `health` - Standard gRPC health service check
+- `reflection` - gRPC reflection service check
+- `connectivity` - Basic connectivity test
+
+## Web Interface
+
+### Dashboard Features
+
+- **Service Management**: Add, edit, and delete services through the web interface
+- **YAML Configuration**: Configure services using YAML format directly in the UI
+- **Real-time Status**: Live status updates with auto-refresh every 30 seconds
+- **Manual Checks**: Trigger manual health checks for any service
+- **Incident Management**: View and resolve incidents
+- **Service Details**: Detailed view with incident history and statistics
+
+### Service Configuration via UI
+
+When creating or editing services through the web interface:
+
+1. **Protocol Selection**: Choose from HTTP/HTTPS, TCP, gRPC, or Redis
+2. **YAML Configuration**: Enter protocol-specific configuration in YAML format
+3. **Default Templates**: UI provides default YAML templates for each protocol
+4. **Validation**: Configuration is validated before saving
+
+Example YAML configurations for each protocol:
+
+**HTTP/HTTPS:**
+
+```yaml
+method: "GET"
+expected_status: 200
+headers:
+  User-Agent: "Sentinel Monitor"
+  Authorization: "Bearer token"
+```
+
+**TCP:**
+
+```yaml
+send_data: "ping"
+expect_data: "pong"
+```
+
+**gRPC:**
+
+```yaml
+check_type: "health"
+service_name: "myapp.MyService"
+tls: true
+insecure_tls: false
+```
+
+**Redis:**
+
+```yaml
+password: "your_password"
+db: 0
+```
 
 ## Notification Setup
 
@@ -205,48 +253,34 @@ Sentinel uses [Shoutrrr](https://github.com/containrrr/shoutrrr) for notificatio
    - Send `/newbot` and follow instructions
    - Save the bot token
 
-2. Get your chat ID:
+2. Get your chat ID or channel username:
 
-   - Add the bot to your group/channel
-   - Send a message to the bot
-   - Visit `https://api.telegram.org/bot<TOKEN>/getUpdates`
-   - Find your chat ID in the response
+   - For private chats: Add the bot to your group/channel, send a message, then visit `https://api.telegram.org/bot<TOKEN>/getUpdates`
+   - For public channels: Use the channel username (e.g., `@mychannel`)
 
-3. Set environment variables:
-
-```bash
-export TELEGRAM_BOT_TOKEN="1234567890:ABCdefGHIjklMNOpqrsTUVwxyz"
-export TELEGRAM_CHAT_ID="-1001234567890"
-```
-
-4. Configure in `config.yaml`:
+3. Configure in `config.yaml`:
 
 ```yaml
 notifications:
   enabled: true
   urls:
-    - "telegram://${TELEGRAM_BOT_TOKEN}/${TELEGRAM_CHAT_ID}"
+    - "telegram://token@telegram?chats=@channel-1[,chat-id-1,...]"
 ```
 
 ### Discord Setup
 
 1. Create a Discord webhook in your server settings
-2. Use the webhook URL format: `discord://webhook_id/webhook_token`
+2. Use the webhook URL format: `discord://token@id`
 
 ### Slack Setup
 
 1. Create a Slack app and get the tokens
-2. Use the Slack URL format: `slack://token-a/token-b/token-c`
+2. Use the Slack URL format: `slack://[botname@]token-a/token-b/token-c`
 
 ### Email Setup
 
 1. Configure SMTP settings
-2. Use the SMTP URL format: `smtp://username:password@host:port?from=sender&to=recipient`
-
-### Webhook Setup
-
-1. Set up your webhook endpoint
-2. Use the webhook URL format: `webhook://your-webhook-url`
+2. Use the SMTP URL format: `smtp://username:password@host:port/?from=fromAddress&to=recipient1[,recipient2,...]`
 
 ### Multiple Providers
 
@@ -256,10 +290,14 @@ You can configure multiple notification providers simultaneously. If one provide
 notifications:
   enabled: true
   urls:
-    - "telegram://${TELEGRAM_BOT_TOKEN}/${TELEGRAM_CHAT_ID}"
-    - "discord://${DISCORD_WEBHOOK_ID}/${DISCORD_WEBHOOK_TOKEN}"
-    - "slack://${SLACK_TOKEN_A}/${SLACK_TOKEN_B}/${SLACK_TOKEN_C}"
-    - "smtp://${SMTP_USER}:${SMTP_PASS}@${SMTP_HOST}:587?from=${SMTP_FROM}&to=${SMTP_TO}"
+    # Telegram
+    - "telegram://token@telegram?chats=@channel-1[,chat-id-1,...]"
+    # Discord
+    - "discord://token@id"
+    # Slack
+    - "slack://[botname@]token-a/token-b/token-c"
+    # Email
+    - "smtp://username:password@host:port/?from=fromAddress&to=recipient1[,recipient2,...]"
 ```
 
 ## API Reference
@@ -273,25 +311,79 @@ GET /api/services
 ### Get Service Details
 
 ```bash
-GET /api/services/{name}
+GET /api/services/{id}
+```
+
+### Get Service Configuration
+
+```bash
+GET /api/services/config/{id}
 ```
 
 ### Get Service Incidents
 
 ```bash
-GET /api/services/{name}/incidents
+GET /api/services/{id}/incidents
 ```
 
 ### Get Service Statistics
 
 ```bash
-GET /api/services/{name}/stats?days=30
+GET /api/services/{id}/stats?days=30
 ```
 
 ### Trigger Manual Check
 
 ```bash
-POST /api/services/{name}/check
+POST /api/services/{id}/check
+```
+
+### Resolve Incidents
+
+```bash
+POST /api/services/{id}/resolve
+```
+
+### Create Service
+
+```bash
+POST /api/services
+Content-Type: application/json
+
+{
+  "name": "my-service",
+  "protocol": "http",
+  "endpoint": "https://example.com/health",
+  "interval": "30s",
+  "timeout": "10s",
+  "retries": 3,
+  "tags": ["api", "critical"],
+  "config": "method: \"GET\"\nexpected_status: 200"
+}
+```
+
+### Update Service
+
+```bash
+PUT /api/services/{id}
+Content-Type: application/json
+
+{
+  "name": "my-service",
+  "protocol": "http",
+  "endpoint": "https://example.com/health",
+  "interval": "30s",
+  "timeout": "10s",
+  "retries": 3,
+  "tags": ["api", "critical"],
+  "config": "method: \"GET\"\nexpected_status: 200"
+}
+```
+
+### Delete Service
+
+```bash
+DELETE /api/services/{id}
 ```
 
 ### Get Recent Incidents
@@ -300,18 +392,14 @@ POST /api/services/{name}/check
 GET /api/incidents?limit=50
 ```
 
-## Web Interface
-
-- **Dashboard** (`/`): Overview of all services
-- **Service Detail** (`/service/{name}`): Detailed view with incident history
-- **Auto-refresh**: Dashboard refreshes every 30 seconds
-
 ## Monitoring Logic
 
 1. **Health Checks**: Each service is checked at configured intervals
 2. **Retry Logic**: Failed checks are retried with exponential backoff
 3. **State Changes**: Status changes trigger incident creation/resolution
 4. **Notifications**: Alerts sent only on status changes (UP ↔ DOWN)
+5. **Concurrent Access**: Improved SQLite handling for concurrent operations
+6. **Clean Logging**: Minimal logging focused on check results and notifications
 
 ## Development
 
@@ -326,11 +414,11 @@ sentinel/
 ├── internal/
 │   ├── config/          # Configuration management
 │   ├── monitors/        # Protocol-specific monitors
-│   ├── storage/         # Data persistence (SQLite)
+│   ├── storage/         # Data persistence (SQLite with retry logic)
 │   ├── notifier/        # Notification system
 │   ├── scheduler/       # Monitoring scheduler
 │   ├── service/         # Business logic
-│   └── web/             # Web interface
+│   └── web/             # Web interface with YAML configuration
 ├── data/                # SQLite database files
 ├── config.yaml          # Configuration file
 └── docker-compose.yml   # Docker services
@@ -427,6 +515,16 @@ docker run -d \
   -v ./data:/root/data \
   sentinel
 ```
+
+## Logging
+
+Sentinel uses minimal logging focused on essential information:
+
+- **Check Results**: Success/failure of each service check
+- **Notifications**: Success/failure of notification delivery
+- **Errors**: Critical errors that require attention
+
+Debug logging has been removed to keep logs clean and focused.
 
 ## Contributing
 

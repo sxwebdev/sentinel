@@ -40,8 +40,8 @@
           <div class="service-info">
             <div class="service-info-item">
               <span class="service-info-label">Status:</span>
-              <span class="badge badge-{{.Service.Status | statusToLower}}">
-                {{.Service.Status | statusToString}}
+              <span class="badge badge-{{.State.Status | statusToLower}}">
+                {{.State.Status | statusToString}}
               </span>
             </div>
             <div class="service-info-item">
@@ -53,14 +53,36 @@
               <span class="service-info-value">{{.Service.Endpoint}}</span>
             </div>
             <div class="service-info-item">
-              <span class="service-info-label">Last Check:</span>
+              <span class="service-info-label">Total Checks:</span>
+              <span class="service-info-value">{{.State.TotalChecks}}</span>
+            </div>
+            <div class="service-info-item">
+              <span class="service-info-label">Consecutive Success:</span>
               <span class="service-info-value"
-                >{{.Service.LastCheck | formatDateTime}}</span
+                >{{.State.ConsecutiveSuccess}}</span
               >
             </div>
-            {{if .Service.LastError}}
+            <div class="service-info-item">
+              <span class="service-info-label">Consecutive Fails:</span>
+              <span class="service-info-value"
+                >{{.State.ConsecutiveFails}}</span
+              >
+            </div>
+            {{if .State.ResponseTime}}
+            <div class="service-info-item">
+              <span class="service-info-label">Response Time:</span>
+              <span class="service-info-value">{{.State.ResponseTime}}</span>
+            </div>
+            {{end}}
+            <div class="service-info-item">
+              <span class="service-info-label">Last Check:</span>
+              <span class="service-info-value"
+                >{{.State.LastCheck | formatDateTimePtr}}</span
+              >
+            </div>
+            {{if .State.LastError}}
             <div class="service-error">
-              <strong>Last Error:</strong> {{.Service.LastError}}
+              <strong>Last Error:</strong> {{.State.LastError}}
             </div>
             {{end}}
           </div>
@@ -118,7 +140,7 @@
 
     <script>
       function triggerCheck() {
-        fetch(`/api/services/{{.Service.Name}}/check`, {
+        fetch(`/api/services/{{.Service.ID}}/check`, {
           method: "POST",
         })
           .then((response) => response.json())
@@ -138,7 +160,7 @@
             "Are you sure you want to resolve all active incidents for this service?"
           )
         ) {
-          fetch(`/api/services/{{.Service.Name}}/resolve`, {
+          fetch(`/api/services/{{.Service.ID}}/resolve`, {
             method: "POST",
           })
             .then((response) => response.json())
