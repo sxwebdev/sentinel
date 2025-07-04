@@ -849,7 +849,6 @@ db: 0`;
       // WebSocket connection for real-time updates
       let ws = null;
       let wsReconnectAttempts = 0;
-      const maxReconnectAttempts = 5;
 
       function connectWebSocket() {
         const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
@@ -876,10 +875,8 @@ db: 0`;
 
           ws.onclose = function () {
             console.log("WebSocket disconnected");
-            if (wsReconnectAttempts < maxReconnectAttempts) {
-              wsReconnectAttempts++;
-              setTimeout(connectWebSocket, 1000 * wsReconnectAttempts);
-            }
+
+            setTimeout(connectWebSocket, 1000);
           };
 
           ws.onerror = function (error) {

@@ -3,152 +3,132 @@ package scheduler
 import (
 	"context"
 	"fmt"
+	"log"
 	"sync"
 	"time"
 
+	"github.com/puzpuzpuz/xsync/v3"
 	"github.com/sxwebdev/sentinel/internal/monitors"
+	"github.com/sxwebdev/sentinel/internal/receiver"
+	"github.com/sxwebdev/sentinel/internal/service"
 	"github.com/sxwebdev/sentinel/internal/storage"
 )
-
-// MonitorServiceInterface defines the interface for monitor service operations
-type MonitorServiceInterface interface {
-	InitializeService(ctx context.Context, cfg storage.Service) error
-	InitializeWithActiveIncidents(ctx context.Context, cfg storage.Service) error
-	RecordSuccess(ctx context.Context, serviceID string, responseTime time.Duration) error
-	RecordFailure(ctx context.Context, serviceID string, err error, responseTime time.Duration) error
-	GetServiceByID(ctx context.Context, id string) (*storage.Service, error)
-	TriggerCheck(ctx context.Context, serviceID string) error
-}
 
 // ErrServiceNotFound is returned when a service is not found
 var ErrServiceNotFound = fmt.Errorf("service not found")
 
 // Scheduler manages the monitoring of multiple services
 type Scheduler struct {
-	services   map[string]*ServiceJob // key is service ID
-	monitorSvc MonitorServiceInterface
-	mu         sync.RWMutex
-	wg         sync.WaitGroup
+	receiver   *receiver.Receiver
+	monitorSvc *service.MonitorService
+
+	jobs *xsync.MapOf[string, *job]
+	wg   sync.WaitGroup
 }
 
-// ServiceJob represents a scheduled monitoring job for a service
-type ServiceJob struct {
-	ServiceID string
-	Name      string
-	Interval  time.Duration
-	Timeout   time.Duration
-	Retries   int
-	Ticker    *time.Ticker
-	StopChan  chan struct{}
+// job represents a scheduled monitoring job for a service
+type job struct {
+	ServiceID   string
+	ServiceName string
+	Interval    time.Duration
+	Timeout     time.Duration
+	Retries     int
+	Ticker      *time.Ticker
+	StopChan    chan struct{}
 }
 
-// NewScheduler creates a new scheduler
-func NewScheduler(monitorService MonitorServiceInterface) *Scheduler {
+// New creates a new scheduler
+func New(
+	monitorService *service.MonitorService,
+	receiver *receiver.Receiver,
+) *Scheduler {
 	return &Scheduler{
-		services:   make(map[string]*ServiceJob),
 		monitorSvc: monitorService,
-	}
-}
-
-// AddService adds a service to be monitored
-func (s *Scheduler) AddService(cfg storage.Service) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	// Check if service already exists
-	if existingJob, exists := s.services[cfg.ID]; exists {
-		// Stop existing job
-		close(existingJob.StopChan)
-		existingJob.Ticker.Stop()
-	}
-
-	// Create new service job with minimal info
-	job := &ServiceJob{
-		ServiceID: cfg.ID,
-		Name:      cfg.Name,
-		Interval:  cfg.Interval,
-		Timeout:   cfg.Timeout,
-		Retries:   cfg.Retries,
-		StopChan:  make(chan struct{}),
-	}
-
-	s.services[cfg.ID] = job
-	return nil
-}
-
-// RemoveService removes a service from monitoring
-func (s *Scheduler) RemoveService(serviceID string) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	if job, exists := s.services[serviceID]; exists {
-		close(job.StopChan)
-		if job.Ticker != nil {
-			job.Ticker.Stop()
-		}
-		delete(s.services, serviceID)
+		receiver:   receiver,
+		jobs:       xsync.NewMapOf[string, *job](),
 	}
 }
 
 // Start begins monitoring all configured services
 func (s *Scheduler) Start(ctx context.Context) error {
+	// Load services from database
+	services, err := s.monitorSvc.LoadServicesFromStorage(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to load services: %w", err)
+	}
+
 	// Get all services under read lock
-	s.mu.RLock()
-	services := make([]*ServiceJob, 0, len(s.services))
-	for _, job := range s.services {
-		services = append(services, job)
-	}
-	s.mu.RUnlock()
-
-	// Start monitoring for all services
-	for _, job := range services {
-		s.wg.Add(1)
-		go s.monitorService(ctx, job)
+	for _, svc := range services {
+		s.addService(ctx, svc)
 	}
 
-	// Wait for context cancellation
-	<-ctx.Done()
+	errChan := make(chan error, 1)
+	go func() {
+		errChan <- s.subscribeEvents(ctx)
+	}()
 
-	// Stop all services
+	select {
+	case err := <-errChan:
+		return err
+	case <-ctx.Done():
+	}
+
+	return nil
+}
+
+func (s *Scheduler) Stop(ctx context.Context) error {
 	s.stopAll()
 	s.wg.Wait()
 	return nil
 }
 
-// StartWithInitialCheck begins monitoring with an immediate check of all services
-func (s *Scheduler) StartWithInitialCheck(ctx context.Context) error {
-	// Get all services under read lock
-	s.mu.RLock()
-	services := make([]*ServiceJob, 0, len(s.services))
-	for _, job := range s.services {
-		services = append(services, job)
-	}
-	s.mu.RUnlock()
+// stopAll stops monitoring for all services
+func (s *Scheduler) stopAll() {
+	s.jobs.Range(func(key string, value *job) bool {
+		close(value.StopChan)
+		if value.Ticker != nil {
+			value.Ticker.Stop()
+		}
+		return true
+	})
+}
 
-	// Start monitoring for all services
-	for _, job := range services {
-		s.wg.Add(1)
-		go s.monitorService(ctx, job)
+// addService adds a service to be monitored
+func (s *Scheduler) addService(ctx context.Context, svc *storage.Service) {
+	// Create new service job with minimal info
+	job := &job{
+		ServiceID:   svc.ID,
+		ServiceName: svc.Name,
+		Interval:    svc.Interval,
+		Timeout:     svc.Timeout,
+		Retries:     svc.Retries,
+		StopChan:    make(chan struct{}),
 	}
 
-	// Perform immediate check for all services
-	for _, job := range services {
-		if err := s.performCheck(ctx, job); err != nil {
-			return fmt.Errorf("failed to perform initial check for service %s: %w", job.Name, err)
+	s.addJob(ctx, job)
+}
+
+// addJob adds a new job to the scheduler
+func (s *Scheduler) addJob(ctx context.Context, job *job) {
+	// Check if job already exists
+	if existingJob, exists := s.jobs.Load(job.ServiceID); exists {
+		// Stop existing job
+		close(existingJob.StopChan)
+		if existingJob.Ticker != nil {
+			existingJob.Ticker.Stop()
 		}
 	}
 
-	// Wait for context cancellation
-	<-ctx.Done()
+	// Store the new job
+	s.jobs.Store(job.ServiceID, job)
 
-	// Stop all services
-	s.stopAll()
-	s.wg.Wait()
-	return nil
+	// Start monitoring in a new goroutine
+	s.wg.Add(1)
+	go s.monitorService(ctx, job)
 }
 
 // monitorService runs the monitoring loop for a single service
-func (s *Scheduler) monitorService(ctx context.Context, job *ServiceJob) {
+func (s *Scheduler) monitorService(ctx context.Context, job *job) {
 	defer s.wg.Done()
 
 	// Create ticker for regular checks
@@ -157,7 +137,6 @@ func (s *Scheduler) monitorService(ctx context.Context, job *ServiceJob) {
 
 	// Perform initial check
 	if err := s.performCheck(ctx, job); err != nil {
-		// Log error but continue monitoring
 		return
 	}
 
@@ -169,7 +148,6 @@ func (s *Scheduler) monitorService(ctx context.Context, job *ServiceJob) {
 			return
 		case <-job.Ticker.C:
 			if err := s.performCheck(ctx, job); err != nil {
-				// Log error but continue monitoring
 				continue
 			}
 		}
@@ -177,12 +155,8 @@ func (s *Scheduler) monitorService(ctx context.Context, job *ServiceJob) {
 }
 
 // performCheck executes a health check for a service
-func (s *Scheduler) performCheck(ctx context.Context, job *ServiceJob) error {
-	serviceName := job.Name
-
-	// Create context with timeout for this specific check
-	checkCtx, cancel := context.WithTimeout(ctx, job.Timeout)
-	defer cancel()
+func (s *Scheduler) performCheck(ctx context.Context, job *job) error {
+	serviceName := job.ServiceName
 
 	startTime := time.Now()
 
@@ -201,6 +175,10 @@ func (s *Scheduler) performCheck(ctx context.Context, job *ServiceJob) error {
 	// Perform the check with retries
 	var lastErr error
 	for attempt := 1; attempt <= job.Retries; attempt++ {
+		// Create context with timeout for this specific check
+		checkCtx, cancel := context.WithTimeout(ctx, job.Timeout)
+		defer cancel()
+
 		err := monitor.Check(checkCtx)
 		if err == nil {
 			// Success
@@ -208,6 +186,9 @@ func (s *Scheduler) performCheck(ctx context.Context, job *ServiceJob) error {
 			if err := s.monitorSvc.RecordSuccess(ctx, job.ServiceID, responseTime); err != nil {
 				return fmt.Errorf("failed to record success for %s: %w", serviceName, err)
 			}
+
+			log.Printf("Service %s check successful (attempt %d/%d)\n", serviceName, attempt, job.Retries)
+
 			return nil
 		}
 
@@ -224,6 +205,8 @@ func (s *Scheduler) performCheck(ctx context.Context, job *ServiceJob) error {
 				continue
 			}
 		}
+
+		log.Printf("Service %s check failed (attempt %d/%d): %s\n", serviceName, attempt, job.Retries, err)
 	}
 
 	// All attempts failed
@@ -235,37 +218,9 @@ func (s *Scheduler) performCheck(ctx context.Context, job *ServiceJob) error {
 	return nil
 }
 
-// stopAll stops monitoring for all services
-func (s *Scheduler) stopAll() {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	for _, job := range s.services {
-		close(job.StopChan)
-		if job.Ticker != nil {
-			job.Ticker.Stop()
-		}
-	}
-}
-
-// GetServices returns the list of currently monitored services
-func (s *Scheduler) GetServices() []string {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	services := make([]string, 0, len(s.services))
-	for _, job := range s.services {
-		services = append(services, job.Name)
-	}
-	return services
-}
-
-// CheckService manually triggers a check for a specific service
-func (s *Scheduler) CheckService(ctx context.Context, serviceID string) error {
-	s.mu.RLock()
-	job, exists := s.services[serviceID]
-	s.mu.RUnlock()
-
+// checkService manually triggers a check for a specific service
+func (s *Scheduler) checkService(ctx context.Context, serviceID string) error {
+	job, exists := s.jobs.Load(serviceID)
 	if !exists {
 		return ErrServiceNotFound
 	}
@@ -273,48 +228,9 @@ func (s *Scheduler) CheckService(ctx context.Context, serviceID string) error {
 	return s.performCheck(ctx, job)
 }
 
-// TriggerCheck triggers an immediate check for a specific service
-func (s *Scheduler) TriggerCheck(ctx context.Context, serviceID string) error {
-	s.mu.RLock()
-	job, exists := s.services[serviceID]
-	s.mu.RUnlock()
-
-	if !exists {
-		return ErrServiceNotFound
-	}
-
-	return s.performCheck(ctx, job)
-}
-
-// AddServiceDynamic adds a service dynamically (for runtime additions)
-func (s *Scheduler) AddServiceDynamic(ctx context.Context, cfg storage.Service) error {
-	// Add to scheduler
-	if err := s.AddService(cfg); err != nil {
-		return fmt.Errorf("failed to add service: %w", err)
-	}
-
-	// Start monitoring immediately
-	s.mu.RLock()
-	job, exists := s.services[cfg.ID]
-	s.mu.RUnlock()
-
-	if !exists {
-		return fmt.Errorf("service was not properly added")
-	}
-
-	// Start monitoring in a new goroutine
-	s.wg.Add(1)
-	go s.monitorService(ctx, job)
-
-	return nil
-}
-
-// RemoveServiceDynamic removes a service dynamically (for runtime removals)
-func (s *Scheduler) RemoveServiceDynamic(serviceID string) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	job, exists := s.services[serviceID]
+// removeJob removes a service dynamically (for runtime removals)
+func (s *Scheduler) removeJob(serviceID string) error {
+	job, exists := s.jobs.Load(serviceID)
 	if !exists {
 		return ErrServiceNotFound
 	}
@@ -326,51 +242,58 @@ func (s *Scheduler) RemoveServiceDynamic(serviceID string) error {
 	}
 
 	// Remove from services map
-	delete(s.services, serviceID)
+	s.jobs.Delete(serviceID)
 
 	return nil
 }
 
-// UpdateServiceDynamic updates a service configuration dynamically
-func (s *Scheduler) UpdateServiceDynamic(ctx context.Context, cfg storage.Service) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+// updateJob updates a service configuration dynamically
+func (s *Scheduler) updateJob(ctx context.Context, svc *storage.Service) error {
+	s.addService(ctx, svc)
 
-	// Check if service already exists by ID
-	existingJob, exists := s.services[cfg.ID]
-	if exists {
-		// Stop existing job
-		close(existingJob.StopChan)
-		if existingJob.Ticker != nil {
-			existingJob.Ticker.Stop()
-		}
-	}
+	return nil
+}
 
-	// Create new service job with updated configuration
-	job := &ServiceJob{
-		ServiceID: cfg.ID,
-		Name:      cfg.Name,
-		Interval:  cfg.Interval,
-		Timeout:   cfg.Timeout,
-		Retries:   cfg.Retries,
-		StopChan:  make(chan struct{}),
-	}
+func (s *Scheduler) subscribeEvents(ctx context.Context) error {
+	broker := s.receiver.TriggerService()
+	sub := broker.Subscribe()
+	defer broker.Unsubscribe(sub)
 
-	s.services[cfg.ID] = job
-
-	// Start monitoring in a new goroutine
-	s.wg.Add(1)
-	go s.monitorService(ctx, job)
-
-	// Perform immediate check with updated configuration
+	errChan := make(chan error, 1)
 	go func() {
-		// Small delay to ensure the new job is properly started
-		time.Sleep(100 * time.Millisecond)
-		if err := s.performCheck(ctx, job); err != nil {
-			// Log error but don't fail the update
-			return
+		for ctx.Err() == nil {
+			select {
+			case item := <-sub:
+				switch item.EventType {
+				case receiver.TriggerServiceEventTypeCheck:
+					if err := s.checkService(ctx, item.Svc.ID); err != nil {
+						log.Println("check service error", err)
+					}
+				case receiver.TriggerServiceEventTypeCreated:
+					s.addService(ctx, item.Svc)
+				case receiver.TriggerServiceEventTypeUpdated:
+					if err := s.updateJob(ctx, item.Svc); err != nil {
+						log.Println("update service error", err)
+					}
+				case receiver.TriggerServiceEventTypeDeleted:
+					if err := s.removeJob(item.Svc.ID); err != nil {
+						log.Println("remove service error", err)
+					}
+				default:
+					log.Println("undefined trigger svc event type", item.EventType)
+				}
+
+			case <-ctx.Done():
+				return
+			}
 		}
 	}()
+
+	select {
+	case <-ctx.Done():
+	case err := <-errChan:
+		return err
+	}
 
 	return nil
 }

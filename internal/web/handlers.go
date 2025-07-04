@@ -16,6 +16,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/template/html/v2"
 	"github.com/sxwebdev/sentinel/internal/config"
+	"github.com/sxwebdev/sentinel/internal/receiver"
 	"github.com/sxwebdev/sentinel/internal/service"
 	"github.com/sxwebdev/sentinel/internal/storage"
 	"gopkg.in/yaml.v3"
@@ -26,16 +27,15 @@ var viewsFS embed.FS
 
 // FlatServiceConfig represents a service with flat config structure
 type FlatServiceConfig struct {
-	ID       string                `json:"id"`
-	Name     string                `json:"name"`
-	Protocol string                `json:"protocol"`
-	Endpoint string                `json:"endpoint"`
-	Interval time.Duration         `json:"interval"`
-	Timeout  time.Duration         `json:"timeout"`
-	Retries  int                   `json:"retries"`
-	Tags     []string              `json:"tags"`
-	Config   string                `json:"config"` // YAML string
-	State    *storage.ServiceState `json:"state,omitempty"`
+	ID       string        `json:"id"`
+	Name     string        `json:"name"`
+	Protocol string        `json:"protocol"`
+	Endpoint string        `json:"endpoint"`
+	Interval time.Duration `json:"interval"`
+	Timeout  time.Duration `json:"timeout"`
+	Retries  int           `json:"retries"`
+	Tags     []string      `json:"tags"`
+	Config   string        `json:"config"` // YAML string
 }
 
 // ServiceTableDTO represents a service with incident statistics for table display
@@ -57,6 +57,7 @@ type ServiceTableDTO struct {
 // Server represents the web server
 type Server struct {
 	monitorService *service.MonitorService
+	receiver       *receiver.Receiver
 	config         *config.Config
 	app            *fiber.App
 	wsConnections  map[*websocket.Conn]bool
@@ -64,7 +65,11 @@ type Server struct {
 }
 
 // NewServer creates a new web server
-func NewServer(monitorService *service.MonitorService, cfg *config.Config) (*Server, error) {
+func NewServer(
+	cfg *config.Config,
+	monitorService *service.MonitorService,
+	receiver *receiver.Receiver,
+) (*Server, error) {
 	// Create template engine with embedded templates
 	templateEngine := html.NewFileSystem(http.FS(viewsFS), ".html")
 
@@ -122,8 +127,9 @@ func NewServer(monitorService *service.MonitorService, cfg *config.Config) (*Ser
 	})
 
 	server := &Server{
-		monitorService: monitorService,
 		config:         cfg,
+		monitorService: monitorService,
+		receiver:       receiver,
 		app:            app,
 		wsConnections:  make(map[*websocket.Conn]bool),
 	}
@@ -132,6 +138,26 @@ func NewServer(monitorService *service.MonitorService, cfg *config.Config) (*Ser
 	server.setupRoutes()
 
 	return server, nil
+}
+
+// Start starts the web server
+func (s *Server) Start(ctx context.Context) error {
+	errChan := make(chan error, 1)
+	go func() {
+		errChan <- s.subscribeEvents(ctx)
+	}()
+
+	select {
+	case err := <-errChan:
+		return err
+	case <-ctx.Done():
+	}
+
+	return nil
+}
+
+func (s *Server) Stop(_ context.Context) error {
+	return nil
 }
 
 // setupRoutes configures all routes
@@ -593,7 +619,6 @@ func (s *Server) handleAPICreateService(c *fiber.Ctx) error {
 		Timeout:  flatService.Timeout,
 		Retries:  flatService.Retries,
 		Tags:     flatService.Tags,
-		State:    flatService.State,
 	}
 
 	// Set default values
@@ -642,7 +667,15 @@ func (s *Server) handleAPIUpdateService(c *fiber.Ctx) error {
 		})
 	}
 
-	// Convert to storage.Service
+	// Get existing service to preserve state
+	existingService, err := s.monitorService.GetServiceByID(c.Context(), id)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "Service not found: " + err.Error(),
+		})
+	}
+
+	// Convert to storage.Service, preserving existing state
 	service := storage.Service{
 		ID:       id,
 		Name:     flatService.Name,
@@ -652,7 +685,7 @@ func (s *Server) handleAPIUpdateService(c *fiber.Ctx) error {
 		Timeout:  flatService.Timeout,
 		Retries:  flatService.Retries,
 		Tags:     flatService.Tags,
-		State:    flatService.State,
+		State:    existingService.State,
 	}
 
 	// Convert flat config to proper MonitorConfig structure
@@ -747,7 +780,7 @@ func (s *Server) convertFlatConfigToMonitorConfig(protocol string, yamlConfig st
 	}
 
 	// Parse YAML into map
-	var configMap map[string]interface{}
+	var configMap map[string]any
 	if err := yaml.Unmarshal([]byte(yamlConfig), &configMap); err != nil {
 		return storage.MonitorConfig{}, fmt.Errorf("failed to parse YAML config: %w", err)
 	}
@@ -788,7 +821,7 @@ func (s *Server) getDefaultConfig(protocol string) storage.MonitorConfig {
 	case "grpc":
 		return storage.MonitorConfig{
 			GRPC: &storage.GRPCConfig{
-				CheckType:   "health",
+				CheckType:   "connectivity",
 				ServiceName: "",
 				TLS:         false,
 				InsecureTLS: false,
@@ -1070,7 +1103,7 @@ func (s *Server) sendServiceUpdate(conn *websocket.Conn) error {
 }
 
 // BroadcastServiceUpdate sends service updates to all connected WebSocket clients
-func (s *Server) BroadcastServiceUpdate() {
+func (s *Server) broadcastServiceUpdate() {
 	// Get updated service data (without locking)
 	services, err := s.monitorService.GetAllServiceConfigs(context.Background())
 	if err != nil {
@@ -1140,4 +1173,31 @@ func (s *Server) BroadcastServiceUpdate() {
 			conn.Close()
 		}
 	}
+}
+
+func (s *Server) subscribeEvents(ctx context.Context) error {
+	broker := s.receiver.ServiceUpdated()
+	sub := broker.Subscribe()
+	defer broker.Unsubscribe(sub)
+
+	errChan := make(chan error, 1)
+	go func() {
+		for ctx.Err() == nil {
+			select {
+			case <-sub:
+				s.broadcastServiceUpdate()
+
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
+
+	select {
+	case <-ctx.Done():
+	case err := <-errChan:
+		return err
+	}
+
+	return nil
 }
