@@ -15,6 +15,7 @@ type MonitorService struct {
 	store     storage.Storage
 	notifier  notifier.Notifier
 	scheduler interface{} // Will be set to *scheduler.Scheduler
+	webServer interface{} // Will be set to *web.Server for WebSocket broadcasts
 	mu        sync.RWMutex
 }
 
@@ -29,6 +30,11 @@ func NewMonitorService(store storage.Storage, notifier notifier.Notifier) *Monit
 // SetScheduler sets the scheduler instance (called from main.go)
 func (m *MonitorService) SetScheduler(scheduler interface{}) {
 	m.scheduler = scheduler
+}
+
+// SetWebServer sets the web server instance for WebSocket broadcasts
+func (m *MonitorService) SetWebServer(webServer interface{}) {
+	m.webServer = webServer
 }
 
 // LoadServicesFromStorage loads all services from storage and initializes monitoring
@@ -264,6 +270,9 @@ func (m *MonitorService) RecordSuccess(ctx context.Context, serviceID string, re
 		}
 	}
 
+	// Broadcast WebSocket update
+	m.broadcastWebSocketUpdate()
+
 	return nil
 }
 
@@ -303,6 +312,9 @@ func (m *MonitorService) RecordFailure(ctx context.Context, serviceID string, ch
 			return fmt.Errorf("failed to create incident: %w", err)
 		}
 	}
+
+	// Broadcast WebSocket update
+	m.broadcastWebSocketUpdate()
 
 	return nil
 }
@@ -419,4 +431,15 @@ func (m *MonitorService) resolveAllActiveIncidents(ctx context.Context, serviceI
 // ForceResolveIncidents manually resolves all active incidents for a service
 func (m *MonitorService) ForceResolveIncidents(ctx context.Context, serviceID string, serviceName string) error {
 	return m.resolveAllActiveIncidents(ctx, serviceID, serviceName)
+}
+
+// broadcastWebSocketUpdate sends WebSocket updates to all connected clients
+func (m *MonitorService) broadcastWebSocketUpdate() {
+	if m.webServer != nil {
+		if broadcastMethod, ok := m.webServer.(interface {
+			BroadcastServiceUpdate()
+		}); ok {
+			broadcastMethod.BroadcastServiceUpdate()
+		}
+	}
 }

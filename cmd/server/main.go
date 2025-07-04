@@ -79,6 +79,9 @@ func run(ctx context.Context) error {
 		return fmt.Errorf("failed to initialize web server: %w", err)
 	}
 
+	// Set web server in monitor service for WebSocket broadcasts
+	monitorService.SetWebServer(webServer)
+
 	// Start Fiber server
 	addr := fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port)
 	serverErr := make(chan error, 1)

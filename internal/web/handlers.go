@@ -1,14 +1,17 @@
 package web
 
 import (
+	"context"
 	"embed"
 	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
+	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/template/html/v2"
@@ -56,6 +59,8 @@ type Server struct {
 	monitorService *service.MonitorService
 	config         *config.Config
 	app            *fiber.App
+	wsConnections  map[*websocket.Conn]bool
+	wsMutex        sync.Mutex
 }
 
 // NewServer creates a new web server
@@ -120,6 +125,7 @@ func NewServer(monitorService *service.MonitorService, cfg *config.Config) (*Ser
 		monitorService: monitorService,
 		config:         cfg,
 		app:            app,
+		wsConnections:  make(map[*websocket.Conn]bool),
 	}
 
 	// Setup routes
@@ -151,6 +157,16 @@ func (s *Server) setupRoutes() {
 	api.Put("/services/:id", s.handleAPIUpdateService)
 	api.Delete("/services/:id", s.handleAPIDeleteService)
 	api.Get("/services/config/:id", s.handleAPIGetServiceConfig)
+
+	// WebSocket endpoint
+	s.app.Use("/ws", func(c *fiber.Ctx) error {
+		if websocket.IsWebSocketUpgrade(c) {
+			c.Locals("allowed", true)
+			return c.Next()
+		}
+		return fiber.ErrUpgradeRequired
+	})
+	s.app.Get("/ws", websocket.New(s.handleWebSocket))
 }
 
 // App returns the Fiber app instance
@@ -949,16 +965,179 @@ func (s *Server) parseRedisConfig(configMap map[string]interface{}) (storage.Mon
 	return storage.MonitorConfig{Redis: redisConfig}, nil
 }
 
-// convertConfigToYAML converts MonitorConfig to YAML string for storage
+// convertConfigToYAML converts MonitorConfig to YAML string
 func (s *Server) convertConfigToYAML(config storage.MonitorConfig) (string, error) {
-	if config.HTTP == nil && config.TCP == nil && config.GRPC == nil && config.Redis == nil {
-		return "", nil
-	}
-
-	yamlData, err := yaml.Marshal(config)
+	data, err := yaml.Marshal(config)
 	if err != nil {
 		return "", fmt.Errorf("failed to marshal config to YAML: %w", err)
 	}
+	return string(data), nil
+}
 
-	return string(yamlData), nil
+// handleWebSocket handles WebSocket connections
+func (s *Server) handleWebSocket(c *websocket.Conn) {
+	// Add connection to the map
+	s.wsMutex.Lock()
+	s.wsConnections[c] = true
+	s.wsMutex.Unlock()
+
+	// Remove connection when it closes
+	defer func() {
+		s.wsMutex.Lock()
+		delete(s.wsConnections, c)
+		s.wsMutex.Unlock()
+		c.Close()
+	}()
+
+	// Send initial data
+	if err := s.sendServiceUpdate(c); err != nil {
+		return
+	}
+
+	// Keep connection alive and handle messages
+	for {
+		_, _, err := c.ReadMessage()
+		if err != nil {
+			break
+		}
+	}
+}
+
+// sendServiceUpdate sends service updates to a specific WebSocket connection
+func (s *Server) sendServiceUpdate(conn *websocket.Conn) error {
+	// Get all services with incident statistics (without locking)
+	services, err := s.monitorService.GetAllServiceConfigs(context.Background())
+	if err != nil {
+		return err
+	}
+
+	incidentStats, err := s.monitorService.GetAllServicesIncidentStats(context.Background())
+	if err != nil {
+		return err
+	}
+
+	// Create a map for quick lookup of incident stats by service ID
+	statsMap := make(map[string]*storage.ServiceIncidentStats)
+	for _, stats := range incidentStats {
+		statsMap[stats.ServiceID] = stats
+	}
+
+	// Convert services to DTO with incident statistics
+	serviceDTOs := make([]ServiceTableDTO, len(services))
+	for i, service := range services {
+		// Convert config to YAML string
+		configYAML, err := s.convertConfigToYAML(service.Config)
+		if err != nil {
+			continue
+		}
+
+		dto := ServiceTableDTO{
+			ID:              service.ID,
+			Name:            service.Name,
+			Protocol:        service.Protocol,
+			Endpoint:        service.Endpoint,
+			Interval:        service.Interval,
+			Timeout:         service.Timeout,
+			Retries:         service.Retries,
+			Tags:            service.Tags,
+			Config:          configYAML,
+			State:           service.State,
+			ActiveIncidents: 0,
+			TotalIncidents:  0,
+		}
+
+		// Add incident statistics if available
+		if stats, exists := statsMap[service.ID]; exists {
+			dto.ActiveIncidents = stats.ActiveIncidents
+			dto.TotalIncidents = stats.TotalIncidents
+		}
+
+		serviceDTOs[i] = dto
+	}
+
+	// Send update message
+	update := fiber.Map{
+		"type":      "service_update",
+		"services":  serviceDTOs,
+		"timestamp": time.Now().Unix(),
+	}
+
+	// Lock only for WebSocket write
+	s.wsMutex.Lock()
+	defer s.wsMutex.Unlock()
+
+	return conn.WriteJSON(update)
+}
+
+// BroadcastServiceUpdate sends service updates to all connected WebSocket clients
+func (s *Server) BroadcastServiceUpdate() {
+	// Get updated service data (without locking)
+	services, err := s.monitorService.GetAllServiceConfigs(context.Background())
+	if err != nil {
+		return
+	}
+
+	incidentStats, err := s.monitorService.GetAllServicesIncidentStats(context.Background())
+	if err != nil {
+		return
+	}
+
+	// Create a map for quick lookup of incident stats by service ID
+	statsMap := make(map[string]*storage.ServiceIncidentStats)
+	for _, stats := range incidentStats {
+		statsMap[stats.ServiceID] = stats
+	}
+
+	// Convert services to DTO with incident statistics
+	serviceDTOs := make([]ServiceTableDTO, len(services))
+	for i, service := range services {
+		// Convert config to YAML string
+		configYAML, err := s.convertConfigToYAML(service.Config)
+		if err != nil {
+			continue
+		}
+
+		dto := ServiceTableDTO{
+			ID:              service.ID,
+			Name:            service.Name,
+			Protocol:        service.Protocol,
+			Endpoint:        service.Endpoint,
+			Interval:        service.Interval,
+			Timeout:         service.Timeout,
+			Retries:         service.Retries,
+			Tags:            service.Tags,
+			Config:          configYAML,
+			State:           service.State,
+			ActiveIncidents: 0,
+			TotalIncidents:  0,
+		}
+
+		// Add incident statistics if available
+		if stats, exists := statsMap[service.ID]; exists {
+			dto.ActiveIncidents = stats.ActiveIncidents
+			dto.TotalIncidents = stats.TotalIncidents
+		}
+
+		serviceDTOs[i] = dto
+	}
+
+	// Prepare update message
+	update := fiber.Map{
+		"type":      "service_update",
+		"services":  serviceDTOs,
+		"timestamp": time.Now().Unix(),
+	}
+
+	// Lock only for WebSocket operations
+	s.wsMutex.Lock()
+	defer s.wsMutex.Unlock()
+
+	// Send to all connections
+	for conn := range s.wsConnections {
+		if err := conn.WriteJSON(update); err != nil {
+			// Remove failed connection
+			delete(s.wsConnections, conn)
+			conn.Close()
+		}
+	}
 }
