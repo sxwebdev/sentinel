@@ -322,7 +322,14 @@ func (s *Server) handleAPIServiceResolve(c *fiber.Ctx) error {
 		})
 	}
 
-	err := s.monitorService.ForceResolveIncidents(c.Context(), serviceID)
+	service, err := s.monitorService.GetServiceByID(c.Context(), serviceID)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "service not found: " + serviceID,
+		})
+	}
+
+	err = s.monitorService.ForceResolveIncidents(c.Context(), serviceID, service.Name)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
@@ -388,6 +395,7 @@ func (s *Server) handleAPIDashboardStats(c *fiber.Ctx) error {
 
 	// Calculate service status distribution and protocol distribution
 	totalResponseTime := time.Duration(0)
+	servicesWithResponseTime := 0
 	totalChecks := 0
 	upServices := 0
 	var lastCheckTime *time.Time
@@ -405,9 +413,10 @@ func (s *Server) handleAPIDashboardStats(c *fiber.Ctx) error {
 				stats["services_unknown"] = stats["services_unknown"].(int) + 1
 			}
 
-			// Sum response times and checks
+			// Sum response times (only from services that have response time data)
 			if service.State.ResponseTime > 0 {
 				totalResponseTime += service.State.ResponseTime
+				servicesWithResponseTime++
 			}
 			totalChecks += service.State.TotalChecks
 
@@ -431,8 +440,8 @@ func (s *Server) handleAPIDashboardStats(c *fiber.Ctx) error {
 	if upServices > 0 {
 		stats["uptime_percentage"] = float64(upServices) / float64(len(services)) * 100
 	}
-	if totalChecks > 0 {
-		stats["avg_response_time"] = totalResponseTime.Milliseconds() / int64(totalChecks)
+	if servicesWithResponseTime > 0 {
+		stats["avg_response_time"] = totalResponseTime.Milliseconds() / int64(servicesWithResponseTime)
 	}
 	stats["total_checks"] = totalChecks
 
