@@ -27,54 +27,65 @@
 
       <!-- Dashboard Statistics -->
       <div class="stats-grid">
-        <div class="dashboard-stat-card info">
-          <div class="stat-icon">📊</div>
+        <div class="dashboard-stat-card">
           <div class="stat-value" id="totalServices">-</div>
           <div class="stat-label">Всего сервисов</div>
         </div>
-        <div class="dashboard-stat-card success">
-          <div class="stat-icon">✅</div>
+        <div class="dashboard-stat-card">
           <div class="stat-value" id="servicesUp">-</div>
           <div class="stat-label">Работают</div>
         </div>
-        <div class="dashboard-stat-card danger">
-          <div class="stat-icon">❌</div>
+        <div class="dashboard-stat-card">
           <div class="stat-value" id="servicesDown">-</div>
           <div class="stat-label">Не работают</div>
         </div>
-        <div class="dashboard-stat-card info">
-          <div class="stat-icon">📈</div>
-          <div class="stat-value" id="uptimePercentage">-</div>
-          <div class="stat-label">Время работы (%)</div>
-        </div>
-        <div class="dashboard-stat-card warning">
-          <div class="stat-icon">⚠️</div>
+        <div class="dashboard-stat-card">
           <div class="stat-value" id="activeIncidents">-</div>
           <div class="stat-label">Активные инциденты</div>
         </div>
-        <div class="dashboard-stat-card info">
-          <div class="stat-icon">⚡</div>
+        <div class="dashboard-stat-card">
+          <div class="stat-value" id="uptimePercentage">-</div>
+          <div class="stat-label">Uptime (%)</div>
+        </div>
+        <div class="dashboard-stat-card">
           <div class="stat-value" id="avgResponseTime">-</div>
           <div class="stat-label">Среднее время ответа (мс)</div>
         </div>
-        <div class="dashboard-stat-card info">
-          <div class="stat-icon">🔍</div>
+        <div class="dashboard-stat-card">
           <div class="stat-value" id="totalChecks">-</div>
           <div class="stat-label">Всего проверок</div>
         </div>
-        <div class="dashboard-stat-card info">
-          <div class="stat-icon">🔄</div>
+        <div class="dashboard-stat-card">
           <div class="stat-value" id="checksPerMinute">-</div>
           <div class="stat-label">Проверок в минуту</div>
         </div>
       </div>
 
       <!-- Protocol Distribution -->
-      <div class="card" style="margin-bottom: 1.5rem">
-        <div class="card-header">
+      <div class="accordion-card" style="margin-bottom: 1.5rem">
+        <div
+          class="accordion-header"
+          onclick="toggleAccordion('protocolAccordion')"
+        >
           <h3>Распределение по протоколам</h3>
+          <span class="accordion-icon" id="protocolAccordionIcon">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="lucide lucide-chevron-down-icon lucide-chevron-down"
+            >
+              <path d="m6 9 6 6 6-6" />
+            </svg>
+          </span>
         </div>
-        <div class="card-body">
+        <div class="accordion-body" id="protocolAccordion">
           <div class="protocol-stats" id="protocolStats">
             <div class="loading">Загрузка...</div>
           </div>
@@ -93,6 +104,7 @@
                 <tr>
                   <th>Service</th>
                   <th>Status</th>
+                  <th>Tags</th>
                   <th>Endpoint</th>
                   <th>Last Check</th>
                   <th>Actions</th>
@@ -113,27 +125,118 @@
                       {{$service.State.Status | statusToString}}
                     </span>
                   </td>
+                  <td>
+                    {{if $service.Tags}} {{range $tag := $service.Tags}}
+                    <span class="tag-badge">{{$tag}}</span>
+                    {{end}} {{else}}
+                    <span class="no-tags">—</span>
+                    {{end}}
+                  </td>
                   <td>{{$service.Endpoint}}</td>
                   <td>{{$service.State.LastCheck | formatDateTimePtr}}</td>
                   <td>
-                    <button
-                      class="btn btn-secondary"
-                      onclick="triggerCheck('{{$service.ID}}')"
-                    >
-                      Check
-                    </button>
-                    <button
-                      class="btn btn-warning"
-                      onclick="editService('{{$service.ID}}')"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      class="btn btn-danger"
-                      onclick="deleteService('{{$service.ID}}', '{{$service.Name}}')"
-                    >
-                      Delete
-                    </button>
+                    <div class="dropdown">
+                      <button
+                        class="dropdown-toggle"
+                        onclick="toggleDropdown('{{$service.ID}}', event)"
+                      >
+                        Actions
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="24"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          class="lucide lucide-chevron-down-icon lucide-chevron-down"
+                        >
+                          <path d="m6 9 6 6 6-6" />
+                        </svg>
+                      </button>
+                      <div class="dropdown-menu" id="dropdown-{{$service.ID}}">
+                        <button
+                          class="dropdown-item"
+                          onclick="triggerCheck('{{$service.ID}}')"
+                        >
+                          <span class="dropdown-icon">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="24"
+                              height="24"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="2"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              class="lucide lucide-refresh-cw-icon lucide-refresh-cw"
+                            >
+                              <path
+                                d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"
+                              />
+                              <path d="M21 3v5h-5" />
+                              <path
+                                d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"
+                              />
+                              <path d="M8 16H3v5" />
+                            </svg>
+                          </span>
+                          Check
+                        </button>
+                        <button
+                          class="dropdown-item"
+                          onclick="editService('{{$service.ID}}')"
+                        >
+                          <span class="dropdown-icon">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="24"
+                              height="24"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="2"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              class="lucide lucide-pencil-icon lucide-pencil"
+                            >
+                              <path
+                                d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"
+                              />
+                              <path d="m15 5 4 4" />
+                            </svg>
+                          </span>
+                          Edit
+                        </button>
+                        <button
+                          class="dropdown-item"
+                          onclick="deleteService('{{$service.ID}}', '{{$service.Name}}')"
+                        >
+                          <span class="dropdown-icon">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="24"
+                              height="24"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="2"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              class="lucide lucide-trash-icon lucide-trash"
+                            >
+                              <path d="M3 6h18" />
+                              <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                              <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                            </svg>
+                          </span>
+                          Delete
+                        </button>
+                      </div>
+                    </div>
                   </td>
                 </tr>
                 {{end}}
@@ -268,7 +371,7 @@
             document.getElementById("activeIncidents").textContent =
               stats.active_incidents;
             document.getElementById("avgResponseTime").textContent =
-              stats.avg_response_time;
+              stats.avg_response_time + " мс";
             document.getElementById("totalChecks").textContent =
               stats.total_checks;
             document.getElementById("checksPerMinute").textContent =
@@ -362,9 +465,9 @@
         const responseCard = document
           .getElementById("avgResponseTime")
           .closest(".dashboard-stat-card");
-        if (stats.avg_response_time <= 100) {
+        if (stats.avg_response_time <= 200) {
           responseCard.className = "dashboard-stat-card success";
-        } else if (stats.avg_response_time <= 500) {
+        } else if (stats.avg_response_time <= 1000) {
           responseCard.className = "dashboard-stat-card warning";
         } else {
           responseCard.className = "dashboard-stat-card danger";
@@ -372,6 +475,7 @@
       }
 
       function triggerCheck(serviceId) {
+        closeAllDropdowns();
         fetch(`/api/services/${serviceId}/check`, {
           method: "POST",
         })
@@ -396,6 +500,7 @@
       }
 
       function editService(serviceId) {
+        closeAllDropdowns();
         currentServiceId = serviceId;
         document.getElementById("modalTitle").textContent = "Edit Service";
 
@@ -466,6 +571,7 @@
       }
 
       function deleteService(serviceId, serviceName) {
+        closeAllDropdowns();
         if (
           confirm(`Are you sure you want to delete service "${serviceName}"?`)
         ) {
@@ -631,6 +737,16 @@ db: 0`;
                   ? service.state.last_check
                   : null;
 
+              // Generate tags HTML
+              let tagsHtml = "";
+              if (service.tags && service.tags.length > 0) {
+                tagsHtml = service.tags
+                  .map((tag) => `<span class="tag-badge">${tag}</span>`)
+                  .join("");
+              } else {
+                tagsHtml = '<span class="no-tags">—</span>';
+              }
+
               row.innerHTML = `
                 <td>
                   <a href="/service/${service.id}" class="service-name">${
@@ -642,24 +758,55 @@ db: 0`;
                     ${status.toUpperCase()}
                   </span>
                 </td>
+                <td>${tagsHtml}</td>
                 <td>${service.endpoint}</td>
                 <td>${formatDateTime(lastCheck)}</td>
                 <td>
-                  <button class="btn btn-secondary" onclick="triggerCheck('${
-                    service.id
-                  }')">
-                    Check
-                  </button>
-                  <button class="btn btn-warning" onclick="editService('${
-                    service.id
-                  }')">
-                    Edit
-                  </button>
-                  <button class="btn btn-danger" onclick="deleteService('${
-                    service.id
-                  }', '${service.name}')">
-                    Delete
-                  </button>
+                  <div class="dropdown">
+                    <button class="dropdown-toggle" onclick="toggleDropdown('${
+                      service.id
+                    }', event)">
+                      Actions
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down-icon lucide-chevron-down">
+                        <path d="m6 9 6 6 6-6"/>
+                      </svg>
+                    </button>
+                    <div class="dropdown-menu" id="dropdown-${service.id}">
+                      <button class="dropdown-item" onclick="triggerCheck('${
+                        service.id
+                      }')">
+                        <span class="dropdown-icon">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-refresh-cw-icon lucide-refresh-cw">
+                            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                            <path d="M21 3v5h-5"/>
+                            <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                            <path d="M8 16H3v5"/>
+                          </svg>
+                        </span> Check
+                      </button>
+                      <button class="dropdown-item" onclick="editService('${
+                        service.id
+                      }')">
+                        <span class="dropdown-icon">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pencil-icon lucide-pencil">
+                            <path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/>
+                            <path d="m15 5 4 4"/>
+                          </svg>
+                        </span> Edit
+                      </button>
+                      <button class="dropdown-item" onclick="deleteService('${
+                        service.id
+                      }', '${service.name}')">
+                        <span class="dropdown-icon">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash-icon lucide-trash">
+                            <path d="M3 6h18"/>
+                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+                            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                          </svg>
+                        </span> Delete
+                      </button>
+                    </div>
+                  </div>
                 </td>
               `;
               tbody.appendChild(row);
@@ -679,12 +826,95 @@ db: 0`;
       // Load initial data
       loadDashboardStats();
 
+      // Initialize accordion as collapsed
+      document.addEventListener("DOMContentLoaded", function () {
+        const accordionBody = document.getElementById("protocolAccordion");
+        const accordionIcon = document.getElementById("protocolAccordionIcon");
+        if (accordionBody && accordionIcon) {
+          accordionBody.style.display = "none";
+          accordionIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-up-icon lucide-chevron-up"><path d="m18 15-6-6-6 6"/></svg>`;
+        }
+      });
+
       // Helper function to format datetime
       function formatDateTime(dateString) {
         if (!dateString) return "Never";
         const date = new Date(dateString);
         return date.toLocaleString();
       }
+
+      // Accordion toggle function
+      function toggleAccordion(accordionId) {
+        const accordionBody = document.getElementById(accordionId);
+        const accordionIcon = document.getElementById(accordionId + "Icon");
+
+        if (accordionBody.style.display === "none") {
+          accordionBody.style.display = "block";
+          accordionIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down-icon lucide-chevron-down"><path d="m6 9 6 6 6-6"/></svg>`;
+        } else {
+          accordionBody.style.display = "none";
+          accordionIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-up-icon lucide-chevron-up"><path d="m18 15-6-6-6 6"/></svg>`;
+        }
+      }
+
+      // Dropdown toggle function
+      function toggleDropdown(serviceId, event) {
+        // Prevent event bubbling
+        if (event) {
+          event.stopPropagation();
+        }
+
+        const dropdownMenu = document.getElementById("dropdown-" + serviceId);
+        const dropdownToggle = dropdownMenu.previousElementSibling;
+
+        // Close all other dropdowns
+        const allDropdowns = document.querySelectorAll(".dropdown-menu");
+        allDropdowns.forEach((dropdown) => {
+          if (dropdown !== dropdownMenu) {
+            dropdown.classList.remove("show");
+          }
+        });
+
+        // Toggle current dropdown
+        dropdownMenu.classList.toggle("show");
+
+        // Update toggle button text
+        if (dropdownMenu.classList.contains("show")) {
+          dropdownToggle.innerHTML = `Actions
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-up-icon lucide-chevron-up">
+              <path d="m18 15-6-6-6 6"/>
+            </svg>`;
+        } else {
+          dropdownToggle.innerHTML = `Actions
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down-icon lucide-chevron-down">
+              <path d="m6 9 6 6 6-6"/>
+            </svg>`;
+        }
+      }
+
+      // Function to close all dropdowns
+      function closeAllDropdowns() {
+        const allDropdowns = document.querySelectorAll(".dropdown-menu");
+        allDropdowns.forEach((dropdown) => {
+          dropdown.classList.remove("show");
+        });
+
+        // Reset all toggle buttons
+        const allToggles = document.querySelectorAll(".dropdown-toggle");
+        allToggles.forEach((toggle) => {
+          toggle.innerHTML = `Actions
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down-icon lucide-chevron-down">
+              <path d="m6 9 6 6 6-6"/>
+            </svg>`;
+        });
+      }
+
+      // Close dropdowns when clicking outside
+      document.addEventListener("click", function (event) {
+        if (!event.target.closest(".dropdown")) {
+          closeAllDropdowns();
+        }
+      });
     </script>
   </body>
 </html>

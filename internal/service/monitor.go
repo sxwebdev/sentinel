@@ -254,12 +254,12 @@ func (m *MonitorService) RecordSuccess(ctx context.Context, serviceID string, re
 
 	// If service was down and now up, resolve all active incidents for this service
 	if wasDown {
-		if err := m.resolveAllActiveIncidents(ctx, serviceID); err != nil {
+		if err := m.resolveAllActiveIncidents(ctx, serviceID, service.Name); err != nil {
 			return fmt.Errorf("failed to resolve active incidents: %w", err)
 		}
 	} else {
 		// Even if service was already up, check for any lingering active incidents and resolve them
-		if err := m.resolveAllActiveIncidents(ctx, serviceID); err != nil {
+		if err := m.resolveAllActiveIncidents(ctx, serviceID, service.Name); err != nil {
 			return fmt.Errorf("failed to resolve lingering incidents: %w", err)
 		}
 	}
@@ -333,7 +333,7 @@ func (m *MonitorService) createIncident(ctx context.Context, serviceID, serviceN
 }
 
 // resolveActiveIncident resolves the active incident when a service recovers
-func (m *MonitorService) resolveActiveIncident(ctx context.Context, serviceID string) error {
+func (m *MonitorService) resolveActiveIncident(ctx context.Context, serviceID string, serviceName string) error {
 	// Get active incidents for the service
 	incidents, err := m.store.GetActiveIncidents(ctx)
 	if err != nil {
@@ -359,7 +359,7 @@ func (m *MonitorService) resolveActiveIncident(ctx context.Context, serviceID st
 
 			// Send recovery notification
 			if m.notifier != nil {
-				if err := m.notifier.SendRecovery(incident.ServiceID, incident); err != nil {
+				if err := m.notifier.SendRecovery(serviceName, incident); err != nil {
 					return fmt.Errorf("failed to send recovery notification: %w", err)
 				}
 			}
@@ -407,11 +407,11 @@ func (m *MonitorService) TriggerCheck(ctx context.Context, serviceID string) err
 }
 
 // resolveAllActiveIncidents resolves all active incidents for a service
-func (m *MonitorService) resolveAllActiveIncidents(ctx context.Context, serviceID string) error {
-	return m.resolveActiveIncident(ctx, serviceID)
+func (m *MonitorService) resolveAllActiveIncidents(ctx context.Context, serviceID string, serviceName string) error {
+	return m.resolveActiveIncident(ctx, serviceID, serviceName)
 }
 
 // ForceResolveIncidents manually resolves all active incidents for a service
-func (m *MonitorService) ForceResolveIncidents(ctx context.Context, serviceID string) error {
-	return m.resolveAllActiveIncidents(ctx, serviceID)
+func (m *MonitorService) ForceResolveIncidents(ctx context.Context, serviceID string, serviceName string) error {
+	return m.resolveAllActiveIncidents(ctx, serviceID, serviceName)
 }
