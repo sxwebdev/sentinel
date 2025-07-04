@@ -362,5 +362,15 @@ func (s *Scheduler) UpdateServiceDynamic(ctx context.Context, cfg storage.Servic
 	s.wg.Add(1)
 	go s.monitorService(ctx, job)
 
+	// Perform immediate check with updated configuration
+	go func() {
+		// Small delay to ensure the new job is properly started
+		time.Sleep(100 * time.Millisecond)
+		if err := s.performCheck(ctx, job); err != nil {
+			// Log error but don't fail the update
+			return
+		}
+	}()
+
 	return nil
 }
