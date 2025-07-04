@@ -725,7 +725,9 @@ db: 0`;
         const accordionIcon = document.getElementById("protocolAccordionIcon");
         if (accordionBody && accordionIcon) {
           accordionBody.style.display = "none";
-          accordionIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-up-icon lucide-chevron-up"><path d="m18 15-6-6-6 6"/></svg>`;
+          accordionIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down-icon lucide-chevron-down">
+                        <path d="m6 9 6 6 6-6"/>
+                      </svg>`;
         }
       });
 
@@ -765,14 +767,50 @@ db: 0`;
         allDropdowns.forEach((dropdown) => {
           if (dropdown !== dropdownMenu) {
             dropdown.classList.remove("show");
+            dropdown.style.top = "";
+            dropdown.style.left = "";
           }
         });
 
         // Toggle current dropdown
-        dropdownMenu.classList.toggle("show");
+        const isShowing = dropdownMenu.classList.toggle("show");
+
+        if (isShowing) {
+          // Calculate position relative to viewport
+          const toggleRect = dropdownToggle.getBoundingClientRect();
+          const menuWidth = 140; // min-width from CSS
+          const menuHeight = 120; // approximate height of dropdown menu
+
+          // Calculate vertical position
+          let topPosition = toggleRect.bottom + 5;
+          const viewportHeight = window.innerHeight;
+
+          // If dropdown would overflow bottom, position it above the button
+          if (topPosition + menuHeight > viewportHeight) {
+            topPosition = toggleRect.top - menuHeight - 5;
+          }
+
+          dropdownMenu.style.top = topPosition + "px";
+
+          // Calculate horizontal position
+          const rightEdge = toggleRect.right;
+          const viewportWidth = window.innerWidth;
+
+          if (rightEdge + menuWidth > viewportWidth) {
+            // If dropdown would overflow right edge, align to left
+            dropdownMenu.style.left = rightEdge - menuWidth + "px";
+          } else {
+            // Otherwise align to right edge
+            dropdownMenu.style.left = rightEdge - menuWidth + "px";
+          }
+        } else {
+          // Clear positioning when hiding
+          dropdownMenu.style.top = "";
+          dropdownMenu.style.left = "";
+        }
 
         // Update toggle button text
-        if (dropdownMenu.classList.contains("show")) {
+        if (isShowing) {
           dropdownToggle.innerHTML = `Actions
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-up-icon lucide-chevron-up">
               <path d="m18 15-6-6-6 6"/>
@@ -790,6 +828,8 @@ db: 0`;
         const allDropdowns = document.querySelectorAll(".dropdown-menu");
         allDropdowns.forEach((dropdown) => {
           dropdown.classList.remove("show");
+          dropdown.style.top = "";
+          dropdown.style.left = "";
         });
 
         // Reset all toggle buttons

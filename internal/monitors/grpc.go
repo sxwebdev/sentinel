@@ -109,7 +109,7 @@ func (g *GRPCMonitor) checkConnectionState(ctx context.Context) error {
 		g.conn.Connect()
 
 		// Wait for state change with timeout
-		connectCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
+		connectCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 		defer cancel()
 
 		if g.conn.WaitForStateChange(connectCtx, state) {

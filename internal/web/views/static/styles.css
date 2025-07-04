@@ -105,6 +105,7 @@ body {
 /* Tables */
 .table-container {
   overflow-x: auto;
+  overflow-y: visible;
   border-radius: 8px;
   border: 1px solid #e2e8f0;
 }
@@ -213,6 +214,19 @@ body {
   display: inline-block;
 }
 
+.dropdown-menu {
+  position: fixed;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  min-width: 140px;
+  z-index: 9999;
+  display: none;
+  overflow: hidden;
+}
+
 .dropdown-toggle {
   background: #f8fafc;
   border: 1px solid #e2e8f0;
@@ -237,21 +251,6 @@ body {
 .dropdown-toggle:hover {
   background: #f1f5f9;
   border-color: #cbd5e1;
-}
-
-.dropdown-menu {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
-    0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  min-width: 140px;
-  z-index: 1000;
-  display: none;
-  overflow: hidden;
 }
 
 .dropdown-menu.show {
