@@ -268,38 +268,60 @@ func (o *ORMStorage) UpdateIncident(ctx context.Context, incident *Incident) err
 
 // GetServiceStatsWithORM calculates statistics for a service using ORM
 func (o *ORMStorage) GetServiceStatsWithORM(ctx context.Context, serviceID string, since time.Time) (*ServiceStats, error) {
-	// Get total incidents
-	sb := sqlbuilder.NewSelectBuilder()
-	sb.Select("COUNT(*) as total_incidents")
-	sb.From("incidents")
+	// Get all incidents for the service since the specified time
+	sb := o.QueryIncidents()
 	sb.Where(sb.Equal("service_id", serviceID), sb.GE("start_time", since))
 
 	sql, args := sb.Build()
-	var totalIncidents int
-	err := o.db.QueryRowContext(ctx, sql, args...).Scan(&totalIncidents)
+	rows, err := o.db.QueryContext(ctx, sql, args...)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get total incidents: %w", err)
+		return nil, fmt.Errorf("failed to query incidents: %w", err)
+	}
+	defer rows.Close()
+
+	var incidents []*Incident
+	for rows.Next() {
+		var incidentRow IncidentRow
+		err := rows.Scan(
+			&incidentRow.ID,
+			&incidentRow.ServiceID,
+			&incidentRow.StartTime,
+			&incidentRow.EndTime,
+			&incidentRow.Error,
+			&incidentRow.DurationNS,
+			&incidentRow.Resolved,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan incident: %w", err)
+		}
+
+		incidents = append(incidents, o.rowToIncident(&incidentRow))
 	}
 
-	// Get total downtime
-	sb2 := sqlbuilder.NewSelectBuilder()
-	sb2.Select("COALESCE(SUM(duration_ns), 0) as total_downtime_ns")
-	sb2.From("incidents")
-	sb2.Where(sb2.Equal("service_id", serviceID), sb2.GE("start_time", since), sb2.Equal("resolved", true))
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating rows: %w", err)
+	}
 
-	sql2, args2 := sb2.Build()
-	var totalDowntimeNS int64
-	err = o.db.QueryRowContext(ctx, sql2, args2...).Scan(&totalDowntimeNS)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get total downtime: %w", err)
+	// Calculate statistics
+	totalIncidents := len(incidents)
+	totalDowntime := time.Duration(0)
+	resolvedIncidents := 0
+
+	for _, incident := range incidents {
+		if incident.Resolved && incident.Duration != nil {
+			totalDowntime += *incident.Duration
+			resolvedIncidents++
+		}
 	}
 
 	// Calculate uptime percentage
 	period := time.Since(since)
-	totalDowntime := time.Duration(totalDowntimeNS)
 	uptimePercentage := 100.0
 	if period > 0 {
-		uptimePercentage = float64(period-totalDowntime) / float64(period) * 100
+		uptimePercentage = 100.0 - (float64(totalDowntime) / float64(period) * 100.0)
+		if uptimePercentage < 0 {
+			uptimePercentage = 0
+		}
 	}
 
 	return &ServiceStats{
@@ -309,6 +331,48 @@ func (o *ORMStorage) GetServiceStatsWithORM(ctx context.Context, serviceID strin
 		UptimePercentage: uptimePercentage,
 		Period:           period,
 	}, nil
+}
+
+// GetAllServicesIncidentStats gets incident statistics for all services using ORM
+func (o *ORMStorage) GetAllServicesIncidentStats(ctx context.Context) ([]*ServiceIncidentStats, error) {
+	// Query to get incident statistics for all services
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select(
+		"service_id",
+		"COUNT(*) as total_incidents",
+		"SUM(CASE WHEN resolved = 0 THEN 1 ELSE 0 END) as active_incidents",
+	)
+	sb.From("incidents")
+	sb.GroupBy("service_id")
+
+	sql, args := sb.Build()
+	rows, err := o.db.QueryContext(ctx, sql, args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query incident statistics: %w", err)
+	}
+	defer rows.Close()
+
+	var stats []*ServiceIncidentStats
+	for rows.Next() {
+		var serviceID string
+		var totalIncidents, activeIncidents int
+		err := rows.Scan(&serviceID, &totalIncidents, &activeIncidents)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan incident statistics: %w", err)
+		}
+
+		stats = append(stats, &ServiceIncidentStats{
+			ServiceID:       serviceID,
+			ActiveIncidents: activeIncidents,
+			TotalIncidents:  totalIncidents,
+		})
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating rows: %w", err)
+	}
+
+	return stats, nil
 }
 
 // rowToIncident converts an IncidentRow to Incident

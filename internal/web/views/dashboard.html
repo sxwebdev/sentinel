@@ -107,139 +107,16 @@
                   <th>Tags</th>
                   <th>Endpoint</th>
                   <th>Last Check</th>
+                  <th>Incidents</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {{range $service := .Services}}
                 <tr>
-                  <td>
-                    <a href="/service/{{$service.ID}}" class="service-name"
-                      >{{$service.Name}}</a
-                    >
-                  </td>
-                  <td>
-                    <span
-                      class="badge badge-{{$service.State.Status | statusToLower}}"
-                    >
-                      {{$service.State.Status | statusToString}}
-                    </span>
-                  </td>
-                  <td>
-                    {{if $service.Tags}} {{range $tag := $service.Tags}}
-                    <span class="tag-badge">{{$tag}}</span>
-                    {{end}} {{else}}
-                    <span class="no-tags">—</span>
-                    {{end}}
-                  </td>
-                  <td>{{$service.Endpoint}}</td>
-                  <td>{{$service.State.LastCheck | formatDateTimePtr}}</td>
-                  <td>
-                    <div class="dropdown">
-                      <button
-                        class="dropdown-toggle"
-                        onclick="toggleDropdown('{{$service.ID}}', event)"
-                      >
-                        Actions
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="24"
-                          height="24"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="2"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          class="lucide lucide-chevron-down-icon lucide-chevron-down"
-                        >
-                          <path d="m6 9 6 6 6-6" />
-                        </svg>
-                      </button>
-                      <div class="dropdown-menu" id="dropdown-{{$service.ID}}">
-                        <button
-                          class="dropdown-item"
-                          onclick="triggerCheck('{{$service.ID}}')"
-                        >
-                          <span class="dropdown-icon">
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="24"
-                              height="24"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              stroke-width="2"
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                              class="lucide lucide-refresh-cw-icon lucide-refresh-cw"
-                            >
-                              <path
-                                d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"
-                              />
-                              <path d="M21 3v5h-5" />
-                              <path
-                                d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"
-                              />
-                              <path d="M8 16H3v5" />
-                            </svg>
-                          </span>
-                          Check
-                        </button>
-                        <button
-                          class="dropdown-item"
-                          onclick="editService('{{$service.ID}}')"
-                        >
-                          <span class="dropdown-icon">
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="24"
-                              height="24"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              stroke-width="2"
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                              class="lucide lucide-pencil-icon lucide-pencil"
-                            >
-                              <path
-                                d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"
-                              />
-                              <path d="m15 5 4 4" />
-                            </svg>
-                          </span>
-                          Edit
-                        </button>
-                        <button
-                          class="dropdown-item"
-                          onclick="deleteService('{{$service.ID}}', '{{$service.Name}}')"
-                        >
-                          <span class="dropdown-icon">
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="24"
-                              height="24"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              stroke-width="2"
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                              class="lucide lucide-trash-icon lucide-trash"
-                            >
-                              <path d="M3 6h18" />
-                              <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                              <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                            </svg>
-                          </span>
-                          Delete
-                        </button>
-                      </div>
-                    </div>
+                  <td colspan="7" class="loading-row">
+                    <div class="loading">Загрузка сервисов...</div>
                   </td>
                 </tr>
-                {{end}}
               </tbody>
             </table>
           </div>
@@ -703,7 +580,7 @@ db: 0`;
 
       // Auto-refresh table every 30 seconds
       function refreshServicesTable() {
-        fetch("/api/services")
+        fetch("/api/services/table")
           .then((response) => {
             if (!response.ok) {
               throw new Error(`HTTP error! status: ${response.status}`);
@@ -762,6 +639,21 @@ db: 0`;
                 <td>${service.endpoint}</td>
                 <td>${formatDateTime(lastCheck)}</td>
                 <td>
+                  <div class="incidents-info">
+                    <span class="incident-count active ${
+                      (service.active_incidents || 0) === 0
+                        ? "no-incidents"
+                        : ""
+                    }" data-service-id="${service.id}">${
+                service.active_incidents || 0
+              }</span>
+                    <span class="incident-separator">/</span>
+                    <span class="incident-count total" data-service-id="${
+                      service.id
+                    }">${service.total_incidents || 0}</span>
+                  </div>
+                </td>
+                <td>
                   <div class="dropdown">
                     <button class="dropdown-toggle" onclick="toggleDropdown('${
                       service.id
@@ -812,7 +704,7 @@ db: 0`;
               tbody.appendChild(row);
             });
 
-            // Also refresh dashboard stats
+            // Also refresh dashboard stats (no need to call loadIncidentsData anymore)
             loadDashboardStats();
           })
           .catch((error) => {
@@ -825,6 +717,7 @@ db: 0`;
 
       // Load initial data
       loadDashboardStats();
+      refreshServicesTable();
 
       // Initialize accordion as collapsed
       document.addEventListener("DOMContentLoaded", function () {
@@ -850,10 +743,10 @@ db: 0`;
 
         if (accordionBody.style.display === "none") {
           accordionBody.style.display = "block";
-          accordionIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down-icon lucide-chevron-down"><path d="m6 9 6 6 6-6"/></svg>`;
+          accordionIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-up-icon lucide-chevron-up"><path d="m18 15-6-6-6 6"/></svg>`;
         } else {
           accordionBody.style.display = "none";
-          accordionIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-up-icon lucide-chevron-up"><path d="m18 15-6-6-6 6"/></svg>`;
+          accordionIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down-icon lucide-chevron-down"><path d="m6 9 6 6 6-6"/></svg>`;
         }
       }
 

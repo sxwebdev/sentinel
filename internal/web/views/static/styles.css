@@ -171,6 +171,42 @@ body {
   font-size: 0.875rem;
 }
 
+/* Incidents info in table */
+.incidents-info {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.incident-count {
+  font-weight: 600;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  min-width: 1.5rem;
+  text-align: center;
+}
+
+.incident-count.active {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.incident-count.active.no-incidents {
+  background: #dcfce7;
+  color: #059669;
+}
+
+.incident-count.total {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.incident-separator {
+  color: #9ca3af;
+  font-weight: 500;
+}
+
 /* Dropdown styles */
 .dropdown {
   position: relative;
@@ -787,6 +823,16 @@ body {
     width: 14px;
     height: 14px;
   }
+
+  .incidents-info {
+    font-size: 0.8rem;
+    gap: 0.2rem;
+  }
+
+  .incident-count {
+    padding: 0.15rem 0.3rem;
+    min-width: 1.2rem;
+  }
 }
 
 /* Loading states */
@@ -1063,4 +1109,16 @@ body {
   .protocol-percentage {
     font-size: 0.75rem;
   }
+}
+
+/* Loading row in table */
+.loading-row {
+  text-align: center;
+}
+
+.loading-row .loading {
+  padding: 1rem;
+  margin: 0;
+  font-style: italic;
+  color: #64748b;
 }

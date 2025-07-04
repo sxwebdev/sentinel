@@ -386,6 +386,11 @@ func (m *MonitorService) GetServiceStats(ctx context.Context, serviceID string, 
 	return m.store.GetServiceStats(ctx, serviceID, since)
 }
 
+// GetAllServicesIncidentStats gets incident statistics for all services
+func (m *MonitorService) GetAllServicesIncidentStats(ctx context.Context) ([]*storage.ServiceIncidentStats, error) {
+	return m.store.GetAllServicesIncidentStats(ctx)
+}
+
 // TriggerCheck triggers a manual check for a service
 func (m *MonitorService) TriggerCheck(ctx context.Context, serviceID string) error {
 	// Get service to check if it exists

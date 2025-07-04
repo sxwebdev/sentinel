@@ -35,6 +35,22 @@ type FlatServiceConfig struct {
 	State    *storage.ServiceState `json:"state,omitempty"`
 }
 
+// ServiceTableDTO represents a service with incident statistics for table display
+type ServiceTableDTO struct {
+	ID              string                `json:"id"`
+	Name            string                `json:"name"`
+	Protocol        string                `json:"protocol"`
+	Endpoint        string                `json:"endpoint"`
+	Interval        time.Duration         `json:"interval"`
+	Timeout         time.Duration         `json:"timeout"`
+	Retries         int                   `json:"retries"`
+	Tags            []string              `json:"tags"`
+	Config          string                `json:"config"` // YAML string
+	State           *storage.ServiceState `json:"state,omitempty"`
+	ActiveIncidents int                   `json:"active_incidents"`
+	TotalIncidents  int                   `json:"total_incidents"`
+}
+
 // Server represents the web server
 type Server struct {
 	monitorService *service.MonitorService
@@ -121,6 +137,7 @@ func (s *Server) setupRoutes() {
 	// API routes
 	api := s.app.Group("/api")
 	api.Get("/services", s.handleAPIServices)
+	api.Get("/services/table", s.handleAPIServicesTable)
 	api.Get("/services/:id", s.handleAPIServiceDetail)
 	api.Get("/services/:id/incidents", s.handleAPIServiceIncidents)
 	api.Get("/services/:id/stats", s.handleAPIServiceStats)
@@ -143,15 +160,8 @@ func (s *Server) App() *fiber.App {
 
 // handleDashboard renders the main dashboard
 func (s *Server) handleDashboard(c *fiber.Ctx) error {
-	// Get all services with their states
-	services, err := s.monitorService.GetAllServiceConfigs(c.Context())
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
-	}
-
 	return c.Render("views/dashboard", fiber.Map{
-		"Services": services,
-		"Title":    "Sentinel Dashboard",
+		"Title": "Sentinel Dashboard",
 		"Actions": []fiber.Map{
 			{
 				"Text":  "Refresh",
@@ -218,6 +228,68 @@ func (s *Server) handleAPIServices(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(services)
+}
+
+// handleAPIServicesTable returns services with incident statistics for table display
+func (s *Server) handleAPIServicesTable(c *fiber.Ctx) error {
+	// Get all services with their states
+	services, err := s.monitorService.GetAllServiceConfigs(c.Context())
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	// Get incident statistics for all services
+	incidentStats, err := s.monitorService.GetAllServicesIncidentStats(c.Context())
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	// Create a map for quick lookup of incident stats by service ID
+	statsMap := make(map[string]*storage.ServiceIncidentStats)
+	for _, stats := range incidentStats {
+		statsMap[stats.ServiceID] = stats
+	}
+
+	// Convert services to DTO with incident statistics
+	serviceDTOs := make([]ServiceTableDTO, len(services))
+	for i, service := range services {
+		// Convert config to YAML string
+		configYAML, err := s.convertConfigToYAML(service.Config)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": "failed to convert service config: " + err.Error(),
+			})
+		}
+
+		dto := ServiceTableDTO{
+			ID:              service.ID,
+			Name:            service.Name,
+			Protocol:        service.Protocol,
+			Endpoint:        service.Endpoint,
+			Interval:        service.Interval,
+			Timeout:         service.Timeout,
+			Retries:         service.Retries,
+			Tags:            service.Tags,
+			Config:          configYAML,
+			State:           service.State,
+			ActiveIncidents: 0,
+			TotalIncidents:  0,
+		}
+
+		// Add incident statistics if available
+		if stats, exists := statsMap[service.ID]; exists {
+			dto.ActiveIncidents = stats.ActiveIncidents
+			dto.TotalIncidents = stats.TotalIncidents
+		}
+
+		serviceDTOs[i] = dto
+	}
+
+	return c.JSON(serviceDTOs)
 }
 
 // handleAPIServiceDetail returns service details
