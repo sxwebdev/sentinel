@@ -10,6 +10,7 @@ Sentinel is a lightweight, multi-protocol service monitoring system written in G
 - **Multi-Provider Notifications**: Alert and recovery notifications via multiple providers (Telegram, Discord, Slack, Email, Webhooks, etc.)
 - **Web Dashboard**: Clean, responsive web interface with YAML configuration
 - **REST API**: Full API for integration with other tools
+- **WebSocket Support**: Real-time updates via WebSocket connections
 - **Persistent Storage**: Incident history using SQLite with improved concurrency handling
 - **Configuration**: YAML-based configuration with environment variable support
 - **Clean Logging**: Minimal logging focused on check results and notifications
@@ -91,100 +92,9 @@ notifications:
     - "slack://[botname@]token-a/token-b/token-c"
     # Email (optional)
     - "smtp://username:password@host:port/?from=fromAddress&to=recipient1[,recipient2,...]"
-
-services:
-  - name: "my-api"
-    protocol: "http"
-    endpoint: "https://api.example.com/health"
-    interval: 60s
-    timeout: 5s
-    retries: 2
-    tags: ["api", "critical"]
-    config:
-      method: "GET"
-      expected_status: 200
 ```
 
-### Protocol-Specific Configuration
-
-#### HTTP/HTTPS
-
-```yaml
-- name: "web-service"
-  protocol: "http"
-  endpoint: "https://example.com/health"
-  interval: 30s
-  timeout: 10s
-  retries: 3
-  tags: ["web", "critical"]
-  config:
-    method: "GET" # HTTP method
-    expected_status: 200 # Expected status code
-    headers: # Optional: custom headers
-      User-Agent: "Sentinel Monitor"
-      Authorization: "Bearer token"
-```
-
-#### TCP
-
-```yaml
-- name: "database"
-  protocol: "tcp"
-  endpoint: "db.example.com:5432"
-  interval: 30s
-  timeout: 5s
-  retries: 3
-  tags: ["database", "postgres"]
-  config:
-    send_data: "ping" # Optional: data to send
-    expect_data: "pong" # Optional: expected response
-```
-
-#### gRPC
-
-```yaml
-- name: "grpc-service"
-  protocol: "grpc"
-  endpoint: "grpc.example.com:50051"
-  interval: 30s
-  timeout: 10s
-  retries: 3
-  tags: ["grpc", "backend"]
-  config:
-    check_type: "health" # "health", "reflection", "connectivity"
-    service_name: "myapp.MyService" # Optional: specific service name
-    tls: true # Use TLS
-    insecure_tls: false # Skip TLS verification
-```
-
-#### Redis
-
-```yaml
-- name: "redis-cache"
-  protocol: "redis"
-  endpoint: "redis.example.com:6379"
-  interval: 30s
-  timeout: 5s
-  retries: 3
-  tags: ["cache", "redis"]
-  config:
-    password: "${REDIS_PASSWORD}" # Optional: Redis password
-    db: 0 # Redis database number
-```
-
-### gRPC Check Types
-
-The gRPC monitor supports three types of checks:
-
-1. **Health Check** (`check_type: "health"`): Uses standard gRPC health service (`grpc.health.v1.Health`)
-2. **Reflection Check** (`check_type: "reflection"`): Checks gRPC reflection availability
-3. **Connectivity Check** (`check_type: "connectivity"`): Simple connection test
-
-**Available check types:**
-
-- `health` - Standard gRPC health service check
-- `reflection` - gRPC reflection service check
-- `connectivity` - Basic connectivity test
+**Note**: Services are now managed through the web interface or API, not through static configuration in `config.yaml`.
 
 ## Web Interface
 
@@ -192,7 +102,7 @@ The gRPC monitor supports three types of checks:
 
 - **Service Management**: Add, edit, and delete services through the web interface
 - **YAML Configuration**: Configure services using YAML format directly in the UI
-- **Real-time Status**: Live status updates with auto-refresh every 30 seconds
+- **Real-time Status**: Live status updates with WebSocket connections
 - **Manual Checks**: Trigger manual health checks for any service
 - **Incident Management**: View and resolve incidents
 - **Service Details**: Detailed view with incident history and statistics
@@ -228,8 +138,8 @@ expect_data: "pong"
 **gRPC:**
 
 ```yaml
-check_type: "health"
-service_name: "myapp.MyService"
+check_type: "connectivity"
+service_name: ""
 tls: true
 insecure_tls: false
 ```
@@ -240,6 +150,20 @@ insecure_tls: false
 password: "your_password"
 db: 0
 ```
+
+### gRPC Check Types
+
+The gRPC monitor supports three types of checks:
+
+1. **Health Check** (`check_type: "health"`): Uses standard gRPC health service (`grpc.health.v1.Health`)
+2. **Reflection Check** (`check_type: "reflection"`): Checks gRPC reflection availability
+3. **Connectivity Check** (`check_type: "connectivity"`): Simple connection test
+
+**Available check types:**
+
+- `health` - Standard gRPC health service check
+- `reflection` - gRPC reflection service check
+- `connectivity` - Basic connectivity test
 
 ## Notification Setup
 
@@ -307,6 +231,14 @@ notifications:
 ```bash
 GET /api/services
 ```
+
+### Get Services Table Data
+
+```bash
+GET /api/services/table
+```
+
+Returns services with incident statistics for table display.
 
 ### Get Service Details
 
@@ -392,14 +324,62 @@ DELETE /api/services/{id}
 GET /api/incidents?limit=50
 ```
 
+### Get Dashboard Statistics
+
+```bash
+GET /api/dashboard/stats
+```
+
+Returns overall dashboard statistics including uptime percentage and average response time.
+
+## WebSocket API
+
+### Connect to WebSocket
+
+```javascript
+const ws = new WebSocket("ws://localhost:8080/ws");
+```
+
+### Message Format
+
+```json
+{
+  "type": "service_update",
+  "services": [
+    {
+      "id": "service-id",
+      "name": "Service Name",
+      "protocol": "http",
+      "endpoint": "https://example.com",
+      "interval": "30s",
+      "timeout": "10s",
+      "retries": 3,
+      "tags": ["api", "critical"],
+      "config": "method: \"GET\"\nexpected_status: 200",
+      "state": {
+        "status": "up",
+        "last_check": "2024-01-01T12:00:00Z",
+        "response_time": "150ms",
+        "consecutive_success": 10,
+        "total_checks": 100
+      },
+      "active_incidents": 0,
+      "total_incidents": 5
+    }
+  ],
+  "timestamp": 1704110400
+}
+```
+
 ## Monitoring Logic
 
 1. **Health Checks**: Each service is checked at configured intervals
 2. **Retry Logic**: Failed checks are retried with exponential backoff
 3. **State Changes**: Status changes trigger incident creation/resolution
 4. **Notifications**: Alerts sent only on status changes (UP ↔ DOWN)
-5. **Concurrent Access**: Improved SQLite handling for concurrent operations
-6. **Clean Logging**: Minimal logging focused on check results and notifications
+5. **Real-time Updates**: WebSocket broadcasts for instant UI updates
+6. **Concurrent Access**: Improved SQLite handling for concurrent operations
+7. **Clean Logging**: Minimal logging focused on check results and notifications
 
 ## Development
 
@@ -416,6 +396,7 @@ sentinel/
 │   ├── monitors/        # Protocol-specific monitors
 │   ├── storage/         # Data persistence (SQLite with retry logic)
 │   ├── notifier/        # Notification system
+│   ├── receiver/        # Event receiver for real-time updates
 │   ├── scheduler/       # Monitoring scheduler
 │   ├── service/         # Business logic
 │   └── web/             # Web interface with YAML configuration
