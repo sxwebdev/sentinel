@@ -11,6 +11,7 @@ import (
 
 	"github.com/sxwebdev/sentinel/internal/config"
 	"github.com/sxwebdev/sentinel/internal/notifier"
+	"github.com/sxwebdev/sentinel/internal/receiver"
 	"github.com/sxwebdev/sentinel/internal/scheduler"
 	"github.com/sxwebdev/sentinel/internal/service"
 	"github.com/sxwebdev/sentinel/internal/storage"
@@ -48,19 +49,23 @@ func run(ctx context.Context) error {
 		}
 	}
 
+	rc := receiver.New()
+	defer func() {
+		_ = rc.Stop(context.Background())
+	}()
+
+	if err := rc.Start(ctx); err != nil {
+		return err
+	}
+
 	// Initialize monitor service
-	monitorService := service.NewMonitorService(stor, notif)
+	monitorService := service.NewMonitorService(stor, notif, rc)
 
 	// Initialize scheduler
-	sched := scheduler.NewScheduler(monitorService)
-
-	// Set scheduler in monitor service
-	monitorService.SetScheduler(sched)
-
-	// Load services from database
-	if err := monitorService.LoadServicesFromStorage(ctx); err != nil {
-		return fmt.Errorf("failed to load services from storage: %w", err)
-	}
+	sched := scheduler.New(monitorService, rc)
+	defer func() {
+		sched.Stop(context.Background())
+	}()
 
 	// Start scheduler with initial check
 	shutdownCtx, shutdownCancel := context.WithCancel(ctx)
@@ -68,16 +73,22 @@ func run(ctx context.Context) error {
 
 	schedulerErr := make(chan error, 1)
 	go func() {
-		if err := sched.StartWithInitialCheck(shutdownCtx); err != nil {
+		if err := sched.Start(shutdownCtx); err != nil {
 			schedulerErr <- fmt.Errorf("scheduler error: %w", err)
 		}
 	}()
 
 	// Initialize web server
-	webServer, err := web.NewServer(monitorService, cfg)
+	webServer, err := web.NewServer(cfg, monitorService, rc)
 	if err != nil {
 		return fmt.Errorf("failed to initialize web server: %w", err)
 	}
+	go func() {
+		schedulerErr <- webServer.Start(ctx)
+	}()
+	defer func() {
+		_ = webServer.Stop(context.Background())
+	}()
 
 	// Start Fiber server
 	addr := fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port)

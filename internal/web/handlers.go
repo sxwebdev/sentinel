@@ -1,18 +1,22 @@
 package web
 
 import (
+	"context"
 	"embed"
 	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
+	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/template/html/v2"
 	"github.com/sxwebdev/sentinel/internal/config"
+	"github.com/sxwebdev/sentinel/internal/receiver"
 	"github.com/sxwebdev/sentinel/internal/service"
 	"github.com/sxwebdev/sentinel/internal/storage"
 	"gopkg.in/yaml.v3"
@@ -23,27 +27,49 @@ var viewsFS embed.FS
 
 // FlatServiceConfig represents a service with flat config structure
 type FlatServiceConfig struct {
-	ID       string                `json:"id"`
-	Name     string                `json:"name"`
-	Protocol string                `json:"protocol"`
-	Endpoint string                `json:"endpoint"`
-	Interval time.Duration         `json:"interval"`
-	Timeout  time.Duration         `json:"timeout"`
-	Retries  int                   `json:"retries"`
-	Tags     []string              `json:"tags"`
-	Config   string                `json:"config"` // YAML string
-	State    *storage.ServiceState `json:"state,omitempty"`
+	ID       string        `json:"id"`
+	Name     string        `json:"name"`
+	Protocol string        `json:"protocol"`
+	Endpoint string        `json:"endpoint"`
+	Interval time.Duration `json:"interval"`
+	Timeout  time.Duration `json:"timeout"`
+	Retries  int           `json:"retries"`
+	Tags     []string      `json:"tags"`
+	Config   string        `json:"config"` // YAML string
+}
+
+// ServiceTableDTO represents a service with incident statistics for table display
+type ServiceTableDTO struct {
+	ID              string                `json:"id"`
+	Name            string                `json:"name"`
+	Protocol        string                `json:"protocol"`
+	Endpoint        string                `json:"endpoint"`
+	Interval        time.Duration         `json:"interval"`
+	Timeout         time.Duration         `json:"timeout"`
+	Retries         int                   `json:"retries"`
+	Tags            []string              `json:"tags"`
+	Config          string                `json:"config"` // YAML string
+	State           *storage.ServiceState `json:"state,omitempty"`
+	ActiveIncidents int                   `json:"active_incidents"`
+	TotalIncidents  int                   `json:"total_incidents"`
 }
 
 // Server represents the web server
 type Server struct {
 	monitorService *service.MonitorService
+	receiver       *receiver.Receiver
 	config         *config.Config
 	app            *fiber.App
+	wsConnections  map[*websocket.Conn]bool
+	wsMutex        sync.Mutex
 }
 
 // NewServer creates a new web server
-func NewServer(monitorService *service.MonitorService, cfg *config.Config) (*Server, error) {
+func NewServer(
+	cfg *config.Config,
+	monitorService *service.MonitorService,
+	receiver *receiver.Receiver,
+) (*Server, error) {
 	// Create template engine with embedded templates
 	templateEngine := html.NewFileSystem(http.FS(viewsFS), ".html")
 
@@ -101,15 +127,37 @@ func NewServer(monitorService *service.MonitorService, cfg *config.Config) (*Ser
 	})
 
 	server := &Server{
-		monitorService: monitorService,
 		config:         cfg,
+		monitorService: monitorService,
+		receiver:       receiver,
 		app:            app,
+		wsConnections:  make(map[*websocket.Conn]bool),
 	}
 
 	// Setup routes
 	server.setupRoutes()
 
 	return server, nil
+}
+
+// Start starts the web server
+func (s *Server) Start(ctx context.Context) error {
+	errChan := make(chan error, 1)
+	go func() {
+		errChan <- s.subscribeEvents(ctx)
+	}()
+
+	select {
+	case err := <-errChan:
+		return err
+	case <-ctx.Done():
+	}
+
+	return nil
+}
+
+func (s *Server) Stop(_ context.Context) error {
+	return nil
 }
 
 // setupRoutes configures all routes
@@ -121,6 +169,7 @@ func (s *Server) setupRoutes() {
 	// API routes
 	api := s.app.Group("/api")
 	api.Get("/services", s.handleAPIServices)
+	api.Get("/services/table", s.handleAPIServicesTable)
 	api.Get("/services/:id", s.handleAPIServiceDetail)
 	api.Get("/services/:id/incidents", s.handleAPIServiceIncidents)
 	api.Get("/services/:id/stats", s.handleAPIServiceStats)
@@ -134,6 +183,16 @@ func (s *Server) setupRoutes() {
 	api.Put("/services/:id", s.handleAPIUpdateService)
 	api.Delete("/services/:id", s.handleAPIDeleteService)
 	api.Get("/services/config/:id", s.handleAPIGetServiceConfig)
+
+	// WebSocket endpoint
+	s.app.Use("/ws", func(c *fiber.Ctx) error {
+		if websocket.IsWebSocketUpgrade(c) {
+			c.Locals("allowed", true)
+			return c.Next()
+		}
+		return fiber.ErrUpgradeRequired
+	})
+	s.app.Get("/ws", websocket.New(s.handleWebSocket))
 }
 
 // App returns the Fiber app instance
@@ -143,15 +202,8 @@ func (s *Server) App() *fiber.App {
 
 // handleDashboard renders the main dashboard
 func (s *Server) handleDashboard(c *fiber.Ctx) error {
-	// Get all services with their states
-	services, err := s.monitorService.GetAllServiceConfigs(c.Context())
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
-	}
-
 	return c.Render("views/dashboard", fiber.Map{
-		"Services": services,
-		"Title":    "Sentinel Dashboard",
+		"Title": "Sentinel Dashboard",
 		"Actions": []fiber.Map{
 			{
 				"Text":  "Refresh",
@@ -218,6 +270,68 @@ func (s *Server) handleAPIServices(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(services)
+}
+
+// handleAPIServicesTable returns services with incident statistics for table display
+func (s *Server) handleAPIServicesTable(c *fiber.Ctx) error {
+	// Get all services with their states
+	services, err := s.monitorService.GetAllServiceConfigs(c.Context())
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	// Get incident statistics for all services
+	incidentStats, err := s.monitorService.GetAllServicesIncidentStats(c.Context())
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	// Create a map for quick lookup of incident stats by service ID
+	statsMap := make(map[string]*storage.ServiceIncidentStats)
+	for _, stats := range incidentStats {
+		statsMap[stats.ServiceID] = stats
+	}
+
+	// Convert services to DTO with incident statistics
+	serviceDTOs := make([]ServiceTableDTO, len(services))
+	for i, service := range services {
+		// Convert config to YAML string
+		configYAML, err := s.convertConfigToYAML(service.Config)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": "failed to convert service config: " + err.Error(),
+			})
+		}
+
+		dto := ServiceTableDTO{
+			ID:              service.ID,
+			Name:            service.Name,
+			Protocol:        service.Protocol,
+			Endpoint:        service.Endpoint,
+			Interval:        service.Interval,
+			Timeout:         service.Timeout,
+			Retries:         service.Retries,
+			Tags:            service.Tags,
+			Config:          configYAML,
+			State:           service.State,
+			ActiveIncidents: 0,
+			TotalIncidents:  0,
+		}
+
+		// Add incident statistics if available
+		if stats, exists := statsMap[service.ID]; exists {
+			dto.ActiveIncidents = stats.ActiveIncidents
+			dto.TotalIncidents = stats.TotalIncidents
+		}
+
+		serviceDTOs[i] = dto
+	}
+
+	return c.JSON(serviceDTOs)
 }
 
 // handleAPIServiceDetail returns service details
@@ -505,7 +619,6 @@ func (s *Server) handleAPICreateService(c *fiber.Ctx) error {
 		Timeout:  flatService.Timeout,
 		Retries:  flatService.Retries,
 		Tags:     flatService.Tags,
-		State:    flatService.State,
 	}
 
 	// Set default values
@@ -554,7 +667,15 @@ func (s *Server) handleAPIUpdateService(c *fiber.Ctx) error {
 		})
 	}
 
-	// Convert to storage.Service
+	// Get existing service to preserve state
+	existingService, err := s.monitorService.GetServiceByID(c.Context(), id)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "Service not found: " + err.Error(),
+		})
+	}
+
+	// Convert to storage.Service, preserving existing state
 	service := storage.Service{
 		ID:       id,
 		Name:     flatService.Name,
@@ -564,7 +685,7 @@ func (s *Server) handleAPIUpdateService(c *fiber.Ctx) error {
 		Timeout:  flatService.Timeout,
 		Retries:  flatService.Retries,
 		Tags:     flatService.Tags,
-		State:    flatService.State,
+		State:    existingService.State,
 	}
 
 	// Convert flat config to proper MonitorConfig structure
@@ -659,7 +780,7 @@ func (s *Server) convertFlatConfigToMonitorConfig(protocol string, yamlConfig st
 	}
 
 	// Parse YAML into map
-	var configMap map[string]interface{}
+	var configMap map[string]any
 	if err := yaml.Unmarshal([]byte(yamlConfig), &configMap); err != nil {
 		return storage.MonitorConfig{}, fmt.Errorf("failed to parse YAML config: %w", err)
 	}
@@ -700,7 +821,7 @@ func (s *Server) getDefaultConfig(protocol string) storage.MonitorConfig {
 	case "grpc":
 		return storage.MonitorConfig{
 			GRPC: &storage.GRPCConfig{
-				CheckType:   "health",
+				CheckType:   "connectivity",
 				ServiceName: "",
 				TLS:         false,
 				InsecureTLS: false,
@@ -877,16 +998,206 @@ func (s *Server) parseRedisConfig(configMap map[string]interface{}) (storage.Mon
 	return storage.MonitorConfig{Redis: redisConfig}, nil
 }
 
-// convertConfigToYAML converts MonitorConfig to YAML string for storage
+// convertConfigToYAML converts MonitorConfig to YAML string
 func (s *Server) convertConfigToYAML(config storage.MonitorConfig) (string, error) {
-	if config.HTTP == nil && config.TCP == nil && config.GRPC == nil && config.Redis == nil {
-		return "", nil
-	}
-
-	yamlData, err := yaml.Marshal(config)
+	data, err := yaml.Marshal(config)
 	if err != nil {
 		return "", fmt.Errorf("failed to marshal config to YAML: %w", err)
 	}
+	return string(data), nil
+}
 
-	return string(yamlData), nil
+// handleWebSocket handles WebSocket connections
+func (s *Server) handleWebSocket(c *websocket.Conn) {
+	// Add connection to the map
+	s.wsMutex.Lock()
+	s.wsConnections[c] = true
+	s.wsMutex.Unlock()
+
+	// Remove connection when it closes
+	defer func() {
+		s.wsMutex.Lock()
+		delete(s.wsConnections, c)
+		s.wsMutex.Unlock()
+		c.Close()
+	}()
+
+	// Send initial data
+	if err := s.sendServiceUpdate(c); err != nil {
+		return
+	}
+
+	// Keep connection alive and handle messages
+	for {
+		_, _, err := c.ReadMessage()
+		if err != nil {
+			break
+		}
+	}
+}
+
+// sendServiceUpdate sends service updates to a specific WebSocket connection
+func (s *Server) sendServiceUpdate(conn *websocket.Conn) error {
+	// Get all services with incident statistics (without locking)
+	services, err := s.monitorService.GetAllServiceConfigs(context.Background())
+	if err != nil {
+		return err
+	}
+
+	incidentStats, err := s.monitorService.GetAllServicesIncidentStats(context.Background())
+	if err != nil {
+		return err
+	}
+
+	// Create a map for quick lookup of incident stats by service ID
+	statsMap := make(map[string]*storage.ServiceIncidentStats)
+	for _, stats := range incidentStats {
+		statsMap[stats.ServiceID] = stats
+	}
+
+	// Convert services to DTO with incident statistics
+	serviceDTOs := make([]ServiceTableDTO, len(services))
+	for i, service := range services {
+		// Convert config to YAML string
+		configYAML, err := s.convertConfigToYAML(service.Config)
+		if err != nil {
+			continue
+		}
+
+		dto := ServiceTableDTO{
+			ID:              service.ID,
+			Name:            service.Name,
+			Protocol:        service.Protocol,
+			Endpoint:        service.Endpoint,
+			Interval:        service.Interval,
+			Timeout:         service.Timeout,
+			Retries:         service.Retries,
+			Tags:            service.Tags,
+			Config:          configYAML,
+			State:           service.State,
+			ActiveIncidents: 0,
+			TotalIncidents:  0,
+		}
+
+		// Add incident statistics if available
+		if stats, exists := statsMap[service.ID]; exists {
+			dto.ActiveIncidents = stats.ActiveIncidents
+			dto.TotalIncidents = stats.TotalIncidents
+		}
+
+		serviceDTOs[i] = dto
+	}
+
+	// Send update message
+	update := fiber.Map{
+		"type":      "service_update",
+		"services":  serviceDTOs,
+		"timestamp": time.Now().Unix(),
+	}
+
+	// Lock only for WebSocket write
+	s.wsMutex.Lock()
+	defer s.wsMutex.Unlock()
+
+	return conn.WriteJSON(update)
+}
+
+// BroadcastServiceUpdate sends service updates to all connected WebSocket clients
+func (s *Server) broadcastServiceUpdate() {
+	// Get updated service data (without locking)
+	services, err := s.monitorService.GetAllServiceConfigs(context.Background())
+	if err != nil {
+		return
+	}
+
+	incidentStats, err := s.monitorService.GetAllServicesIncidentStats(context.Background())
+	if err != nil {
+		return
+	}
+
+	// Create a map for quick lookup of incident stats by service ID
+	statsMap := make(map[string]*storage.ServiceIncidentStats)
+	for _, stats := range incidentStats {
+		statsMap[stats.ServiceID] = stats
+	}
+
+	// Convert services to DTO with incident statistics
+	serviceDTOs := make([]ServiceTableDTO, len(services))
+	for i, service := range services {
+		// Convert config to YAML string
+		configYAML, err := s.convertConfigToYAML(service.Config)
+		if err != nil {
+			continue
+		}
+
+		dto := ServiceTableDTO{
+			ID:              service.ID,
+			Name:            service.Name,
+			Protocol:        service.Protocol,
+			Endpoint:        service.Endpoint,
+			Interval:        service.Interval,
+			Timeout:         service.Timeout,
+			Retries:         service.Retries,
+			Tags:            service.Tags,
+			Config:          configYAML,
+			State:           service.State,
+			ActiveIncidents: 0,
+			TotalIncidents:  0,
+		}
+
+		// Add incident statistics if available
+		if stats, exists := statsMap[service.ID]; exists {
+			dto.ActiveIncidents = stats.ActiveIncidents
+			dto.TotalIncidents = stats.TotalIncidents
+		}
+
+		serviceDTOs[i] = dto
+	}
+
+	// Prepare update message
+	update := fiber.Map{
+		"type":      "service_update",
+		"services":  serviceDTOs,
+		"timestamp": time.Now().Unix(),
+	}
+
+	// Lock only for WebSocket operations
+	s.wsMutex.Lock()
+	defer s.wsMutex.Unlock()
+
+	// Send to all connections
+	for conn := range s.wsConnections {
+		if err := conn.WriteJSON(update); err != nil {
+			// Remove failed connection
+			delete(s.wsConnections, conn)
+			conn.Close()
+		}
+	}
+}
+
+func (s *Server) subscribeEvents(ctx context.Context) error {
+	broker := s.receiver.ServiceUpdated()
+	sub := broker.Subscribe()
+	defer broker.Unsubscribe(sub)
+
+	errChan := make(chan error, 1)
+	go func() {
+		for ctx.Err() == nil {
+			select {
+			case <-sub:
+				s.broadcastServiceUpdate()
+
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
+
+	select {
+	case <-ctx.Done():
+	case err := <-errChan:
+		return err
+	}
+
+	return nil
 }

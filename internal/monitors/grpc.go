@@ -64,11 +64,6 @@ func NewGRPCMonitor(cfg storage.Service) (*GRPCMonitor, error) {
 
 // Check performs the gRPC health check
 func (g *GRPCMonitor) Check(ctx context.Context) error {
-	// Check connection state first
-	if err := g.checkConnectionState(ctx); err != nil {
-		return err
-	}
-
 	// Perform check based on type
 	switch g.conf.CheckType {
 	case "health":
@@ -76,7 +71,7 @@ func (g *GRPCMonitor) Check(ctx context.Context) error {
 	case "reflection":
 		return g.performReflectionCheck(ctx)
 	case "connectivity":
-		return nil
+		return g.checkConnectionState(ctx)
 	default:
 		return fmt.Errorf("unsupported check type: %s", g.conf.CheckType)
 	}
@@ -88,7 +83,7 @@ func (g *GRPCMonitor) checkConnectionState(ctx context.Context) error {
 
 	// If connecting, wait for state change with timeout
 	if state == connectivity.Connecting {
-		connectCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+		connectCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
 		defer cancel()
 
 		if !g.conn.WaitForStateChange(connectCtx, state) {
@@ -109,7 +104,7 @@ func (g *GRPCMonitor) checkConnectionState(ctx context.Context) error {
 		g.conn.Connect()
 
 		// Wait for state change with timeout
-		connectCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
+		connectCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
 		defer cancel()
 
 		if g.conn.WaitForStateChange(connectCtx, state) {
@@ -135,11 +130,6 @@ func (g *GRPCMonitor) checkConnectionState(ctx context.Context) error {
 
 // performHealthCheck performs a standard gRPC health check
 func (g *GRPCMonitor) performHealthCheck(ctx context.Context) error {
-	// First ensure connection is ready
-	if err := g.checkConnectionState(ctx); err != nil {
-		return fmt.Errorf("connection not ready for health check: %w", err)
-	}
-
 	client := grpc_health_v1.NewHealthClient(g.conn)
 
 	req := &grpc_health_v1.HealthCheckRequest{}

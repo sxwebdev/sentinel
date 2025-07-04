@@ -27,6 +27,7 @@ type Storage interface {
 
 	// Statistics
 	GetServiceStats(ctx context.Context, serviceID string, since time.Time) (*ServiceStats, error)
+	GetAllServicesIncidentStats(ctx context.Context) ([]*ServiceIncidentStats, error)
 
 	// Cleanup
 	Close() error
@@ -105,6 +106,13 @@ type ServiceStats struct {
 	TotalDowntime    time.Duration `json:"total_downtime"`
 	UptimePercentage float64       `json:"uptime_percentage"`
 	Period           time.Duration `json:"period"`
+}
+
+// ServiceIncidentStats holds incident statistics for a service
+type ServiceIncidentStats struct {
+	ServiceID       string `json:"service_id"`
+	ActiveIncidents int    `json:"active_incidents"`
+	TotalIncidents  int    `json:"total_incidents"`
 }
 
 // MonitorConfig represents configuration for different monitor types

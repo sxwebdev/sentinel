@@ -105,6 +105,11 @@ func (s *SQLiteStorage) GetServiceStats(ctx context.Context, serviceID string, s
 	return s.orm.GetServiceStatsWithORM(ctx, serviceID, since)
 }
 
+// GetAllServicesIncidentStats retrieves incident statistics for all services
+func (s *SQLiteStorage) GetAllServicesIncidentStats(ctx context.Context) ([]*ServiceIncidentStats, error) {
+	return s.orm.GetAllServicesIncidentStats(ctx)
+}
+
 // Service methods
 
 // SaveService saves a new service to the database

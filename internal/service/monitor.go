@@ -3,70 +3,55 @@ package service
 import (
 	"context"
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/sxwebdev/sentinel/internal/notifier"
+	"github.com/sxwebdev/sentinel/internal/receiver"
 	"github.com/sxwebdev/sentinel/internal/storage"
 )
 
 // MonitorService manages the monitoring state and business logic
 type MonitorService struct {
-	store     storage.Storage
-	notifier  notifier.Notifier
-	scheduler interface{} // Will be set to *scheduler.Scheduler
-	mu        sync.RWMutex
+	store    storage.Storage
+	notifier notifier.Notifier
+	receiver *receiver.Receiver
 }
 
 // NewMonitorService creates a new monitor service
-func NewMonitorService(store storage.Storage, notifier notifier.Notifier) *MonitorService {
+func NewMonitorService(
+	store storage.Storage,
+	notifier notifier.Notifier,
+	receiver *receiver.Receiver,
+) *MonitorService {
 	return &MonitorService{
 		store:    store,
 		notifier: notifier,
+		receiver: receiver,
 	}
-}
-
-// SetScheduler sets the scheduler instance (called from main.go)
-func (m *MonitorService) SetScheduler(scheduler interface{}) {
-	m.scheduler = scheduler
 }
 
 // LoadServicesFromStorage loads all services from storage and initializes monitoring
-func (m *MonitorService) LoadServicesFromStorage(ctx context.Context) error {
+func (m *MonitorService) LoadServicesFromStorage(ctx context.Context) ([]*storage.Service, error) {
 	services, err := m.store.GetAllServices(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to load services from storage: %w", err)
+		return nil, fmt.Errorf("failed to load services from storage: %w", err)
 	}
 
-	for _, service := range services {
+	for _, svc := range services {
 		// Initialize service state if it doesn't exist
-		if service.State == nil {
-			if err := m.InitializeService(ctx, *service); err != nil {
-				return fmt.Errorf("failed to initialize service %s: %w", service.Name, err)
-			}
-		}
-
-		// Add to scheduler if available
-		if m.scheduler != nil {
-			if addServiceMethod, ok := m.scheduler.(interface {
-				AddService(storage.Service) error
-			}); ok {
-				if err := addServiceMethod.AddService(*service); err != nil {
-					return fmt.Errorf("failed to add service %s to scheduler: %w", service.Name, err)
-				}
+		if svc.State == nil {
+			if err := m.InitializeService(ctx, *svc); err != nil {
+				return nil, fmt.Errorf("failed to initialize service %s: %w", svc.Name, err)
 			}
 		}
 	}
 
-	return nil
+	return services, nil
 }
 
 // AddService adds a new service and starts monitoring it
 func (m *MonitorService) AddService(ctx context.Context, service *storage.Service) error {
-	// Generate ID if not provided
-	if service.ID == "" {
-		service.ID = storage.GenerateULID()
-	}
+	service.ID = storage.GenerateULID()
 
 	// Initialize state if not provided
 	if service.State == nil {
@@ -86,37 +71,36 @@ func (m *MonitorService) AddService(ctx context.Context, service *storage.Servic
 		return fmt.Errorf("failed to save service: %w", err)
 	}
 
-	// Add to scheduler if available
-	if m.scheduler != nil {
-		if addServiceMethod, ok := m.scheduler.(interface {
-			AddServiceDynamic(context.Context, storage.Service) error
-		}); ok {
-			if err := addServiceMethod.AddServiceDynamic(ctx, *service); err != nil {
-				return fmt.Errorf("failed to add service to scheduler: %w", err)
-			}
-		}
+	svc, err := m.store.GetService(ctx, service.ID)
+	if err != nil {
+		return err
 	}
+
+	m.receiver.TriggerService().Publish(*receiver.NewTriggerServiceData(
+		receiver.TriggerServiceEventTypeCreated,
+		svc,
+	))
 
 	return nil
 }
 
 // UpdateService updates an existing service
-func (m *MonitorService) UpdateService(ctx context.Context, service *storage.Service) error {
+func (m *MonitorService) UpdateService(ctx context.Context, svc *storage.Service) error {
 	// Update in storage
-	if err := m.store.UpdateService(ctx, service); err != nil {
+	if err := m.store.UpdateService(ctx, svc); err != nil {
 		return fmt.Errorf("failed to update service: %w", err)
 	}
 
-	// Update in scheduler if available
-	if m.scheduler != nil {
-		if updateServiceMethod, ok := m.scheduler.(interface {
-			UpdateServiceDynamic(context.Context, storage.Service) error
-		}); ok {
-			if err := updateServiceMethod.UpdateServiceDynamic(ctx, *service); err != nil {
-				return fmt.Errorf("failed to update service in scheduler: %w", err)
-			}
-		}
+	// Get service to find name for scheduler cleanup
+	svc, err := m.store.GetService(ctx, svc.ID)
+	if err != nil {
+		return fmt.Errorf("failed to get service: %w", err)
 	}
+
+	m.receiver.TriggerService().Publish(*receiver.NewTriggerServiceData(
+		receiver.TriggerServiceEventTypeUpdated,
+		svc,
+	))
 
 	return nil
 }
@@ -124,21 +108,15 @@ func (m *MonitorService) UpdateService(ctx context.Context, service *storage.Ser
 // DeleteService removes a service and stops monitoring it
 func (m *MonitorService) DeleteService(ctx context.Context, id string) error {
 	// Get service to find name for scheduler cleanup
-	service, err := m.store.GetService(ctx, id)
+	svc, err := m.store.GetService(ctx, id)
 	if err != nil {
 		return fmt.Errorf("failed to get service: %w", err)
 	}
 
-	// Remove from scheduler if available
-	if m.scheduler != nil {
-		if removeServiceMethod, ok := m.scheduler.(interface {
-			RemoveServiceDynamic(string) error
-		}); ok {
-			if err := removeServiceMethod.RemoveServiceDynamic(service.ID); err != nil {
-				return fmt.Errorf("failed to remove service from scheduler: %w", err)
-			}
-		}
-	}
+	m.receiver.TriggerService().Publish(*receiver.NewTriggerServiceData(
+		receiver.TriggerServiceEventTypeDeleted,
+		svc,
+	))
 
 	// Delete from storage
 	if err := m.store.DeleteService(ctx, id); err != nil {
@@ -264,6 +242,9 @@ func (m *MonitorService) RecordSuccess(ctx context.Context, serviceID string, re
 		}
 	}
 
+	// Broadcast WebSocket update
+	m.broadcastWebSocketUpdate()
+
 	return nil
 }
 
@@ -303,6 +284,9 @@ func (m *MonitorService) RecordFailure(ctx context.Context, serviceID string, ch
 			return fmt.Errorf("failed to create incident: %w", err)
 		}
 	}
+
+	// Broadcast WebSocket update
+	m.broadcastWebSocketUpdate()
 
 	return nil
 }
@@ -386,24 +370,25 @@ func (m *MonitorService) GetServiceStats(ctx context.Context, serviceID string, 
 	return m.store.GetServiceStats(ctx, serviceID, since)
 }
 
+// GetAllServicesIncidentStats gets incident statistics for all services
+func (m *MonitorService) GetAllServicesIncidentStats(ctx context.Context) ([]*storage.ServiceIncidentStats, error) {
+	return m.store.GetAllServicesIncidentStats(ctx)
+}
+
 // TriggerCheck triggers a manual check for a service
 func (m *MonitorService) TriggerCheck(ctx context.Context, serviceID string) error {
 	// Get service to check if it exists
-	_, err := m.GetServiceByID(ctx, serviceID)
+	svc, err := m.GetServiceByID(ctx, serviceID)
 	if err != nil {
-		return fmt.Errorf("service not found: %w", err)
+		return err
 	}
 
-	// Trigger check via scheduler if available
-	if m.scheduler != nil {
-		if triggerMethod, ok := m.scheduler.(interface {
-			TriggerCheck(context.Context, string) error
-		}); ok {
-			return triggerMethod.TriggerCheck(ctx, serviceID)
-		}
-	}
+	m.receiver.TriggerService().Publish(*receiver.NewTriggerServiceData(
+		receiver.TriggerServiceEventTypeCheck,
+		svc,
+	))
 
-	return fmt.Errorf("scheduler not available")
+	return nil
 }
 
 // resolveAllActiveIncidents resolves all active incidents for a service
@@ -414,4 +399,9 @@ func (m *MonitorService) resolveAllActiveIncidents(ctx context.Context, serviceI
 // ForceResolveIncidents manually resolves all active incidents for a service
 func (m *MonitorService) ForceResolveIncidents(ctx context.Context, serviceID string, serviceName string) error {
 	return m.resolveAllActiveIncidents(ctx, serviceID, serviceName)
+}
+
+// broadcastWebSocketUpdate sends WebSocket updates to all connected clients
+func (m *MonitorService) broadcastWebSocketUpdate() {
+	m.receiver.ServiceUpdated().Publish(struct{}{})
 }
