@@ -2,7 +2,7 @@
 FROM golang:1.24-alpine AS builder
 
 # Install dependencies
-RUN apk add --no-cache git ca-certificates
+RUN apk add --no-cache ca-certificates
 
 # Set working directory
 WORKDIR /app
@@ -15,7 +15,7 @@ RUN go mod download
 COPY . .
 
 # Build the application
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o sentinel ./cmd/server
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix -ldflags="-w -s -X" -o sentinel ./cmd/server
 
 # Final stage
 FROM alpine:latest
@@ -27,13 +27,6 @@ WORKDIR /root/
 
 # Copy binary from builder stage
 COPY --from=builder /app/sentinel .
-
-# Copy configuration and web assets
-COPY --from=builder /app/config.yaml .
-COPY --from=builder /app/web ./web
-
-# Create data directory
-RUN mkdir -p data
 
 # Expose port
 EXPOSE 8080

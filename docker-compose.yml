@@ -2,12 +2,9 @@ version: "3.8"
 
 services:
   sentinel:
-    build: .
+    image: sxwebdev/sentinel:latest
     ports:
       - "8080:8080"
-    environment:
-      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
-      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
     volumes:
       - ./data:/root/data
       - ./config.yaml:/root/config.yaml
@@ -26,20 +23,6 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
-
-  # Example services to monitor (for testing)
-  nginx-test:
-    image: nginx:alpine
-    ports:
-      - "8081:80"
-    restart: unless-stopped
-
-  redis-test:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-    restart: unless-stopped
-    command: redis-server --requirepass testpassword
 
 volumes:
   sentinel-data:

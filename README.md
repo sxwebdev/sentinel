@@ -43,7 +43,7 @@ docker-compose up -d
 
 ### Manual Installation
 
-1. Install Go 1.21 or later
+1. Install Go 1.24 or later
 2. Clone and build:
 
 ```bash
@@ -461,14 +461,11 @@ Description=Sentinel Service Monitor
 After=network.target
 
 [Service]
-Type=simple
 User=sentinel
 WorkingDirectory=/opt/sentinel
 ExecStart=/opt/sentinel/sentinel
 Restart=always
 RestartSec=5
-Environment=TELEGRAM_BOT_TOKEN=your_token
-Environment=TELEGRAM_CHAT_ID=your_chat_id
 
 [Install]
 WantedBy=multi-user.target
@@ -477,6 +474,7 @@ WantedBy=multi-user.target
 Enable and start:
 
 ```bash
+sudo systemctl daemon-reload
 sudo systemctl enable sentinel
 sudo systemctl start sentinel
 ```
@@ -487,13 +485,15 @@ sudo systemctl start sentinel
 # Build image
 docker build -t sentinel .
 
+# Or pull
+docker pull sxwebdev/sentinel:latest
+
 # Run container
 docker run -d \
   --name sentinel \
   -p 8080:8080 \
-  -e TELEGRAM_BOT_TOKEN="your_token" \
-  -e TELEGRAM_CHAT_ID="your_chat_id" \
   -v ./data:/root/data \
+  -v config.yaml:/root/config.yaml
   sentinel
 ```
 

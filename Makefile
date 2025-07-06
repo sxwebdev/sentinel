@@ -33,8 +33,6 @@ rungrpcserver:
 build: deps ## Build the application
 	@mkdir -p $(BUILD_DIR)
 	go build $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME) $(MAIN_PATH)
-	go build $(LDFLAGS) -o $(BUILD_DIR)/tcpserver ./cmd/tcpserver
-	go build $(LDFLAGS) -o $(BUILD_DIR)/grpcserver ./cmd/grpcserver
 
 
 build-linux: deps ## Build for Linux
@@ -69,17 +67,19 @@ format: ## Format code
 	goimports -w .
 
 # Docker
-docker-build: ## Build Docker image
-	docker build -t sentinel:$(VERSION) .
+docker-push: ## Push Docker image
+	docker buildx build \
+		--platform linux/amd64,linux/arm64 \
+		--push \
+		-t sxwebdev/sentinel:latest .
 
 docker-run: ## Run Docker container
 	docker run -d \
 		--name sentinel \
 		-p 8080:8080 \
-		-e TELEGRAM_BOT_TOKEN="${TELEGRAM_BOT_TOKEN}" \
-		-e TELEGRAM_CHAT_ID="${TELEGRAM_CHAT_ID}" \
 		-v $(PWD)/data:/root/data \
-		sentinel:$(VERSION)
+		-v $(PWD)/config.yaml:/root/config.yaml \
+		sxwebdev/sentinel:latest
 
 docker-stop: ## Stop Docker container
 	docker stop sentinel || true
