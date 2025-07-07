@@ -378,22 +378,6 @@
                 rows="8"
                 placeholder='{"method": "GET", "expected_status": 200, "headers": {}}'
               ></textarea>
-              <small class="form-text">
-                Enter configuration in JSON format. Examples:
-                <br />HTTP:
-                <code
-                  >{"method": "GET", "expected_status": 200, "headers":
-                  {"Authorization": "Bearer token"}}</code
-                >
-                <br />TCP:
-                <code>{"send_data": "ping", "expect_data": "pong"}</code>
-                <br />gRPC:
-                <code
-                  >{"check_type": "connectivity", "service_name": "", "tls":
-                  true, "insecure_tls": false}</code
-                >
-                <br />Redis: <code>{"password": "secret", "db": 0}</code>
-              </small>
             </div>
             <div class="form-actions">
               <button

@@ -325,12 +325,33 @@ func (o *ORMStorage) GetServiceStatsWithORM(ctx context.Context, serviceID strin
 		}
 	}
 
+	// Get service to get current response time
+	service, err := o.FindServiceByID(ctx, serviceID)
+	if err != nil {
+		// If service not found, return stats without response time
+		return &ServiceStats{
+			ServiceID:        serviceID,
+			TotalIncidents:   totalIncidents,
+			TotalDowntime:    totalDowntime,
+			UptimePercentage: uptimePercentage,
+			Period:           period,
+			AvgResponseTime:  0,
+		}, nil
+	}
+
+	// Get average response time from service state
+	avgResponseTime := time.Duration(0)
+	if service.State != nil && service.State.ResponseTime > 0 {
+		avgResponseTime = service.State.ResponseTime
+	}
+
 	return &ServiceStats{
 		ServiceID:        serviceID,
 		TotalIncidents:   totalIncidents,
 		TotalDowntime:    totalDowntime,
 		UptimePercentage: uptimePercentage,
 		Period:           period,
+		AvgResponseTime:  avgResponseTime,
 	}, nil
 }
 

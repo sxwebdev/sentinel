@@ -9,16 +9,7 @@ const docTemplate = `{
     "info": {
         "description": "{{escape .Description}}",
         "title": "{{.Title}}",
-        "termsOfService": "http://swagger.io/terms/",
-        "contact": {
-            "name": "API Support",
-            "url": "http://www.swagger.io/support",
-            "email": "support@swagger.io"
-        },
-        "license": {
-            "name": "Apache 2.0",
-            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
-        },
+        "contact": {},
         "version": "{{.Version}}"
     },
     "host": "{{.Host}}",
@@ -890,31 +881,25 @@ const docTemplate = `{
             "properties": {
                 "avg_response_time": {
                     "type": "integer",
-                    "example": 150
+                    "example": 150000000
                 },
-                "failed_checks": {
+                "period": {
                     "type": "integer",
-                    "example": 50
-                },
-                "last_check": {
-                    "type": "string"
-                },
-                "last_incident": {
-                    "type": "string"
+                    "example": 2592000000000000
                 },
                 "service_id": {
                     "type": "string",
                     "example": "service-1"
                 },
-                "successful_checks": {
+                "total_downtime": {
                     "type": "integer",
-                    "example": 950
+                    "example": 1800000000000
                 },
-                "total_checks": {
+                "total_incidents": {
                     "type": "integer",
-                    "example": 1000
+                    "example": 5
                 },
-                "uptime_percent": {
+                "uptime_percentage": {
                     "type": "number",
                     "example": 95
                 }
@@ -935,12 +920,12 @@ const docTemplate = `{
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "1.0",
+	Version:          "",
 	Host:             "",
-	BasePath:         "/api/v1",
+	BasePath:         "",
 	Schemes:          []string{},
-	Title:            "Sentinel Monitoring API",
-	Description:      "Service with optional incident statistics",
+	Title:            "",
+	Description:      "",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

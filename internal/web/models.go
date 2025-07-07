@@ -50,12 +50,10 @@ type Incident struct {
 // ServiceStats represents service statistics
 // @Description Service statistics
 type ServiceStats struct {
-	ServiceID        string     `json:"service_id" example:"service-1"`
-	TotalChecks      int        `json:"total_checks" example:"1000"`
-	SuccessfulChecks int        `json:"successful_checks" example:"950"`
-	FailedChecks     int        `json:"failed_checks" example:"50"`
-	UptimePercent    float64    `json:"uptime_percent" example:"95.0"`
-	AvgResponseTime  int64      `json:"avg_response_time" example:"150"`
-	LastCheck        time.Time  `json:"last_check"`
-	LastIncident     *time.Time `json:"last_incident"`
+	ServiceID        string        `json:"service_id" example:"service-1"`
+	TotalIncidents   int           `json:"total_incidents" example:"5"`
+	TotalDowntime    time.Duration `json:"total_downtime" swaggertype:"primitive,integer" example:"1800000000000"`
+	UptimePercentage float64       `json:"uptime_percentage" example:"95.0"`
+	Period           time.Duration `json:"period" swaggertype:"primitive,integer" example:"2592000000000000"`
+	AvgResponseTime  time.Duration `json:"avg_response_time" swaggertype:"primitive,integer" example:"150000000"`
 }

@@ -1,21 +1,8 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "Service with optional incident statistics",
-        "title": "Sentinel Monitoring API",
-        "termsOfService": "http://swagger.io/terms/",
-        "contact": {
-            "name": "API Support",
-            "url": "http://www.swagger.io/support",
-            "email": "support@swagger.io"
-        },
-        "license": {
-            "name": "Apache 2.0",
-            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
-        },
-        "version": "1.0"
+        "contact": {}
     },
-    "basePath": "/api/v1",
     "paths": {
         "/dashboard/stats": {
             "get": {
@@ -883,31 +870,25 @@
             "properties": {
                 "avg_response_time": {
                     "type": "integer",
-                    "example": 150
+                    "example": 150000000
                 },
-                "failed_checks": {
+                "period": {
                     "type": "integer",
-                    "example": 50
-                },
-                "last_check": {
-                    "type": "string"
-                },
-                "last_incident": {
-                    "type": "string"
+                    "example": 2592000000000000
                 },
                 "service_id": {
                     "type": "string",
                     "example": "service-1"
                 },
-                "successful_checks": {
+                "total_downtime": {
                     "type": "integer",
-                    "example": 950
+                    "example": 1800000000000
                 },
-                "total_checks": {
+                "total_incidents": {
                     "type": "integer",
-                    "example": 1000
+                    "example": 5
                 },
-                "uptime_percent": {
+                "uptime_percentage": {
                     "type": "number",
                     "example": 95
                 }

@@ -108,6 +108,7 @@ type ServiceStats struct {
 	TotalDowntime    time.Duration `json:"total_downtime" swaggertype:"primitive,integer"`
 	UptimePercentage float64       `json:"uptime_percentage"`
 	Period           time.Duration `json:"period" swaggertype:"primitive,integer"`
+	AvgResponseTime  time.Duration `json:"avg_response_time" swaggertype:"primitive,integer"`
 }
 
 // ServiceIncidentStats holds incident statistics for a service

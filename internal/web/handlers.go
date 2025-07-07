@@ -235,23 +235,8 @@ func (s *Server) handleServiceDetail(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusNotFound).SendString("service not found: " + serviceID)
 	}
 
-	// Get recent incidents
-	incidents, err := s.monitorService.GetServiceIncidents(c.Context(), targetService.ID)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
-	}
-
-	// Get service stats
-	stats, err := s.monitorService.GetServiceStats(c.Context(), targetService.ID, time.Now().AddDate(0, 0, -30))
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
-	}
-
 	return c.Render("views/service_detail", fiber.Map{
 		"Service":      targetService,
-		"State":        targetService.State,
-		"Incidents":    incidents,
-		"Stats":        stats,
 		"Title":        "Service: " + targetService.Name,
 		"BackLink":     "/",
 		"BackLinkText": "Back to Dashboard",
