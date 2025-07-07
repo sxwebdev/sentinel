@@ -22,6 +22,7 @@ type Storage interface {
 	SaveService(ctx context.Context, service *Service) error
 	GetService(ctx context.Context, id string) (*Service, error)
 	GetAllServices(ctx context.Context) ([]*Service, error)
+	GetEnabledServices(ctx context.Context) ([]*Service, error)
 	UpdateService(ctx context.Context, service *Service) error
 	DeleteService(ctx context.Context, id string) error
 
@@ -35,16 +36,17 @@ type Storage interface {
 
 // Service represents a monitored service
 type Service struct {
-	ID       string        `json:"id" yaml:"id"`
-	Name     string        `json:"name" yaml:"name"`
-	Protocol string        `json:"protocol" yaml:"protocol"`
-	Endpoint string        `json:"endpoint" yaml:"endpoint"`
-	Interval time.Duration `json:"interval" yaml:"interval"`
-	Timeout  time.Duration `json:"timeout" yaml:"timeout"`
-	Retries  int           `json:"retries" yaml:"retries"`
-	Tags     []string      `json:"tags" yaml:"tags"`
-	Config   MonitorConfig `json:"config" yaml:"config"`
-	State    *ServiceState `json:"state,omitempty" yaml:"state,omitempty"`
+	ID        string        `json:"id" yaml:"id"`
+	Name      string        `json:"name" yaml:"name"`
+	Protocol  string        `json:"protocol" yaml:"protocol"`
+	Endpoint  string        `json:"endpoint" yaml:"endpoint"`
+	Interval  time.Duration `json:"interval" yaml:"interval"`
+	Timeout   time.Duration `json:"timeout" yaml:"timeout"`
+	Retries   int           `json:"retries" yaml:"retries"`
+	Tags      []string      `json:"tags" yaml:"tags"`
+	Config    MonitorConfig `json:"config" yaml:"config"`
+	State     *ServiceState `json:"state,omitempty" yaml:"state,omitempty"`
+	IsEnabled bool          `json:"is_enabled" yaml:"is_enabled"`
 }
 
 // ServiceState represents the current state of a monitored service

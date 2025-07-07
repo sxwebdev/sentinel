@@ -95,6 +95,12 @@ func (s *Scheduler) stopAll() {
 
 // addService adds a service to be monitored
 func (s *Scheduler) addService(ctx context.Context, svc *storage.Service) {
+	// Only add enabled services to monitoring
+	if !svc.IsEnabled {
+		log.Printf("Skipping disabled service: %s (ID: %s)", svc.Name, svc.ID)
+		return
+	}
+
 	// Create new service job with minimal info
 	job := &job{
 		ServiceID:   svc.ID,
@@ -272,8 +278,17 @@ func (s *Scheduler) subscribeEvents(ctx context.Context) error {
 				case receiver.TriggerServiceEventTypeCreated:
 					s.addService(ctx, item.Svc)
 				case receiver.TriggerServiceEventTypeUpdated:
-					if err := s.updateJob(ctx, item.Svc); err != nil {
-						log.Println("update service error", err)
+					// Check if service was disabled
+					if !item.Svc.IsEnabled {
+						// Remove from monitoring if service is now disabled
+						if err := s.removeJob(item.Svc.ID); err != nil {
+							log.Println("remove disabled service error", err)
+						}
+					} else {
+						// Update or add to monitoring if service is enabled
+						if err := s.updateJob(ctx, item.Svc); err != nil {
+							log.Println("update service error", err)
+						}
 					}
 				case receiver.TriggerServiceEventTypeDeleted:
 					if err := s.removeJob(item.Svc.ID); err != nil {

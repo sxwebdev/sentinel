@@ -45,6 +45,7 @@ type ServiceRow struct {
 	Tags      string    `db:"tags"`
 	Config    string    `db:"config"`
 	State     string    `db:"state"`
+	IsEnabled bool      `db:"is_enabled"`
 	CreatedAt time.Time `db:"created_at"`
 	UpdatedAt time.Time `db:"updated_at"`
 }
@@ -397,7 +398,7 @@ func (o *ORMStorage) rowToIncident(row *IncidentRow) *Incident {
 // QueryServices creates a query builder for services
 func (o *ORMStorage) QueryServices() *sqlbuilder.SelectBuilder {
 	sb := sqlbuilder.NewSelectBuilder()
-	sb.Select("id", "name", "protocol", "endpoint", "interval", "timeout", "retries", "tags", "config", "state")
+	sb.Select("id", "name", "protocol", "endpoint", "interval", "timeout", "retries", "tags", "config", "state", "is_enabled")
 	sb.From("services")
 	return sb
 }
@@ -422,6 +423,7 @@ func (o *ORMStorage) FindServiceByID(ctx context.Context, id string) (*Service, 
 		&serviceRow.Tags,
 		&serviceRow.Config,
 		&serviceRow.State,
+		&serviceRow.IsEnabled,
 	)
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
@@ -459,6 +461,54 @@ func (o *ORMStorage) FindAllServices(ctx context.Context) ([]*Service, error) {
 			&serviceRow.Tags,
 			&serviceRow.Config,
 			&serviceRow.State,
+			&serviceRow.IsEnabled,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan service: %w", err)
+		}
+
+		service, err := o.rowToService(&serviceRow)
+		if err != nil {
+			return nil, err
+		}
+		services = append(services, service)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating rows: %w", err)
+	}
+
+	return services, nil
+}
+
+// FindEnabledServices finds all enabled services using ORM
+func (o *ORMStorage) FindEnabledServices(ctx context.Context) ([]*Service, error) {
+	sb := o.QueryServices()
+	sb.Where(sb.Equal("is_enabled", true))
+	sb.OrderBy("name")
+
+	sql, args := sb.Build()
+	rows, err := o.db.QueryContext(ctx, sql, args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query active services: %w", err)
+	}
+	defer rows.Close()
+
+	var services []*Service
+	for rows.Next() {
+		var serviceRow ServiceRow
+		err := rows.Scan(
+			&serviceRow.ID,
+			&serviceRow.Name,
+			&serviceRow.Protocol,
+			&serviceRow.Endpoint,
+			&serviceRow.Interval,
+			&serviceRow.Timeout,
+			&serviceRow.Retries,
+			&serviceRow.Tags,
+			&serviceRow.Config,
+			&serviceRow.State,
+			&serviceRow.IsEnabled,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan service: %w", err)
@@ -483,7 +533,7 @@ func (o *ORMStorage) CreateService(ctx context.Context, service *Service) error 
 	return o.retryOnBusy(ctx, func() error {
 		ib := sqlbuilder.NewInsertBuilder()
 		ib.InsertInto("services")
-		ib.Cols("id", "name", "protocol", "endpoint", "interval", "timeout", "retries", "tags", "config", "state")
+		ib.Cols("id", "name", "protocol", "endpoint", "interval", "timeout", "retries", "tags", "config", "state", "is_enabled")
 
 		tagsJSON, err := json.Marshal(service.Tags)
 		if err != nil {
@@ -515,6 +565,7 @@ func (o *ORMStorage) CreateService(ctx context.Context, service *Service) error 
 			string(tagsJSON),
 			string(configJSON),
 			stateJSON,
+			service.IsEnabled,
 		)
 
 		sql, args := ib.Build()
@@ -554,6 +605,7 @@ func (o *ORMStorage) UpdateService(ctx context.Context, service *Service) error 
 			ub.Assign("retries", service.Retries),
 			ub.Assign("tags", string(tagsJSON)),
 			ub.Assign("config", string(configJSON)),
+			ub.Assign("is_enabled", service.IsEnabled),
 		}
 
 		// Update state if provided
@@ -677,16 +729,17 @@ func (o *ORMStorage) rowToService(row *ServiceRow) (*Service, error) {
 	}
 
 	return &Service{
-		ID:       row.ID,
-		Name:     row.Name,
-		Protocol: row.Protocol,
-		Endpoint: row.Endpoint,
-		Interval: interval,
-		Timeout:  timeout,
-		Retries:  row.Retries,
-		Tags:     tags,
-		Config:   config,
-		State:    state,
+		ID:        row.ID,
+		Name:      row.Name,
+		Protocol:  row.Protocol,
+		Endpoint:  row.Endpoint,
+		Interval:  interval,
+		Timeout:   timeout,
+		Retries:   row.Retries,
+		Tags:      tags,
+		Config:    config,
+		State:     state,
+		IsEnabled: row.IsEnabled,
 	}, nil
 }
 

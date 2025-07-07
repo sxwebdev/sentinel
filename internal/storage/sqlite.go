@@ -127,6 +127,11 @@ func (s *SQLiteStorage) GetAllServices(ctx context.Context) ([]*Service, error) 
 	return s.orm.FindAllServices(ctx)
 }
 
+// GetEnabledServices retrieves all enabled services
+func (s *SQLiteStorage) GetEnabledServices(ctx context.Context) ([]*Service, error) {
+	return s.orm.FindEnabledServices(ctx)
+}
+
 // UpdateService updates an existing service
 func (s *SQLiteStorage) UpdateService(ctx context.Context, service *Service) error {
 	return s.orm.UpdateService(ctx, service)

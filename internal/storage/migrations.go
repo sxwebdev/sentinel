@@ -28,7 +28,7 @@ var migrations = []Migration{
 			tags jsonb NOT NULL DEFAULT '[]',
 			config jsonb NOT NULL DEFAULT '{}',
 			state jsonb NOT NULL DEFAULT '{}',
-			is_active BOOLEAN NOT NULL DEFAULT TRUE,
+			is_enabled BOOLEAN NOT NULL DEFAULT TRUE,
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 		);
