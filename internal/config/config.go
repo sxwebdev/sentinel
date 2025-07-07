@@ -57,6 +57,9 @@ func (c *Config) setDefaults() error {
 	if c.Server.Port == 0 {
 		c.Server.Port = 8080
 	}
+	if c.Server.BaseHost == "" {
+		c.Server.BaseHost = "localhost:8080"
+	}
 
 	// Monitoring defaults
 	if c.Monitoring.Global.DefaultInterval == 0 {
