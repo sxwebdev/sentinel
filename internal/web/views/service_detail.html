@@ -146,7 +146,7 @@
 
     <script>
       function triggerCheck() {
-        fetch(`/api/services/{{.Service.ID}}/check`, {
+        fetch(`/api/v1/services/{{.Service.ID}}/check`, {
           method: "POST",
         })
           .then((response) => response.json())
@@ -166,7 +166,7 @@
             "Are you sure you want to resolve all active incidents for this service?"
           )
         ) {
-          fetch(`/api/services/{{.Service.ID}}/resolve`, {
+          fetch(`/api/v1/services/{{.Service.ID}}/resolve`, {
             method: "POST",
           })
             .then((response) => response.json())

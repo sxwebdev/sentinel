@@ -121,5 +121,5 @@ release: clean build-all test ## Create release build
 
 genswagger:
 	rm -rf ./docs/*
-	swag fmt -d ./internal/web/handlers
-	swag init -o docs/docsv1 --dir ./internal/web/handlers -g handlers.go --parseDependency
+	swag fmt -d ./internal/web
+	swag init -o docs/docsv1 --dir ./internal/web -g handlers.go --parseDependency

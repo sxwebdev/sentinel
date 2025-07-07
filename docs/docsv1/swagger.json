@@ -1,7 +1,7 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "Service with incident statistics for table display",
+        "description": "Service with optional incident statistics",
         "title": "Sentinel Monitoring API",
         "termsOfService": "http://swagger.io/terms/",
         "contact": {
@@ -15,7 +15,7 @@
         },
         "version": "1.0"
     },
-    "basePath": "/api",
+    "basePath": "/api/v1",
     "paths": {
         "/dashboard/stats": {
             "get": {
@@ -88,7 +88,7 @@
         },
         "/services": {
             "get": {
-                "description": "Returns a list of all configured services with their states",
+                "description": "Returns a list of all configured services with incident statistics",
                 "consumes": [
                     "application/json"
                 ],
@@ -101,11 +101,11 @@
                 "summary": "Get all services",
                 "responses": {
                     "200": {
-                        "description": "List of services",
+                        "description": "List of services with statistics",
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/web.FlatServiceConfig"
+                                "$ref": "#/definitions/web.ServiceDTO"
                             }
                         }
                     },
@@ -136,7 +136,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/web.FlatServiceConfig"
+                            "$ref": "#/definitions/web.ServiceDTO"
                         }
                     }
                 ],
@@ -206,38 +206,6 @@
                 }
             }
         },
-        "/services/table": {
-            "get": {
-                "description": "Returns a list of services with incident statistics for table display",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "services"
-                ],
-                "summary": "Get services for table",
-                "responses": {
-                    "200": {
-                        "description": "List of services with statistics",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/web.ServiceTableDTO"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/web.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
         "/services/{id}": {
             "get": {
                 "description": "Returns detailed information about a specific service",
@@ -264,7 +232,7 @@
                     "200": {
                         "description": "Service details",
                         "schema": {
-                            "$ref": "#/definitions/web.FlatServiceConfig"
+                            "$ref": "#/definitions/web.ServiceDTO"
                         }
                     },
                     "400": {
@@ -307,7 +275,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/web.FlatServiceConfig"
+                            "$ref": "#/definitions/web.ServiceDTO"
                         }
                     }
                 ],
@@ -795,52 +763,6 @@
                 }
             }
         },
-        "web.EndpointConfig": {
-            "description": "Configuration for a single endpoint",
-            "type": "object",
-            "properties": {
-                "body": {
-                    "type": "string",
-                    "example": "{\"query\":\"test\"}"
-                },
-                "headers": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    },
-                    "example": {
-                        "{\"Authorization\"": "\"Bearer token\"}"
-                    }
-                },
-                "json_path": {
-                    "description": "Path to extract value from JSON response",
-                    "type": "string",
-                    "example": "$.status"
-                },
-                "method": {
-                    "type": "string",
-                    "example": "GET"
-                },
-                "name": {
-                    "type": "string",
-                    "example": "health-check"
-                },
-                "password": {
-                    "description": "Basic Auth password",
-                    "type": "string",
-                    "example": "pass"
-                },
-                "url": {
-                    "type": "string",
-                    "example": "https://api.example.com/health"
-                },
-                "username": {
-                    "description": "Basic Auth username",
-                    "type": "string",
-                    "example": "user"
-                }
-            }
-        },
         "web.ErrorResponse": {
             "description": "Error response",
             "type": "object",
@@ -848,67 +770,6 @@
                 "error": {
                     "type": "string",
                     "example": "Error description"
-                }
-            }
-        },
-        "web.FlatServiceConfig": {
-            "description": "Service configuration with flat structure",
-            "type": "object",
-            "properties": {
-                "config": {
-                    "description": "JSON object",
-                    "type": "object",
-                    "additionalProperties": {}
-                },
-                "endpoint": {
-                    "type": "string",
-                    "example": "https://example.com"
-                },
-                "id": {
-                    "type": "string",
-                    "example": "service-1"
-                },
-                "interval": {
-                    "type": "integer",
-                    "example": 30000000000
-                },
-                "is_enabled": {
-                    "type": "boolean",
-                    "example": true
-                },
-                "multi_endpoint": {
-                    "description": "Extended HTTP configuration",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/web.MultiEndpointConfig"
-                        }
-                    ]
-                },
-                "name": {
-                    "type": "string",
-                    "example": "Web Server"
-                },
-                "protocol": {
-                    "type": "string",
-                    "example": "http"
-                },
-                "retries": {
-                    "type": "integer",
-                    "example": 3
-                },
-                "tags": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    },
-                    "example": [
-                        "web",
-                        "production"
-                    ]
-                },
-                "timeout": {
-                    "type": "integer",
-                    "example": 5000000000
                 }
             }
         },
@@ -952,65 +813,8 @@
                 }
             }
         },
-        "web.MultiEndpointConfig": {
-            "description": "Configuration for monitoring multiple endpoints",
-            "type": "object",
-            "properties": {
-                "condition": {
-                    "description": "JavaScript condition",
-                    "type": "string",
-                    "example": "response.status === 200"
-                },
-                "endpoints": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/web.EndpointConfig"
-                    }
-                },
-                "timeout": {
-                    "type": "integer",
-                    "example": 10000000000
-                }
-            }
-        },
-        "web.ServiceStats": {
-            "description": "Service statistics",
-            "type": "object",
-            "properties": {
-                "avg_response_time": {
-                    "type": "integer",
-                    "example": 150
-                },
-                "failed_checks": {
-                    "type": "integer",
-                    "example": 50
-                },
-                "last_check": {
-                    "type": "string"
-                },
-                "last_incident": {
-                    "type": "string"
-                },
-                "service_id": {
-                    "type": "string",
-                    "example": "service-1"
-                },
-                "successful_checks": {
-                    "type": "integer",
-                    "example": 950
-                },
-                "total_checks": {
-                    "type": "integer",
-                    "example": 1000
-                },
-                "uptime_percent": {
-                    "type": "number",
-                    "example": 95
-                }
-            }
-        },
-        "web.ServiceTableDTO": {
-            "description": "Service with incident statistics for table display",
+        "web.ServiceDTO": {
+            "description": "Service with optional incident statistics",
             "type": "object",
             "properties": {
                 "active_incidents": {
@@ -1018,7 +822,9 @@
                     "example": 2
                 },
                 "config": {
-                    "description": "JSON object"
+                    "description": "JSON object",
+                    "type": "object",
+                    "additionalProperties": {}
                 },
                 "endpoint": {
                     "type": "string",
@@ -1068,6 +874,42 @@
                 "total_incidents": {
                     "type": "integer",
                     "example": 10
+                }
+            }
+        },
+        "web.ServiceStats": {
+            "description": "Service statistics",
+            "type": "object",
+            "properties": {
+                "avg_response_time": {
+                    "type": "integer",
+                    "example": 150
+                },
+                "failed_checks": {
+                    "type": "integer",
+                    "example": 50
+                },
+                "last_check": {
+                    "type": "string"
+                },
+                "last_incident": {
+                    "type": "string"
+                },
+                "service_id": {
+                    "type": "string",
+                    "example": "service-1"
+                },
+                "successful_checks": {
+                    "type": "integer",
+                    "example": 950
+                },
+                "total_checks": {
+                    "type": "integer",
+                    "example": 1000
+                },
+                "uptime_percent": {
+                    "type": "number",
+                    "example": 95
                 }
             }
         },

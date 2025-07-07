@@ -417,7 +417,7 @@
 
       // Load dashboard statistics
       function loadDashboardStats() {
-        fetch("/api/dashboard/stats")
+        fetch("/api/v1/dashboard/stats")
           .then((response) => {
             if (!response.ok) {
               throw new Error(`HTTP error! status: ${response.status}`);
@@ -542,7 +542,7 @@
 
       function triggerCheck(serviceId) {
         closeAllDropdowns();
-        fetch(`/api/services/${serviceId}/check`, {
+        fetch(`/api/v1/services/${serviceId}/check`, {
           method: "POST",
         })
           .then((response) => response.json())
@@ -577,7 +577,7 @@
         document.getElementById("modalTitle").textContent = "Edit Service";
 
         // Load service config for editing
-        fetch(`/api/services/config/${serviceId}`)
+        fetch(`/api/v1/services/config/${serviceId}`)
           .then((response) => response.json())
           .then((serviceConfig) => {
             // Reset multi-endpoint section
@@ -819,7 +819,7 @@
         if (
           confirm(`Are you sure you want to delete service "${serviceName}"?`)
         ) {
-          fetch(`/api/services/${serviceId}`, {
+          fetch(`/api/v1/services/${serviceId}`, {
             method: "DELETE",
           })
             .then((response) => {
@@ -988,8 +988,8 @@
           };
 
           const url = currentServiceId
-            ? `/api/services/${currentServiceId}`
-            : "/api/services";
+            ? `/api/v1/services/${currentServiceId}`
+            : "/api/v1/services";
           const method = currentServiceId ? "PUT" : "POST";
 
           fetch(url, {
@@ -1073,7 +1073,7 @@
 
       // Auto-refresh table every 30 seconds
       function refreshServicesTable() {
-        fetch("/api/services/table")
+        fetch("/api/v1/services")
           .then((response) => {
             if (!response.ok) {
               throw new Error(`HTTP error! status: ${response.status}`);

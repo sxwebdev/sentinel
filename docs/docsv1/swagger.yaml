@@ -1,4 +1,4 @@
-basePath: /api
+basePath: /api/v1
 definitions:
   storage.GRPCConfig:
     properties:
@@ -149,89 +149,12 @@ definitions:
         example: 95.5
         type: number
     type: object
-  web.EndpointConfig:
-    description: Configuration for a single endpoint
-    properties:
-      body:
-        example: '{"query":"test"}'
-        type: string
-      headers:
-        additionalProperties:
-          type: string
-        example:
-          '{"Authorization"': '"Bearer token"}'
-        type: object
-      json_path:
-        description: Path to extract value from JSON response
-        example: $.status
-        type: string
-      method:
-        example: GET
-        type: string
-      name:
-        example: health-check
-        type: string
-      password:
-        description: Basic Auth password
-        example: pass
-        type: string
-      url:
-        example: https://api.example.com/health
-        type: string
-      username:
-        description: Basic Auth username
-        example: user
-        type: string
-    type: object
   web.ErrorResponse:
     description: Error response
     properties:
       error:
         example: Error description
         type: string
-    type: object
-  web.FlatServiceConfig:
-    description: Service configuration with flat structure
-    properties:
-      config:
-        additionalProperties: {}
-        description: JSON object
-        type: object
-      endpoint:
-        example: https://example.com
-        type: string
-      id:
-        example: service-1
-        type: string
-      interval:
-        example: 30000000000
-        type: integer
-      is_enabled:
-        example: true
-        type: boolean
-      multi_endpoint:
-        allOf:
-        - $ref: '#/definitions/web.MultiEndpointConfig'
-        description: Extended HTTP configuration
-      name:
-        example: Web Server
-        type: string
-      protocol:
-        example: http
-        type: string
-      retries:
-        example: 3
-        type: integer
-      tags:
-        example:
-        - web
-        - production
-        items:
-          type: string
-        type: array
-      timeout:
-        example: 5000000000
-        type: integer
     type: object
   web.Incident:
     description: Service incident
@@ -262,55 +185,16 @@ definitions:
         example: down
         type: string
     type: object
-  web.MultiEndpointConfig:
-    description: Configuration for monitoring multiple endpoints
-    properties:
-      condition:
-        description: JavaScript condition
-        example: response.status === 200
-        type: string
-      endpoints:
-        items:
-          $ref: '#/definitions/web.EndpointConfig'
-        type: array
-      timeout:
-        example: 10000000000
-        type: integer
-    type: object
-  web.ServiceStats:
-    description: Service statistics
-    properties:
-      avg_response_time:
-        example: 150
-        type: integer
-      failed_checks:
-        example: 50
-        type: integer
-      last_check:
-        type: string
-      last_incident:
-        type: string
-      service_id:
-        example: service-1
-        type: string
-      successful_checks:
-        example: 950
-        type: integer
-      total_checks:
-        example: 1000
-        type: integer
-      uptime_percent:
-        example: 95
-        type: number
-    type: object
-  web.ServiceTableDTO:
-    description: Service with incident statistics for table display
+  web.ServiceDTO:
+    description: Service with optional incident statistics
     properties:
       active_incidents:
         example: 2
         type: integer
       config:
+        additionalProperties: {}
         description: JSON object
+        type: object
       endpoint:
         example: https://example.com
         type: string
@@ -348,6 +232,32 @@ definitions:
         example: 10
         type: integer
     type: object
+  web.ServiceStats:
+    description: Service statistics
+    properties:
+      avg_response_time:
+        example: 150
+        type: integer
+      failed_checks:
+        example: 50
+        type: integer
+      last_check:
+        type: string
+      last_incident:
+        type: string
+      service_id:
+        example: service-1
+        type: string
+      successful_checks:
+        example: 950
+        type: integer
+      total_checks:
+        example: 1000
+        type: integer
+      uptime_percent:
+        example: 95
+        type: number
+    type: object
   web.SuccessResponse:
     description: Successful response
     properties:
@@ -360,7 +270,7 @@ info:
     email: support@swagger.io
     name: API Support
     url: http://www.swagger.io/support
-  description: Service with incident statistics for table display
+  description: Service with optional incident statistics
   license:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
@@ -417,15 +327,15 @@ paths:
     get:
       consumes:
       - application/json
-      description: Returns a list of all configured services with their states
+      description: Returns a list of all configured services with incident statistics
       produces:
       - application/json
       responses:
         "200":
-          description: List of services
+          description: List of services with statistics
           schema:
             items:
-              $ref: '#/definitions/web.FlatServiceConfig'
+              $ref: '#/definitions/web.ServiceDTO'
             type: array
         "500":
           description: Internal server error
@@ -444,7 +354,7 @@ paths:
         name: service
         required: true
         schema:
-          $ref: '#/definitions/web.FlatServiceConfig'
+          $ref: '#/definitions/web.ServiceDTO'
       produces:
       - application/json
       responses:
@@ -506,7 +416,7 @@ paths:
         "200":
           description: Service details
           schema:
-            $ref: '#/definitions/web.FlatServiceConfig'
+            $ref: '#/definitions/web.ServiceDTO'
         "400":
           description: Bad request
           schema:
@@ -533,7 +443,7 @@ paths:
         name: service
         required: true
         schema:
-          $ref: '#/definitions/web.FlatServiceConfig'
+          $ref: '#/definitions/web.ServiceDTO'
       produces:
       - application/json
       responses:
@@ -713,27 +623,6 @@ paths:
           schema:
             $ref: '#/definitions/web.ErrorResponse'
       summary: Get service configuration
-      tags:
-      - services
-  /services/table:
-    get:
-      consumes:
-      - application/json
-      description: Returns a list of services with incident statistics for table display
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: List of services with statistics
-          schema:
-            items:
-              $ref: '#/definitions/web.ServiceTableDTO'
-            type: array
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/web.ErrorResponse'
-      summary: Get services for table
       tags:
       - services
 swagger: "2.0"

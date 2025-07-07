@@ -1,14 +1,15 @@
 // Package web provides HTTP handlers for the Sentinel monitoring system
-// @title Sentinel Monitoring API
-// @version 1.0
-// @description API for service monitoring and incident management
-// @termsOfService http://swagger.io/terms/
-// @contact.name API Support
-// @contact.url http://www.swagger.io/support
-// @contact.email support@swagger.io
-// @license.name Apache 2.0
-// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
-// @BasePath /api
+//
+//	@title			Sentinel Monitoring API
+//	@version		1.0
+//	@description	API for service monitoring and incident management
+//	@termsOfService	http://swagger.io/terms/
+//	@contact.name	API Support
+//	@contact.url	http://www.swagger.io/support
+//	@contact.email	support@swagger.io
+//	@license.name	Apache 2.0
+//	@license.url	http://www.apache.org/licenses/LICENSE-2.0.html
+//	@BasePath		/api/v1
 package web
 
 import (
@@ -27,8 +28,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/template/html/v2"
 	swagger "github.com/swaggo/fiber-swagger"
-	"github.com/sxwebdev/sentinel/docs"
-	_ "github.com/sxwebdev/sentinel/docs"
+	"github.com/sxwebdev/sentinel/docs/docsv1"
 	"github.com/sxwebdev/sentinel/internal/config"
 	"github.com/sxwebdev/sentinel/internal/receiver"
 	"github.com/sxwebdev/sentinel/internal/service"
@@ -38,48 +38,10 @@ import (
 //go:embed views/*
 var viewsFS embed.FS
 
-// FlatServiceConfig represents a service with flat config structure
-// @Description Service configuration with flat structure
-type FlatServiceConfig struct {
-	ID        string         `json:"id" example:"service-1"`
-	Name      string         `json:"name" example:"Web Server"`
-	Protocol  string         `json:"protocol" example:"http"`
-	Endpoint  string         `json:"endpoint" example:"https://example.com"`
-	Interval  time.Duration  `json:"interval" swaggertype:"primitive,integer" example:"30000000000"`
-	Timeout   time.Duration  `json:"timeout" swaggertype:"primitive,integer" example:"5000000000"`
-	Retries   int            `json:"retries" example:"3"`
-	Tags      []string       `json:"tags" example:"web,production"`
-	Config    map[string]any `json:"config"` // JSON object
-	IsEnabled bool           `json:"is_enabled" example:"true"`
-
-	// Extended HTTP configuration
-	MultiEndpoint *MultiEndpointConfig `json:"multi_endpoint,omitempty"`
-}
-
-// MultiEndpointConfig represents configuration for monitoring multiple endpoints
-// @Description Configuration for monitoring multiple endpoints
-type MultiEndpointConfig struct {
-	Endpoints []EndpointConfig `json:"endpoints" yaml:"endpoints"`
-	Condition string           `json:"condition" yaml:"condition" example:"response.status === 200"` // JavaScript condition
-	Timeout   time.Duration    `json:"timeout" yaml:"timeout" swaggertype:"primitive,integer" example:"10000000000"`
-}
-
-// EndpointConfig represents a single endpoint configuration
-// @Description Configuration for a single endpoint
-type EndpointConfig struct {
-	Name     string            `json:"name" yaml:"name" example:"health-check"`
-	URL      string            `json:"url" yaml:"url" example:"https://api.example.com/health"`
-	Method   string            `json:"method" yaml:"method" example:"GET"`
-	Headers  map[string]string `json:"headers" yaml:"headers" example:"{\"Authorization\":\"Bearer token\"}"`
-	Body     string            `json:"body" yaml:"body" example:"{\"query\":\"test\"}"`
-	JSONPath string            `json:"json_path" yaml:"json_path" example:"$.status"` // Path to extract value from JSON response
-	Username string            `json:"username" yaml:"username" example:"user"`       // Basic Auth username
-	Password string            `json:"password" yaml:"password" example:"pass"`       // Basic Auth password
-}
-
-// ServiceTableDTO represents a service with incident statistics for table display
-// @Description Service with incident statistics for table display
-type ServiceTableDTO struct {
+// ServiceDTO represents a service with optional incident statistics
+//
+//	@Description	Service with optional incident statistics
+type ServiceDTO struct {
 	ID              string                `json:"id" example:"service-1"`
 	Name            string                `json:"name" example:"Web Server"`
 	Protocol        string                `json:"protocol" example:"http"`
@@ -88,11 +50,11 @@ type ServiceTableDTO struct {
 	Timeout         time.Duration         `json:"timeout" swaggertype:"primitive,integer" example:"5000000000"`
 	Retries         int                   `json:"retries" example:"3"`
 	Tags            []string              `json:"tags" example:"web,production"`
-	Config          any                   `json:"config"` // JSON object
+	Config          map[string]any        `json:"config"` // JSON object
 	State           *storage.ServiceState `json:"state,omitempty"`
 	IsEnabled       bool                  `json:"is_enabled" example:"true"`
-	ActiveIncidents int                   `json:"active_incidents" example:"2"`
-	TotalIncidents  int                   `json:"total_incidents" example:"10"`
+	ActiveIncidents int                   `json:"active_incidents,omitempty" example:"2"`
+	TotalIncidents  int                   `json:"total_incidents,omitempty" example:"10"`
 }
 
 // Server represents the web server
@@ -176,9 +138,9 @@ func NewServer(
 	}
 
 	// Set Swagger host from config
-	docs.SwaggerInfo.Host = cfg.Server.BaseHost
-	docs.SwaggerInfo.BasePath = "/api"
-	docs.SwaggerInfo.Schemes = []string{"http", "https"}
+	docsv1.SwaggerInfo.Host = cfg.Server.BaseHost
+	docsv1.SwaggerInfo.BasePath = "/api/v1"
+	docsv1.SwaggerInfo.Schemes = []string{"http", "https"}
 
 	// Setup routes
 	server.setupRoutes()
@@ -213,11 +175,10 @@ func (s *Server) setupRoutes() {
 	s.app.Get("/service/:id", s.handleServiceDetail)
 
 	// API routes
-	api := s.app.Group("/api")
+	api := s.app.Group("/api/v1")
 	// Swagger UI
 	api.Get("/swagger/*", swagger.WrapHandler)
 	api.Get("/services", s.handleAPIServices)
-	api.Get("/services/table", s.handleAPIServicesTable)
 	api.Get("/services/:id", s.handleAPIServiceDetail)
 	api.Get("/services/:id/incidents", s.handleAPIServiceIncidents)
 	api.Get("/services/:id/stats", s.handleAPIServiceStats)
@@ -307,55 +268,17 @@ func (s *Server) handleServiceDetail(c *fiber.Ctx) error {
 	})
 }
 
-// handleAPIServices returns all services
-// @Summary Get all services
-// @Description Returns a list of all configured services with their states
-// @Tags services
-// @Accept json
-// @Produce json
-// @Success 200 {array} FlatServiceConfig "List of services"
-// @Failure 500 {object} ErrorResponse "Internal server error"
-// @Router /services [get]
+// handleAPIServices returns all services with incident statistics
+//
+//	@Summary		Get all services
+//	@Description	Returns a list of all configured services with incident statistics
+//	@Tags			services
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{array}		ServiceDTO		"List of services with statistics"
+//	@Failure		500	{object}	ErrorResponse	"Internal server error"
+//	@Router			/services [get]
 func (s *Server) handleAPIServices(c *fiber.Ctx) error {
-	// Get all services with their states
-	services, err := s.monitorService.GetAllServiceConfigs(c.Context())
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
-		})
-	}
-
-	// Преобразуем Interval и Timeout в string
-	var result []FlatServiceConfig
-	for _, svc := range services {
-		result = append(result, FlatServiceConfig{
-			ID:            svc.ID,
-			Name:          svc.Name,
-			Protocol:      svc.Protocol,
-			Endpoint:      svc.Endpoint,
-			Interval:      svc.Interval,
-			Timeout:       svc.Timeout,
-			Retries:       svc.Retries,
-			Tags:          svc.Tags,
-			Config:        toFlatConfigMap(svc.Config),
-			IsEnabled:     svc.IsEnabled,
-			MultiEndpoint: nil,
-		})
-	}
-
-	return c.JSON(result)
-}
-
-// handleAPIServicesTable returns services with incident statistics for table display
-// @Summary Get services for table
-// @Description Returns a list of services with incident statistics for table display
-// @Tags services
-// @Accept json
-// @Produce json
-// @Success 200 {array} ServiceTableDTO "List of services with statistics"
-// @Failure 500 {object} ErrorResponse "Internal server error"
-// @Router /services/table [get]
-func (s *Server) handleAPIServicesTable(c *fiber.Ctx) error {
 	// Get all services with their states
 	services, err := s.monitorService.GetAllServiceConfigs(c.Context())
 	if err != nil {
@@ -379,9 +302,9 @@ func (s *Server) handleAPIServicesTable(c *fiber.Ctx) error {
 	}
 
 	// Convert services to DTO with incident statistics
-	serviceDTOs := make([]ServiceTableDTO, len(services))
-	for i, service := range services {
-		dto := ServiceTableDTO{
+	var result []ServiceDTO
+	for _, service := range services {
+		dto := ServiceDTO{
 			ID:              service.ID,
 			Name:            service.Name,
 			Protocol:        service.Protocol,
@@ -390,7 +313,7 @@ func (s *Server) handleAPIServicesTable(c *fiber.Ctx) error {
 			Timeout:         service.Timeout,
 			Retries:         service.Retries,
 			Tags:            service.Tags,
-			Config:          toFlatConfigMap(service.Config),
+			Config:          s.convertConfigToMap(service.Config),
 			State:           service.State,
 			IsEnabled:       service.IsEnabled,
 			ActiveIncidents: 0,
@@ -403,23 +326,24 @@ func (s *Server) handleAPIServicesTable(c *fiber.Ctx) error {
 			dto.TotalIncidents = stats.TotalIncidents
 		}
 
-		serviceDTOs[i] = dto
+		result = append(result, dto)
 	}
 
-	return c.JSON(serviceDTOs)
+	return c.JSON(result)
 }
 
 // handleAPIServiceDetail returns service details
-// @Summary Get service details
-// @Description Returns detailed information about a specific service
-// @Tags services
-// @Accept json
-// @Produce json
-// @Param id path string true "Service ID"
-// @Success 200 {object} FlatServiceConfig "Service details"
-// @Failure 400 {object} ErrorResponse "Bad request"
-// @Failure 404 {object} ErrorResponse "Service not found"
-// @Router /services/{id} [get]
+//
+//	@Summary		Get service details
+//	@Description	Returns detailed information about a specific service
+//	@Tags			services
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	path		string			true	"Service ID"
+//	@Success		200	{object}	ServiceDTO		"Service details"
+//	@Failure		400	{object}	ErrorResponse	"Bad request"
+//	@Failure		404	{object}	ErrorResponse	"Service not found"
+//	@Router			/services/{id} [get]
 func (s *Server) handleAPIServiceDetail(c *fiber.Ctx) error {
 	serviceID := c.Params("id")
 	if serviceID == "" {
@@ -439,16 +363,17 @@ func (s *Server) handleAPIServiceDetail(c *fiber.Ctx) error {
 }
 
 // handleAPIServiceIncidents returns service incidents
-// @Summary Get service incidents
-// @Description Returns a list of incidents for a specific service
-// @Tags incidents
-// @Accept json
-// @Produce json
-// @Param id path string true "Service ID"
-// @Success 200 {array} Incident "List of incidents"
-// @Failure 400 {object} ErrorResponse "Bad request"
-// @Failure 500 {object} ErrorResponse "Internal server error"
-// @Router /services/{id}/incidents [get]
+//
+//	@Summary		Get service incidents
+//	@Description	Returns a list of incidents for a specific service
+//	@Tags			incidents
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	path		string			true	"Service ID"
+//	@Success		200	{array}		Incident		"List of incidents"
+//	@Failure		400	{object}	ErrorResponse	"Bad request"
+//	@Failure		500	{object}	ErrorResponse	"Internal server error"
+//	@Router			/services/{id}/incidents [get]
 func (s *Server) handleAPIServiceIncidents(c *fiber.Ctx) error {
 	serviceID := c.Params("id")
 	if serviceID == "" {
@@ -468,17 +393,18 @@ func (s *Server) handleAPIServiceIncidents(c *fiber.Ctx) error {
 }
 
 // handleAPIServiceStats returns service statistics
-// @Summary Get service statistics
-// @Description Returns service statistics for the specified period
-// @Tags statistics
-// @Accept json
-// @Produce json
-// @Param id path string true "Service ID"
-// @Param days query int false "Number of days (default 30)"
-// @Success 200 {object} ServiceStats "Service statistics"
-// @Failure 400 {object} ErrorResponse "Bad request"
-// @Failure 500 {object} ErrorResponse "Internal server error"
-// @Router /services/{id}/stats [get]
+//
+//	@Summary		Get service statistics
+//	@Description	Returns service statistics for the specified period
+//	@Tags			statistics
+//	@Accept			json
+//	@Produce		json
+//	@Param			id		path		string			true	"Service ID"
+//	@Param			days	query		int				false	"Number of days (default 30)"
+//	@Success		200		{object}	ServiceStats	"Service statistics"
+//	@Failure		400		{object}	ErrorResponse	"Bad request"
+//	@Failure		500		{object}	ErrorResponse	"Internal server error"
+//	@Router			/services/{id}/stats [get]
 func (s *Server) handleAPIServiceStats(c *fiber.Ctx) error {
 	serviceID := c.Params("id")
 	if serviceID == "" {
@@ -505,17 +431,18 @@ func (s *Server) handleAPIServiceStats(c *fiber.Ctx) error {
 }
 
 // handleAPIServiceCheck triggers a manual check
-// @Summary Trigger service check
-// @Description Triggers a manual check of service status
-// @Tags services
-// @Accept json
-// @Produce json
-// @Param id path string true "Service ID"
-// @Success 200 {object} SuccessResponse "Check triggered successfully"
-// @Failure 400 {object} ErrorResponse "Bad request"
-// @Failure 404 {object} ErrorResponse "Service not found"
-// @Failure 500 {object} ErrorResponse "Internal server error"
-// @Router /services/{id}/check [post]
+//
+//	@Summary		Trigger service check
+//	@Description	Triggers a manual check of service status
+//	@Tags			services
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	path		string			true	"Service ID"
+//	@Success		200	{object}	SuccessResponse	"Check triggered successfully"
+//	@Failure		400	{object}	ErrorResponse	"Bad request"
+//	@Failure		404	{object}	ErrorResponse	"Service not found"
+//	@Failure		500	{object}	ErrorResponse	"Internal server error"
+//	@Router			/services/{id}/check [post]
 func (s *Server) handleAPIServiceCheck(c *fiber.Ctx) error {
 	serviceID := c.Params("id")
 	if serviceID == "" {
@@ -545,17 +472,18 @@ func (s *Server) handleAPIServiceCheck(c *fiber.Ctx) error {
 }
 
 // handleAPIServiceResolve resolves a service incident
-// @Summary Resolve service incidents
-// @Description Forcefully resolves all active incidents for a service
-// @Tags incidents
-// @Accept json
-// @Produce json
-// @Param id path string true "Service ID"
-// @Success 200 {object} SuccessResponse "Incidents resolved successfully"
-// @Failure 400 {object} ErrorResponse "Bad request"
-// @Failure 404 {object} ErrorResponse "Service not found"
-// @Failure 500 {object} ErrorResponse "Internal server error"
-// @Router /services/{id}/resolve [post]
+//
+//	@Summary		Resolve service incidents
+//	@Description	Forcefully resolves all active incidents for a service
+//	@Tags			incidents
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	path		string			true	"Service ID"
+//	@Success		200	{object}	SuccessResponse	"Incidents resolved successfully"
+//	@Failure		400	{object}	ErrorResponse	"Bad request"
+//	@Failure		404	{object}	ErrorResponse	"Service not found"
+//	@Failure		500	{object}	ErrorResponse	"Internal server error"
+//	@Router			/services/{id}/resolve [post]
 func (s *Server) handleAPIServiceResolve(c *fiber.Ctx) error {
 	serviceID := c.Params("id")
 	if serviceID == "" {
@@ -584,15 +512,16 @@ func (s *Server) handleAPIServiceResolve(c *fiber.Ctx) error {
 }
 
 // handleAPIRecentIncidents returns recent incidents
-// @Summary Get recent incidents
-// @Description Returns a list of recent incidents across all services
-// @Tags incidents
-// @Accept json
-// @Produce json
-// @Param limit query int false "Number of incidents (default 50)"
-// @Success 200 {array} Incident "List of incidents"
-// @Failure 500 {object} ErrorResponse "Internal server error"
-// @Router /incidents [get]
+//
+//	@Summary		Get recent incidents
+//	@Description	Returns a list of recent incidents across all services
+//	@Tags			incidents
+//	@Accept			json
+//	@Produce		json
+//	@Param			limit	query		int				false	"Number of incidents (default 50)"
+//	@Success		200		{array}		Incident		"List of incidents"
+//	@Failure		500		{object}	ErrorResponse	"Internal server error"
+//	@Router			/incidents [get]
 func (s *Server) handleAPIRecentIncidents(c *fiber.Ctx) error {
 	limitStr := c.Query("limit", "50")
 	limit, err := strconv.Atoi(limitStr)
@@ -611,14 +540,15 @@ func (s *Server) handleAPIRecentIncidents(c *fiber.Ctx) error {
 }
 
 // handleAPIDashboardStats returns dashboard statistics
-// @Summary Get dashboard statistics
-// @Description Returns overall statistics for the dashboard
-// @Tags statistics
-// @Accept json
-// @Produce json
-// @Success 200 {object} DashboardStats "Dashboard statistics"
-// @Failure 500 {object} ErrorResponse "Internal server error"
-// @Router /dashboard/stats [get]
+//
+//	@Summary		Get dashboard statistics
+//	@Description	Returns overall statistics for the dashboard
+//	@Tags			statistics
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	DashboardStats	"Dashboard statistics"
+//	@Failure		500	{object}	ErrorResponse	"Internal server error"
+//	@Router			/dashboard/stats [get]
 func (s *Server) handleAPIDashboardStats(c *fiber.Ctx) error {
 	// Get all services
 	services, err := s.monitorService.GetAllServiceConfigs(c.Context())
@@ -729,36 +659,37 @@ func (s *Server) handleAPIDashboardStats(c *fiber.Ctx) error {
 }
 
 // handleAPICreateService creates a new service
-// @Summary Create new service
-// @Description Creates a new service for monitoring
-// @Tags services
-// @Accept json
-// @Produce json
-// @Param service body FlatServiceConfig true "Service configuration"
-// @Success 201 {object} storage.Service "Service created"
-// @Failure 400 {object} ErrorResponse "Bad request"
-// @Failure 500 {object} ErrorResponse "Internal server error"
-// @Router /services [post]
+//
+//	@Summary		Create new service
+//	@Description	Creates a new service for monitoring
+//	@Tags			services
+//	@Accept			json
+//	@Produce		json
+//	@Param			service	body		ServiceDTO		true	"Service configuration"
+//	@Success		201		{object}	storage.Service	"Service created"
+//	@Failure		400		{object}	ErrorResponse	"Bad request"
+//	@Failure		500		{object}	ErrorResponse	"Internal server error"
+//	@Router			/services [post]
 func (s *Server) handleAPICreateService(c *fiber.Ctx) error {
-	var flatService FlatServiceConfig
-	if err := c.BodyParser(&flatService); err != nil {
+	var serviceDTO ServiceDTO
+	if err := c.BodyParser(&serviceDTO); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Invalid request body: " + err.Error(),
 		})
 	}
 
 	// Validate required fields
-	if flatService.Name == "" {
+	if serviceDTO.Name == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Service name is required",
 		})
 	}
-	if flatService.Protocol == "" {
+	if serviceDTO.Protocol == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Protocol is required",
 		})
 	}
-	if flatService.Endpoint == "" {
+	if serviceDTO.Endpoint == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Endpoint is required",
 		})
@@ -766,15 +697,15 @@ func (s *Server) handleAPICreateService(c *fiber.Ctx) error {
 
 	// Convert to storage.Service
 	service := storage.Service{
-		ID:        flatService.ID,
-		Name:      flatService.Name,
-		Protocol:  flatService.Protocol,
-		Endpoint:  flatService.Endpoint,
-		Interval:  flatService.Interval,
-		Timeout:   flatService.Timeout,
-		Retries:   flatService.Retries,
-		Tags:      flatService.Tags,
-		IsEnabled: flatService.IsEnabled,
+		ID:        serviceDTO.ID,
+		Name:      serviceDTO.Name,
+		Protocol:  serviceDTO.Protocol,
+		Endpoint:  serviceDTO.Endpoint,
+		Interval:  serviceDTO.Interval,
+		Timeout:   serviceDTO.Timeout,
+		Retries:   serviceDTO.Retries,
+		Tags:      serviceDTO.Tags,
+		IsEnabled: serviceDTO.IsEnabled,
 	}
 
 	// Set default values
@@ -789,7 +720,7 @@ func (s *Server) handleAPICreateService(c *fiber.Ctx) error {
 	}
 
 	// Convert flat config to proper MonitorConfig structure
-	config, err := s.convertFlatConfigToMonitorConfig(flatService.Protocol, flatService.Config)
+	config, err := s.convertFlatConfigToMonitorConfig(serviceDTO.Protocol, serviceDTO.Config)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Invalid config: " + err.Error(),
@@ -808,18 +739,19 @@ func (s *Server) handleAPICreateService(c *fiber.Ctx) error {
 }
 
 // handleAPIUpdateService updates an existing service
-// @Summary Update service
-// @Description Updates an existing service
-// @Tags services
-// @Accept json
-// @Produce json
-// @Param id path string true "Service ID"
-// @Param service body FlatServiceConfig true "New service configuration"
-// @Success 200 {object} storage.Service "Service updated"
-// @Failure 400 {object} ErrorResponse "Bad request"
-// @Failure 404 {object} ErrorResponse "Service not found"
-// @Failure 500 {object} ErrorResponse "Internal server error"
-// @Router /services/{id} [put]
+//
+//	@Summary		Update service
+//	@Description	Updates an existing service
+//	@Tags			services
+//	@Accept			json
+//	@Produce		json
+//	@Param			id		path		string			true	"Service ID"
+//	@Param			service	body		ServiceDTO		true	"New service configuration"
+//	@Success		200		{object}	storage.Service	"Service updated"
+//	@Failure		400		{object}	ErrorResponse	"Bad request"
+//	@Failure		404		{object}	ErrorResponse	"Service not found"
+//	@Failure		500		{object}	ErrorResponse	"Internal server error"
+//	@Router			/services/{id} [put]
 func (s *Server) handleAPIUpdateService(c *fiber.Ctx) error {
 	id := c.Params("id")
 	if id == "" {
@@ -828,15 +760,15 @@ func (s *Server) handleAPIUpdateService(c *fiber.Ctx) error {
 		})
 	}
 
-	var flatService FlatServiceConfig
-	if err := c.BodyParser(&flatService); err != nil {
+	var serviceDTO ServiceDTO
+	if err := c.BodyParser(&serviceDTO); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Invalid request body: " + err.Error(),
 		})
 	}
 
 	// Debug: log the received data
-	fmt.Printf("Update service request: %+v\n", flatService)
+	fmt.Printf("Update service request: %+v\n", serviceDTO)
 
 	// Get existing service to preserve state
 	existingService, err := s.monitorService.GetServiceByID(c.Context(), id)
@@ -849,19 +781,19 @@ func (s *Server) handleAPIUpdateService(c *fiber.Ctx) error {
 	// Convert to storage.Service, preserving existing state
 	service := storage.Service{
 		ID:        id,
-		Name:      flatService.Name,
-		Protocol:  flatService.Protocol,
-		Endpoint:  flatService.Endpoint,
-		Interval:  flatService.Interval,
-		Timeout:   flatService.Timeout,
-		Retries:   flatService.Retries,
-		Tags:      flatService.Tags,
+		Name:      serviceDTO.Name,
+		Protocol:  serviceDTO.Protocol,
+		Endpoint:  serviceDTO.Endpoint,
+		Interval:  serviceDTO.Interval,
+		Timeout:   serviceDTO.Timeout,
+		Retries:   serviceDTO.Retries,
+		Tags:      serviceDTO.Tags,
 		State:     existingService.State,
-		IsEnabled: flatService.IsEnabled,
+		IsEnabled: serviceDTO.IsEnabled,
 	}
 
 	// Convert flat config to proper MonitorConfig structure
-	config, err := s.convertFlatConfigToMonitorConfig(flatService.Protocol, flatService.Config)
+	config, err := s.convertFlatConfigToMonitorConfig(serviceDTO.Protocol, serviceDTO.Config)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Invalid config: " + err.Error(),
@@ -908,16 +840,17 @@ func (s *Server) handleAPIUpdateService(c *fiber.Ctx) error {
 }
 
 // handleAPIDeleteService deletes a service
-// @Summary Delete service
-// @Description Deletes a service from the monitoring system
-// @Tags services
-// @Accept json
-// @Produce json
-// @Param id path string true "Service ID"
-// @Success 204 "Service deleted"
-// @Failure 400 {object} ErrorResponse "Bad request"
-// @Failure 500 {object} ErrorResponse "Internal server error"
-// @Router /services/{id} [delete]
+//
+//	@Summary		Delete service
+//	@Description	Deletes a service from the monitoring system
+//	@Tags			services
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	path	string	true	"Service ID"
+//	@Success		204	"Service deleted"
+//	@Failure		400	{object}	ErrorResponse	"Bad request"
+//	@Failure		500	{object}	ErrorResponse	"Internal server error"
+//	@Router			/services/{id} [delete]
 func (s *Server) handleAPIDeleteService(c *fiber.Ctx) error {
 	id := c.Params("id")
 	if id == "" {
@@ -936,16 +869,17 @@ func (s *Server) handleAPIDeleteService(c *fiber.Ctx) error {
 }
 
 // handleAPIGetServiceConfig gets service configuration by ID
-// @Summary Get service configuration
-// @Description Returns the complete service configuration by ID
-// @Tags services
-// @Accept json
-// @Produce json
-// @Param id path string true "Service ID"
-// @Success 200 {object} storage.Service "Service configuration"
-// @Failure 400 {object} ErrorResponse "Bad request"
-// @Failure 404 {object} ErrorResponse "Service not found"
-// @Router /services/config/{id} [get]
+//
+//	@Summary		Get service configuration
+//	@Description	Returns the complete service configuration by ID
+//	@Tags			services
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	path		string			true	"Service ID"
+//	@Success		200	{object}	storage.Service	"Service configuration"
+//	@Failure		400	{object}	ErrorResponse	"Bad request"
+//	@Failure		404	{object}	ErrorResponse	"Service not found"
+//	@Router			/services/config/{id} [get]
 func (s *Server) handleAPIGetServiceConfig(c *fiber.Ctx) error {
 	id := c.Params("id")
 	if id == "" {
@@ -1238,16 +1172,16 @@ func (s *Server) sendServiceUpdate(conn *websocket.Conn) error {
 		return err
 	}
 
-	// Create a map for quick lookup of incident stats by service ID
+	// Quick lookup map for incident stats by service ID
 	statsMap := make(map[string]*storage.ServiceIncidentStats)
 	for _, stats := range incidentStats {
 		statsMap[stats.ServiceID] = stats
 	}
 
-	// Convert services to DTO with incident statistics
-	serviceDTOs := make([]ServiceTableDTO, len(services))
+	// Build DTOs
+	serviceDTOs := make([]ServiceDTO, len(services))
 	for i, service := range services {
-		dto := ServiceTableDTO{
+		dto := ServiceDTO{
 			ID:              service.ID,
 			Name:            service.Name,
 			Protocol:        service.Protocol,
@@ -1256,30 +1190,25 @@ func (s *Server) sendServiceUpdate(conn *websocket.Conn) error {
 			Timeout:         service.Timeout,
 			Retries:         service.Retries,
 			Tags:            service.Tags,
-			Config:          toFlatConfigMap(service.Config),
+			Config:          s.convertConfigToMap(service.Config),
 			State:           service.State,
 			IsEnabled:       service.IsEnabled,
 			ActiveIncidents: 0,
 			TotalIncidents:  0,
 		}
-
-		// Add incident statistics if available
 		if stats, exists := statsMap[service.ID]; exists {
 			dto.ActiveIncidents = stats.ActiveIncidents
 			dto.TotalIncidents = stats.TotalIncidents
 		}
-
 		serviceDTOs[i] = dto
 	}
 
-	// Send update message
 	update := fiber.Map{
 		"type":      "service_update",
 		"services":  serviceDTOs,
 		"timestamp": time.Now().Unix(),
 	}
 
-	// Lock only for WebSocket write
 	s.wsMutex.Lock()
 	defer s.wsMutex.Unlock()
 
@@ -1288,7 +1217,6 @@ func (s *Server) sendServiceUpdate(conn *websocket.Conn) error {
 
 // BroadcastServiceUpdate sends service updates to all connected WebSocket clients
 func (s *Server) broadcastServiceUpdate() {
-	// Get updated service data (without locking)
 	services, err := s.monitorService.GetAllServiceConfigs(context.Background())
 	if err != nil {
 		return
@@ -1299,16 +1227,14 @@ func (s *Server) broadcastServiceUpdate() {
 		return
 	}
 
-	// Create a map for quick lookup of incident stats by service ID
 	statsMap := make(map[string]*storage.ServiceIncidentStats)
 	for _, stats := range incidentStats {
 		statsMap[stats.ServiceID] = stats
 	}
 
-	// Convert services to DTO with incident statistics
-	serviceDTOs := make([]ServiceTableDTO, len(services))
+	serviceDTOs := make([]ServiceDTO, len(services))
 	for i, service := range services {
-		dto := ServiceTableDTO{
+		dto := ServiceDTO{
 			ID:              service.ID,
 			Name:            service.Name,
 			Protocol:        service.Protocol,
@@ -1317,37 +1243,30 @@ func (s *Server) broadcastServiceUpdate() {
 			Timeout:         service.Timeout,
 			Retries:         service.Retries,
 			Tags:            service.Tags,
-			Config:          toFlatConfigMap(service.Config),
+			Config:          s.convertConfigToMap(service.Config),
 			State:           service.State,
 			IsEnabled:       service.IsEnabled,
 			ActiveIncidents: 0,
 			TotalIncidents:  0,
 		}
-
-		// Add incident statistics if available
 		if stats, exists := statsMap[service.ID]; exists {
 			dto.ActiveIncidents = stats.ActiveIncidents
 			dto.TotalIncidents = stats.TotalIncidents
 		}
-
 		serviceDTOs[i] = dto
 	}
 
-	// Prepare update message
 	update := fiber.Map{
 		"type":      "service_update",
 		"services":  serviceDTOs,
 		"timestamp": time.Now().Unix(),
 	}
 
-	// Lock only for WebSocket operations
 	s.wsMutex.Lock()
 	defer s.wsMutex.Unlock()
 
-	// Send to all connections
 	for conn := range s.wsConnections {
 		if err := conn.WriteJSON(update); err != nil {
-			// Remove failed connection
 			delete(s.wsConnections, conn)
 			conn.Close()
 		}
@@ -1381,8 +1300,35 @@ func (s *Server) subscribeEvents(ctx context.Context) error {
 	return nil
 }
 
-func toFlatConfigMap(cfg storage.MonitorConfig) map[string]any {
-	// Преобразование storage.MonitorConfig в map[string]any для Swagger/JSON
-	// Можно доработать под нужды, сейчас просто возвращает пустую map если не реализовано
-	return map[string]any{}
+// convertConfigToMap converts storage.MonitorConfig to map[string]any
+func (s *Server) convertConfigToMap(cfg storage.MonitorConfig) map[string]any {
+	result := make(map[string]any)
+
+	if cfg.HTTP != nil {
+		result["method"] = cfg.HTTP.Method
+		result["expected_status"] = cfg.HTTP.ExpectedStatus
+		result["headers"] = cfg.HTTP.Headers
+		if cfg.HTTP.ExtendedConfig != nil {
+			result["multi_endpoint"] = cfg.HTTP.ExtendedConfig
+		}
+	}
+
+	if cfg.TCP != nil {
+		result["send_data"] = cfg.TCP.SendData
+		result["expect_data"] = cfg.TCP.ExpectData
+	}
+
+	if cfg.GRPC != nil {
+		result["check_type"] = cfg.GRPC.CheckType
+		result["service_name"] = cfg.GRPC.ServiceName
+		result["tls"] = cfg.GRPC.TLS
+		result["insecure_tls"] = cfg.GRPC.InsecureTLS
+	}
+
+	if cfg.Redis != nil {
+		result["password"] = cfg.Redis.Password
+		result["db"] = cfg.Redis.DB
+	}
+
+	return result
 }
