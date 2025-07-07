@@ -27,7 +27,6 @@ var migrations = []Migration{
 			retries INTEGER NOT NULL DEFAULT 3,
 			tags jsonb NOT NULL DEFAULT '[]',
 			config jsonb NOT NULL DEFAULT '{}',
-			state jsonb NOT NULL DEFAULT '{}',
 			is_enabled BOOLEAN NOT NULL DEFAULT TRUE,
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -46,13 +45,41 @@ var migrations = []Migration{
 			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 		);
 
+		-- Create service_states table for current service states
+		CREATE TABLE IF NOT EXISTS service_states (
+			id TEXT PRIMARY KEY,
+			service_id TEXT NOT NULL REFERENCES services(id),
+			status TEXT NOT NULL DEFAULT 'unknown',
+			last_check DATETIME,
+			next_check DATETIME,
+			last_error TEXT,
+			consecutive_fails INTEGER NOT NULL DEFAULT 0,
+			consecutive_success INTEGER NOT NULL DEFAULT 0,
+			total_checks INTEGER NOT NULL DEFAULT 0,
+			response_time_ns INTEGER,
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			UNIQUE(service_id)
+		);
+
 		-- Create indexes for performance
 		CREATE INDEX IF NOT EXISTS idx_services_name ON services(name);
 		CREATE INDEX IF NOT EXISTS idx_services_protocol ON services(protocol);
+		CREATE INDEX IF NOT EXISTS idx_services_enabled ON services(is_enabled);
+		CREATE INDEX IF NOT EXISTS idx_services_updated_at ON services(updated_at DESC);
+		
 		CREATE INDEX IF NOT EXISTS idx_incidents_service_id ON incidents(service_id);
 		CREATE INDEX IF NOT EXISTS idx_incidents_start_time ON incidents(start_time);
+		CREATE INDEX IF NOT EXISTS idx_incidents_start_time_desc ON incidents(start_time DESC);
 		CREATE INDEX IF NOT EXISTS idx_incidents_resolved ON incidents(resolved);
 		CREATE INDEX IF NOT EXISTS idx_incidents_service_resolved ON incidents(service_id, resolved);
+		CREATE INDEX IF NOT EXISTS idx_incidents_service_start_time ON incidents(service_id, start_time DESC);
+		CREATE INDEX IF NOT EXISTS idx_incidents_resolved_start_time ON incidents(resolved, start_time DESC);
+		
+		CREATE INDEX IF NOT EXISTS idx_service_states_service_id ON service_states(service_id);
+		CREATE INDEX IF NOT EXISTS idx_service_states_status ON service_states(status);
+		CREATE INDEX IF NOT EXISTS idx_service_states_last_check ON service_states(last_check DESC);
+		CREATE INDEX IF NOT EXISTS idx_service_states_next_check ON service_states(next_check);
 		`,
 	},
 }

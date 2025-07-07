@@ -27,6 +27,11 @@ type Storage interface {
 	UpdateService(ctx context.Context, service *Service) error
 	DeleteService(ctx context.Context, id string) error
 
+	// Service state management
+	GetServiceState(ctx context.Context, serviceID string) (*ServiceStateRecord, error)
+	UpdateServiceState(ctx context.Context, state *ServiceStateRecord) error
+	GetAllServiceStates(ctx context.Context) ([]*ServiceStateRecord, error)
+
 	// Statistics
 	GetServiceStats(ctx context.Context, serviceID string, since time.Time) (*ServiceStats, error)
 	GetAllServicesIncidentStats(ctx context.Context) ([]*ServiceIncidentStats, error)
@@ -37,17 +42,18 @@ type Storage interface {
 
 // Service represents a monitored service
 type Service struct {
-	ID        string        `json:"id" yaml:"id"`
-	Name      string        `json:"name" yaml:"name"`
-	Protocol  string        `json:"protocol" yaml:"protocol"`
-	Endpoint  string        `json:"endpoint" yaml:"endpoint"`
-	Interval  time.Duration `json:"interval" yaml:"interval" swaggertype:"primitive,integer"`
-	Timeout   time.Duration `json:"timeout" yaml:"timeout" swaggertype:"primitive,integer"`
-	Retries   int           `json:"retries" yaml:"retries"`
-	Tags      []string      `json:"tags" yaml:"tags"`
-	Config    MonitorConfig `json:"config" yaml:"config"`
-	State     *ServiceState `json:"state,omitempty" yaml:"state,omitempty"`
-	IsEnabled bool          `json:"is_enabled" yaml:"is_enabled"`
+	ID              string        `json:"id" yaml:"id"`
+	Name            string        `json:"name" yaml:"name"`
+	Protocol        string        `json:"protocol" yaml:"protocol"`
+	Endpoint        string        `json:"endpoint" yaml:"endpoint"`
+	Interval        time.Duration `json:"interval" yaml:"interval" swaggertype:"primitive,integer"`
+	Timeout         time.Duration `json:"timeout" yaml:"timeout" swaggertype:"primitive,integer"`
+	Retries         int           `json:"retries" yaml:"retries"`
+	Tags            []string      `json:"tags" yaml:"tags"`
+	Config          MonitorConfig `json:"config" yaml:"config"`
+	IsEnabled       bool          `json:"is_enabled" yaml:"is_enabled"`
+	ActiveIncidents int           `json:"active_incidents,omitempty" yaml:"active_incidents,omitempty"`
+	TotalIncidents  int           `json:"total_incidents,omitempty" yaml:"total_incidents,omitempty"`
 }
 
 // ServiceState represents the current state of a monitored service
@@ -117,6 +123,22 @@ type ServiceIncidentStats struct {
 	ServiceID       string `json:"service_id"`
 	ActiveIncidents int    `json:"active_incidents"`
 	TotalIncidents  int    `json:"total_incidents"`
+}
+
+// ServiceStateRecord represents a service state record in the database
+type ServiceStateRecord struct {
+	ID                 string        `json:"id"`
+	ServiceID          string        `json:"service_id"`
+	Status             ServiceStatus `json:"status"` // "up", "down", "unknown"
+	LastCheck          *time.Time    `json:"last_check,omitempty"`
+	NextCheck          *time.Time    `json:"next_check,omitempty"`
+	LastError          string        `json:"last_error,omitempty"`
+	ConsecutiveFails   int           `json:"consecutive_fails"`
+	ConsecutiveSuccess int           `json:"consecutive_success"`
+	TotalChecks        int           `json:"total_checks"`
+	ResponseTimeNS     *int64        `json:"response_time_ns,omitempty"`
+	CreatedAt          time.Time     `json:"created_at"`
+	UpdatedAt          time.Time     `json:"updated_at"`
 }
 
 // MonitorConfig represents configuration for different monitor types

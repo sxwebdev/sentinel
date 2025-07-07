@@ -9,7 +9,16 @@ const docTemplate = `{
     "info": {
         "description": "{{escape .Description}}",
         "title": "{{.Title}}",
-        "contact": {},
+        "termsOfService": "http://swagger.io/terms/",
+        "contact": {
+            "name": "API Support",
+            "url": "http://www.swagger.io/support",
+            "email": "support@swagger.io"
+        },
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        },
         "version": "{{.Version}}"
     },
     "host": "{{.Host}}",
@@ -17,7 +26,7 @@ const docTemplate = `{
     "paths": {
         "/dashboard/stats": {
             "get": {
-                "description": "Returns overall statistics for the dashboard",
+                "description": "Returns statistics for the dashboard",
                 "consumes": [
                     "application/json"
                 ],
@@ -25,14 +34,15 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "statistics"
+                    "dashboard"
                 ],
                 "summary": "Get dashboard statistics",
                 "responses": {
                     "200": {
                         "description": "Dashboard statistics",
                         "schema": {
-                            "$ref": "#/definitions/web.DashboardStats"
+                            "type": "object",
+                            "additionalProperties": true
                         }
                     },
                     "500": {
@@ -86,7 +96,7 @@ const docTemplate = `{
         },
         "/services": {
             "get": {
-                "description": "Returns a list of all configured services with incident statistics",
+                "description": "Returns a list of all services with their current states",
                 "consumes": [
                     "application/json"
                 ],
@@ -99,11 +109,11 @@ const docTemplate = `{
                 "summary": "Get all services",
                 "responses": {
                     "200": {
-                        "description": "List of services with statistics",
+                        "description": "List of services with states",
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/web.ServiceDTO"
+                                "$ref": "#/definitions/web.ServiceWithState"
                             }
                         }
                     },
@@ -691,9 +701,6 @@ const docTemplate = `{
                 "retries": {
                     "type": "integer"
                 },
-                "state": {
-                    "$ref": "#/definitions/storage.ServiceState"
-                },
                 "tags": {
                     "type": "array",
                     "items": {
@@ -705,7 +712,7 @@ const docTemplate = `{
                 }
             }
         },
-        "storage.ServiceState": {
+        "storage.ServiceStateRecord": {
             "type": "object",
             "properties": {
                 "consecutive_fails": {
@@ -713,6 +720,12 @@ const docTemplate = `{
                 },
                 "consecutive_success": {
                     "type": "integer"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
                 },
                 "last_check": {
                     "type": "string"
@@ -723,14 +736,25 @@ const docTemplate = `{
                 "next_check": {
                     "type": "string"
                 },
-                "response_time": {
+                "response_time_ns": {
                     "type": "integer"
                 },
+                "service_id": {
+                    "type": "string"
+                },
                 "status": {
-                    "$ref": "#/definitions/storage.ServiceStatus"
+                    "description": "\"up\", \"down\", \"unknown\"",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/storage.ServiceStatus"
+                        }
+                    ]
                 },
                 "total_checks": {
                     "type": "integer"
+                },
+                "updated_at": {
+                    "type": "string"
                 }
             }
         },
@@ -757,61 +781,6 @@ const docTemplate = `{
                 },
                 "send_data": {
                     "type": "string"
-                }
-            }
-        },
-        "web.DashboardStats": {
-            "description": "Dashboard statistics",
-            "type": "object",
-            "properties": {
-                "active_incidents": {
-                    "type": "integer",
-                    "example": 2
-                },
-                "avg_response_time": {
-                    "type": "integer",
-                    "example": 150
-                },
-                "checks_per_minute": {
-                    "type": "integer",
-                    "example": 60
-                },
-                "last_check_time": {
-                    "type": "string"
-                },
-                "protocols": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "integer"
-                    }
-                },
-                "recent_incidents": {
-                    "type": "integer",
-                    "example": 5
-                },
-                "services_down": {
-                    "type": "integer",
-                    "example": 1
-                },
-                "services_unknown": {
-                    "type": "integer",
-                    "example": 1
-                },
-                "services_up": {
-                    "type": "integer",
-                    "example": 8
-                },
-                "total_checks": {
-                    "type": "integer",
-                    "example": 1000
-                },
-                "total_services": {
-                    "type": "integer",
-                    "example": 10
-                },
-                "uptime_percentage": {
-                    "type": "number",
-                    "example": 95.5
                 }
             }
         },
@@ -866,7 +835,6 @@ const docTemplate = `{
             }
         },
         "web.ServiceDTO": {
-            "description": "Service with optional incident statistics",
             "type": "object",
             "properties": {
                 "active_incidents": {
@@ -905,9 +873,6 @@ const docTemplate = `{
                 "retries": {
                     "type": "integer",
                     "example": 3
-                },
-                "state": {
-                    "$ref": "#/definitions/storage.ServiceState"
                 },
                 "tags": {
                     "type": "array",
@@ -959,6 +924,17 @@ const docTemplate = `{
                 }
             }
         },
+        "web.ServiceWithState": {
+            "type": "object",
+            "properties": {
+                "service": {
+                    "$ref": "#/definitions/storage.Service"
+                },
+                "state": {
+                    "$ref": "#/definitions/storage.ServiceStateRecord"
+                }
+            }
+        },
         "web.SuccessResponse": {
             "description": "Successful response",
             "type": "object",
@@ -974,12 +950,12 @@ const docTemplate = `{
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "",
+	Version:          "1.0",
 	Host:             "",
-	BasePath:         "",
+	BasePath:         "/api/v1",
 	Schemes:          []string{},
-	Title:            "",
-	Description:      "",
+	Title:            "Sentinel Monitoring API",
+	Description:      "API for service monitoring and incident management",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

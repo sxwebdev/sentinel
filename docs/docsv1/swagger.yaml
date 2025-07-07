@@ -1,3 +1,4 @@
+basePath: /api/v1
 definitions:
   storage.GRPCConfig:
     properties:
@@ -61,8 +62,6 @@ definitions:
         type: string
       retries:
         type: integer
-      state:
-        $ref: '#/definitions/storage.ServiceState'
       tags:
         items:
           type: string
@@ -70,24 +69,34 @@ definitions:
       timeout:
         type: integer
     type: object
-  storage.ServiceState:
+  storage.ServiceStateRecord:
     properties:
       consecutive_fails:
         type: integer
       consecutive_success:
         type: integer
+      created_at:
+        type: string
+      id:
+        type: string
       last_check:
         type: string
       last_error:
         type: string
       next_check:
         type: string
-      response_time:
+      response_time_ns:
         type: integer
+      service_id:
+        type: string
       status:
-        $ref: '#/definitions/storage.ServiceStatus'
+        allOf:
+        - $ref: '#/definitions/storage.ServiceStatus'
+        description: '"up", "down", "unknown"'
       total_checks:
         type: integer
+      updated_at:
+        type: string
     type: object
   storage.ServiceStatus:
     enum:
@@ -107,46 +116,6 @@ definitions:
         type: string
       send_data:
         type: string
-    type: object
-  web.DashboardStats:
-    description: Dashboard statistics
-    properties:
-      active_incidents:
-        example: 2
-        type: integer
-      avg_response_time:
-        example: 150
-        type: integer
-      checks_per_minute:
-        example: 60
-        type: integer
-      last_check_time:
-        type: string
-      protocols:
-        additionalProperties:
-          type: integer
-        type: object
-      recent_incidents:
-        example: 5
-        type: integer
-      services_down:
-        example: 1
-        type: integer
-      services_unknown:
-        example: 1
-        type: integer
-      services_up:
-        example: 8
-        type: integer
-      total_checks:
-        example: 1000
-        type: integer
-      total_services:
-        example: 10
-        type: integer
-      uptime_percentage:
-        example: 95.5
-        type: number
     type: object
   web.ErrorResponse:
     description: Error response
@@ -185,7 +154,6 @@ definitions:
         type: string
     type: object
   web.ServiceDTO:
-    description: Service with optional incident statistics
     properties:
       active_incidents:
         example: 2
@@ -215,8 +183,6 @@ definitions:
       retries:
         example: 3
         type: integer
-      state:
-        $ref: '#/definitions/storage.ServiceState'
       tags:
         example:
         - web
@@ -253,6 +219,13 @@ definitions:
         example: 95
         type: number
     type: object
+  web.ServiceWithState:
+    properties:
+      service:
+        $ref: '#/definitions/storage.Service'
+      state:
+        $ref: '#/definitions/storage.ServiceStateRecord'
+    type: object
   web.SuccessResponse:
     description: Successful response
     properties:
@@ -261,27 +234,38 @@ definitions:
         type: string
     type: object
 info:
-  contact: {}
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: API for service monitoring and incident management
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Sentinel Monitoring API
+  version: "1.0"
 paths:
   /dashboard/stats:
     get:
       consumes:
       - application/json
-      description: Returns overall statistics for the dashboard
+      description: Returns statistics for the dashboard
       produces:
       - application/json
       responses:
         "200":
           description: Dashboard statistics
           schema:
-            $ref: '#/definitions/web.DashboardStats'
+            additionalProperties: true
+            type: object
         "500":
           description: Internal server error
           schema:
             $ref: '#/definitions/web.ErrorResponse'
       summary: Get dashboard statistics
       tags:
-      - statistics
+      - dashboard
   /incidents:
     get:
       consumes:
@@ -312,15 +296,15 @@ paths:
     get:
       consumes:
       - application/json
-      description: Returns a list of all configured services with incident statistics
+      description: Returns a list of all services with their current states
       produces:
       - application/json
       responses:
         "200":
-          description: List of services with statistics
+          description: List of services with states
           schema:
             items:
-              $ref: '#/definitions/web.ServiceDTO'
+              $ref: '#/definitions/web.ServiceWithState'
             type: array
         "500":
           description: Internal server error

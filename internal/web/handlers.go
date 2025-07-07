@@ -38,28 +38,32 @@ import (
 //go:embed views/*
 var viewsFS embed.FS
 
-// ServiceDTO represents a service with optional incident statistics
-//
-//	@Description	Service with optional incident statistics
+// ServiceDTO represents a service for API responses
 type ServiceDTO struct {
-	ID              string                `json:"id" example:"service-1"`
-	Name            string                `json:"name" example:"Web Server"`
-	Protocol        string                `json:"protocol" example:"http"`
-	Endpoint        string                `json:"endpoint" example:"https://example.com"`
-	Interval        time.Duration         `json:"interval" swaggertype:"primitive,integer" example:"30000000000"`
-	Timeout         time.Duration         `json:"timeout" swaggertype:"primitive,integer" example:"5000000000"`
-	Retries         int                   `json:"retries" example:"3"`
-	Tags            []string              `json:"tags" example:"web,production"`
-	Config          map[string]any        `json:"config"` // JSON object
-	State           *storage.ServiceState `json:"state,omitempty"`
-	IsEnabled       bool                  `json:"is_enabled" example:"true"`
-	ActiveIncidents int                   `json:"active_incidents,omitempty" example:"2"`
-	TotalIncidents  int                   `json:"total_incidents,omitempty" example:"10"`
+	ID              string         `json:"id" example:"service-1"`
+	Name            string         `json:"name" example:"Web Server"`
+	Protocol        string         `json:"protocol" example:"http"`
+	Endpoint        string         `json:"endpoint" example:"https://example.com"`
+	Interval        time.Duration  `json:"interval" swaggertype:"primitive,integer" example:"30000000000"`
+	Timeout         time.Duration  `json:"timeout" swaggertype:"primitive,integer" example:"5000000000"`
+	Retries         int            `json:"retries" example:"3"`
+	Tags            []string       `json:"tags" example:"web,production"`
+	Config          map[string]any `json:"config"` // JSON object
+	IsEnabled       bool           `json:"is_enabled" example:"true"`
+	ActiveIncidents int            `json:"active_incidents,omitempty" example:"2"`
+	TotalIncidents  int            `json:"total_incidents,omitempty" example:"10"`
+}
+
+// ServiceWithState represents a service with its current state
+type ServiceWithState struct {
+	Service *storage.Service            `json:"service"`
+	State   *storage.ServiceStateRecord `json:"state,omitempty"`
 }
 
 // Server represents the web server
 type Server struct {
 	monitorService *service.MonitorService
+	storage        storage.Storage
 	receiver       *receiver.Receiver
 	config         *config.Config
 	app            *fiber.App
@@ -71,6 +75,7 @@ type Server struct {
 func NewServer(
 	cfg *config.Config,
 	monitorService *service.MonitorService,
+	storage storage.Storage,
 	receiver *receiver.Receiver,
 ) (*Server, error) {
 	// Create template engine with embedded templates
@@ -79,11 +84,11 @@ func NewServer(
 	// Add template functions
 	templateEngine.
 		AddFunc("lower", strings.ToLower).
-		AddFunc("statusToString", func(status storage.ServiceStatus) string {
-			return status.String()
+		AddFunc("statusToString", func(status string) string {
+			return string(status)
 		}).
-		AddFunc("statusToLower", func(status storage.ServiceStatus) string {
-			return strings.ToLower(status.String())
+		AddFunc("statusToLower", func(status string) string {
+			return strings.ToLower(status)
 		}).
 		AddFunc("formatDateTime", func(t time.Time) string {
 			return t.Format("2006-01-02 15:04:05")
@@ -102,7 +107,8 @@ func NewServer(
 
 	// Create Fiber app
 	app := fiber.New(fiber.Config{
-		Views: templateEngine,
+		Views:   templateEngine,
+		AppName: "Sentinel",
 	})
 
 	app.Use(cors.New())
@@ -130,9 +136,10 @@ func NewServer(
 	})
 
 	server := &Server{
-		config:         cfg,
 		monitorService: monitorService,
+		storage:        storage,
 		receiver:       receiver,
+		config:         cfg,
 		app:            app,
 		wsConnections:  make(map[*websocket.Conn]bool),
 	}
@@ -165,6 +172,18 @@ func (s *Server) Start(ctx context.Context) error {
 }
 
 func (s *Server) Stop(_ context.Context) error {
+	fmt.Println("Web server: stopping, closing all WebSocket connections")
+
+	s.wsMutex.Lock()
+	// Закрываем все WebSocket соединения
+	for conn := range s.wsConnections {
+		conn.Close()
+	}
+	// Очищаем map
+	s.wsConnections = make(map[*websocket.Conn]bool)
+	s.wsMutex.Unlock()
+
+	fmt.Println("Web server: stopped")
 	return nil
 }
 
@@ -178,7 +197,7 @@ func (s *Server) setupRoutes() {
 	api := s.app.Group("/api/v1")
 	// Swagger UI
 	api.Get("/swagger/*", swagger.WrapHandler)
-	api.Get("/services", s.handleAPIServices)
+	api.Get("/services", s.handleAPIGetServices)
 	api.Get("/services/:id", s.handleAPIServiceDetail)
 	api.Get("/services/:id/incidents", s.handleAPIServiceIncidents)
 	api.Delete("/services/:id/incidents/:incidentId", s.handleAPIDeleteIncident)
@@ -254,68 +273,60 @@ func (s *Server) handleServiceDetail(c *fiber.Ctx) error {
 	})
 }
 
-// handleAPIServices returns all services with incident statistics
+// handleAPIGetServices handles GET /api/v1/services
 //
 //	@Summary		Get all services
-//	@Description	Returns a list of all configured services with incident statistics
+//	@Description	Returns a list of all services with their current states
 //	@Tags			services
 //	@Accept			json
 //	@Produce		json
-//	@Success		200	{array}		ServiceDTO		"List of services with statistics"
-//	@Failure		500	{object}	ErrorResponse	"Internal server error"
+//	@Success		200	{array}		ServiceWithState	"List of services with states"
+//	@Failure		500	{object}	ErrorResponse		"Internal server error"
 //	@Router			/services [get]
-func (s *Server) handleAPIServices(c *fiber.Ctx) error {
-	// Get all services with their states
-	services, err := s.monitorService.GetAllServiceConfigs(c.Context())
+func (s *Server) handleAPIGetServices(c *fiber.Ctx) error {
+	ctx := c.Context()
+
+	services, err := s.monitorService.GetAllServiceConfigs(ctx)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
 		})
 	}
 
-	// Get incident statistics for all services
-	incidentStats, err := s.monitorService.GetAllServicesIncidentStats(c.Context())
+	// Get incident statistics
+	incidentStats, err := s.monitorService.GetAllServicesIncidentStats(ctx)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
 		})
 	}
 
-	// Create a map for quick lookup of incident stats by service ID
+	// Quick lookup map for incident stats by service ID
 	statsMap := make(map[string]*storage.ServiceIncidentStats)
 	for _, stats := range incidentStats {
 		statsMap[stats.ServiceID] = stats
 	}
 
-	// Convert services to DTO with incident statistics
-	var result []ServiceDTO
+	// Get services with their states
+	var servicesWithState []*ServiceWithState
 	for _, service := range services {
-		dto := ServiceDTO{
-			ID:              service.ID,
-			Name:            service.Name,
-			Protocol:        service.Protocol,
-			Endpoint:        service.Endpoint,
-			Interval:        service.Interval,
-			Timeout:         service.Timeout,
-			Retries:         service.Retries,
-			Tags:            service.Tags,
-			Config:          s.convertConfigToMap(service.Config),
-			State:           service.State,
-			IsEnabled:       service.IsEnabled,
-			ActiveIncidents: 0,
-			TotalIncidents:  0,
+		serviceWithState, err := s.getServiceWithState(ctx, service)
+		if err != nil {
+			// Log error but continue with other services
+			continue
 		}
 
-		// Add incident statistics if available
+		// Add incident statistics to the service
 		if stats, exists := statsMap[service.ID]; exists {
-			dto.ActiveIncidents = stats.ActiveIncidents
-			dto.TotalIncidents = stats.TotalIncidents
+			// Add incident stats to the service object
+			serviceWithState.Service.ActiveIncidents = stats.ActiveIncidents
+			serviceWithState.Service.TotalIncidents = stats.TotalIncidents
 		}
 
-		result = append(result, dto)
+		servicesWithState = append(servicesWithState, serviceWithState)
 	}
 
-	return c.JSON(result)
+	return c.JSON(servicesWithState)
 }
 
 // handleAPIServiceDetail returns service details
@@ -326,7 +337,7 @@ func (s *Server) handleAPIServices(c *fiber.Ctx) error {
 //	@Accept			json
 //	@Produce		json
 //	@Param			id	path		string			true	"Service ID"
-//	@Success		200	{object}	ServiceDTO		"Service details"
+//	@Success		200	{object}	ServiceWithState	"Service details with state"
 //	@Failure		400	{object}	ErrorResponse	"Bad request"
 //	@Failure		404	{object}	ErrorResponse	"Service not found"
 //	@Router			/services/{id} [get]
@@ -345,7 +356,32 @@ func (s *Server) handleAPIServiceDetail(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.JSON(targetService)
+	// Get service with state
+	serviceWithState, err := s.getServiceWithState(c.Context(), targetService)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	// Get incident statistics for this service
+	incidentStats, err := s.monitorService.GetAllServicesIncidentStats(c.Context())
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	// Find statistics for this service
+	for _, stats := range incidentStats {
+		if stats.ServiceID == serviceID {
+			serviceWithState.Service.ActiveIncidents = stats.ActiveIncidents
+			serviceWithState.Service.TotalIncidents = stats.TotalIncidents
+			break
+		}
+	}
+
+	return c.JSON(serviceWithState)
 }
 
 // handleAPIServiceIncidents returns service incidents
@@ -532,8 +568,8 @@ func (s *Server) handleAPIRecentIncidents(c *fiber.Ctx) error {
 //	@Tags			incidents
 //	@Accept			json
 //	@Produce		json
-//	@Param			id			path		string			true	"Service ID"
-//	@Param			incidentId	path		string			true	"Incident ID"
+//	@Param			id			path	string	true	"Service ID"
+//	@Param			incidentId	path	string	true	"Incident ID"
 //	@Success		204			"Incident deleted"
 //	@Failure		400			{object}	ErrorResponse	"Bad request"
 //	@Failure		404			{object}	ErrorResponse	"Incident not found"
@@ -567,7 +603,7 @@ func (s *Server) handleAPIDeleteIncident(c *fiber.Ctx) error {
 	err = s.monitorService.DeleteIncident(c.Context(), serviceID, incidentID)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to delete incident: " + err.Error(),
+			"error": err.Error(),
 		})
 	}
 
@@ -577,15 +613,15 @@ func (s *Server) handleAPIDeleteIncident(c *fiber.Ctx) error {
 // handleAPIDashboardStats returns dashboard statistics
 //
 //	@Summary		Get dashboard statistics
-//	@Description	Returns overall statistics for the dashboard
-//	@Tags			statistics
+//	@Description	Returns statistics for the dashboard
+//	@Tags			dashboard
 //	@Accept			json
 //	@Produce		json
-//	@Success		200	{object}	DashboardStats	"Dashboard statistics"
+//	@Success		200	{object}	map[string]any	"Dashboard statistics"
 //	@Failure		500	{object}	ErrorResponse	"Internal server error"
 //	@Router			/dashboard/stats [get]
 func (s *Server) handleAPIDashboardStats(c *fiber.Ctx) error {
-	// Get all services
+	// Get all services with their states
 	services, err := s.monitorService.GetAllServiceConfigs(c.Context())
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -601,33 +637,49 @@ func (s *Server) handleAPIDashboardStats(c *fiber.Ctx) error {
 		})
 	}
 
-	// Calculate statistics
+	// Get all service states
+	serviceStates, err := s.storage.GetAllServiceStates(c.Context())
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	// Create a map for quick lookup of service states by service ID
+	stateMap := make(map[string]*storage.ServiceStateRecord)
+	for _, state := range serviceStates {
+		stateMap[state.ServiceID] = state
+	}
+
+	// Initialize stats
 	stats := fiber.Map{
 		"total_services":    len(services),
 		"services_up":       0,
 		"services_down":     0,
 		"services_unknown":  0,
-		"protocols":         make(map[string]int),
-		"recent_incidents":  len(recentIncidents),
-		"active_incidents":  0,
+		"uptime_percentage": 0.0,
 		"avg_response_time": 0,
 		"total_checks":      0,
-		"uptime_percentage": 0,
+		"active_incidents":  0,
 		"last_check_time":   nil,
 		"checks_per_minute": 0,
+		"protocols":         make(map[string]int),
 	}
 
-	// Calculate service status distribution and protocol distribution
-	totalResponseTime := time.Duration(0)
-	servicesWithResponseTime := 0
+	// Calculate statistics
 	totalChecks := 0
 	upServices := 0
 	var lastCheckTime *time.Time
+	var totalResponseTimeMs int64
+	var responseTimeCount int64
 
 	for _, service := range services {
+		// Get service state
+		serviceState := stateMap[service.ID]
+
 		// Count by status
-		if service.State != nil {
-			switch service.State.Status {
+		if serviceState != nil {
+			switch serviceState.Status {
 			case storage.StatusUp:
 				stats["services_up"] = stats["services_up"].(int) + 1
 				upServices++
@@ -637,17 +689,17 @@ func (s *Server) handleAPIDashboardStats(c *fiber.Ctx) error {
 				stats["services_unknown"] = stats["services_unknown"].(int) + 1
 			}
 
-			// Sum response times (only from services that have response time data)
-			if service.State.ResponseTime > 0 {
-				totalResponseTime += service.State.ResponseTime
-				servicesWithResponseTime++
+			// Add response time to total (only from services that have response time data)
+			if serviceState.ResponseTimeNS != nil && *serviceState.ResponseTimeNS > 0 {
+				totalResponseTimeMs += *serviceState.ResponseTimeNS / 1000000 // Convert to milliseconds
+				responseTimeCount++
 			}
-			totalChecks += service.State.TotalChecks
+			totalChecks += serviceState.TotalChecks
 
 			// Track last check time
-			if service.State.LastCheck != nil {
-				if lastCheckTime == nil || service.State.LastCheck.After(*lastCheckTime) {
-					lastCheckTime = service.State.LastCheck
+			if serviceState.LastCheck != nil {
+				if lastCheckTime == nil || serviceState.LastCheck.After(*lastCheckTime) {
+					lastCheckTime = serviceState.LastCheck
 				}
 			}
 		}
@@ -664,8 +716,8 @@ func (s *Server) handleAPIDashboardStats(c *fiber.Ctx) error {
 	if upServices > 0 {
 		stats["uptime_percentage"] = float64(upServices) / float64(len(services)) * 100
 	}
-	if servicesWithResponseTime > 0 {
-		stats["avg_response_time"] = totalResponseTime.Milliseconds() / int64(servicesWithResponseTime)
+	if responseTimeCount > 0 {
+		stats["avg_response_time"] = totalResponseTimeMs / responseTimeCount
 	}
 	stats["total_checks"] = totalChecks
 
@@ -766,7 +818,7 @@ func (s *Server) handleAPICreateService(c *fiber.Ctx) error {
 	// Add service
 	if err := s.monitorService.AddService(c.Context(), &service); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to create service: " + err.Error(),
+			"error": err.Error(),
 		})
 	}
 
@@ -805,15 +857,7 @@ func (s *Server) handleAPIUpdateService(c *fiber.Ctx) error {
 	// Debug: log the received data
 	fmt.Printf("Update service request: %+v\n", serviceDTO)
 
-	// Get existing service to preserve state
-	existingService, err := s.monitorService.GetServiceByID(c.Context(), id)
-	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"error": "Service not found: " + err.Error(),
-		})
-	}
-
-	// Convert to storage.Service, preserving existing state
+	// Convert to storage.Service
 	service := storage.Service{
 		ID:        id,
 		Name:      serviceDTO.Name,
@@ -823,7 +867,6 @@ func (s *Server) handleAPIUpdateService(c *fiber.Ctx) error {
 		Timeout:   serviceDTO.Timeout,
 		Retries:   serviceDTO.Retries,
 		Tags:      serviceDTO.Tags,
-		State:     existingService.State,
 		IsEnabled: serviceDTO.IsEnabled,
 	}
 
@@ -867,7 +910,7 @@ func (s *Server) handleAPIUpdateService(c *fiber.Ctx) error {
 	// Update service
 	if err := s.monitorService.UpdateService(c.Context(), &service); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to update service: " + err.Error(),
+			"error": err.Error(),
 		})
 	}
 
@@ -896,7 +939,7 @@ func (s *Server) handleAPIDeleteService(c *fiber.Ctx) error {
 
 	if err := s.monitorService.DeleteService(c.Context(), id); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to delete service: " + err.Error(),
+			"error": err.Error(),
 		})
 	}
 
@@ -1167,21 +1210,29 @@ func (s *Server) parseRedisConfig(configMap map[string]interface{}) (storage.Mon
 
 // handleWebSocket handles WebSocket connections
 func (s *Server) handleWebSocket(c *websocket.Conn) {
+	fmt.Printf("WebSocket: new connection from %s\n", c.RemoteAddr())
+
 	// Add connection to the map
 	s.wsMutex.Lock()
 	s.wsConnections[c] = true
+	connectionCount := len(s.wsConnections)
 	s.wsMutex.Unlock()
+
+	fmt.Printf("WebSocket: total connections: %d\n", connectionCount)
 
 	// Remove connection when it closes
 	defer func() {
 		s.wsMutex.Lock()
 		delete(s.wsConnections, c)
+		remainingConnections := len(s.wsConnections)
 		s.wsMutex.Unlock()
 		c.Close()
+		fmt.Printf("WebSocket: connection closed, remaining connections: %d\n", remainingConnections)
 	}()
 
 	// Send initial data
 	if err := s.sendServiceUpdate(c); err != nil {
+		fmt.Printf("WebSocket: failed to send initial update: %v\n", err)
 		return
 	}
 
@@ -1189,6 +1240,7 @@ func (s *Server) handleWebSocket(c *websocket.Conn) {
 	for {
 		_, _, err := c.ReadMessage()
 		if err != nil {
+			fmt.Printf("WebSocket: read error: %v\n", err)
 			break
 		}
 	}
@@ -1196,15 +1248,21 @@ func (s *Server) handleWebSocket(c *websocket.Conn) {
 
 // sendServiceUpdate sends service updates to a specific WebSocket connection
 func (s *Server) sendServiceUpdate(conn *websocket.Conn) error {
-	// Get all services with incident statistics (without locking)
-	services, err := s.monitorService.GetAllServiceConfigs(context.Background())
-	if err != nil {
-		return err
+	// Проверяем, не закрыта ли база данных
+	if s.storage == nil {
+		return fmt.Errorf("storage is nil, cannot send service update")
 	}
 
+	// Get all services with their states
+	services, err := s.monitorService.GetAllServiceConfigs(context.Background())
+	if err != nil {
+		return fmt.Errorf("failed to get services: %w", err)
+	}
+
+	// Get incident statistics
 	incidentStats, err := s.monitorService.GetAllServicesIncidentStats(context.Background())
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get incident stats: %w", err)
 	}
 
 	// Quick lookup map for incident stats by service ID
@@ -1213,98 +1271,112 @@ func (s *Server) sendServiceUpdate(conn *websocket.Conn) error {
 		statsMap[stats.ServiceID] = stats
 	}
 
-	// Build DTOs
-	serviceDTOs := make([]ServiceDTO, len(services))
-	for i, service := range services {
-		dto := ServiceDTO{
-			ID:              service.ID,
-			Name:            service.Name,
-			Protocol:        service.Protocol,
-			Endpoint:        service.Endpoint,
-			Interval:        service.Interval,
-			Timeout:         service.Timeout,
-			Retries:         service.Retries,
-			Tags:            service.Tags,
-			Config:          s.convertConfigToMap(service.Config),
-			State:           service.State,
-			IsEnabled:       service.IsEnabled,
-			ActiveIncidents: 0,
-			TotalIncidents:  0,
+	// Get services with their states
+	var servicesWithState []*ServiceWithState
+	for _, service := range services {
+		serviceWithState, err := s.getServiceWithState(context.Background(), service)
+		if err != nil {
+			// Log error but continue with other services
+			fmt.Printf("WebSocket send error: failed to get state for service %s: %v\n", service.ID, err)
+			continue
 		}
+
+		// Add incident statistics to the service
 		if stats, exists := statsMap[service.ID]; exists {
-			dto.ActiveIncidents = stats.ActiveIncidents
-			dto.TotalIncidents = stats.TotalIncidents
+			// Add incident stats to the service object
+			serviceWithState.Service.ActiveIncidents = stats.ActiveIncidents
+			serviceWithState.Service.TotalIncidents = stats.TotalIncidents
 		}
-		serviceDTOs[i] = dto
+
+		servicesWithState = append(servicesWithState, serviceWithState)
 	}
 
 	update := fiber.Map{
 		"type":      "service_update",
-		"services":  serviceDTOs,
+		"services":  servicesWithState,
 		"timestamp": time.Now().Unix(),
 	}
 
 	s.wsMutex.Lock()
 	defer s.wsMutex.Unlock()
 
-	return conn.WriteJSON(update)
+	if err := conn.WriteJSON(update); err != nil {
+		return fmt.Errorf("failed to write JSON to WebSocket: %w", err)
+	}
+
+	return nil
 }
 
 // BroadcastServiceUpdate sends service updates to all connected WebSocket clients
 func (s *Server) broadcastServiceUpdate() {
+	// Проверяем, не закрыта ли база данных
+	if s.storage == nil {
+		fmt.Println("WebSocket broadcast: storage is nil, skipping update")
+		return
+	}
+
 	services, err := s.monitorService.GetAllServiceConfigs(context.Background())
 	if err != nil {
+		fmt.Printf("WebSocket broadcast error: failed to get services: %v\n", err)
 		return
 	}
 
+	// Get incident statistics
 	incidentStats, err := s.monitorService.GetAllServicesIncidentStats(context.Background())
 	if err != nil {
+		fmt.Printf("WebSocket broadcast error: failed to get incident stats: %v\n", err)
 		return
 	}
 
+	// Quick lookup map for incident stats by service ID
 	statsMap := make(map[string]*storage.ServiceIncidentStats)
 	for _, stats := range incidentStats {
 		statsMap[stats.ServiceID] = stats
 	}
 
-	serviceDTOs := make([]ServiceDTO, len(services))
-	for i, service := range services {
-		dto := ServiceDTO{
-			ID:              service.ID,
-			Name:            service.Name,
-			Protocol:        service.Protocol,
-			Endpoint:        service.Endpoint,
-			Interval:        service.Interval,
-			Timeout:         service.Timeout,
-			Retries:         service.Retries,
-			Tags:            service.Tags,
-			Config:          s.convertConfigToMap(service.Config),
-			State:           service.State,
-			IsEnabled:       service.IsEnabled,
-			ActiveIncidents: 0,
-			TotalIncidents:  0,
+	// Get services with their states
+	var servicesWithState []*ServiceWithState
+	for _, service := range services {
+		serviceWithState, err := s.getServiceWithState(context.Background(), service)
+		if err != nil {
+			// Log error but continue with other services
+			fmt.Printf("WebSocket broadcast error: failed to get state for service %s: %v\n", service.ID, err)
+			continue
 		}
+
+		// Add incident statistics to the service
 		if stats, exists := statsMap[service.ID]; exists {
-			dto.ActiveIncidents = stats.ActiveIncidents
-			dto.TotalIncidents = stats.TotalIncidents
+			// Add incident stats to the service object
+			serviceWithState.Service.ActiveIncidents = stats.ActiveIncidents
+			serviceWithState.Service.TotalIncidents = stats.TotalIncidents
 		}
-		serviceDTOs[i] = dto
+
+		servicesWithState = append(servicesWithState, serviceWithState)
 	}
 
 	update := fiber.Map{
 		"type":      "service_update",
-		"services":  serviceDTOs,
+		"services":  servicesWithState,
 		"timestamp": time.Now().Unix(),
 	}
 
 	s.wsMutex.Lock()
 	defer s.wsMutex.Unlock()
 
+	// Send to all connections and handle errors
+	activeConnections := 0
 	for conn := range s.wsConnections {
 		if err := conn.WriteJSON(update); err != nil {
+			fmt.Printf("WebSocket broadcast error: failed to send to connection: %v\n", err)
 			delete(s.wsConnections, conn)
 			conn.Close()
+		} else {
+			activeConnections++
 		}
+	}
+
+	if activeConnections > 0 {
+		fmt.Printf("WebSocket broadcast: sent update to %d connections\n", activeConnections)
 	}
 }
 
@@ -1313,26 +1385,29 @@ func (s *Server) subscribeEvents(ctx context.Context) error {
 	sub := broker.Subscribe()
 	defer broker.Unsubscribe(sub)
 
-	errChan := make(chan error, 1)
-	go func() {
-		for ctx.Err() == nil {
-			select {
-			case <-sub:
-				s.broadcastServiceUpdate()
-
-			case <-ctx.Done():
-				return
-			}
-		}
-	}()
-
-	select {
-	case <-ctx.Done():
-	case err := <-errChan:
-		return err
+	if sub == nil {
+		return fmt.Errorf("failed to subscribe to service updates broker")
 	}
 
-	return nil
+	fmt.Println("WebSocket: starting event subscription")
+
+	// Используем select для обработки событий с проверкой контекста
+	for {
+		select {
+		case <-sub:
+			// Проверяем, не закрыта ли база данных перед отправкой обновлений
+			if s.storage == nil {
+				fmt.Println("WebSocket: storage is nil, skipping broadcast")
+				continue
+			}
+			fmt.Println("WebSocket: received service update event")
+			s.broadcastServiceUpdate()
+
+		case <-ctx.Done():
+			fmt.Println("WebSocket: context cancelled, stopping event subscription")
+			return nil
+		}
+	}
 }
 
 // convertConfigToMap converts storage.MonitorConfig to map[string]any
@@ -1366,4 +1441,18 @@ func (s *Server) convertConfigToMap(cfg storage.MonitorConfig) map[string]any {
 	}
 
 	return result
+}
+
+// getServiceWithState gets a service with its current state
+func (s *Server) getServiceWithState(ctx context.Context, service *storage.Service) (*ServiceWithState, error) {
+	// Get service state
+	serviceState, err := s.storage.GetServiceState(ctx, service.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get service state: %w", err)
+	}
+
+	return &ServiceWithState{
+		Service: service,
+		State:   serviceState,
+	}, nil
 }

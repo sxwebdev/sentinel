@@ -146,3 +146,20 @@ func (s *SQLiteStorage) UpdateService(ctx context.Context, service *Service) err
 func (s *SQLiteStorage) DeleteService(ctx context.Context, id string) error {
 	return s.orm.DeleteService(ctx, id)
 }
+
+// Service state management methods
+
+// GetServiceState gets service state
+func (s *SQLiteStorage) GetServiceState(ctx context.Context, serviceID string) (*ServiceStateRecord, error) {
+	return s.orm.GetServiceState(ctx, serviceID)
+}
+
+// UpdateServiceState updates service state
+func (s *SQLiteStorage) UpdateServiceState(ctx context.Context, state *ServiceStateRecord) error {
+	return s.orm.UpdateServiceState(ctx, state)
+}
+
+// GetAllServiceStates gets all service states
+func (s *SQLiteStorage) GetAllServiceStates(ctx context.Context) ([]*ServiceStateRecord, error) {
+	return s.orm.GetAllServiceStates(ctx)
+}

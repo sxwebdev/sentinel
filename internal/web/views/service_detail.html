@@ -68,15 +68,18 @@
       function loadServiceInfo() {
         fetch(`/api/v1/services/${serviceId}`)
           .then((response) => response.json())
-          .then((service) => {
+          .then((serviceWithState) => {
+            const service = serviceWithState.service;
+            const state = serviceWithState.state;
+
             const serviceInfo = document.getElementById("serviceInfo");
             serviceInfo.innerHTML = `
               <div class="service-info-item">
                 <span class="service-info-label">Status:</span>
                 <span class="badge badge-${
-                  service.state?.status?.toLowerCase() || "unknown"
+                  state?.status?.toLowerCase() || "unknown"
                 }">
-                  ${service.state?.status || "Unknown"}
+                  ${state?.status || "Unknown"}
                 </span>
               </div>
               <div class="service-info-item">
@@ -96,27 +99,29 @@
               <div class="service-info-item">
                 <span class="service-info-label">Total Checks:</span>
                 <span class="service-info-value">${
-                  service.state?.total_checks || 0
+                  state?.total_checks || 0
                 }</span>
               </div>
               <div class="service-info-item">
                 <span class="service-info-label">Consecutive Success:</span>
                 <span class="service-info-value">${
-                  service.state?.consecutive_success || 0
+                  state?.consecutive_success || 0
                 }</span>
               </div>
               <div class="service-info-item">
                 <span class="service-info-label">Consecutive Fails:</span>
                 <span class="service-info-value">${
-                  service.state?.consecutive_fails || 0
+                  state?.consecutive_fails || 0
                 }</span>
               </div>
               ${
-                service.state?.response_time
+                state?.response_time_ns
                   ? `
               <div class="service-info-item">
                 <span class="service-info-label">Response Time:</span>
-                <span class="service-info-value">${service.state.response_time}</span>
+                <span class="service-info-value">${Math.round(
+                  state.response_time_ns / 1000000
+                )}ms</span>
               </div>
               `
                   : ""
@@ -124,16 +129,16 @@
               <div class="service-info-item">
                 <span class="service-info-label">Last Check:</span>
                 <span class="service-info-value">${
-                  service.state?.last_check
-                    ? new Date(service.state.last_check).toLocaleString()
+                  state?.last_check
+                    ? new Date(state.last_check).toLocaleString()
                     : "Never"
                 }</span>
               </div>
               ${
-                service.state?.last_error
+                state?.last_error
                   ? `
               <div class="service-error">
-                <strong>Last Error:</strong> ${service.state.last_error}
+                <strong>Last Error:</strong> ${state.last_error}
               </div>
               `
                   : ""

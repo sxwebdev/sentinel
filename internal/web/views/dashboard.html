@@ -1064,7 +1064,7 @@
             }
             return response.json();
           })
-          .then((services) => {
+          .then((servicesWithState) => {
             const tbody = document.querySelector(".table tbody");
             if (!tbody) {
               return;
@@ -1073,23 +1073,27 @@
 
             // Handle both array and object formats
             let servicesArray = [];
-            if (Array.isArray(services)) {
-              servicesArray = services;
-            } else if (typeof services === "object" && services !== null) {
-              servicesArray = Object.values(services);
+            if (Array.isArray(servicesWithState)) {
+              servicesArray = servicesWithState;
+            } else if (
+              typeof servicesWithState === "object" &&
+              servicesWithState !== null
+            ) {
+              servicesArray = Object.values(servicesWithState);
             } else {
               return;
             }
 
-            servicesArray.forEach((service, index) => {
+            servicesArray.forEach((serviceWithState, index) => {
+              const service = serviceWithState.service;
+              const state = serviceWithState.state;
+
               const row = document.createElement("tr");
 
               // Get status and last check from state
-              const status = service.state ? service.state.status : "unknown";
+              const status = state ? state.status : "unknown";
               const lastCheck =
-                service.state && service.state.last_check
-                  ? service.state.last_check
-                  : null;
+                state && state.last_check ? state.last_check : null;
 
               // Generate tags HTML
               let tagsHtml = "";
@@ -1333,49 +1337,83 @@
       // WebSocket connection for real-time updates
       let ws = null;
       let wsReconnectAttempts = 0;
+      let maxReconnectAttempts = 10;
 
       function connectWebSocket() {
         const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
         const wsUrl = `${protocol}//${window.location.host}/ws`;
 
+        console.log("WebSocket: attempting to connect to", wsUrl);
+
         try {
           ws = new WebSocket(wsUrl);
 
           ws.onopen = function () {
-            console.log("WebSocket connected");
+            console.log("WebSocket: connected successfully");
             wsReconnectAttempts = 0;
           };
 
           ws.onmessage = function (event) {
             try {
               const data = JSON.parse(event.data);
+              console.log("WebSocket: received message", data.type);
               if (data.type === "service_update") {
                 updateServicesTableFromWebSocket(data.services);
               }
             } catch (error) {
-              console.error("Failed to parse WebSocket message:", error);
+              console.error("WebSocket: failed to parse message:", error);
+              console.error("WebSocket: raw message:", event.data);
             }
           };
 
-          ws.onclose = function () {
-            console.log("WebSocket disconnected");
+          ws.onclose = function (event) {
+            console.log("WebSocket: disconnected", {
+              code: event.code,
+              reason: event.reason,
+              wasClean: event.wasClean,
+            });
 
-            setTimeout(connectWebSocket, 1000);
+            if (wsReconnectAttempts < maxReconnectAttempts) {
+              wsReconnectAttempts++;
+              const delay = Math.min(
+                1000 * Math.pow(2, wsReconnectAttempts),
+                30000
+              ); // exponential backoff, max 30s
+              console.log(
+                `WebSocket: attempting to reconnect in ${delay}ms (attempt ${wsReconnectAttempts}/${maxReconnectAttempts})`
+              );
+              setTimeout(connectWebSocket, delay);
+            } else {
+              console.error(
+                "WebSocket: max reconnection attempts reached, giving up"
+              );
+            }
           };
 
           ws.onerror = function (error) {
-            console.error("WebSocket error:", error);
+            console.error("WebSocket: connection error:", error);
+            console.error("WebSocket: error details:", {
+              readyState: ws.readyState,
+              url: ws.url,
+            });
           };
         } catch (error) {
-          console.error("Failed to create WebSocket connection:", error);
+          console.error("WebSocket: failed to create connection:", error);
         }
       }
 
       function updateServicesTableFromWebSocket(services) {
         const tbody = document.querySelector(".table tbody");
         if (!tbody) {
+          console.log("WebSocket: table body not found");
           return;
         }
+
+        console.log(
+          "WebSocket: updating table with",
+          services.length,
+          "services"
+        );
 
         // Получаем существующие строки таблицы
         const existingRows = tbody.querySelectorAll("tr");
@@ -1390,16 +1428,32 @@
         });
 
         // Обрабатываем каждый сервис из WebSocket
-        services.forEach((service) => {
+        services.forEach((serviceWithState) => {
+          // Структура данных: {service: {...}, state: {...}}
+          const service = serviceWithState.service;
+          const state = serviceWithState.state;
+
+          if (!service || !service.id) {
+            console.error("WebSocket: invalid service data", serviceWithState);
+            return;
+          }
+
+          console.log(
+            "WebSocket: processing service",
+            service.id,
+            "status:",
+            state?.status
+          );
+
           const existingRow = existingServices.get(service.id);
 
           if (existingRow) {
             // Обновляем существующую строку без анимации
-            updateExistingRow(existingRow, service);
+            updateExistingRow(existingRow, serviceWithState);
             existingServices.delete(service.id); // Убираем из списка обработанных
           } else {
             // Добавляем новую строку
-            const newRow = createServiceRow(service);
+            const newRow = createServiceRow(serviceWithState);
             tbody.appendChild(newRow);
           }
         });
@@ -1410,22 +1464,28 @@
         });
       }
 
-      function updateExistingRow(row, service) {
+      function updateExistingRow(row, serviceWithState) {
+        const service = serviceWithState.service;
+        const state = serviceWithState.state;
+
         // Обновляем статус
         const statusCell = row.querySelector("td:nth-child(3) .badge");
         if (statusCell) {
-          const status = service.state ? service.state.status : "unknown";
+          const status = state ? state.status : "unknown";
           statusCell.className = `badge badge-${status.toLowerCase()}`;
           statusCell.textContent = status.toUpperCase();
+          console.log(
+            "WebSocket: updated status for",
+            service.id,
+            "to",
+            status
+          );
         }
 
         // Обновляем время последней проверки
         const lastCheckCell = row.querySelector("td:nth-child(6)");
         if (lastCheckCell) {
-          const lastCheck =
-            service.state && service.state.last_check
-              ? service.state.last_check
-              : null;
+          const lastCheck = state && state.last_check ? state.last_check : null;
           lastCheckCell.textContent = formatDateTime(lastCheck);
         }
 
@@ -1456,15 +1516,14 @@
         }
       }
 
-      function createServiceRow(service) {
+      function createServiceRow(serviceWithState) {
+        const service = serviceWithState.service;
+        const state = serviceWithState.state;
         const row = document.createElement("tr");
 
         // Get status and last check from state
-        const status = service.state ? service.state.status : "unknown";
-        const lastCheck =
-          service.state && service.state.last_check
-            ? service.state.last_check
-            : null;
+        const status = state ? state.status : "unknown";
+        const lastCheck = state && state.last_check ? state.last_check : null;
 
         // Generate tags HTML
         let tagsHtml = "";

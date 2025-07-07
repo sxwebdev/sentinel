@@ -2,6 +2,7 @@ package receiver
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/sxwebdev/sentinel/internal/storage"
 	"github.com/sxwebdev/sentinel/pkg/broker"
@@ -46,16 +47,18 @@ func New() *Receiver {
 func (s Receiver) Name() string { return "receiver" }
 
 func (s *Receiver) Start(_ context.Context) error {
+	fmt.Println("Receiver: starting brokers")
 	go s.serviceUpdated.Start()
 	go s.triggerService.Start()
-
+	fmt.Println("Receiver: brokers started successfully")
 	return nil
 }
 
 func (s *Receiver) Stop(_ context.Context) error {
+	fmt.Println("Receiver: stopping brokers")
 	s.serviceUpdated.Stop()
 	s.triggerService.Stop()
-
+	fmt.Println("Receiver: brokers stopped")
 	return nil
 }
 

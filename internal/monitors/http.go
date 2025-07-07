@@ -6,11 +6,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 	"strings"
 	"time"
 
 	"github.com/dop251/goja"
-	"github.com/hashicorp/go-retryablehttp"
 	"github.com/sxwebdev/sentinel/internal/storage"
 )
 
@@ -124,11 +124,10 @@ func (h *HTTPMonitor) Check(ctx context.Context) error {
 func (h *HTTPMonitor) checkSingleEndpoint(ctx context.Context) error {
 	config := h.config
 
-	client := retryablehttp.NewClient()
-	client.RetryMax = h.retries
-	client.HTTPClient.Timeout = config.Timeout
+	client := &http.Client{}
+	client.Timeout = config.Timeout
 
-	req, err := retryablehttp.NewRequestWithContext(ctx, config.Method, config.URL, strings.NewReader(config.Body))
+	req, err := http.NewRequestWithContext(ctx, config.Method, config.URL, strings.NewReader(config.Body))
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}
@@ -205,11 +204,10 @@ func (h *HTTPMonitor) checkMultiEndpoint(ctx context.Context) error {
 func (h *HTTPMonitor) checkEndpoint(ctx context.Context, endpoint EndpointConfig) EndpointResult {
 	start := time.Now()
 
-	client := retryablehttp.NewClient()
-	client.RetryMax = h.retries
-	client.HTTPClient.Timeout = h.config.Timeout
+	client := &http.Client{}
+	client.Timeout = h.config.Timeout
 
-	req, err := retryablehttp.NewRequestWithContext(ctx, endpoint.Method, endpoint.URL, strings.NewReader(endpoint.Body))
+	req, err := http.NewRequestWithContext(ctx, endpoint.Method, endpoint.URL, strings.NewReader(endpoint.Body))
 	if err != nil {
 		return EndpointResult{
 			Name:     endpoint.Name,
