@@ -686,6 +686,12 @@ body {
   margin-bottom: 0.5rem;
 }
 
+.incident-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .incident-time {
   font-weight: 600;
   color: #0f172a;
@@ -1155,6 +1161,17 @@ body {
 
 .btn-danger:hover {
   background: #dc2626;
+}
+
+.btn-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  border-radius: 4px;
+}
+
+.btn-sm svg {
+  width: 12px;
+  height: 12px;
 }
 
 /* Header actions */

@@ -14,6 +14,7 @@ type Storage interface {
 	SaveIncident(ctx context.Context, incident *Incident) error
 	GetIncident(ctx context.Context, serviceID, incidentID string) (*Incident, error)
 	UpdateIncident(ctx context.Context, incident *Incident) error
+	DeleteIncident(ctx context.Context, incidentID string) error
 	GetIncidentsByService(ctx context.Context, serviceID string) ([]*Incident, error)
 	GetRecentIncidents(ctx context.Context, limit int) ([]*Incident, error)
 	GetActiveIncidents(ctx context.Context) ([]*Incident, error)

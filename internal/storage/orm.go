@@ -267,6 +267,32 @@ func (o *ORMStorage) UpdateIncident(ctx context.Context, incident *Incident) err
 	})
 }
 
+// DeleteIncident deletes an incident by ID using ORM with retry logic
+func (o *ORMStorage) DeleteIncident(ctx context.Context, incidentID string) error {
+	return o.retryOnBusy(ctx, func() error {
+		db := sqlbuilder.NewDeleteBuilder()
+		db.DeleteFrom("incidents")
+		db.Where(db.Equal("id", incidentID))
+
+		sql, args := db.Build()
+		result, err := o.db.ExecContext(ctx, sql, args...)
+		if err != nil {
+			return fmt.Errorf("failed to delete incident: %w", err)
+		}
+
+		rowsAffected, err := result.RowsAffected()
+		if err != nil {
+			return fmt.Errorf("failed to get rows affected: %w", err)
+		}
+
+		if rowsAffected == 0 {
+			return fmt.Errorf("incident not found")
+		}
+
+		return nil
+	})
+}
+
 // GetServiceStatsWithORM calculates statistics for a service using ORM
 func (o *ORMStorage) GetServiceStatsWithORM(ctx context.Context, serviceID string, since time.Time) (*ServiceStats, error) {
 	// Get all incidents for the service since the specified time

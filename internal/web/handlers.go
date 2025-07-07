@@ -181,6 +181,7 @@ func (s *Server) setupRoutes() {
 	api.Get("/services", s.handleAPIServices)
 	api.Get("/services/:id", s.handleAPIServiceDetail)
 	api.Get("/services/:id/incidents", s.handleAPIServiceIncidents)
+	api.Delete("/services/:id/incidents/:incidentId", s.handleAPIDeleteIncident)
 	api.Get("/services/:id/stats", s.handleAPIServiceStats)
 	api.Post("/services/:id/check", s.handleAPIServiceCheck)
 	api.Post("/services/:id/resolve", s.handleAPIServiceResolve)
@@ -522,6 +523,55 @@ func (s *Server) handleAPIRecentIncidents(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(incidents)
+}
+
+// handleAPIDeleteIncident deletes a specific incident
+//
+//	@Summary		Delete incident
+//	@Description	Deletes a specific incident for a service
+//	@Tags			incidents
+//	@Accept			json
+//	@Produce		json
+//	@Param			id			path		string			true	"Service ID"
+//	@Param			incidentId	path		string			true	"Incident ID"
+//	@Success		204			"Incident deleted"
+//	@Failure		400			{object}	ErrorResponse	"Bad request"
+//	@Failure		404			{object}	ErrorResponse	"Incident not found"
+//	@Failure		500			{object}	ErrorResponse	"Internal server error"
+//	@Router			/services/{id}/incidents/{incidentId} [delete]
+func (s *Server) handleAPIDeleteIncident(c *fiber.Ctx) error {
+	serviceID := c.Params("id")
+	incidentID := c.Params("incidentId")
+
+	if serviceID == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "service ID is required",
+		})
+	}
+
+	if incidentID == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "incident ID is required",
+		})
+	}
+
+	// Check if service exists
+	_, err := s.monitorService.GetServiceByID(c.Context(), serviceID)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "service not found: " + serviceID,
+		})
+	}
+
+	// Delete incident
+	err = s.monitorService.DeleteIncident(c.Context(), serviceID, incidentID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to delete incident: " + err.Error(),
+		})
+	}
+
+	return c.SendStatus(fiber.StatusNoContent)
 }
 
 // handleAPIDashboardStats returns dashboard statistics

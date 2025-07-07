@@ -202,11 +202,24 @@
                   <div class="incident-item">
                     <div class="incident-header">
                       <span class="incident-time">${startTime}</span>
-                      <span class="incident-status ${
-                        incident.resolved ? "resolved" : "active"
-                      }">
-                        ${incident.resolved ? "Resolved" : "Active"}
-                      </span>
+                      <div class="incident-actions">
+                        <span class="incident-status ${
+                          incident.resolved ? "resolved" : "active"
+                        }">
+                          ${incident.resolved ? "Resolved" : "Active"}
+                        </span>
+                        <button 
+                          class="btn btn-danger btn-sm" 
+                          onclick="deleteIncident('${incident.id}')"
+                          title="Delete incident"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash-icon lucide-trash">
+                            <path d="M3 6h18"/>
+                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+                            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                          </svg>
+                        </button>
+                      </div>
                     </div>
                     ${
                       incident.error
@@ -288,6 +301,34 @@
             .catch((error) => {
               console.error("Failed to resolve incidents:", error);
               alert("Failed to resolve incidents: " + error);
+            });
+        }
+      }
+
+      function deleteIncident(incidentId) {
+        if (
+          confirm(
+            "Are you sure you want to delete this incident? This action cannot be undone."
+          )
+        ) {
+          fetch(`/api/v1/services/${serviceId}/incidents/${incidentId}`, {
+            method: "DELETE",
+          })
+            .then((response) => {
+              if (response.ok) {
+                // Reload data instead of full page reload
+                loadServiceInfo();
+                loadServiceStats();
+                loadIncidents();
+              } else {
+                return response.json().then((data) => {
+                  throw new Error(data.error || "Failed to delete incident");
+                });
+              }
+            })
+            .catch((error) => {
+              console.error("Failed to delete incident:", error);
+              alert("Failed to delete incident: " + error.message);
             });
         }
       }

@@ -83,6 +83,11 @@ func (s *SQLiteStorage) UpdateIncident(ctx context.Context, incident *Incident) 
 	return s.orm.UpdateIncident(ctx, incident)
 }
 
+// DeleteIncident deletes an incident by ID
+func (s *SQLiteStorage) DeleteIncident(ctx context.Context, incidentID string) error {
+	return s.orm.DeleteIncident(ctx, incidentID)
+}
+
 // GetIncidentsByService retrieves all incidents for a specific service
 func (s *SQLiteStorage) GetIncidentsByService(ctx context.Context, serviceID string) ([]*Incident, error) {
 	return s.orm.FindIncidentsByService(ctx, serviceID)

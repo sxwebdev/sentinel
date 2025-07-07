@@ -370,6 +370,25 @@ func (m *MonitorService) GetRecentIncidents(ctx context.Context, limit int) ([]*
 	return m.store.GetRecentIncidents(ctx, limit)
 }
 
+// DeleteIncident deletes a specific incident
+func (m *MonitorService) DeleteIncident(ctx context.Context, serviceID, incidentID string) error {
+	// First check if the incident exists and belongs to the service
+	_, err := m.store.GetIncident(ctx, serviceID, incidentID)
+	if err != nil {
+		return fmt.Errorf("incident not found: %w", err)
+	}
+
+	// Delete the incident
+	if err := m.store.DeleteIncident(ctx, incidentID); err != nil {
+		return fmt.Errorf("failed to delete incident: %w", err)
+	}
+
+	// Broadcast WebSocket update
+	m.broadcastWebSocketUpdate()
+
+	return nil
+}
+
 // GetServiceStats gets statistics for a service
 func (m *MonitorService) GetServiceStats(ctx context.Context, serviceID string, since time.Time) (*storage.ServiceStats, error) {
 	return m.store.GetServiceStats(ctx, serviceID, since)

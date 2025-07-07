@@ -515,6 +515,42 @@ paths:
       summary: Get service incidents
       tags:
       - incidents
+  /services/{id}/incidents/{incidentId}:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes a specific incident for a service
+      parameters:
+      - description: Service ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Incident ID
+        in: path
+        name: incidentId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Incident deleted
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+        "404":
+          description: Incident not found
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+      summary: Delete incident
+      tags:
+      - incidents
   /services/{id}/resolve:
     post:
       consumes:
