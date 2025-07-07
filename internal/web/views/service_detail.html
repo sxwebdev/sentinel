@@ -92,10 +92,26 @@
                 <span class="service-info-label">Protocol:</span>
                 <span class="service-info-value">${service.protocol}</span>
               </div>
+              ${
+                service.config.url
+                  ? `
+              <div class="service-info-item">
+                <span class="service-info-label">URL:</span>
+                <span class="service-info-value">${service.config.url}</span>
+              </div>
+              `
+                  : ""
+              }
+              ${
+                service.config.endpoint
+                  ? `
               <div class="service-info-item">
                 <span class="service-info-label">Endpoint:</span>
-                <span class="service-info-value">${service.endpoint}</span>
+                <span class="service-info-value">${service.config.endpoint}</span>
               </div>
+              `
+                  : ""
+              }
               <div class="service-info-item">
                 <span class="service-info-label">Total Checks:</span>
                 <span class="service-info-value">${

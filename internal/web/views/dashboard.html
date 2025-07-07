@@ -106,7 +106,6 @@
                   <th>Service</th>
                   <th>Status</th>
                   <th>Tags</th>
-                  <th>Endpoint</th>
                   <th>Last Check</th>
                   <th>Incidents</th>
                   <th>Actions</th>
@@ -153,9 +152,23 @@
                 <option value="redis">Redis</option>
               </select>
             </div>
-            <div class="form-group">
+            <div class="form-group" id="urlField" style="display: none">
+              <label for="url">URL *</label>
+              <input
+                type="text"
+                id="url"
+                name="url"
+                placeholder="https://example.com"
+              />
+            </div>
+            <div class="form-group" id="endpointField" style="display: none">
               <label for="endpoint">Endpoint *</label>
-              <input type="text" id="endpoint" name="endpoint" required />
+              <input
+                type="text"
+                id="endpoint"
+                name="endpoint"
+                placeholder="localhost:8080"
+              />
             </div>
             <div class="form-row">
               <div class="form-group">
@@ -211,21 +224,174 @@
               </div>
             </div>
 
-            <!-- Multi-endpoint configuration section -->
-            <div class="form-group">
-              <label for="multi_endpoint_enabled"
-                >Multi-Endpoint Monitoring</label
-              >
-              <div class="switch-container" onclick="toggleMultiEndpoint()">
-                <input
-                  type="checkbox"
-                  id="multi_endpoint_enabled"
-                  name="multi_endpoint_enabled"
-                />
-                <span class="switch-slider"></span>
+            <!-- HTTP Configuration -->
+            <div class="form-group" id="httpConfig" style="display: none">
+              <div class="card">
+                <div class="card-header">
+                  <h4>HTTP Configuration</h4>
+                </div>
+                <div class="card-body">
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label for="httpMethod">Method</label>
+                      <select id="httpMethod" name="httpMethod">
+                        <option value="GET">GET</option>
+                        <option value="POST">POST</option>
+                        <option value="PUT">PUT</option>
+                        <option value="DELETE">DELETE</option>
+                        <option value="HEAD">HEAD</option>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label for="expectedStatus">Expected Status</label>
+                      <input
+                        type="number"
+                        id="expectedStatus"
+                        name="expectedStatus"
+                        value="200"
+                        min="100"
+                        max="599"
+                      />
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label for="httpHeaders">Headers (JSON)</label>
+                    <textarea
+                      id="httpHeaders"
+                      name="httpHeaders"
+                      rows="3"
+                      placeholder='{"Content-Type": "application/json"}'
+                    ></textarea>
+                  </div>
+                  <div class="form-group">
+                    <label for="httpBody">Request Body</label>
+                    <textarea
+                      id="httpBody"
+                      name="httpBody"
+                      rows="3"
+                      placeholder="Request body for POST/PUT requests"
+                    ></textarea>
+                  </div>
+                </div>
               </div>
             </div>
 
+            <!-- TCP Configuration -->
+            <div class="form-group" id="tcpConfig" style="display: none">
+              <div class="card">
+                <div class="card-header">
+                  <h4>TCP Configuration</h4>
+                </div>
+                <div class="card-body">
+                  <div class="form-group">
+                    <label for="sendData">Send Data</label>
+                    <input
+                      type="text"
+                      id="sendData"
+                      name="sendData"
+                      placeholder="Data to send to TCP endpoint"
+                    />
+                  </div>
+                  <div class="form-group">
+                    <label for="expectData">Expected Response</label>
+                    <input
+                      type="text"
+                      id="expectData"
+                      name="expectData"
+                      placeholder="Expected response data"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- gRPC Configuration -->
+            <div class="form-group" id="grpcConfig" style="display: none">
+              <div class="card">
+                <div class="card-header">
+                  <h4>gRPC Configuration</h4>
+                </div>
+                <div class="card-body">
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label for="checkType">Check Type</label>
+                      <select id="checkType" name="checkType">
+                        <option value="health">Health Check</option>
+                        <option value="connectivity">Connectivity</option>
+                        <option value="reflection">Reflection</option>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label for="serviceName">Service Name</label>
+                      <input
+                        type="text"
+                        id="serviceName"
+                        name="serviceName"
+                        placeholder="Service name for health check"
+                      />
+                    </div>
+                  </div>
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label for="tls">Use TLS</label>
+                      <div class="switch-container" onclick="toggleTLS()">
+                        <input type="checkbox" id="tls" name="tls" checked />
+                        <span class="switch-slider"></span>
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <label for="insecureTLS">Insecure TLS</label>
+                      <div
+                        class="switch-container"
+                        onclick="toggleInsecureTLS()"
+                      >
+                        <input
+                          type="checkbox"
+                          id="insecureTLS"
+                          name="insecureTLS"
+                        />
+                        <span class="switch-slider"></span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Redis Configuration -->
+            <div class="form-group" id="redisConfig" style="display: none">
+              <div class="card">
+                <div class="card-header">
+                  <h4>Redis Configuration</h4>
+                </div>
+                <div class="card-body">
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label for="redisPassword">Password</label>
+                      <input
+                        type="password"
+                        id="redisPassword"
+                        name="redisPassword"
+                        placeholder="Redis password"
+                      />
+                    </div>
+                    <div class="form-group">
+                      <label for="redisDB">Database</label>
+                      <input
+                        type="number"
+                        id="redisDB"
+                        name="redisDB"
+                        value="0"
+                        min="0"
+                        max="15"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Multi-endpoint configuration section -->
             <div
               class="form-group"
               id="multi_endpoint_config"
@@ -370,15 +536,6 @@
               </div>
             </div>
 
-            <div class="form-group">
-              <label for="config">Configuration (JSON)</label>
-              <textarea
-                id="config"
-                name="config"
-                rows="8"
-                placeholder='{"method": "GET", "expected_status": 200, "headers": {}}'
-              ></textarea>
-            </div>
             <div class="form-actions">
               <button
                 type="button"
@@ -545,12 +702,16 @@
         currentServiceId = null;
         document.getElementById("modalTitle").textContent = "Add Service";
         document.getElementById("serviceForm").reset();
-        document.getElementById("config").value = "";
 
         // Reset multi-endpoint section
-        document.getElementById("multi_endpoint_enabled").checked = false;
         document.getElementById("multi_endpoint_config").style.display = "none";
         document.getElementById("endpoints_container").innerHTML = "";
+
+        // Hide all config sections
+        document.getElementById("httpConfig").style.display = "none";
+        document.getElementById("tcpConfig").style.display = "none";
+        document.getElementById("grpcConfig").style.display = "none";
+        document.getElementById("redisConfig").style.display = "none";
 
         document.getElementById("serviceModal").style.display = "block";
       }
@@ -565,13 +726,11 @@
           .then((response) => response.json())
           .then((serviceConfig) => {
             // Reset multi-endpoint section
-            document.getElementById("multi_endpoint_enabled").checked = false;
             document.getElementById("multi_endpoint_config").style.display =
               "none";
             document.getElementById("endpoints_container").innerHTML = "";
             document.getElementById("name").value = serviceConfig.name;
             document.getElementById("protocol").value = serviceConfig.protocol;
-            document.getElementById("endpoint").value = serviceConfig.endpoint;
             document.getElementById("interval").value = Math.floor(
               serviceConfig.interval / 1000000000
             ); // Convert from nanoseconds
@@ -584,55 +743,74 @@
             document.getElementById("is_enabled").checked =
               serviceConfig.is_enabled !== false;
 
-            // --- Исправление: универсальный разбор multi-endpoint ---
-            console.log("Service config:", serviceConfig);
-            console.log("Config object:", serviceConfig.config);
-
-            let config = serviceConfig.config || {};
-            let multiEndpointConfig = null;
-
-            // Проверяем все возможные места, где может быть multi_endpoint
-            if (config.multi_endpoint) {
-              console.log("Found multi_endpoint in config.multi_endpoint");
-              multiEndpointConfig = config.multi_endpoint;
-            } else if (config.http && config.http.multi_endpoint) {
-              console.log("Found multi_endpoint in config.http.multi_endpoint");
-              multiEndpointConfig = config.http.multi_endpoint;
-              config = config.http; // для отображения остальных полей
-            } else if (config.http && config.http.extended_config) {
-              console.log(
-                "Found multi_endpoint in config.http.extended_config"
-              );
-              multiEndpointConfig = config.http.extended_config;
-              config = config.http; // для отображения остальных полей
-            } else if (config.extended_config) {
-              console.log("Found multi_endpoint in config.extended_config");
-              multiEndpointConfig = config.extended_config;
-            } else {
-              // Проверяем, может быть multi_endpoint находится в другом месте
-              console.log("Checking for multi_endpoint in other locations...");
-              console.log("Config keys:", Object.keys(config));
-              if (config.http) {
-                console.log("HTTP config keys:", Object.keys(config.http));
-              }
-              console.log("No multi_endpoint found in config");
+            // Fill protocol-specific fields
+            const serviceConfigData = serviceConfig.config || {};
+            if (serviceConfig.protocol === "http" && serviceConfigData.http) {
+              document.getElementById("url").value =
+                serviceConfigData.http.url || "";
+              document.getElementById("httpMethod").value =
+                serviceConfigData.http.method || "GET";
+              document.getElementById("expectedStatus").value =
+                serviceConfigData.http.expected_status || 200;
+              document.getElementById("httpHeaders").value = serviceConfigData
+                .http.headers
+                ? JSON.stringify(serviceConfigData.http.headers, null, 2)
+                : "";
+              document.getElementById("httpBody").value =
+                serviceConfigData.http.body || "";
+            } else if (
+              serviceConfig.protocol === "tcp" &&
+              serviceConfigData.tcp
+            ) {
+              document.getElementById("endpoint").value =
+                serviceConfigData.tcp.endpoint || "";
+              document.getElementById("sendData").value =
+                serviceConfigData.tcp.send_data || "";
+              document.getElementById("expectData").value =
+                serviceConfigData.tcp.expect_data || "";
+            } else if (
+              serviceConfig.protocol === "grpc" &&
+              serviceConfigData.grpc
+            ) {
+              document.getElementById("endpoint").value =
+                serviceConfigData.grpc.endpoint || "";
+              document.getElementById("checkType").value =
+                serviceConfigData.grpc.check_type || "health";
+              document.getElementById("serviceName").value =
+                serviceConfigData.grpc.service_name || "";
+              document.getElementById("tls").checked =
+                serviceConfigData.grpc.tls !== false;
+              document.getElementById("insecureTLS").checked =
+                serviceConfigData.grpc.insecure_tls === true;
+            } else if (
+              serviceConfig.protocol === "redis" &&
+              serviceConfigData.redis
+            ) {
+              document.getElementById("endpoint").value =
+                serviceConfigData.redis.endpoint || "";
+              document.getElementById("redisPassword").value =
+                serviceConfigData.redis.password || "";
+              document.getElementById("redisDB").value =
+                serviceConfigData.redis.db || 0;
             }
 
-            console.log("Multi endpoint config:", multiEndpointConfig);
-
-            // Если есть multi-endpoint, подставляем в форму
-            if (multiEndpointConfig) {
-              document.getElementById("multi_endpoint_enabled").checked = true;
-              document.getElementById("multi_endpoint_config").style.display =
-                "block";
+            // Handle multi-endpoint for HTTP
+            if (
+              serviceConfig.protocol === "http" &&
+              serviceConfigData.http &&
+              serviceConfigData.http.multi_endpoint
+            ) {
+              const multiEndpointConfig = serviceConfigData.http.multi_endpoint;
               document.getElementById("condition").value =
                 multiEndpointConfig.condition || "";
               document.getElementById("multi_timeout").value = Math.floor(
                 (multiEndpointConfig.timeout || 30000000000) / 1000000000
               );
+
               // Clear existing endpoints
               const container = document.getElementById("endpoints_container");
               container.innerHTML = "";
+
               (multiEndpointConfig.endpoints || []).forEach(
                 (endpoint, index) => {
                   if (index === 0) {
@@ -685,15 +863,16 @@
                     </div>
                     <div class="form-group">
                       <label>Headers (JSON)</label>
-                      <textarea name="endpoint_headers[]" placeholder='{"Authorization": "Bearer token"}' rows="2"></textarea>
+                      <textarea name="endpoint_headers[]" rows="2" placeholder='{"Content-Type": "application/json"}'></textarea>
                     </div>
                     <div class="form-group">
-                      <label>Body</label>
-                      <textarea name="endpoint_body[]" placeholder="Request body (for POST/PUT)" rows="2"></textarea>
+                      <label>Request Body</label>
+                      <textarea name="endpoint_body[]" rows="2" placeholder="Request body for POST/PUT requests"></textarea>
                     </div>
                   `;
                     container.appendChild(endpointDiv);
-                    // Заполняем данные первого эндпоинта
+
+                    // Fill first endpoint data
                     const nameInput = container.querySelector(
                       'input[name="endpoint_name[]"]'
                     );
@@ -718,6 +897,7 @@
                     const bodyTextarea = container.querySelector(
                       'textarea[name="endpoint_body[]"]'
                     );
+
                     if (nameInput) nameInput.value = endpoint.name || "";
                     if (urlInput) urlInput.value = endpoint.url || "";
                     if (methodSelect)
@@ -729,18 +909,14 @@
                     if (passwordInput)
                       passwordInput.value = endpoint.password || "";
                     if (headersTextarea)
-                      headersTextarea.value = JSON.stringify(
-                        endpoint.headers || {},
-                        null,
-                        2
-                      );
+                      headersTextarea.value = endpoint.headers
+                        ? JSON.stringify(endpoint.headers, null, 2)
+                        : "";
                     if (bodyTextarea) bodyTextarea.value = endpoint.body || "";
                   } else {
                     // Add additional endpoints
                     addEndpoint();
-                    const endpointItems =
-                      container.querySelectorAll(".endpoint-item");
-                    const currentItem = endpointItems[endpointItems.length - 1];
+                    const currentItem = container.lastElementChild;
                     currentItem.querySelector(
                       'input[name="endpoint_name[]"]'
                     ).value = endpoint.name || "";
@@ -753,19 +929,17 @@
                     currentItem.querySelector(
                       'input[name="endpoint_json_path[]"]'
                     ).value = endpoint.json_path || "";
-                    const usernameInput = currentItem.querySelector(
+                    currentItem.querySelector(
                       'input[name="endpoint_username[]"]'
-                    );
-                    const passwordInput = currentItem.querySelector(
+                    ).value = endpoint.username || "";
+                    currentItem.querySelector(
                       'input[name="endpoint_password[]"]'
-                    );
-                    if (usernameInput)
-                      usernameInput.value = endpoint.username || "";
-                    if (passwordInput)
-                      passwordInput.value = endpoint.password || "";
+                    ).value = endpoint.password || "";
                     currentItem.querySelector(
                       'textarea[name="endpoint_headers[]"]'
-                    ).value = JSON.stringify(endpoint.headers || {}, null, 2);
+                    ).value = endpoint.headers
+                      ? JSON.stringify(endpoint.headers, null, 2)
+                      : "";
                     currentItem.querySelector(
                       'textarea[name="endpoint_body[]"]'
                     ).value = endpoint.body || "";
@@ -773,22 +947,6 @@
                 }
               );
             }
-
-            // Остальной код editService (отображение config в textarea)
-            let configJson = "";
-            if (config.http) {
-              configJson = JSON.stringify(config.http, null, 2);
-            } else if (config.tcp) {
-              configJson = JSON.stringify(config.tcp, null, 2);
-            } else if (config.grpc) {
-              configJson = JSON.stringify(config.grpc, null, 2);
-            } else if (config.redis) {
-              configJson = JSON.stringify(config.redis, null, 2);
-            } else {
-              // Если обычный http/json config
-              configJson = JSON.stringify(config, null, 2);
-            }
-            document.getElementById("config").value = configJson;
             updateConfigFields();
             document.getElementById("serviceModal").style.display = "block";
           })
@@ -832,51 +990,48 @@
 
       function updateConfigFields() {
         const protocol = document.getElementById("protocol").value;
-        const configTextarea = document.getElementById("config");
 
-        // Если поле конфигурации пустое или содержит только базовый placeholder,
-        // устанавливаем дефолтное значение для выбранного протокола
-        const currentValue = configTextarea.value.trim();
-        if (currentValue === "" || currentValue === "{}") {
-          let exampleConfig = "";
-          switch (protocol) {
-            case "http":
-              exampleConfig = `{
-  "method": "GET",
-  "expected_status": 200,
-  "headers": {}
-}`;
-              break;
-            case "tcp":
-              exampleConfig = `{
-  "send_data": "",
-  "expect_data": ""
-}`;
-              break;
-            case "grpc":
-              exampleConfig = `{
-  "check_type": "connectivity",
-  "service_name": "",
-  "tls": true,
-  "insecure_tls": false
-}`;
-              break;
-            case "redis":
-              exampleConfig = `{
-  "password": "",
-  "db": 0
-}`;
-              break;
-          }
-          configTextarea.value = exampleConfig;
-        }
+        // Hide all config sections first
+        document.getElementById("httpConfig").style.display = "none";
+        document.getElementById("tcpConfig").style.display = "none";
+        document.getElementById("grpcConfig").style.display = "none";
+        document.getElementById("redisConfig").style.display = "none";
+        document.getElementById("multi_endpoint_config").style.display = "none";
 
-        // Reset multi-endpoint configuration when protocol changes
-        if (protocol !== "http") {
-          document.getElementById("multi_endpoint_enabled").checked = false;
+        // Show/hide URL and endpoint fields based on protocol
+        const urlField = document.getElementById("urlField");
+        const endpointField = document.getElementById("endpointField");
+
+        if (protocol === "http") {
+          urlField.style.display = "block";
+          endpointField.style.display = "none";
+          document.getElementById("httpConfig").style.display = "block";
           document.getElementById("multi_endpoint_config").style.display =
-            "none";
+            "block";
+        } else if (protocol === "tcp") {
+          urlField.style.display = "none";
+          endpointField.style.display = "block";
+          document.getElementById("tcpConfig").style.display = "block";
+        } else if (protocol === "grpc") {
+          urlField.style.display = "none";
+          endpointField.style.display = "block";
+          document.getElementById("grpcConfig").style.display = "block";
+        } else if (protocol === "redis") {
+          urlField.style.display = "none";
+          endpointField.style.display = "block";
+          document.getElementById("redisConfig").style.display = "block";
         }
+      }
+
+      // Toggle functions for gRPC switches
+      function toggleTLS() {
+        const checkbox = document.getElementById("tls");
+        checkbox.checked = !checkbox.checked;
+      }
+
+      function toggleInsecureTLS() {
+        const checkbox = document.getElementById("insecureTLS");
+        checkbox.checked = !checkbox.checked;
       }
 
       document
@@ -886,14 +1041,38 @@
 
           const formData = new FormData(e.target);
           const protocol = formData.get("protocol");
-          const multiEndpointEnabled =
-            formData.get("multi_endpoint_enabled") === "on";
-
-          console.log("Multi-endpoint enabled:", multiEndpointEnabled);
 
           let config = null;
 
-          if (multiEndpointEnabled) {
+          // Build config based on protocol
+          if (protocol === "http") {
+            // HTTP config
+            const httpConfig = {
+              url: formData.get("url"),
+              method: formData.get("httpMethod") || "GET",
+              expected_status: parseInt(formData.get("expectedStatus")) || 200,
+              headers: {},
+            };
+
+            // Parse headers JSON
+            const headersText = formData.get("httpHeaders");
+            if (headersText && headersText.trim()) {
+              try {
+                httpConfig.headers = JSON.parse(headersText);
+              } catch (e) {
+                console.error("Invalid headers JSON:", headersText);
+              }
+            }
+
+            // Add body if present
+            const body = formData.get("httpBody");
+            if (body && body.trim()) {
+              httpConfig.body = body;
+            }
+
+            config = { http: httpConfig };
+
+            // Add multi-endpoint config if endpoints are configured
             const endpoints = [];
             const names = formData.getAll("endpoint_name[]");
             const urls = formData.getAll("endpoint_url[]");
@@ -904,61 +1083,70 @@
             const usernames = formData.getAll("endpoint_username[]");
             const passwords = formData.getAll("endpoint_password[]");
 
-            for (let i = 0; i < names.length; i++) {
-              const endpoint = {
-                name: names[i],
-                url: urls[i],
-                method: methods[i],
-                json_path: jsonPaths[i],
-                headers: {},
-                body: bodies[i],
-                username: usernames[i] || "",
-                password: passwords[i] || "",
+            if (names.length > 0 && names[0].trim()) {
+              for (let i = 0; i < names.length; i++) {
+                const endpoint = {
+                  name: names[i],
+                  url: urls[i],
+                  method: methods[i] || "GET",
+                  json_path: jsonPaths[i] || "",
+                  headers: {},
+                  body: bodies[i] || "",
+                  username: usernames[i] || "",
+                  password: passwords[i] || "",
+                };
+
+                // Parse headers JSON
+                if (headers[i] && headers[i].trim()) {
+                  try {
+                    endpoint.headers = JSON.parse(headers[i]);
+                  } catch (e) {
+                    console.error("Invalid headers JSON:", headers[i]);
+                  }
+                }
+
+                endpoints.push(endpoint);
+              }
+
+              const multiEndpointConfig = {
+                endpoints: endpoints,
+                condition: formData.get("condition") || "",
+                timeout: parseInt(formData.get("multi_timeout")) * 1000000000, // Convert to nanoseconds
               };
 
-              // Parse headers JSON
-              if (headers[i] && headers[i].trim()) {
-                try {
-                  endpoint.headers = JSON.parse(headers[i]);
-                } catch (e) {
-                  console.error("Invalid headers JSON:", headers[i]);
-                }
-              }
-
-              endpoints.push(endpoint);
+              config.http.multi_endpoint = multiEndpointConfig;
             }
-
-            const multiEndpointConfig = {
-              endpoints: endpoints,
-              condition: formData.get("condition"),
-              timeout: parseInt(formData.get("multi_timeout")) * 1000000000, // Convert to nanoseconds
-            };
-
-            // Add multi-endpoint config to the main config
+          } else if (protocol === "tcp") {
             config = {
-              method: "GET",
-              expected_status: 200,
-              headers: {},
-              multi_endpoint: multiEndpointConfig,
+              tcp: {
+                endpoint: formData.get("endpoint"),
+                send_data: formData.get("sendData") || "",
+                expect_data: formData.get("expectData") || "",
+              },
             };
-            console.log("Multi-endpoint config:", config);
-          } else {
-            // Parse regular config from textarea as JSON only
-            const configText = formData.get("config") || "";
-            if (configText.trim()) {
-              try {
-                config = JSON.parse(configText);
-              } catch (e) {
-                alert("Invalid JSON configuration. Please check the format.");
-                return;
-              }
-            }
+          } else if (protocol === "grpc") {
+            config = {
+              grpc: {
+                endpoint: formData.get("endpoint"),
+                check_type: formData.get("checkType") || "health",
+                service_name: formData.get("serviceName") || "",
+                tls: formData.get("tls") === "on",
+                insecure_tls: formData.get("insecureTLS") === "on",
+              },
+            };
+          } else if (protocol === "redis") {
+            config = {
+              redis: {
+                endpoint: formData.get("endpoint"),
+                password: formData.get("redisPassword") || "",
+                db: parseInt(formData.get("redisDB")) || 0,
+              },
+            };
           }
 
           const service = {
             name: formData.get("name"),
             protocol: formData.get("protocol"),
-            endpoint: formData.get("endpoint"),
             interval: parseInt(formData.get("interval")) * 1000000000, // Convert to nanoseconds
             timeout: parseInt(formData.get("timeout")) * 1000000000,
             retries: parseInt(formData.get("retries")),
@@ -1048,7 +1236,6 @@
           const protocol = this.value;
           if (protocol !== "http") {
             // Reset multi-endpoint section for non-HTTP protocols
-            document.getElementById("multi_endpoint_enabled").checked = false;
             document.getElementById("multi_endpoint_config").style.display =
               "none";
             document.getElementById("endpoints_container").innerHTML = "";
@@ -1124,7 +1311,6 @@
                   </span>
                 </td>
                 <td>${tagsHtml}</td>
-                <td>${service.endpoint}</td>
                 <td>${formatDateTime(lastCheck)}</td>
                 <td>
                   <div class="incidents-info">
@@ -1554,7 +1740,6 @@
             </span>
           </td>
           <td>${tagsHtml}</td>
-          <td>${service.endpoint}</td>
           <td>${formatDateTime(lastCheck)}</td>
           <td>
             <div class="incidents-info">

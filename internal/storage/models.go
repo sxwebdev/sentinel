@@ -40,20 +40,27 @@ type Storage interface {
 	Close() error
 }
 
+type ServiceProtocolType string
+
+const (
+	ServiceProtocolTypeHTTP ServiceProtocolType = "http"
+	ServiceProtocolTypeTCP  ServiceProtocolType = "tcp"
+	ServiceProtocolTypeGRPC ServiceProtocolType = "grpc"
+)
+
 // Service represents a monitored service
 type Service struct {
-	ID              string        `json:"id" yaml:"id"`
-	Name            string        `json:"name" yaml:"name"`
-	Protocol        string        `json:"protocol" yaml:"protocol"`
-	Endpoint        string        `json:"endpoint" yaml:"endpoint"`
-	Interval        time.Duration `json:"interval" yaml:"interval" swaggertype:"primitive,integer"`
-	Timeout         time.Duration `json:"timeout" yaml:"timeout" swaggertype:"primitive,integer"`
-	Retries         int           `json:"retries" yaml:"retries"`
-	Tags            []string      `json:"tags" yaml:"tags"`
-	Config          MonitorConfig `json:"config" yaml:"config"`
-	IsEnabled       bool          `json:"is_enabled" yaml:"is_enabled"`
-	ActiveIncidents int           `json:"active_incidents,omitempty" yaml:"active_incidents,omitempty"`
-	TotalIncidents  int           `json:"total_incidents,omitempty" yaml:"total_incidents,omitempty"`
+	ID              string              `json:"id" yaml:"id"`
+	Name            string              `json:"name" yaml:"name"`
+	Protocol        ServiceProtocolType `json:"protocol" yaml:"protocol"`
+	Interval        time.Duration       `json:"interval" yaml:"interval" swaggertype:"primitive,integer"`
+	Timeout         time.Duration       `json:"timeout" yaml:"timeout" swaggertype:"primitive,integer"`
+	Retries         int                 `json:"retries" yaml:"retries"`
+	Tags            []string            `json:"tags" yaml:"tags"`
+	Config          map[string]any      `json:"config" yaml:"config"`
+	IsEnabled       bool                `json:"is_enabled" yaml:"is_enabled"`
+	ActiveIncidents int                 `json:"active_incidents,omitempty" yaml:"active_incidents,omitempty"`
+	TotalIncidents  int                 `json:"total_incidents,omitempty" yaml:"total_incidents,omitempty"`
 }
 
 // ServiceState represents the current state of a monitored service
@@ -139,42 +146,6 @@ type ServiceStateRecord struct {
 	ResponseTimeNS     *int64        `json:"response_time_ns,omitempty"`
 	CreatedAt          time.Time     `json:"created_at"`
 	UpdatedAt          time.Time     `json:"updated_at"`
-}
-
-// MonitorConfig represents configuration for different monitor types
-type MonitorConfig struct {
-	HTTP  *HTTPConfig  `json:"http,omitempty" yaml:"http,omitempty"`
-	TCP   *TCPConfig   `json:"tcp,omitempty" yaml:"tcp,omitempty"`
-	GRPC  *GRPCConfig  `json:"grpc,omitempty" yaml:"grpc,omitempty"`
-	Redis *RedisConfig `json:"redis,omitempty" yaml:"redis,omitempty"`
-}
-
-// HTTPConfig represents HTTP/HTTPS monitor configuration
-type HTTPConfig struct {
-	Method         string            `json:"method" yaml:"method"`
-	ExpectedStatus int               `json:"expected_status" yaml:"expected_status"`
-	Headers        map[string]string `json:"headers" yaml:"headers"`
-	ExtendedConfig map[string]any    `json:"extended_config,omitempty" yaml:"extended_config,omitempty"` // For multi-endpoint configuration
-}
-
-// TCPConfig represents TCP monitor configuration
-type TCPConfig struct {
-	SendData   string `json:"send_data" yaml:"send_data"`
-	ExpectData string `json:"expect_data" yaml:"expect_data"`
-}
-
-// GRPCConfig represents gRPC monitor configuration
-type GRPCConfig struct {
-	CheckType   string `json:"check_type" yaml:"check_type"`
-	ServiceName string `json:"service_name" yaml:"service_name"`
-	TLS         bool   `json:"tls" yaml:"tls"`
-	InsecureTLS bool   `json:"insecure_tls" yaml:"insecure_tls"`
-}
-
-// RedisConfig represents Redis monitor configuration
-type RedisConfig struct {
-	Password string `json:"password" yaml:"password"`
-	DB       int    `json:"db" yaml:"db"`
 }
 
 // GenerateULID generates a new ULID

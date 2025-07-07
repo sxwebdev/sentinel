@@ -30,6 +30,7 @@ import (
 	swagger "github.com/swaggo/fiber-swagger"
 	"github.com/sxwebdev/sentinel/docs/docsv1"
 	"github.com/sxwebdev/sentinel/internal/config"
+	"github.com/sxwebdev/sentinel/internal/monitors"
 	"github.com/sxwebdev/sentinel/internal/receiver"
 	"github.com/sxwebdev/sentinel/internal/service"
 	"github.com/sxwebdev/sentinel/internal/storage"
@@ -43,12 +44,11 @@ type ServiceDTO struct {
 	ID              string         `json:"id" example:"service-1"`
 	Name            string         `json:"name" example:"Web Server"`
 	Protocol        string         `json:"protocol" example:"http"`
-	Endpoint        string         `json:"endpoint" example:"https://example.com"`
 	Interval        time.Duration  `json:"interval" swaggertype:"primitive,integer" example:"30000000000"`
 	Timeout         time.Duration  `json:"timeout" swaggertype:"primitive,integer" example:"5000000000"`
 	Retries         int            `json:"retries" example:"3"`
 	Tags            []string       `json:"tags" example:"web,production"`
-	Config          map[string]any `json:"config"` // JSON object
+	Config          monitors.Config `json:"config"` // JSON object
 	IsEnabled       bool           `json:"is_enabled" example:"true"`
 	ActiveIncidents int            `json:"active_incidents,omitempty" example:"2"`
 	TotalIncidents  int            `json:"total_incidents,omitempty" example:"10"`
@@ -776,18 +776,12 @@ func (s *Server) handleAPICreateService(c *fiber.Ctx) error {
 			"error": "Protocol is required",
 		})
 	}
-	if serviceDTO.Endpoint == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Endpoint is required",
-		})
-	}
 
 	// Convert to storage.Service
 	service := storage.Service{
 		ID:        serviceDTO.ID,
 		Name:      serviceDTO.Name,
 		Protocol:  serviceDTO.Protocol,
-		Endpoint:  serviceDTO.Endpoint,
 		Interval:  serviceDTO.Interval,
 		Timeout:   serviceDTO.Timeout,
 		Retries:   serviceDTO.Retries,
@@ -862,7 +856,6 @@ func (s *Server) handleAPIUpdateService(c *fiber.Ctx) error {
 		ID:        id,
 		Name:      serviceDTO.Name,
 		Protocol:  serviceDTO.Protocol,
-		Endpoint:  serviceDTO.Endpoint,
 		Interval:  serviceDTO.Interval,
 		Timeout:   serviceDTO.Timeout,
 		Retries:   serviceDTO.Retries,
@@ -888,11 +881,6 @@ func (s *Server) handleAPIUpdateService(c *fiber.Ctx) error {
 	if service.Protocol == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Protocol is required",
-		})
-	}
-	if service.Endpoint == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Endpoint is required",
 		})
 	}
 
@@ -977,7 +965,7 @@ func (s *Server) handleAPIGetServiceConfig(c *fiber.Ctx) error {
 }
 
 // convertFlatConfigToMonitorConfig converts JSON config object to proper MonitorConfig structure
-func (s *Server) convertFlatConfigToMonitorConfig(protocol string, configObj map[string]any) (storage.MonitorConfig, error) {
+func (s *Server) convertFlatConfigToMonitorConfig(protocol storage.ServiceProtocolType, configObj map[string]any) (storage.ServiceConfig, error) {
 	if configObj == nil {
 		// Return default config based on protocol
 		return s.getDefaultConfig(protocol), nil
@@ -987,108 +975,77 @@ func (s *Server) convertFlatConfigToMonitorConfig(protocol string, configObj map
 
 	// Validate and convert based on protocol
 	switch protocol {
-	case "http", "https":
+	case storage.ServiceProtocolTypeHTTP:
 		return s.parseHTTPConfig(configObj)
-	case "tcp":
+	case storage.ServiceProtocolTypeTCP:
 		return s.parseTCPConfig(configObj)
-	case "grpc":
+	case storage.ServiceProtocolTypeGRPC:
 		return s.parseGRPCConfig(configObj)
-	case "redis":
-		return s.parseRedisConfig(configObj)
 	default:
-		return storage.MonitorConfig{}, fmt.Errorf("unsupported protocol: %s", protocol)
+		return storage.ServiceConfig{}, fmt.Errorf("unsupported protocol: %s", protocol)
 	}
 }
 
 // getDefaultConfig returns default config for a protocol
-func (s *Server) getDefaultConfig(protocol string) storage.MonitorConfig {
+func (s *Server) getDefaultConfig(protocol storage.ServiceProtocolType) storage.ServiceConfig {
 	switch protocol {
-	case "http", "https":
-		return storage.MonitorConfig{
-			HTTP: &storage.HTTPConfig{
-				Method:         "GET",
-				ExpectedStatus: 200,
-				Headers:        make(map[string]string),
+	case storage.ServiceProtocolTypeHTTP:
+		return storage.ServiceConfig{
+			HTTP: map[string]any{
+				"method":          "GET",
+				"expected_status": 200,
+				"headers":         make(map[string]string),
 			},
 		}
-	case "tcp":
-		return storage.MonitorConfig{
-			TCP: &storage.TCPConfig{
-				SendData:   "",
-				ExpectData: "",
+	case storage.ServiceProtocolTypeTCP:
+		return storage.ServiceConfig{
+			TCP: map[string]any{
+				"send_data":   "",
+				"expect_data": "",
 			},
 		}
-	case "grpc":
-		return storage.MonitorConfig{
-			GRPC: &storage.GRPCConfig{
-				CheckType:   "connectivity",
-				ServiceName: "",
-				TLS:         false,
-				InsecureTLS: false,
-			},
-		}
-	case "redis":
-		return storage.MonitorConfig{
-			Redis: &storage.RedisConfig{
-				Password: "",
-				DB:       0,
+	case storage.ServiceProtocolTypeGRPC:
+		return storage.ServiceConfig{
+			GRPC: map[string]any{
+				"check_type":   "connectivity",
+				"service_name": "",
+				"tls":          false,
+				"insecure_tls": false,
 			},
 		}
 	default:
-		return storage.MonitorConfig{}
+		return storage.ServiceConfig{}
 	}
 }
 
 // parseHTTPConfig parses and validates HTTP config
-func (s *Server) parseHTTPConfig(configMap map[string]interface{}) (storage.MonitorConfig, error) {
-	httpConfig := &storage.HTTPConfig{
-		Method:         "GET",
-		ExpectedStatus: 200,
-		Headers:        make(map[string]string),
+func (s *Server) parseHTTPConfig(configMap map[string]any) (storage.ServiceConfig, error) {
+	configData, ok := configMap[string(storage.ServiceProtocolTypeHTTP)]
+	if 
+
+	httpConfig, err := monitors.GetConfig[monitors.HTTPConfig](configMap)
+	if err != nil {
+		return storage.ServiceConfig{}, err
 	}
 
 	// Extract and validate method
 	if method, ok := configMap["method"].(string); ok {
 		method = strings.ToUpper(method)
 		if method != "GET" && method != "POST" && method != "PUT" && method != "DELETE" && method != "HEAD" && method != "OPTIONS" {
-			return storage.MonitorConfig{}, fmt.Errorf("invalid HTTP method: %s", method)
+			return storage.ServiceConfig{}, fmt.Errorf("invalid HTTP method: %s", method)
 		}
-		httpConfig.Method = method
 	}
 
 	// Extract and validate expected status
 	if expectedStatus, ok := configMap["expected_status"].(int); ok {
 		if expectedStatus < 100 || expectedStatus > 599 {
-			return storage.MonitorConfig{}, fmt.Errorf("invalid HTTP status code: %d", expectedStatus)
+			return storage.ServiceConfig{}, fmt.Errorf("invalid HTTP status code: %d", expectedStatus)
 		}
-		httpConfig.ExpectedStatus = expectedStatus
 	} else if expectedStatus, ok := configMap["expected_status"].(float64); ok {
 		status := int(expectedStatus)
 		if status < 100 || status > 599 {
-			return storage.MonitorConfig{}, fmt.Errorf("invalid HTTP status code: %d", status)
+			return storage.ServiceConfig{}, fmt.Errorf("invalid HTTP status code: %d", status)
 		}
-		httpConfig.ExpectedStatus = status
-	}
-
-	// Extract headers
-	if headers, ok := configMap["headers"].(map[string]interface{}); ok {
-		for key, value := range headers {
-			if strValue, ok := value.(string); ok {
-				httpConfig.Headers[key] = strValue
-			} else {
-				return storage.MonitorConfig{}, fmt.Errorf("invalid header value for %s: must be string", key)
-			}
-		}
-	}
-
-	// Extract multi-endpoint configuration if present
-	if multiEndpoint, ok := configMap["multi_endpoint"].(map[string]interface{}); ok {
-		httpConfig.ExtendedConfig = multiEndpoint
-	}
-
-	// Extract extended_config if present (for backward compatibility)
-	if extendedConfig, ok := configMap["extended_config"].(map[string]interface{}); ok {
-		httpConfig.ExtendedConfig = extendedConfig
 	}
 
 	// Check for unknown fields

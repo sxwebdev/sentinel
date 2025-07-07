@@ -38,7 +38,6 @@ type ServiceRow struct {
 	ID        string    `db:"id"`
 	Name      string    `db:"name"`
 	Protocol  string    `db:"protocol"`
-	Endpoint  string    `db:"endpoint"`
 	Interval  string    `db:"interval"`
 	Timeout   string    `db:"timeout"`
 	Retries   int       `db:"retries"`
@@ -442,7 +441,7 @@ func (o *ORMStorage) rowToIncident(row *IncidentRow) *Incident {
 // QueryServices creates a query builder for services
 func (o *ORMStorage) QueryServices() *sqlbuilder.SelectBuilder {
 	sb := sqlbuilder.NewSelectBuilder()
-	sb.Select("id", "name", "protocol", "endpoint", "interval", "timeout", "retries", "tags", "config", "is_enabled")
+	sb.Select("id", "name", "protocol", "interval", "timeout", "retries", "tags", "config", "is_enabled")
 	sb.From("services")
 	return sb
 }
@@ -460,7 +459,6 @@ func (o *ORMStorage) FindServiceByID(ctx context.Context, id string) (*Service, 
 		&serviceRow.ID,
 		&serviceRow.Name,
 		&serviceRow.Protocol,
-		&serviceRow.Endpoint,
 		&serviceRow.Interval,
 		&serviceRow.Timeout,
 		&serviceRow.Retries,
@@ -497,7 +495,6 @@ func (o *ORMStorage) FindAllServices(ctx context.Context) ([]*Service, error) {
 			&serviceRow.ID,
 			&serviceRow.Name,
 			&serviceRow.Protocol,
-			&serviceRow.Endpoint,
 			&serviceRow.Interval,
 			&serviceRow.Timeout,
 			&serviceRow.Retries,
@@ -543,7 +540,6 @@ func (o *ORMStorage) FindEnabledServices(ctx context.Context) ([]*Service, error
 			&serviceRow.ID,
 			&serviceRow.Name,
 			&serviceRow.Protocol,
-			&serviceRow.Endpoint,
 			&serviceRow.Interval,
 			&serviceRow.Timeout,
 			&serviceRow.Retries,
@@ -574,7 +570,7 @@ func (o *ORMStorage) CreateService(ctx context.Context, service *Service) error 
 	return o.retryOnBusy(ctx, func() error {
 		ib := sqlbuilder.NewInsertBuilder()
 		ib.InsertInto("services")
-		ib.Cols("id", "name", "protocol", "endpoint", "interval", "timeout", "retries", "tags", "config", "is_enabled")
+		ib.Cols("id", "name", "protocol", "interval", "timeout", "retries", "tags", "config", "is_enabled")
 
 		tagsJSON, err := json.Marshal(service.Tags)
 		if err != nil {
@@ -590,7 +586,6 @@ func (o *ORMStorage) CreateService(ctx context.Context, service *Service) error 
 			service.ID,
 			service.Name,
 			service.Protocol,
-			service.Endpoint,
 			service.Interval.String(),
 			service.Timeout.String(),
 			service.Retries,
@@ -630,7 +625,6 @@ func (o *ORMStorage) UpdateService(ctx context.Context, service *Service) error 
 		assignments := []string{
 			ub.Assign("name", service.Name),
 			ub.Assign("protocol", service.Protocol),
-			ub.Assign("endpoint", service.Endpoint),
 			ub.Assign("interval", service.Interval.String()),
 			ub.Assign("timeout", service.Timeout.String()),
 			ub.Assign("retries", service.Retries),
@@ -850,7 +844,7 @@ func (o *ORMStorage) rowToService(row *ServiceRow) (*Service, error) {
 		return nil, fmt.Errorf("failed to unmarshal tags: %w", err)
 	}
 
-	var config MonitorConfig
+	var config map[string]any
 	if err := json.Unmarshal([]byte(row.Config), &config); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
 	}
@@ -858,8 +852,7 @@ func (o *ORMStorage) rowToService(row *ServiceRow) (*Service, error) {
 	return &Service{
 		ID:        row.ID,
 		Name:      row.Name,
-		Protocol:  row.Protocol,
-		Endpoint:  row.Endpoint,
+		Protocol:  ServiceProtocolType(row.Protocol),
 		Interval:  interval,
 		Timeout:   timeout,
 		Retries:   row.Retries,

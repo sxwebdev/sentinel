@@ -14,35 +14,24 @@ import (
 	"github.com/sxwebdev/sentinel/internal/storage"
 )
 
-// HTTPMonitorConfig represents configuration for HTTP monitoring
-type HTTPMonitorConfig struct {
-	URL     string            `json:"url" yaml:"url"`
-	Method  string            `json:"method" yaml:"method"`
-	Headers map[string]string `json:"headers" yaml:"headers"`
-	Body    string            `json:"body" yaml:"body"`
-	Timeout time.Duration     `json:"timeout" yaml:"timeout"`
-
-	// Extended configuration for multi-endpoint monitoring
-	MultiEndpoint *MultiEndpointConfig `json:"multi_endpoint,omitempty" yaml:"multi_endpoint,omitempty"`
-}
-
-// MultiEndpointConfig represents configuration for monitoring multiple endpoints
-type MultiEndpointConfig struct {
-	Endpoints []EndpointConfig `json:"endpoints" yaml:"endpoints"`
-	Condition string           `json:"condition" yaml:"condition"` // JavaScript condition
-	Timeout   time.Duration    `json:"timeout" yaml:"timeout"`
+// HTTPConfig represents configuration for HTTP monitoring
+type HTTPConfig struct {
+	Timeout   time.Duration    `json:"timeout"`
+	Endpoints []EndpointConfig `json:"endpoints"`
+	Condition string           `json:"condition"`
 }
 
 // EndpointConfig represents a single endpoint configuration
 type EndpointConfig struct {
-	Name     string            `json:"name" yaml:"name"`
-	URL      string            `json:"url" yaml:"url"`
-	Method   string            `json:"method" yaml:"method"`
-	Headers  map[string]string `json:"headers" yaml:"headers"`
-	Body     string            `json:"body" yaml:"body"`
-	JSONPath string            `json:"json_path" yaml:"json_path"` // Path to extract value from JSON response
-	Username string            `json:"username" yaml:"username"`   // Basic Auth username
-	Password string            `json:"password" yaml:"password"`   // Basic Auth password
+	Name           string            `json:"name"`
+	URL            string            `json:"url"`
+	Method         string            `json:"method"`
+	Headers        map[string]string `json:"headers"`
+	Body           string            `json:"body"`
+	ExpectedStatus int               `json:"expected_status"`
+	JSONPath       string            `json:"json_path"` // Path to extract value from JSON response
+	Username       string            `json:"username"`  // Basic Auth username
+	Password       string            `json:"password"`  // Basic Auth password
 }
 
 // EndpointResult represents result from a single endpoint
@@ -50,7 +39,7 @@ type EndpointResult struct {
 	Name     string        `json:"name"`
 	URL      string        `json:"url"`
 	Success  bool          `json:"success"`
-	Value    interface{}   `json:"value,omitempty"`
+	Value    any           `json:"value,omitempty"`
 	Error    string        `json:"error,omitempty"`
 	Response string        `json:"response,omitempty"`
 	Duration time.Duration `json:"duration"`
@@ -59,50 +48,20 @@ type EndpointResult struct {
 // HTTPMonitor monitors HTTP/HTTPS endpoints
 type HTTPMonitor struct {
 	BaseMonitor
-	config  *HTTPMonitorConfig
+	conf    HTTPConfig
 	retries int
 }
 
 // NewHTTPMonitor creates a new HTTP monitor
 func NewHTTPMonitor(cfg storage.Service) (*HTTPMonitor, error) {
-	// Parse HTTP config from service config
-	var httpConfig HTTPMonitorConfig
-	if cfg.Config.HTTP != nil {
-		// Convert from old format to new format
-		httpConfig = HTTPMonitorConfig{
-			URL:     cfg.Endpoint,
-			Method:  cfg.Config.HTTP.Method,
-			Headers: cfg.Config.HTTP.Headers,
-			Timeout: cfg.Timeout,
-		}
-
-		// Parse extended config if present
-		if cfg.Config.HTTP.ExtendedConfig != nil {
-			jsData, err := json.Marshal(cfg.Config.HTTP.ExtendedConfig)
-			if err != nil {
-				return nil, fmt.Errorf("failed to parse extended HTTP config: %w", err)
-			}
-
-			var multiEndpoint MultiEndpointConfig
-			if err := json.Unmarshal(jsData, &multiEndpoint); err != nil {
-				return nil, fmt.Errorf("failed to parse extended HTTP config: %w", err)
-			}
-
-			httpConfig.MultiEndpoint = &multiEndpoint
-		}
-	} else {
-		// Default config
-		httpConfig = HTTPMonitorConfig{
-			URL:     cfg.Endpoint,
-			Method:  "GET",
-			Headers: make(map[string]string),
-			Timeout: cfg.Timeout,
-		}
+	conf, err := GetConfig[HTTPConfig](cfg.Config, storage.ServiceProtocolTypeHTTP)
+	if err != nil {
+		return nil, fmt.Errorf("HTTP config not found")
 	}
 
 	monitor := &HTTPMonitor{
 		BaseMonitor: NewBaseMonitor(cfg),
-		config:      &httpConfig,
+		conf:        conf,
 		retries:     cfg.Retries,
 	}
 
@@ -111,56 +70,13 @@ func NewHTTPMonitor(cfg storage.Service) (*HTTPMonitor, error) {
 
 // Check performs a health check on the HTTP endpoint
 func (h *HTTPMonitor) Check(ctx context.Context) error {
-	// Check if multi-endpoint monitoring is configured
-	if h.config.MultiEndpoint != nil {
-		return h.checkMultiEndpoint(ctx)
-	}
-
-	// Standard single endpoint check
-	return h.checkSingleEndpoint(ctx)
+	return h.checkEndpoints(ctx)
 }
 
-// checkSingleEndpoint performs a health check on a single HTTP endpoint
-func (h *HTTPMonitor) checkSingleEndpoint(ctx context.Context) error {
-	config := h.config
-
-	client := &http.Client{}
-	client.Timeout = config.Timeout
-
-	req, err := http.NewRequestWithContext(ctx, config.Method, config.URL, strings.NewReader(config.Body))
-	if err != nil {
-		return fmt.Errorf("failed to create request: %w", err)
-	}
-
-	// Add headers
-	for key, value := range config.Headers {
-		req.Header.Set(key, value)
-	}
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return fmt.Errorf("request failed: %w", err)
-	}
-	defer resp.Body.Close()
-
-	// Read response body
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return fmt.Errorf("failed to read response body: %w", err)
-	}
-
-	// Check if status code indicates success
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return fmt.Errorf("HTTP %d: %s", resp.StatusCode, string(body))
-	}
-
-	return nil
-}
-
-// checkMultiEndpoint performs health checks on multiple endpoints and evaluates conditions
-func (h *HTTPMonitor) checkMultiEndpoint(ctx context.Context) error {
-	config := h.config.MultiEndpoint
-	results := make([]EndpointResult, 0, len(config.Endpoints))
+// checkEndpoints performs health checks on multiple endpoints and evaluates conditions
+func (h *HTTPMonitor) checkEndpoints(ctx context.Context) error {
+	config := h.conf.Endpoints
+	results := make([]EndpointResult, 0, len(config))
 
 	// Check all endpoints concurrently
 	type endpointResult struct {
@@ -168,9 +84,9 @@ func (h *HTTPMonitor) checkMultiEndpoint(ctx context.Context) error {
 		index  int
 	}
 
-	resultChan := make(chan endpointResult, len(config.Endpoints))
+	resultChan := make(chan endpointResult, len(config))
 
-	for i, endpoint := range config.Endpoints {
+	for i, endpoint := range config {
 		go func(ep EndpointConfig, idx int) {
 			result := h.checkEndpoint(ctx, ep)
 			resultChan <- endpointResult{result: result, index: idx}
@@ -178,7 +94,7 @@ func (h *HTTPMonitor) checkMultiEndpoint(ctx context.Context) error {
 	}
 
 	// Collect results
-	for i := 0; i < len(config.Endpoints); i++ {
+	for i := 0; i < len(config); i++ {
 		select {
 		case result := <-resultChan:
 			results = append(results, result.result)
@@ -188,7 +104,7 @@ func (h *HTTPMonitor) checkMultiEndpoint(ctx context.Context) error {
 	}
 
 	// Evaluate condition
-	conditionMet, err := evaluateCondition(config.Condition, results)
+	conditionMet, err := evaluateCondition(h.conf.Condition, results)
 	if err != nil {
 		return fmt.Errorf("failed to evaluate condition: %w", err)
 	}
@@ -258,6 +174,17 @@ func (h *HTTPMonitor) checkEndpoint(ctx context.Context, endpoint EndpointConfig
 
 	// Check if status code indicates success
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return EndpointResult{
+			Name:     endpoint.Name,
+			URL:      endpoint.URL,
+			Success:  false,
+			Error:    fmt.Sprintf("HTTP %d: %s", resp.StatusCode, string(body)),
+			Response: string(body),
+			Duration: duration,
+		}
+	}
+
+	if endpoint.ExpectedStatus != 0 && resp.StatusCode != endpoint.ExpectedStatus {
 		return EndpointResult{
 			Name:     endpoint.Name,
 			URL:      endpoint.URL,

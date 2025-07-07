@@ -21,7 +21,6 @@ var migrations = []Migration{
 			id TEXT PRIMARY KEY,
 			name TEXT NOT NULL,
 			protocol TEXT NOT NULL,
-			endpoint TEXT NOT NULL,
 			interval TEXT NOT NULL,
 			timeout TEXT NOT NULL,
 			retries INTEGER NOT NULL DEFAULT 3,
