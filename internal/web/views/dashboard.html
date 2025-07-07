@@ -45,7 +45,7 @@
         </div>
         <div class="dashboard-stat-card">
           <div class="stat-value" id="uptimePercentage">-</div>
-          <div class="stat-label">Uptime (%)</div>
+          <div class="stat-label">Uptime</div>
         </div>
         <div class="dashboard-stat-card">
           <div class="stat-value" id="avgResponseTime">-</div>
@@ -102,6 +102,7 @@
             <table class="table">
               <thead>
                 <tr>
+                  <th style="width: 40px; text-align: center">Enabled</th>
                   <th>Service</th>
                   <th>Status</th>
                   <th>Tags</th>
@@ -196,6 +197,18 @@
                 name="tags"
                 placeholder="api, critical, production"
               />
+            </div>
+            <div class="form-group">
+              <label for="is_enabled">Enabled Service</label>
+              <div class="switch-container" onclick="toggleSwitch()">
+                <input
+                  type="checkbox"
+                  id="is_enabled"
+                  name="is_enabled"
+                  checked
+                />
+                <span class="switch-slider"></span>
+              </div>
             </div>
             <div class="form-group">
               <label for="config">Configuration (YAML)</label>
@@ -397,6 +410,8 @@
             document.getElementById("retries").value = serviceConfig.retries;
             document.getElementById("tags").value =
               serviceConfig.tags.join(", ");
+            document.getElementById("is_enabled").checked =
+              serviceConfig.is_enabled !== false;
 
             // Convert config object to YAML string
             let configYaml = "";
@@ -423,7 +438,7 @@
                 }"`;
               } else if (serviceConfig.config.grpc) {
                 configYaml = `check_type: "${
-                  serviceConfig.config.grpc.check_type || "health"
+                  serviceConfig.config.grpc.check_type || "connectivity"
                 }"\nservice_name: "${
                   serviceConfig.config.grpc.service_name || ""
                 }"\ntls: ${
@@ -496,22 +511,20 @@
             case "http":
               exampleConfig = `method: "GET"
 expected_status: 200
-headers:
-  User-Agent: "Sentinel Monitor"
-  Authorization: "Bearer token"`;
+headers:`;
               break;
             case "tcp":
-              exampleConfig = `send_data: "ping"
-expect_data: "pong"`;
+              exampleConfig = `send_data: ""
+expect_data: ""`;
               break;
             case "grpc":
-              exampleConfig = `check_type: "health"
-service_name: "myapp.MyService"
+              exampleConfig = `check_type: "connectivity"
+service_name: ""
 tls: true
 insecure_tls: false`;
               break;
             case "redis":
-              exampleConfig = `password: "your_password"
+              exampleConfig = `password: ""
 db: 0`;
               break;
           }
@@ -537,6 +550,7 @@ db: 0`;
               .split(",")
               .map((tag) => tag.trim())
               .filter((tag) => tag),
+            is_enabled: formData.get("is_enabled") === "on",
             config: formData.get("config") || "",
           };
 
@@ -625,6 +639,13 @@ db: 0`;
               }
 
               row.innerHTML = `
+                <td style="text-align: center;">
+                  <div class="activity-indicator ${
+                    service.is_enabled !== false ? "active" : "inactive"
+                  }" title="${
+                service.is_enabled !== false ? "Enabled" : "Disabled"
+              }"></div>
+                </td>
                 <td>
                   <a href="/service/${service.id}" class="service-name">${
                 service.name
@@ -916,6 +937,13 @@ db: 0`;
           }
 
           row.innerHTML = `
+            <td style="text-align: center;">
+              <div class="activity-indicator ${
+                service.is_enabled !== false ? "active" : "inactive"
+              }" title="${
+            service.is_enabled !== false ? "Enabled" : "Disabled"
+          }"></div>
+            </td>
             <td>
               <a href="/service/${service.id}" class="service-name">${
             service.name
@@ -992,6 +1020,12 @@ db: 0`;
           `;
           tbody.appendChild(row);
         });
+      }
+
+      // Toggle switch function
+      function toggleSwitch() {
+        const checkbox = document.getElementById("is_enabled");
+        checkbox.checked = !checkbox.checked;
       }
 
       // Connect to WebSocket when page loads

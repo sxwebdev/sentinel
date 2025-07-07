@@ -45,6 +45,7 @@ type ServiceRow struct {
 	Tags      string    `db:"tags"`
 	Config    string    `db:"config"`
 	State     string    `db:"state"`
+	IsEnabled bool      `db:"is_enabled"`
 	CreatedAt time.Time `db:"created_at"`
 	UpdatedAt time.Time `db:"updated_at"`
 }
@@ -397,7 +398,7 @@ func (o *ORMStorage) rowToIncident(row *IncidentRow) *Incident {
 // QueryServices creates a query builder for services
 func (o *ORMStorage) QueryServices() *sqlbuilder.SelectBuilder {
 	sb := sqlbuilder.NewSelectBuilder()
-	sb.Select("id", "name", "protocol", "endpoint", "interval", "timeout", "retries", "tags", "config", "state")
+	sb.Select("id", "name", "protocol", "endpoint", "interval", "timeout", "retries", "tags", "config", "state", "is_enabled")
 	sb.From("services")
 	return sb
 }
@@ -422,6 +423,7 @@ func (o *ORMStorage) FindServiceByID(ctx context.Context, id string) (*Service, 
 		&serviceRow.Tags,
 		&serviceRow.Config,
 		&serviceRow.State,
+		&serviceRow.IsEnabled,
 	)
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
@@ -459,6 +461,54 @@ func (o *ORMStorage) FindAllServices(ctx context.Context) ([]*Service, error) {
 			&serviceRow.Tags,
 			&serviceRow.Config,
 			&serviceRow.State,
+			&serviceRow.IsEnabled,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan service: %w", err)
+		}
+
+		service, err := o.rowToService(&serviceRow)
+		if err != nil {
+			return nil, err
+		}
+		services = append(services, service)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating rows: %w", err)
+	}
+
+	return services, nil
+}
+
+// FindEnabledServices finds all enabled services using ORM
+func (o *ORMStorage) FindEnabledServices(ctx context.Context) ([]*Service, error) {
+	sb := o.QueryServices()
+	sb.Where(sb.Equal("is_enabled", true))
+	sb.OrderBy("name")
+
+	sql, args := sb.Build()
+	rows, err := o.db.QueryContext(ctx, sql, args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query active services: %w", err)
+	}
+	defer rows.Close()
+
+	var services []*Service
+	for rows.Next() {
+		var serviceRow ServiceRow
+		err := rows.Scan(
+			&serviceRow.ID,
+			&serviceRow.Name,
+			&serviceRow.Protocol,
+			&serviceRow.Endpoint,
+			&serviceRow.Interval,
+			&serviceRow.Timeout,
+			&serviceRow.Retries,
+			&serviceRow.Tags,
+			&serviceRow.Config,
+			&serviceRow.State,
+			&serviceRow.IsEnabled,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan service: %w", err)
@@ -483,7 +533,7 @@ func (o *ORMStorage) CreateService(ctx context.Context, service *Service) error 
 	return o.retryOnBusy(ctx, func() error {
 		ib := sqlbuilder.NewInsertBuilder()
 		ib.InsertInto("services")
-		ib.Cols("id", "name", "protocol", "endpoint", "interval", "timeout", "retries", "tags", "config", "state")
+		ib.Cols("id", "name", "protocol", "endpoint", "interval", "timeout", "retries", "tags", "config", "state", "is_enabled")
 
 		tagsJSON, err := json.Marshal(service.Tags)
 		if err != nil {
@@ -515,6 +565,7 @@ func (o *ORMStorage) CreateService(ctx context.Context, service *Service) error 
 			string(tagsJSON),
 			string(configJSON),
 			stateJSON,
+			service.IsEnabled,
 		)
 
 		sql, args := ib.Build()
@@ -554,6 +605,7 @@ func (o *ORMStorage) UpdateService(ctx context.Context, service *Service) error 
 			ub.Assign("retries", service.Retries),
 			ub.Assign("tags", string(tagsJSON)),
 			ub.Assign("config", string(configJSON)),
+			ub.Assign("is_enabled", service.IsEnabled),
 		}
 
 		// Update state if provided
@@ -589,28 +641,61 @@ func (o *ORMStorage) UpdateService(ctx context.Context, service *Service) error 
 	})
 }
 
-// DeleteService deletes a service by ID using ORM
+// DeleteService deletes a service and all its incidents by ID using ORM in a single transaction
 func (o *ORMStorage) DeleteService(ctx context.Context, id string) error {
-	db := sqlbuilder.NewDeleteBuilder()
-	db.DeleteFrom("services")
-	db.Where(db.Equal("id", id))
+	return o.retryOnBusy(ctx, func() error {
+		// Start a transaction
+		tx, err := o.db.BeginTx(ctx, nil)
+		if err != nil {
+			return fmt.Errorf("failed to begin transaction: %w", err)
+		}
 
-	sql, args := db.Build()
-	result, err := o.db.ExecContext(ctx, sql, args...)
-	if err != nil {
-		return fmt.Errorf("failed to delete service: %w", err)
-	}
+		// Ensure transaction is rolled back on error
+		defer func() {
+			if err != nil {
+				tx.Rollback()
+			}
+		}()
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to get rows affected: %w", err)
-	}
+		// First, delete all incidents for this service
+		incidentDeleteBuilder := sqlbuilder.NewDeleteBuilder()
+		incidentDeleteBuilder.DeleteFrom("incidents")
+		incidentDeleteBuilder.Where(incidentDeleteBuilder.Equal("service_id", id))
 
-	if rowsAffected == 0 {
-		return fmt.Errorf("service not found")
-	}
+		incidentSQL, incidentArgs := incidentDeleteBuilder.Build()
+		_, err = tx.ExecContext(ctx, incidentSQL, incidentArgs...)
+		if err != nil {
+			return fmt.Errorf("failed to delete incidents: %w", err)
+		}
 
-	return nil
+		// Then, delete the service
+		serviceDeleteBuilder := sqlbuilder.NewDeleteBuilder()
+		serviceDeleteBuilder.DeleteFrom("services")
+		serviceDeleteBuilder.Where(serviceDeleteBuilder.Equal("id", id))
+
+		serviceSQL, serviceArgs := serviceDeleteBuilder.Build()
+		result, err := tx.ExecContext(ctx, serviceSQL, serviceArgs...)
+		if err != nil {
+			return fmt.Errorf("failed to delete service: %w", err)
+		}
+
+		rowsAffected, err := result.RowsAffected()
+		if err != nil {
+			return fmt.Errorf("failed to get rows affected: %w", err)
+		}
+
+		if rowsAffected == 0 {
+			return fmt.Errorf("service not found")
+		}
+
+		// Commit the transaction
+		err = tx.Commit()
+		if err != nil {
+			return fmt.Errorf("failed to commit transaction: %w", err)
+		}
+
+		return nil
+	})
 }
 
 // rowToService converts a ServiceRow to Service
@@ -644,16 +729,17 @@ func (o *ORMStorage) rowToService(row *ServiceRow) (*Service, error) {
 	}
 
 	return &Service{
-		ID:       row.ID,
-		Name:     row.Name,
-		Protocol: row.Protocol,
-		Endpoint: row.Endpoint,
-		Interval: interval,
-		Timeout:  timeout,
-		Retries:  row.Retries,
-		Tags:     tags,
-		Config:   config,
-		State:    state,
+		ID:        row.ID,
+		Name:      row.Name,
+		Protocol:  row.Protocol,
+		Endpoint:  row.Endpoint,
+		Interval:  interval,
+		Timeout:   timeout,
+		Retries:   row.Retries,
+		Tags:      tags,
+		Config:    config,
+		State:     state,
+		IsEnabled: row.IsEnabled,
 	}, nil
 }
 
@@ -671,7 +757,7 @@ func (o *ORMStorage) retryOnBusy(ctx context.Context, operation func() error) er
 	maxRetries := 5
 	baseDelay := 10 * time.Millisecond
 
-	for attempt := 0; attempt < maxRetries; attempt++ {
+	for attempt := range maxRetries {
 		err := operation()
 		if err == nil {
 			return nil

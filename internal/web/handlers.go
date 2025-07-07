@@ -27,15 +27,16 @@ var viewsFS embed.FS
 
 // FlatServiceConfig represents a service with flat config structure
 type FlatServiceConfig struct {
-	ID       string        `json:"id"`
-	Name     string        `json:"name"`
-	Protocol string        `json:"protocol"`
-	Endpoint string        `json:"endpoint"`
-	Interval time.Duration `json:"interval"`
-	Timeout  time.Duration `json:"timeout"`
-	Retries  int           `json:"retries"`
-	Tags     []string      `json:"tags"`
-	Config   string        `json:"config"` // YAML string
+	ID        string        `json:"id"`
+	Name      string        `json:"name"`
+	Protocol  string        `json:"protocol"`
+	Endpoint  string        `json:"endpoint"`
+	Interval  time.Duration `json:"interval"`
+	Timeout   time.Duration `json:"timeout"`
+	Retries   int           `json:"retries"`
+	Tags      []string      `json:"tags"`
+	Config    string        `json:"config"` // YAML string
+	IsEnabled bool          `json:"is_enabled"`
 }
 
 // ServiceTableDTO represents a service with incident statistics for table display
@@ -50,6 +51,7 @@ type ServiceTableDTO struct {
 	Tags            []string              `json:"tags"`
 	Config          string                `json:"config"` // YAML string
 	State           *storage.ServiceState `json:"state,omitempty"`
+	IsEnabled       bool                  `json:"is_enabled"`
 	ActiveIncidents int                   `json:"active_incidents"`
 	TotalIncidents  int                   `json:"total_incidents"`
 }
@@ -318,6 +320,7 @@ func (s *Server) handleAPIServicesTable(c *fiber.Ctx) error {
 			Tags:            service.Tags,
 			Config:          configYAML,
 			State:           service.State,
+			IsEnabled:       service.IsEnabled,
 			ActiveIncidents: 0,
 			TotalIncidents:  0,
 		}
@@ -611,14 +614,15 @@ func (s *Server) handleAPICreateService(c *fiber.Ctx) error {
 
 	// Convert to storage.Service
 	service := storage.Service{
-		ID:       flatService.ID,
-		Name:     flatService.Name,
-		Protocol: flatService.Protocol,
-		Endpoint: flatService.Endpoint,
-		Interval: flatService.Interval,
-		Timeout:  flatService.Timeout,
-		Retries:  flatService.Retries,
-		Tags:     flatService.Tags,
+		ID:        flatService.ID,
+		Name:      flatService.Name,
+		Protocol:  flatService.Protocol,
+		Endpoint:  flatService.Endpoint,
+		Interval:  flatService.Interval,
+		Timeout:   flatService.Timeout,
+		Retries:   flatService.Retries,
+		Tags:      flatService.Tags,
+		IsEnabled: flatService.IsEnabled,
 	}
 
 	// Set default values
@@ -677,15 +681,16 @@ func (s *Server) handleAPIUpdateService(c *fiber.Ctx) error {
 
 	// Convert to storage.Service, preserving existing state
 	service := storage.Service{
-		ID:       id,
-		Name:     flatService.Name,
-		Protocol: flatService.Protocol,
-		Endpoint: flatService.Endpoint,
-		Interval: flatService.Interval,
-		Timeout:  flatService.Timeout,
-		Retries:  flatService.Retries,
-		Tags:     flatService.Tags,
-		State:    existingService.State,
+		ID:        id,
+		Name:      flatService.Name,
+		Protocol:  flatService.Protocol,
+		Endpoint:  flatService.Endpoint,
+		Interval:  flatService.Interval,
+		Timeout:   flatService.Timeout,
+		Retries:   flatService.Retries,
+		Tags:      flatService.Tags,
+		State:     existingService.State,
+		IsEnabled: flatService.IsEnabled,
 	}
 
 	// Convert flat config to proper MonitorConfig structure
@@ -1075,6 +1080,7 @@ func (s *Server) sendServiceUpdate(conn *websocket.Conn) error {
 			Tags:            service.Tags,
 			Config:          configYAML,
 			State:           service.State,
+			IsEnabled:       service.IsEnabled,
 			ActiveIncidents: 0,
 			TotalIncidents:  0,
 		}
@@ -1141,6 +1147,7 @@ func (s *Server) broadcastServiceUpdate() {
 			Tags:            service.Tags,
 			Config:          configYAML,
 			State:           service.State,
+			IsEnabled:       service.IsEnabled,
 			ActiveIncidents: 0,
 			TotalIncidents:  0,
 		}

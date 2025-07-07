@@ -74,6 +74,11 @@ func (c *Config) setDefaults() error {
 		c.Database.Path = "./data/incidents.db"
 	}
 
+	// Timezone defaults
+	if c.Timezone == "" {
+		c.Timezone = "UTC"
+	}
+
 	return nil
 }
 
@@ -90,6 +95,11 @@ func (c *Config) validate() error {
 				return fmt.Errorf("notification URL at index %d cannot be empty", i)
 			}
 		}
+	}
+
+	// Validate timezone
+	if _, err := time.LoadLocation(c.Timezone); err != nil {
+		return fmt.Errorf("invalid timezone: %w", err)
 	}
 
 	return nil

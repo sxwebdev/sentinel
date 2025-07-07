@@ -16,34 +16,34 @@ var migrations = []Migration{
 	{
 		Version: 1,
 		SQL: `
-		-- Create services table with ULID, JSONB config and state
+		-- Create services table
 		CREATE TABLE IF NOT EXISTS services (
 			id TEXT PRIMARY KEY,
-			name TEXT NOT NULL UNIQUE,
+			name TEXT NOT NULL,
 			protocol TEXT NOT NULL,
 			endpoint TEXT NOT NULL,
 			interval TEXT NOT NULL,
 			timeout TEXT NOT NULL,
 			retries INTEGER NOT NULL DEFAULT 3,
-			tags TEXT NOT NULL DEFAULT '[]',
-			config TEXT NOT NULL DEFAULT '{}',
-			state TEXT NOT NULL DEFAULT '{}',
+			tags jsonb NOT NULL DEFAULT '[]',
+			config jsonb NOT NULL DEFAULT '{}',
+			state jsonb NOT NULL DEFAULT '{}',
+			is_enabled BOOLEAN NOT NULL DEFAULT TRUE,
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 		);
 
-		-- Create incidents table with ULID
+		-- Create incidents table
 		CREATE TABLE IF NOT EXISTS incidents (
 			id TEXT PRIMARY KEY,
-			service_id TEXT NOT NULL,
+			service_id TEXT NOT NULL REFERENCES services(id),
 			start_time DATETIME NOT NULL,
 			end_time DATETIME,
 			error TEXT NOT NULL,
 			duration_ns INTEGER,
 			resolved BOOLEAN NOT NULL DEFAULT FALSE,
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-			FOREIGN KEY (service_id) REFERENCES services(id) ON DELETE CASCADE
+			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 		);
 
 		-- Create indexes for performance

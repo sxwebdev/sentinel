@@ -45,6 +45,12 @@
               </span>
             </div>
             <div class="service-info-item">
+              <span class="service-info-label">Enabled:</span>
+              <div
+                class="activity-indicator {{if .Service.IsEnabled}}active{{else}}inactive{{end}}"
+              ></div>
+            </div>
+            <div class="service-info-item">
               <span class="service-info-label">Protocol:</span>
               <span class="service-info-value">{{.Service.Protocol}}</span>
             </div>

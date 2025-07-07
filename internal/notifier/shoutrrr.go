@@ -119,7 +119,7 @@ func (s *NotifierImpl) formatAlertMessage(serviceName string, incident *storage.
 		serviceName,
 		serviceName,
 		incident.Error,
-		incident.StartTime.Format("2006-01-02 15:04:05 UTC"),
+		incident.StartTime.Format("2006-01-02 15:04:05"),
 		incident.ID,
 	)
 }
@@ -135,9 +135,9 @@ func (s *NotifierImpl) formatRecoveryMessage(serviceName string, incident *stora
 
 	var endTime string
 	if incident.EndTime != nil {
-		endTime = incident.EndTime.Format("2006-01-02 15:04:05 UTC")
+		endTime = incident.EndTime.Format("2006-01-02 15:04:05")
 	} else {
-		endTime = time.Now().Format("2006-01-02 15:04:05 UTC")
+		endTime = time.Now().Format("2006-01-02 15:04:05")
 	}
 
 	return fmt.Sprintf(

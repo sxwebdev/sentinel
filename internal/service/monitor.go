@@ -30,11 +30,11 @@ func NewMonitorService(
 	}
 }
 
-// LoadServicesFromStorage loads all services from storage and initializes monitoring
+// LoadServicesFromStorage loads all enabled services from storage and initializes monitoring
 func (m *MonitorService) LoadServicesFromStorage(ctx context.Context) ([]*storage.Service, error) {
-	services, err := m.store.GetAllServices(ctx)
+	services, err := m.store.GetEnabledServices(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to load services from storage: %w", err)
+		return nil, fmt.Errorf("failed to load enabled services from storage: %w", err)
 	}
 
 	for _, svc := range services {
@@ -131,9 +131,14 @@ func (m *MonitorService) GetServiceByID(ctx context.Context, id string) (*storag
 	return m.store.GetService(ctx, id)
 }
 
-// GetAllServiceConfigs gets all service configurations
+// GetAllServiceConfigs gets all service configurations (including inactive)
 func (m *MonitorService) GetAllServiceConfigs(ctx context.Context) ([]*storage.Service, error) {
 	return m.store.GetAllServices(ctx)
+}
+
+// GetEnabledServiceConfigs gets only enabled service configurations
+func (m *MonitorService) GetEnabledServiceConfigs(ctx context.Context) ([]*storage.Service, error) {
+	return m.store.GetEnabledServices(ctx)
 }
 
 // InitializeService initializes monitoring state for a service
