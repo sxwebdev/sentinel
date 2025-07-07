@@ -126,8 +126,8 @@ func (m *MonitorService) GetServiceByID(ctx context.Context, id string) (*storag
 	return m.storage.GetService(ctx, id)
 }
 
-// GetAllServiceConfigs gets all service configurations (including inactive)
-func (m *MonitorService) GetAllServiceConfigs(ctx context.Context) ([]*storage.Service, error) {
+// GetAllServices gets all service configurations (including inactive)
+func (m *MonitorService) GetAllServices(ctx context.Context) ([]*storage.Service, error) {
 	return m.storage.GetAllServices(ctx)
 }
 
@@ -244,6 +244,9 @@ func (m *MonitorService) RecordSuccess(ctx context.Context, serviceID string, re
 		return fmt.Errorf("failed to resolve incident: %w", err)
 	}
 
+	// Broadcast WebSocket update
+	m.broadcastWebSocketUpdate()
+
 	return nil
 }
 
@@ -296,6 +299,9 @@ func (m *MonitorService) RecordFailure(ctx context.Context, serviceID string, ch
 			return fmt.Errorf("failed to create incident: %w", err)
 		}
 	}
+
+	// Broadcast WebSocket update
+	m.broadcastWebSocketUpdate()
 
 	return nil
 }

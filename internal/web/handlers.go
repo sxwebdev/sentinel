@@ -286,7 +286,7 @@ func (s *Server) handleServiceDetail(c *fiber.Ctx) error {
 func (s *Server) handleAPIGetServices(c *fiber.Ctx) error {
 	ctx := c.Context()
 
-	services, err := s.monitorService.GetAllServiceConfigs(ctx)
+	services, err := s.monitorService.GetAllServices(ctx)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
@@ -622,7 +622,7 @@ func (s *Server) handleAPIDeleteIncident(c *fiber.Ctx) error {
 //	@Router			/dashboard/stats [get]
 func (s *Server) handleAPIDashboardStats(c *fiber.Ctx) error {
 	// Get all services with their states
-	services, err := s.monitorService.GetAllServiceConfigs(c.Context())
+	services, err := s.monitorService.GetAllServices(c.Context())
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
@@ -1254,7 +1254,7 @@ func (s *Server) sendServiceUpdate(conn *websocket.Conn) error {
 	}
 
 	// Get all services with their states
-	services, err := s.monitorService.GetAllServiceConfigs(context.Background())
+	services, err := s.monitorService.GetAllServices(context.Background())
 	if err != nil {
 		return fmt.Errorf("failed to get services: %w", err)
 	}
@@ -1308,21 +1308,21 @@ func (s *Server) sendServiceUpdate(conn *websocket.Conn) error {
 }
 
 // BroadcastServiceUpdate sends service updates to all connected WebSocket clients
-func (s *Server) broadcastServiceUpdate() {
+func (s *Server) broadcastServiceUpdate(ctx context.Context) {
 	// Проверяем, не закрыта ли база данных
 	if s.storage == nil {
 		fmt.Println("WebSocket broadcast: storage is nil, skipping update")
 		return
 	}
 
-	services, err := s.monitorService.GetAllServiceConfigs(context.Background())
+	services, err := s.monitorService.GetAllServices(ctx)
 	if err != nil {
 		fmt.Printf("WebSocket broadcast error: failed to get services: %v\n", err)
 		return
 	}
 
 	// Get incident statistics
-	incidentStats, err := s.monitorService.GetAllServicesIncidentStats(context.Background())
+	incidentStats, err := s.monitorService.GetAllServicesIncidentStats(ctx)
 	if err != nil {
 		fmt.Printf("WebSocket broadcast error: failed to get incident stats: %v\n", err)
 		return
@@ -1337,7 +1337,7 @@ func (s *Server) broadcastServiceUpdate() {
 	// Get services with their states
 	var servicesWithState []*ServiceWithState
 	for _, service := range services {
-		serviceWithState, err := s.getServiceWithState(context.Background(), service)
+		serviceWithState, err := s.getServiceWithState(ctx, service)
 		if err != nil {
 			// Log error but continue with other services
 			fmt.Printf("WebSocket broadcast error: failed to get state for service %s: %v\n", service.ID, err)
@@ -1401,7 +1401,7 @@ func (s *Server) subscribeEvents(ctx context.Context) error {
 				continue
 			}
 			fmt.Println("WebSocket: received service update event")
-			s.broadcastServiceUpdate()
+			s.broadcastServiceUpdate(ctx)
 
 		case <-ctx.Done():
 			fmt.Println("WebSocket: context cancelled, stopping event subscription")
