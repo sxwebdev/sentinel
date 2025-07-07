@@ -64,17 +64,12 @@ var migrations = []Migration{
 
 		-- Create indexes for performance
 		CREATE INDEX IF NOT EXISTS idx_services_name ON services(name);
-		CREATE INDEX IF NOT EXISTS idx_services_protocol ON services(protocol);
 		CREATE INDEX IF NOT EXISTS idx_services_enabled ON services(is_enabled);
-		CREATE INDEX IF NOT EXISTS idx_services_updated_at ON services(updated_at DESC);
+		CREATE INDEX IF NOT EXISTS idx_services_created_at ON services(created_at DESC);
 		
 		CREATE INDEX IF NOT EXISTS idx_incidents_service_id ON incidents(service_id);
-		CREATE INDEX IF NOT EXISTS idx_incidents_start_time ON incidents(start_time);
 		CREATE INDEX IF NOT EXISTS idx_incidents_start_time_desc ON incidents(start_time DESC);
 		CREATE INDEX IF NOT EXISTS idx_incidents_resolved ON incidents(resolved);
-		CREATE INDEX IF NOT EXISTS idx_incidents_service_resolved ON incidents(service_id, resolved);
-		CREATE INDEX IF NOT EXISTS idx_incidents_service_start_time ON incidents(service_id, start_time DESC);
-		CREATE INDEX IF NOT EXISTS idx_incidents_resolved_start_time ON incidents(resolved, start_time DESC);
 		
 		CREATE INDEX IF NOT EXISTS idx_service_states_service_id ON service_states(service_id);
 		CREATE INDEX IF NOT EXISTS idx_service_states_status ON service_states(status);
