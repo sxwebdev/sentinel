@@ -33,6 +33,12 @@ func run(ctx context.Context) error {
 		return fmt.Errorf("failed to load config: %w", err)
 	}
 
+	// set default timezone
+	time.Local, err = time.LoadLocation(cfg.Timezone)
+	if err != nil {
+		return fmt.Errorf("failed to set timezone: %w", err)
+	}
+
 	// Initialize storage
 	stor, err := storage.NewStorage(storage.StorageTypeSQLite, cfg.Database.Path)
 	if err != nil {

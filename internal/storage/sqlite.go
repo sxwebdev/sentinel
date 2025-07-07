@@ -39,7 +39,7 @@ func NewSQLiteStorage(dbPath string) (*SQLiteStorage, error) {
 	db.SetConnMaxLifetime(time.Hour)
 
 	// Test connection
-	if err := db.Ping(); err != nil {
+	if err := db.PingContext(context.Background()); err != nil {
 		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
 
@@ -68,9 +68,7 @@ func (s *SQLiteStorage) Close() error {
 
 // SaveIncident saves a new incident to the database
 func (s *SQLiteStorage) SaveIncident(ctx context.Context, incident *Incident) error {
-	if incident.ID == "" {
-		incident.ID = GenerateULID()
-	}
+	incident.ID = GenerateULID()
 
 	return s.orm.CreateIncident(ctx, incident)
 }
@@ -114,9 +112,7 @@ func (s *SQLiteStorage) GetAllServicesIncidentStats(ctx context.Context) ([]*Ser
 
 // SaveService saves a new service to the database
 func (s *SQLiteStorage) SaveService(ctx context.Context, service *Service) error {
-	if service.ID == "" {
-		service.ID = GenerateULID()
-	}
+	service.ID = GenerateULID()
 
 	return s.orm.CreateService(ctx, service)
 }

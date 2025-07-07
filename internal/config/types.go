@@ -10,6 +10,7 @@ type Config struct {
 	Monitoring    MonitoringConfig    `yaml:"monitoring"`
 	Database      DatabaseConfig      `yaml:"database"`
 	Notifications NotificationsConfig `yaml:"notifications"`
+	Timezone      string              `yaml:"timezone"`
 }
 
 // ServerConfig holds web server configuration

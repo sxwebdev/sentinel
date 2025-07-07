@@ -589,28 +589,61 @@ func (o *ORMStorage) UpdateService(ctx context.Context, service *Service) error 
 	})
 }
 
-// DeleteService deletes a service by ID using ORM
+// DeleteService deletes a service and all its incidents by ID using ORM in a single transaction
 func (o *ORMStorage) DeleteService(ctx context.Context, id string) error {
-	db := sqlbuilder.NewDeleteBuilder()
-	db.DeleteFrom("services")
-	db.Where(db.Equal("id", id))
+	return o.retryOnBusy(ctx, func() error {
+		// Start a transaction
+		tx, err := o.db.BeginTx(ctx, nil)
+		if err != nil {
+			return fmt.Errorf("failed to begin transaction: %w", err)
+		}
 
-	sql, args := db.Build()
-	result, err := o.db.ExecContext(ctx, sql, args...)
-	if err != nil {
-		return fmt.Errorf("failed to delete service: %w", err)
-	}
+		// Ensure transaction is rolled back on error
+		defer func() {
+			if err != nil {
+				tx.Rollback()
+			}
+		}()
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to get rows affected: %w", err)
-	}
+		// First, delete all incidents for this service
+		incidentDeleteBuilder := sqlbuilder.NewDeleteBuilder()
+		incidentDeleteBuilder.DeleteFrom("incidents")
+		incidentDeleteBuilder.Where(incidentDeleteBuilder.Equal("service_id", id))
 
-	if rowsAffected == 0 {
-		return fmt.Errorf("service not found")
-	}
+		incidentSQL, incidentArgs := incidentDeleteBuilder.Build()
+		_, err = tx.ExecContext(ctx, incidentSQL, incidentArgs...)
+		if err != nil {
+			return fmt.Errorf("failed to delete incidents: %w", err)
+		}
 
-	return nil
+		// Then, delete the service
+		serviceDeleteBuilder := sqlbuilder.NewDeleteBuilder()
+		serviceDeleteBuilder.DeleteFrom("services")
+		serviceDeleteBuilder.Where(serviceDeleteBuilder.Equal("id", id))
+
+		serviceSQL, serviceArgs := serviceDeleteBuilder.Build()
+		result, err := tx.ExecContext(ctx, serviceSQL, serviceArgs...)
+		if err != nil {
+			return fmt.Errorf("failed to delete service: %w", err)
+		}
+
+		rowsAffected, err := result.RowsAffected()
+		if err != nil {
+			return fmt.Errorf("failed to get rows affected: %w", err)
+		}
+
+		if rowsAffected == 0 {
+			return fmt.Errorf("service not found")
+		}
+
+		// Commit the transaction
+		err = tx.Commit()
+		if err != nil {
+			return fmt.Errorf("failed to commit transaction: %w", err)
+		}
+
+		return nil
+	})
 }
 
 // rowToService converts a ServiceRow to Service
@@ -671,7 +704,7 @@ func (o *ORMStorage) retryOnBusy(ctx context.Context, operation func() error) er
 	maxRetries := 5
 	baseDelay := 10 * time.Millisecond
 
-	for attempt := 0; attempt < maxRetries; attempt++ {
+	for attempt := range maxRetries {
 		err := operation()
 		if err == nil {
 			return nil

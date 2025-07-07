@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/oklog/ulid"
+	"github.com/oklog/ulid/v2"
 )
 
 // Storage defines the interface for incident storage
@@ -152,5 +152,5 @@ type RedisConfig struct {
 
 // GenerateULID generates a new ULID
 func GenerateULID() string {
-	return ulid.MustNew(ulid.Now(), nil).String()
+	return ulid.Make().String()
 }

@@ -8,6 +8,8 @@ monitoring:
     default_timeout: 10s
     default_retries: 3
 
+timezone: UTC
+
 database:
   path: "./data/db.sqlite3"
 
