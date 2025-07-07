@@ -19,7 +19,6 @@ import (
 	"github.com/sxwebdev/sentinel/internal/receiver"
 	"github.com/sxwebdev/sentinel/internal/service"
 	"github.com/sxwebdev/sentinel/internal/storage"
-	"gopkg.in/yaml.v3"
 )
 
 //go:embed views/*
@@ -27,16 +26,38 @@ var viewsFS embed.FS
 
 // FlatServiceConfig represents a service with flat config structure
 type FlatServiceConfig struct {
-	ID        string        `json:"id"`
-	Name      string        `json:"name"`
-	Protocol  string        `json:"protocol"`
-	Endpoint  string        `json:"endpoint"`
-	Interval  time.Duration `json:"interval"`
-	Timeout   time.Duration `json:"timeout"`
-	Retries   int           `json:"retries"`
-	Tags      []string      `json:"tags"`
-	Config    string        `json:"config"` // YAML string
-	IsEnabled bool          `json:"is_enabled"`
+	ID        string         `json:"id"`
+	Name      string         `json:"name"`
+	Protocol  string         `json:"protocol"`
+	Endpoint  string         `json:"endpoint"`
+	Interval  time.Duration  `json:"interval"`
+	Timeout   time.Duration  `json:"timeout"`
+	Retries   int            `json:"retries"`
+	Tags      []string       `json:"tags"`
+	Config    map[string]any `json:"config"` // JSON object
+	IsEnabled bool           `json:"is_enabled"`
+
+	// Extended HTTP configuration
+	MultiEndpoint *MultiEndpointConfig `json:"multi_endpoint,omitempty"`
+}
+
+// MultiEndpointConfig represents configuration for monitoring multiple endpoints
+type MultiEndpointConfig struct {
+	Endpoints []EndpointConfig `json:"endpoints" yaml:"endpoints"`
+	Condition string           `json:"condition" yaml:"condition"` // JavaScript condition
+	Timeout   time.Duration    `json:"timeout" yaml:"timeout"`
+}
+
+// EndpointConfig represents a single endpoint configuration
+type EndpointConfig struct {
+	Name     string            `json:"name" yaml:"name"`
+	URL      string            `json:"url" yaml:"url"`
+	Method   string            `json:"method" yaml:"method"`
+	Headers  map[string]string `json:"headers" yaml:"headers"`
+	Body     string            `json:"body" yaml:"body"`
+	JSONPath string            `json:"json_path" yaml:"json_path"` // Path to extract value from JSON response
+	Username string            `json:"username" yaml:"username"`   // Basic Auth username
+	Password string            `json:"password" yaml:"password"`   // Basic Auth password
 }
 
 // ServiceTableDTO represents a service with incident statistics for table display
@@ -49,7 +70,7 @@ type ServiceTableDTO struct {
 	Timeout         time.Duration         `json:"timeout"`
 	Retries         int                   `json:"retries"`
 	Tags            []string              `json:"tags"`
-	Config          string                `json:"config"` // YAML string
+	Config          any                   `json:"config"` // JSON object
 	State           *storage.ServiceState `json:"state,omitempty"`
 	IsEnabled       bool                  `json:"is_enabled"`
 	ActiveIncidents int                   `json:"active_incidents"`
@@ -301,14 +322,6 @@ func (s *Server) handleAPIServicesTable(c *fiber.Ctx) error {
 	// Convert services to DTO with incident statistics
 	serviceDTOs := make([]ServiceTableDTO, len(services))
 	for i, service := range services {
-		// Convert config to YAML string
-		configYAML, err := s.convertConfigToYAML(service.Config)
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": "failed to convert service config: " + err.Error(),
-			})
-		}
-
 		dto := ServiceTableDTO{
 			ID:              service.ID,
 			Name:            service.Name,
@@ -318,7 +331,7 @@ func (s *Server) handleAPIServicesTable(c *fiber.Ctx) error {
 			Timeout:         service.Timeout,
 			Retries:         service.Retries,
 			Tags:            service.Tags,
-			Config:          configYAML,
+			Config:          service.Config,
 			State:           service.State,
 			IsEnabled:       service.IsEnabled,
 			ActiveIncidents: 0,
@@ -671,6 +684,9 @@ func (s *Server) handleAPIUpdateService(c *fiber.Ctx) error {
 		})
 	}
 
+	// Debug: log the received data
+	fmt.Printf("Update service request: %+v\n", flatService)
+
 	// Get existing service to preserve state
 	existingService, err := s.monitorService.GetServiceByID(c.Context(), id)
 	if err != nil {
@@ -777,29 +793,25 @@ func (s *Server) handleAPIGetServiceConfig(c *fiber.Ctx) error {
 	return c.JSON(service)
 }
 
-// convertFlatConfigToMonitorConfig converts YAML config string to proper MonitorConfig structure
-func (s *Server) convertFlatConfigToMonitorConfig(protocol string, yamlConfig string) (storage.MonitorConfig, error) {
-	if yamlConfig == "" {
+// convertFlatConfigToMonitorConfig converts JSON config object to proper MonitorConfig structure
+func (s *Server) convertFlatConfigToMonitorConfig(protocol string, configObj map[string]any) (storage.MonitorConfig, error) {
+	if configObj == nil {
 		// Return default config based on protocol
 		return s.getDefaultConfig(protocol), nil
 	}
 
-	// Parse YAML into map
-	var configMap map[string]any
-	if err := yaml.Unmarshal([]byte(yamlConfig), &configMap); err != nil {
-		return storage.MonitorConfig{}, fmt.Errorf("failed to parse YAML config: %w", err)
-	}
+	// Convert interface{} to map[string]interface{}
 
 	// Validate and convert based on protocol
 	switch protocol {
 	case "http", "https":
-		return s.parseHTTPConfig(configMap)
+		return s.parseHTTPConfig(configObj)
 	case "tcp":
-		return s.parseTCPConfig(configMap)
+		return s.parseTCPConfig(configObj)
 	case "grpc":
-		return s.parseGRPCConfig(configMap)
+		return s.parseGRPCConfig(configObj)
 	case "redis":
-		return s.parseRedisConfig(configMap)
+		return s.parseRedisConfig(configObj)
 	default:
 		return storage.MonitorConfig{}, fmt.Errorf("unsupported protocol: %s", protocol)
 	}
@@ -886,8 +898,18 @@ func (s *Server) parseHTTPConfig(configMap map[string]interface{}) (storage.Moni
 		}
 	}
 
+	// Extract multi-endpoint configuration if present
+	if multiEndpoint, ok := configMap["multi_endpoint"].(map[string]interface{}); ok {
+		httpConfig.ExtendedConfig = multiEndpoint
+	}
+
+	// Extract extended_config if present (for backward compatibility)
+	if extendedConfig, ok := configMap["extended_config"].(map[string]interface{}); ok {
+		httpConfig.ExtendedConfig = extendedConfig
+	}
+
 	// Check for unknown fields
-	allowedFields := map[string]bool{"method": true, "expected_status": true, "headers": true}
+	allowedFields := map[string]bool{"method": true, "expected_status": true, "headers": true, "multi_endpoint": true, "extended_config": true}
 	for field := range configMap {
 		if !allowedFields[field] {
 			return storage.MonitorConfig{}, fmt.Errorf("unknown field in HTTP config: %s", field)
@@ -1003,15 +1025,6 @@ func (s *Server) parseRedisConfig(configMap map[string]interface{}) (storage.Mon
 	return storage.MonitorConfig{Redis: redisConfig}, nil
 }
 
-// convertConfigToYAML converts MonitorConfig to YAML string
-func (s *Server) convertConfigToYAML(config storage.MonitorConfig) (string, error) {
-	data, err := yaml.Marshal(config)
-	if err != nil {
-		return "", fmt.Errorf("failed to marshal config to YAML: %w", err)
-	}
-	return string(data), nil
-}
-
 // handleWebSocket handles WebSocket connections
 func (s *Server) handleWebSocket(c *websocket.Conn) {
 	// Add connection to the map
@@ -1063,12 +1076,6 @@ func (s *Server) sendServiceUpdate(conn *websocket.Conn) error {
 	// Convert services to DTO with incident statistics
 	serviceDTOs := make([]ServiceTableDTO, len(services))
 	for i, service := range services {
-		// Convert config to YAML string
-		configYAML, err := s.convertConfigToYAML(service.Config)
-		if err != nil {
-			continue
-		}
-
 		dto := ServiceTableDTO{
 			ID:              service.ID,
 			Name:            service.Name,
@@ -1078,7 +1085,7 @@ func (s *Server) sendServiceUpdate(conn *websocket.Conn) error {
 			Timeout:         service.Timeout,
 			Retries:         service.Retries,
 			Tags:            service.Tags,
-			Config:          configYAML,
+			Config:          service.Config,
 			State:           service.State,
 			IsEnabled:       service.IsEnabled,
 			ActiveIncidents: 0,
@@ -1130,12 +1137,6 @@ func (s *Server) broadcastServiceUpdate() {
 	// Convert services to DTO with incident statistics
 	serviceDTOs := make([]ServiceTableDTO, len(services))
 	for i, service := range services {
-		// Convert config to YAML string
-		configYAML, err := s.convertConfigToYAML(service.Config)
-		if err != nil {
-			continue
-		}
-
 		dto := ServiceTableDTO{
 			ID:              service.ID,
 			Name:            service.Name,
@@ -1145,7 +1146,7 @@ func (s *Server) broadcastServiceUpdate() {
 			Timeout:         service.Timeout,
 			Retries:         service.Retries,
 			Tags:            service.Tags,
-			Config:          configYAML,
+			Config:          service.Config,
 			State:           service.State,
 			IsEnabled:       service.IsEnabled,
 			ActiveIncidents: 0,

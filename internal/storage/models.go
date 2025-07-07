@@ -130,6 +130,7 @@ type HTTPConfig struct {
 	Method         string            `json:"method" yaml:"method"`
 	ExpectedStatus int               `json:"expected_status" yaml:"expected_status"`
 	Headers        map[string]string `json:"headers" yaml:"headers"`
+	ExtendedConfig map[string]any    `json:"extended_config,omitempty" yaml:"extended_config,omitempty"` // For multi-endpoint configuration
 }
 
 // TCPConfig represents TCP monitor configuration

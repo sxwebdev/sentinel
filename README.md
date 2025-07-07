@@ -8,7 +8,7 @@ Sentinel is a lightweight, multi-protocol service monitoring system written in G
 - **Real-time Monitoring**: Configurable check intervals and timeouts
 - **Incident Management**: Automatic incident creation and resolution
 - **Multi-Provider Notifications**: Alert and recovery notifications via multiple providers (Telegram, Discord, Slack, Email, Webhooks, etc.)
-- **Web Dashboard**: Clean, responsive web interface with YAML configuration
+- **Web Dashboard**: Clean, responsive web interface with JSON configuration
 - **REST API**: Full API for integration with other tools
 - **WebSocket Support**: Real-time updates via WebSocket connections
 - **Persistent Storage**: Incident history using SQLite with improved concurrency handling
@@ -101,7 +101,7 @@ notifications:
 ### Dashboard Features
 
 - **Service Management**: Add, edit, and delete services through the web interface
-- **YAML Configuration**: Configure services using YAML format directly in the UI
+- **JSON Configuration**: Configure services using JSON format directly in the UI
 - **Real-time Status**: Live status updates with WebSocket connections
 - **Manual Checks**: Trigger manual health checks for any service
 - **Incident Management**: View and resolve incidents
@@ -112,43 +112,52 @@ notifications:
 When creating or editing services through the web interface:
 
 1. **Protocol Selection**: Choose from HTTP/HTTPS, TCP, gRPC, or Redis
-2. **YAML Configuration**: Enter protocol-specific configuration in YAML format
+2. **JSON Configuration**: Enter protocol-specific configuration in JSON format
 3. **Default Templates**: UI provides default YAML templates for each protocol
 4. **Validation**: Configuration is validated before saving
 
-Example YAML configurations for each protocol:
+Example JSON configurations for each protocol:
 
 **HTTP/HTTPS:**
 
-```yaml
-method: "GET"
-expected_status: 200
-headers:
-  User-Agent: "Sentinel Monitor"
-  Authorization: "Bearer token"
+```json
+{
+  "method": "GET",
+  "expected_status": 200,
+  "headers": {
+    "User-Agent": "Sentinel Monitor",
+    "Authorization": "Bearer token"
+  }
+}
 ```
 
 **TCP:**
 
-```yaml
-send_data: "ping"
-expect_data: "pong"
+```json
+{
+  "send_data": "ping",
+  "expect_data": "pong"
+}
 ```
 
 **gRPC:**
 
-```yaml
-check_type: "connectivity"
-service_name: ""
-tls: true
-insecure_tls: false
+```json
+{
+  "check_type": "connectivity",
+  "service_name": "",
+  "tls": true,
+  "insecure_tls": false
+}
 ```
 
 **Redis:**
 
-```yaml
-password: "your_password"
-db: 0
+```json
+{
+  "password": "your_password",
+  "db": 0
+}
 ```
 
 ### gRPC Check Types
@@ -290,7 +299,10 @@ Content-Type: application/json
   "timeout": "10s",
   "retries": 3,
   "tags": ["api", "critical"],
-  "config": "method: \"GET\"\nexpected_status: 200"
+  "config": {
+    "method": "GET",
+    "expected_status": 200
+  }
 }
 ```
 
@@ -308,7 +320,10 @@ Content-Type: application/json
   "timeout": "10s",
   "retries": 3,
   "tags": ["api", "critical"],
-  "config": "method: \"GET\"\nexpected_status: 200"
+  "config": {
+    "method": "GET",
+    "expected_status": 200
+  }
 }
 ```
 
@@ -385,7 +400,7 @@ const ws = new WebSocket("ws://localhost:8080/ws");
 
 ### Project Structure
 
-```
+```text
 sentinel/
 ├── cmd/
 │   ├── server/          # Main application

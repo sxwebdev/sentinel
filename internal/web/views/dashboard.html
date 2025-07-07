@@ -210,14 +210,190 @@
                 <span class="switch-slider"></span>
               </div>
             </div>
+
+            <!-- Multi-endpoint configuration section -->
             <div class="form-group">
-              <label for="config">Configuration (YAML)</label>
+              <label for="multi_endpoint_enabled"
+                >Multi-Endpoint Monitoring</label
+              >
+              <div class="switch-container" onclick="toggleMultiEndpoint()">
+                <input
+                  type="checkbox"
+                  id="multi_endpoint_enabled"
+                  name="multi_endpoint_enabled"
+                />
+                <span class="switch-slider"></span>
+              </div>
+            </div>
+
+            <div
+              class="form-group"
+              id="multi_endpoint_config"
+              style="display: none"
+            >
+              <div class="card">
+                <div class="card-header">
+                  <h4>Multi-Endpoint Configuration</h4>
+                </div>
+                <div class="card-body">
+                  <div class="form-group">
+                    <label for="condition">JavaScript Condition</label>
+                    <textarea
+                      id="condition"
+                      name="condition"
+                      placeholder="// Example: return Math.abs(results.main.value - results.backup.value) > 5;"
+                      rows="4"
+                    ></textarea>
+                    <small class="form-text">
+                      JavaScript condition that returns true to trigger an
+                      incident. Available variables:
+                      <code>results.endpoint_name.value</code>,
+                      <code>results.endpoint_name.success</code>, etc.
+                    </small>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="multi_timeout">Timeout (seconds)</label>
+                    <input
+                      type="number"
+                      id="multi_timeout"
+                      name="multi_timeout"
+                      value="30"
+                      min="1"
+                      max="300"
+                    />
+                  </div>
+
+                  <div class="form-group">
+                    <label>Endpoints</label>
+                    <div id="endpoints_container">
+                      <div class="endpoint-item">
+                        <div class="endpoint-header">
+                          <h5>Endpoint 1</h5>
+                          <button
+                            type="button"
+                            class="btn btn-danger btn-sm"
+                            onclick="removeEndpoint(this)"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                        <div class="form-row">
+                          <div class="form-group">
+                            <label>Name</label>
+                            <input
+                              type="text"
+                              name="endpoint_name[]"
+                              placeholder="main"
+                              required
+                            />
+                          </div>
+                          <div class="form-group">
+                            <label>URL</label>
+                            <input
+                              type="url"
+                              name="endpoint_url[]"
+                              placeholder="https://api.example.com/status"
+                              required
+                            />
+                          </div>
+                        </div>
+                        <div class="form-row">
+                          <div class="form-group">
+                            <label>Method</label>
+                            <select name="endpoint_method[]">
+                              <option value="GET">GET</option>
+                              <option value="POST">POST</option>
+                              <option value="PUT">PUT</option>
+                              <option value="DELETE">DELETE</option>
+                              <option value="HEAD">HEAD</option>
+                            </select>
+                          </div>
+                          <div class="form-group">
+                            <label>JSON Path</label>
+                            <input
+                              type="text"
+                              name="endpoint_json_path[]"
+                              placeholder="result.block_number"
+                            />
+                            <small class="form-text"
+                              >Path to extract value from JSON response (e.g.,
+                              "result.block_number")</small
+                            >
+                          </div>
+                        </div>
+                        <div class="form-row">
+                          <div class="form-group">
+                            <label>Username (Basic Auth)</label>
+                            <input
+                              type="text"
+                              name="endpoint_username[]"
+                              placeholder="username"
+                            />
+                          </div>
+                          <div class="form-group">
+                            <label>Password (Basic Auth)</label>
+                            <input
+                              type="password"
+                              name="endpoint_password[]"
+                              placeholder="password"
+                            />
+                          </div>
+                        </div>
+                        <div class="form-group">
+                          <label>Headers (JSON)</label>
+                          <textarea
+                            name="endpoint_headers[]"
+                            placeholder='{"Authorization": "Bearer token"}'
+                            rows="2"
+                          ></textarea>
+                        </div>
+                        <div class="form-group">
+                          <label>Body</label>
+                          <textarea
+                            name="endpoint_body[]"
+                            placeholder="Request body (for POST/PUT)"
+                            rows="2"
+                          ></textarea>
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      class="btn btn-secondary"
+                      onclick="addEndpoint()"
+                    >
+                      Add Endpoint
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="config">Configuration (JSON)</label>
               <textarea
                 id="config"
                 name="config"
                 rows="8"
-                placeholder="# Protocol-specific configuration"
+                placeholder='{"method": "GET", "expected_status": 200, "headers": {}}'
               ></textarea>
+              <small class="form-text">
+                Enter configuration in JSON format. Examples:
+                <br />HTTP:
+                <code
+                  >{"method": "GET", "expected_status": 200, "headers":
+                  {"Authorization": "Bearer token"}}</code
+                >
+                <br />TCP:
+                <code>{"send_data": "ping", "expect_data": "pong"}</code>
+                <br />gRPC:
+                <code
+                  >{"check_type": "connectivity", "service_name": "", "tls":
+                  true, "insecure_tls": false}</code
+                >
+                <br />Redis: <code>{"password": "secret", "db": 0}</code>
+              </small>
             </div>
             <div class="form-actions">
               <button
@@ -386,6 +562,12 @@
         document.getElementById("modalTitle").textContent = "Add Service";
         document.getElementById("serviceForm").reset();
         document.getElementById("config").value = "";
+
+        // Reset multi-endpoint section
+        document.getElementById("multi_endpoint_enabled").checked = false;
+        document.getElementById("multi_endpoint_config").style.display = "none";
+        document.getElementById("endpoints_container").innerHTML = "";
+
         document.getElementById("serviceModal").style.display = "block";
       }
 
@@ -398,6 +580,11 @@
         fetch(`/api/services/config/${serviceId}`)
           .then((response) => response.json())
           .then((serviceConfig) => {
+            // Reset multi-endpoint section
+            document.getElementById("multi_endpoint_enabled").checked = false;
+            document.getElementById("multi_endpoint_config").style.display =
+              "none";
+            document.getElementById("endpoints_container").innerHTML = "";
             document.getElementById("name").value = serviceConfig.name;
             document.getElementById("protocol").value = serviceConfig.protocol;
             document.getElementById("endpoint").value = serviceConfig.endpoint;
@@ -413,46 +600,211 @@
             document.getElementById("is_enabled").checked =
               serviceConfig.is_enabled !== false;
 
-            // Convert config object to YAML string
-            let configYaml = "";
-            if (serviceConfig.config) {
-              if (serviceConfig.config.http) {
-                configYaml = `method: "${
-                  serviceConfig.config.http.method || "GET"
-                }"\nexpected_status: ${
-                  serviceConfig.config.http.expected_status || 200
-                }`;
-                if (serviceConfig.config.http.headers) {
-                  configYaml += "\nheaders:";
-                  for (const [key, value] of Object.entries(
-                    serviceConfig.config.http.headers
-                  )) {
-                    configYaml += `\n  ${key}: "${value}"`;
+            // --- Исправление: универсальный разбор multi-endpoint ---
+            console.log("Service config:", serviceConfig);
+            console.log("Config object:", serviceConfig.config);
+
+            let config = serviceConfig.config || {};
+            let multiEndpointConfig = null;
+
+            // Проверяем все возможные места, где может быть multi_endpoint
+            if (config.multi_endpoint) {
+              console.log("Found multi_endpoint in config.multi_endpoint");
+              multiEndpointConfig = config.multi_endpoint;
+            } else if (config.http && config.http.multi_endpoint) {
+              console.log("Found multi_endpoint in config.http.multi_endpoint");
+              multiEndpointConfig = config.http.multi_endpoint;
+              config = config.http; // для отображения остальных полей
+            } else if (config.http && config.http.extended_config) {
+              console.log(
+                "Found multi_endpoint in config.http.extended_config"
+              );
+              multiEndpointConfig = config.http.extended_config;
+              config = config.http; // для отображения остальных полей
+            } else if (config.extended_config) {
+              console.log("Found multi_endpoint in config.extended_config");
+              multiEndpointConfig = config.extended_config;
+            } else {
+              // Проверяем, может быть multi_endpoint находится в другом месте
+              console.log("Checking for multi_endpoint in other locations...");
+              console.log("Config keys:", Object.keys(config));
+              if (config.http) {
+                console.log("HTTP config keys:", Object.keys(config.http));
+              }
+              console.log("No multi_endpoint found in config");
+            }
+
+            console.log("Multi endpoint config:", multiEndpointConfig);
+
+            // Если есть multi-endpoint, подставляем в форму
+            if (multiEndpointConfig) {
+              document.getElementById("multi_endpoint_enabled").checked = true;
+              document.getElementById("multi_endpoint_config").style.display =
+                "block";
+              document.getElementById("condition").value =
+                multiEndpointConfig.condition || "";
+              document.getElementById("multi_timeout").value = Math.floor(
+                (multiEndpointConfig.timeout || 30000000000) / 1000000000
+              );
+              // Clear existing endpoints
+              const container = document.getElementById("endpoints_container");
+              container.innerHTML = "";
+              (multiEndpointConfig.endpoints || []).forEach(
+                (endpoint, index) => {
+                  if (index === 0) {
+                    // Create first endpoint
+                    const endpointDiv = document.createElement("div");
+                    endpointDiv.className = "endpoint-item";
+                    endpointDiv.innerHTML = `
+                    <div class="endpoint-header">
+                      <h5>Endpoint 1</h5>
+                      <button type="button" class="btn btn-danger btn-sm" onclick="removeEndpoint(this)">
+                        Remove
+                      </button>
+                    </div>
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label>Name</label>
+                        <input type="text" name="endpoint_name[]" placeholder="main" required />
+                      </div>
+                      <div class="form-group">
+                        <label>URL</label>
+                        <input type="url" name="endpoint_url[]" placeholder="https://api.example.com/status" required />
+                      </div>
+                    </div>
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label>Method</label>
+                        <select name="endpoint_method[]">
+                          <option value="GET">GET</option>
+                          <option value="POST">POST</option>
+                          <option value="PUT">PUT</option>
+                          <option value="DELETE">DELETE</option>
+                          <option value="HEAD">HEAD</option>
+                        </select>
+                      </div>
+                      <div class="form-group">
+                        <label>JSON Path</label>
+                        <input type="text" name="endpoint_json_path[]" placeholder="result.block_number" />
+                        <small class="form-text">Path to extract value from JSON response (e.g., "result.block_number")</small>
+                      </div>
+                    </div>
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label>Username (Basic Auth)</label>
+                        <input type="text" name="endpoint_username[]" placeholder="username" />
+                      </div>
+                      <div class="form-group">
+                        <label>Password (Basic Auth)</label>
+                        <input type="password" name="endpoint_password[]" placeholder="password" />
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <label>Headers (JSON)</label>
+                      <textarea name="endpoint_headers[]" placeholder='{"Authorization": "Bearer token"}' rows="2"></textarea>
+                    </div>
+                    <div class="form-group">
+                      <label>Body</label>
+                      <textarea name="endpoint_body[]" placeholder="Request body (for POST/PUT)" rows="2"></textarea>
+                    </div>
+                  `;
+                    container.appendChild(endpointDiv);
+                    // Заполняем данные первого эндпоинта
+                    const nameInput = container.querySelector(
+                      'input[name="endpoint_name[]"]'
+                    );
+                    const urlInput = container.querySelector(
+                      'input[name="endpoint_url[]"]'
+                    );
+                    const methodSelect = container.querySelector(
+                      'select[name="endpoint_method[]"]'
+                    );
+                    const jsonPathInput = container.querySelector(
+                      'input[name="endpoint_json_path[]"]'
+                    );
+                    const usernameInput = container.querySelector(
+                      'input[name="endpoint_username[]"]'
+                    );
+                    const passwordInput = container.querySelector(
+                      'input[name="endpoint_password[]"]'
+                    );
+                    const headersTextarea = container.querySelector(
+                      'textarea[name="endpoint_headers[]"]'
+                    );
+                    const bodyTextarea = container.querySelector(
+                      'textarea[name="endpoint_body[]"]'
+                    );
+                    if (nameInput) nameInput.value = endpoint.name || "";
+                    if (urlInput) urlInput.value = endpoint.url || "";
+                    if (methodSelect)
+                      methodSelect.value = endpoint.method || "GET";
+                    if (jsonPathInput)
+                      jsonPathInput.value = endpoint.json_path || "";
+                    if (usernameInput)
+                      usernameInput.value = endpoint.username || "";
+                    if (passwordInput)
+                      passwordInput.value = endpoint.password || "";
+                    if (headersTextarea)
+                      headersTextarea.value = JSON.stringify(
+                        endpoint.headers || {},
+                        null,
+                        2
+                      );
+                    if (bodyTextarea) bodyTextarea.value = endpoint.body || "";
+                  } else {
+                    // Add additional endpoints
+                    addEndpoint();
+                    const endpointItems =
+                      container.querySelectorAll(".endpoint-item");
+                    const currentItem = endpointItems[endpointItems.length - 1];
+                    currentItem.querySelector(
+                      'input[name="endpoint_name[]"]'
+                    ).value = endpoint.name || "";
+                    currentItem.querySelector(
+                      'input[name="endpoint_url[]"]'
+                    ).value = endpoint.url || "";
+                    currentItem.querySelector(
+                      'select[name="endpoint_method[]"]'
+                    ).value = endpoint.method || "GET";
+                    currentItem.querySelector(
+                      'input[name="endpoint_json_path[]"]'
+                    ).value = endpoint.json_path || "";
+                    const usernameInput = currentItem.querySelector(
+                      'input[name="endpoint_username[]"]'
+                    );
+                    const passwordInput = currentItem.querySelector(
+                      'input[name="endpoint_password[]"]'
+                    );
+                    if (usernameInput)
+                      usernameInput.value = endpoint.username || "";
+                    if (passwordInput)
+                      passwordInput.value = endpoint.password || "";
+                    currentItem.querySelector(
+                      'textarea[name="endpoint_headers[]"]'
+                    ).value = JSON.stringify(endpoint.headers || {}, null, 2);
+                    currentItem.querySelector(
+                      'textarea[name="endpoint_body[]"]'
+                    ).value = endpoint.body || "";
                   }
                 }
-              } else if (serviceConfig.config.tcp) {
-                configYaml = `send_data: "${
-                  serviceConfig.config.tcp.send_data || ""
-                }"\nexpect_data: "${
-                  serviceConfig.config.tcp.expect_data || ""
-                }"`;
-              } else if (serviceConfig.config.grpc) {
-                configYaml = `check_type: "${
-                  serviceConfig.config.grpc.check_type || "connectivity"
-                }"\nservice_name: "${
-                  serviceConfig.config.grpc.service_name || ""
-                }"\ntls: ${
-                  serviceConfig.config.grpc.tls || false
-                }\ninsecure_tls: ${
-                  serviceConfig.config.grpc.insecure_tls || false
-                }`;
-              } else if (serviceConfig.config.redis) {
-                configYaml = `password: "${
-                  serviceConfig.config.redis.password || ""
-                }"\ndb: ${serviceConfig.config.redis.db || 0}`;
-              }
+              );
             }
-            document.getElementById("config").value = configYaml;
+
+            // Остальной код editService (отображение config в textarea)
+            let configJson = "";
+            if (config.http) {
+              configJson = JSON.stringify(config.http, null, 2);
+            } else if (config.tcp) {
+              configJson = JSON.stringify(config.tcp, null, 2);
+            } else if (config.grpc) {
+              configJson = JSON.stringify(config.grpc, null, 2);
+            } else if (config.redis) {
+              configJson = JSON.stringify(config.redis, null, 2);
+            } else {
+              // Если обычный http/json config
+              configJson = JSON.stringify(config, null, 2);
+            }
+            document.getElementById("config").value = configJson;
             updateConfigFields();
             document.getElementById("serviceModal").style.display = "block";
           })
@@ -501,34 +853,45 @@
         // Если поле конфигурации пустое или содержит только базовый placeholder,
         // устанавливаем дефолтное значение для выбранного протокола
         const currentValue = configTextarea.value.trim();
-        if (
-          currentValue === "" ||
-          currentValue === "{}" ||
-          currentValue === "# Protocol-specific configuration"
-        ) {
+        if (currentValue === "" || currentValue === "{}") {
           let exampleConfig = "";
           switch (protocol) {
             case "http":
-              exampleConfig = `method: "GET"
-expected_status: 200
-headers:`;
+              exampleConfig = `{
+  "method": "GET",
+  "expected_status": 200,
+  "headers": {}
+}`;
               break;
             case "tcp":
-              exampleConfig = `send_data: ""
-expect_data: ""`;
+              exampleConfig = `{
+  "send_data": "",
+  "expect_data": ""
+}`;
               break;
             case "grpc":
-              exampleConfig = `check_type: "connectivity"
-service_name: ""
-tls: true
-insecure_tls: false`;
+              exampleConfig = `{
+  "check_type": "connectivity",
+  "service_name": "",
+  "tls": true,
+  "insecure_tls": false
+}`;
               break;
             case "redis":
-              exampleConfig = `password: ""
-db: 0`;
+              exampleConfig = `{
+  "password": "",
+  "db": 0
+}`;
               break;
           }
           configTextarea.value = exampleConfig;
+        }
+
+        // Reset multi-endpoint configuration when protocol changes
+        if (protocol !== "http") {
+          document.getElementById("multi_endpoint_enabled").checked = false;
+          document.getElementById("multi_endpoint_config").style.display =
+            "none";
         }
       }
 
@@ -538,6 +901,76 @@ db: 0`;
           e.preventDefault();
 
           const formData = new FormData(e.target);
+          const protocol = formData.get("protocol");
+          const multiEndpointEnabled =
+            formData.get("multi_endpoint_enabled") === "on";
+
+          console.log("Multi-endpoint enabled:", multiEndpointEnabled);
+
+          let config = null;
+
+          if (multiEndpointEnabled) {
+            const endpoints = [];
+            const names = formData.getAll("endpoint_name[]");
+            const urls = formData.getAll("endpoint_url[]");
+            const methods = formData.getAll("endpoint_method[]");
+            const jsonPaths = formData.getAll("endpoint_json_path[]");
+            const headers = formData.getAll("endpoint_headers[]");
+            const bodies = formData.getAll("endpoint_body[]");
+            const usernames = formData.getAll("endpoint_username[]");
+            const passwords = formData.getAll("endpoint_password[]");
+
+            for (let i = 0; i < names.length; i++) {
+              const endpoint = {
+                name: names[i],
+                url: urls[i],
+                method: methods[i],
+                json_path: jsonPaths[i],
+                headers: {},
+                body: bodies[i],
+                username: usernames[i] || "",
+                password: passwords[i] || "",
+              };
+
+              // Parse headers JSON
+              if (headers[i] && headers[i].trim()) {
+                try {
+                  endpoint.headers = JSON.parse(headers[i]);
+                } catch (e) {
+                  console.error("Invalid headers JSON:", headers[i]);
+                }
+              }
+
+              endpoints.push(endpoint);
+            }
+
+            const multiEndpointConfig = {
+              endpoints: endpoints,
+              condition: formData.get("condition"),
+              timeout: parseInt(formData.get("multi_timeout")) * 1000000000, // Convert to nanoseconds
+            };
+
+            // Add multi-endpoint config to the main config
+            config = {
+              method: "GET",
+              expected_status: 200,
+              headers: {},
+              multi_endpoint: multiEndpointConfig,
+            };
+            console.log("Multi-endpoint config:", config);
+          } else {
+            // Parse regular config from textarea as JSON only
+            const configText = formData.get("config") || "";
+            if (configText.trim()) {
+              try {
+                config = JSON.parse(configText);
+              } catch (e) {
+                alert("Invalid JSON configuration. Please check the format.");
+                return;
+              }
+            }
+          }
+
           const service = {
             name: formData.get("name"),
             protocol: formData.get("protocol"),
@@ -551,7 +984,7 @@ db: 0`;
               .map((tag) => tag.trim())
               .filter((tag) => tag),
             is_enabled: formData.get("is_enabled") === "on",
-            config: formData.get("config") || "",
+            config: config,
           };
 
           const url = currentServiceId
@@ -591,6 +1024,52 @@ db: 0`;
           closeModal();
         }
       };
+
+      // Prevent modal from closing when mouse leaves during drag operations
+      let isMouseDown = false;
+      let isDragging = false;
+
+      document.addEventListener("mousedown", function (event) {
+        isMouseDown = true;
+        isDragging = false;
+      });
+
+      document.addEventListener("mousemove", function (event) {
+        if (isMouseDown) {
+          isDragging = true;
+        }
+      });
+
+      document.addEventListener("mouseup", function (event) {
+        isMouseDown = false;
+        // Reset dragging state after a short delay
+        setTimeout(() => {
+          isDragging = false;
+        }, 100);
+      });
+
+      // Override the window.onclick for modal to prevent closing during drag
+      const originalWindowOnclick = window.onclick;
+      window.onclick = function (event) {
+        const modal = document.getElementById("serviceModal");
+        if (event.target === modal && !isDragging) {
+          closeModal();
+        }
+      };
+
+      // Add event listener for protocol change
+      document
+        .getElementById("protocol")
+        .addEventListener("change", function () {
+          const protocol = this.value;
+          if (protocol !== "http") {
+            // Reset multi-endpoint section for non-HTTP protocols
+            document.getElementById("multi_endpoint_enabled").checked = false;
+            document.getElementById("multi_endpoint_config").style.display =
+              "none";
+            document.getElementById("endpoints_container").innerHTML = "";
+          }
+        });
 
       // Auto-refresh table every 30 seconds
       function refreshServicesTable() {
@@ -914,118 +1393,288 @@ db: 0`;
           return;
         }
 
-        tbody.innerHTML = "";
+        // Получаем существующие строки таблицы
+        const existingRows = tbody.querySelectorAll("tr");
+        const existingServices = new Map();
 
+        existingRows.forEach((row) => {
+          const serviceLink = row.querySelector(".service-name");
+          if (serviceLink) {
+            const serviceId = serviceLink.getAttribute("href").split("/").pop();
+            existingServices.set(serviceId, row);
+          }
+        });
+
+        // Обрабатываем каждый сервис из WebSocket
         services.forEach((service) => {
-          const row = document.createElement("tr");
+          const existingRow = existingServices.get(service.id);
 
-          // Get status and last check from state
+          if (existingRow) {
+            // Обновляем существующую строку без анимации
+            updateExistingRow(existingRow, service);
+            existingServices.delete(service.id); // Убираем из списка обработанных
+          } else {
+            // Добавляем новую строку
+            const newRow = createServiceRow(service);
+            tbody.appendChild(newRow);
+          }
+        });
+
+        // Удаляем строки сервисов, которых больше нет
+        existingServices.forEach((row) => {
+          row.remove();
+        });
+      }
+
+      function updateExistingRow(row, service) {
+        // Обновляем статус
+        const statusCell = row.querySelector("td:nth-child(3) .badge");
+        if (statusCell) {
           const status = service.state ? service.state.status : "unknown";
+          statusCell.className = `badge badge-${status.toLowerCase()}`;
+          statusCell.textContent = status.toUpperCase();
+        }
+
+        // Обновляем время последней проверки
+        const lastCheckCell = row.querySelector("td:nth-child(6)");
+        if (lastCheckCell) {
           const lastCheck =
             service.state && service.state.last_check
               ? service.state.last_check
               : null;
+          lastCheckCell.textContent = formatDateTime(lastCheck);
+        }
 
-          // Generate tags HTML
-          let tagsHtml = "";
-          if (service.tags && service.tags.length > 0) {
-            tagsHtml = service.tags
-              .map((tag) => `<span class="tag-badge">${tag}</span>`)
-              .join("");
-          } else {
-            tagsHtml = '<span class="no-tags">—</span>';
-          }
+        // Обновляем количество инцидентов
+        const activeIncidentsSpan = row.querySelector(".incident-count.active");
+        const totalIncidentsSpan = row.querySelector(".incident-count.total");
 
-          row.innerHTML = `
-            <td style="text-align: center;">
-              <div class="activity-indicator ${
-                service.is_enabled !== false ? "active" : "inactive"
-              }" title="${
-            service.is_enabled !== false ? "Enabled" : "Disabled"
-          }"></div>
-            </td>
-            <td>
-              <a href="/service/${service.id}" class="service-name">${
-            service.name
-          }</a>
-            </td>
-            <td>
-              <span class="badge badge-${status.toLowerCase()}">
-                ${status.toUpperCase()}
-              </span>
-            </td>
-            <td>${tagsHtml}</td>
-            <td>${service.endpoint}</td>
-            <td>${formatDateTime(lastCheck)}</td>
-            <td>
-              <div class="incidents-info">
-                <span class="incident-count active ${
-                  (service.active_incidents || 0) === 0 ? "no-incidents" : ""
-                }" data-service-id="${service.id}">${
-            service.active_incidents || 0
-          }</span>
-                <span class="incident-separator">/</span>
-                <span class="incident-count total" data-service-id="${
+        if (activeIncidentsSpan) {
+          const activeCount = service.active_incidents || 0;
+          activeIncidentsSpan.textContent = activeCount;
+          activeIncidentsSpan.className = `incident-count active ${
+            activeCount === 0 ? "no-incidents" : ""
+          }`;
+        }
+
+        if (totalIncidentsSpan) {
+          totalIncidentsSpan.textContent = service.total_incidents || 0;
+        }
+
+        // Обновляем индикатор активности
+        const activityIndicator = row.querySelector(".activity-indicator");
+        if (activityIndicator) {
+          activityIndicator.className = `activity-indicator ${
+            service.is_enabled !== false ? "active" : "inactive"
+          }`;
+          activityIndicator.title =
+            service.is_enabled !== false ? "Enabled" : "Disabled";
+        }
+      }
+
+      function createServiceRow(service) {
+        const row = document.createElement("tr");
+
+        // Get status and last check from state
+        const status = service.state ? service.state.status : "unknown";
+        const lastCheck =
+          service.state && service.state.last_check
+            ? service.state.last_check
+            : null;
+
+        // Generate tags HTML
+        let tagsHtml = "";
+        if (service.tags && service.tags.length > 0) {
+          tagsHtml = service.tags
+            .map((tag) => `<span class="tag-badge">${tag}</span>`)
+            .join("");
+        } else {
+          tagsHtml = '<span class="no-tags">—</span>';
+        }
+
+        row.innerHTML = `
+          <td style="text-align: center;">
+            <div class="activity-indicator ${
+              service.is_enabled !== false ? "active" : "inactive"
+            }" title="${
+          service.is_enabled !== false ? "Enabled" : "Disabled"
+        }"></div>
+          </td>
+          <td>
+            <a href="/service/${service.id}" class="service-name">${
+          service.name
+        }</a>
+          </td>
+          <td>
+            <span class="badge badge-${status.toLowerCase()}">
+              ${status.toUpperCase()}
+            </span>
+          </td>
+          <td>${tagsHtml}</td>
+          <td>${service.endpoint}</td>
+          <td>${formatDateTime(lastCheck)}</td>
+          <td>
+            <div class="incidents-info">
+              <span class="incident-count active ${
+                (service.active_incidents || 0) === 0 ? "no-incidents" : ""
+              }" data-service-id="${service.id}">${
+          service.active_incidents || 0
+        }</span>
+              <span class="incident-separator">/</span>
+              <span class="incident-count total" data-service-id="${
+                service.id
+              }">${service.total_incidents || 0}</span>
+            </div>
+          </td>
+          <td>
+            <div class="dropdown">
+              <button class="dropdown-toggle" onclick="toggleDropdown('${
+                service.id
+              }', event)">
+                Actions
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down-icon lucide-chevron-down">
+                  <path d="m6 9 6 6 6-6"/>
+                </svg>
+              </button>
+              <div class="dropdown-menu" id="dropdown-${service.id}">
+                <button class="dropdown-item" onclick="triggerCheck('${
                   service.id
-                }">${service.total_incidents || 0}</span>
-              </div>
-            </td>
-            <td>
-              <div class="dropdown">
-                <button class="dropdown-toggle" onclick="toggleDropdown('${
-                  service.id
-                }', event)">
-                  Actions
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down-icon lucide-chevron-down">
-                    <path d="m6 9 6 6 6-6"/>
-                  </svg>
+                }')">
+                  <span class="dropdown-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-refresh-cw-icon lucide-refresh-cw">
+                      <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                      <path d="M21 3v5h-5"/>
+                      <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                      <path d="M8 16H3v5"/>
+                    </svg>
+                  </span> Check
                 </button>
-                <div class="dropdown-menu" id="dropdown-${service.id}">
-                  <button class="dropdown-item" onclick="triggerCheck('${
-                    service.id
-                  }')">
-                    <span class="dropdown-icon">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-refresh-cw-icon lucide-refresh-cw">
-                        <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
-                        <path d="M21 3v5h-5"/>
-                        <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
-                        <path d="M8 16H3v5"/>
-                      </svg>
-                    </span> Check
-                  </button>
-                  <button class="dropdown-item" onclick="editService('${
-                    service.id
-                  }')">
-                    <span class="dropdown-icon">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pencil-icon lucide-pencil">
-                        <path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/>
-                        <path d="m15 5 4 4"/>
-                      </svg>
-                    </span> Edit
-                  </button>
-                  <button class="dropdown-item" onclick="deleteService('${
-                    service.id
-                  }', '${service.name}')">
-                    <span class="dropdown-icon">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash-icon lucide-trash">
-                        <path d="M3 6h18"/>
-                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
-                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
-                      </svg>
-                    </span> Delete
-                  </button>
-                </div>
+                <button class="dropdown-item" onclick="editService('${
+                  service.id
+                }')">
+                  <span class="dropdown-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pencil-icon lucide-pencil">
+                      <path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/>
+                      <path d="m15 5 4 4"/>
+                    </svg>
+                  </span> Edit
+                </button>
+                <button class="dropdown-item" onclick="deleteService('${
+                  service.id
+                }', '${service.name}')">
+                  <span class="dropdown-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash-icon lucide-trash">
+                      <path d="M3 6h18"/>
+                      <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+                      <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                    </svg>
+                  </span> Delete
+                </button>
               </div>
-            </td>
-          `;
-          tbody.appendChild(row);
-        });
+            </div>
+          </td>
+        `;
+
+        return row;
       }
 
       // Toggle switch function
       function toggleSwitch() {
         const checkbox = document.getElementById("is_enabled");
         checkbox.checked = !checkbox.checked;
+      }
+
+      // Toggle multi-endpoint function
+      function toggleMultiEndpoint() {
+        const checkbox = document.getElementById("multi_endpoint_enabled");
+        checkbox.checked = !checkbox.checked;
+
+        const configDiv = document.getElementById("multi_endpoint_config");
+        if (checkbox.checked) {
+          configDiv.style.display = "block";
+          console.log("Multi-endpoint section enabled");
+        } else {
+          configDiv.style.display = "none";
+          console.log("Multi-endpoint section disabled");
+        }
+      }
+
+      // Add endpoint function
+      function addEndpoint() {
+        const container = document.getElementById("endpoints_container");
+        const endpointCount = container.children.length + 1;
+
+        const endpointDiv = document.createElement("div");
+        endpointDiv.className = "endpoint-item";
+        endpointDiv.innerHTML = `
+          <div class="endpoint-header">
+            <h5>Endpoint ${endpointCount}</h5>
+            <button type="button" class="btn btn-danger btn-sm" onclick="removeEndpoint(this)">
+              Remove
+            </button>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Name</label>
+              <input type="text" name="endpoint_name[]" placeholder="endpoint${endpointCount}" required />
+            </div>
+            <div class="form-group">
+              <label>URL</label>
+              <input type="url" name="endpoint_url[]" placeholder="https://api.example.com/status" required />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Method</label>
+              <select name="endpoint_method[]">
+                <option value="GET">GET</option>
+                <option value="POST">POST</option>
+                <option value="PUT">PUT</option>
+                <option value="DELETE">DELETE</option>
+                <option value="HEAD">HEAD</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>JSON Path</label>
+              <input type="text" name="endpoint_json_path[]" placeholder="result.block_number" />
+              <small class="form-text">Path to extract value from JSON response (e.g., "result.block_number")</small>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Username (Basic Auth)</label>
+              <input type="text" name="endpoint_username[]" placeholder="username" />
+            </div>
+            <div class="form-group">
+              <label>Password (Basic Auth)</label>
+              <input type="password" name="endpoint_password[]" placeholder="password" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Headers (JSON)</label>
+            <textarea name="endpoint_headers[]" placeholder='{"Authorization": "Bearer token"}' rows="2"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Body</label>
+            <textarea name="endpoint_body[]" placeholder="Request body (for POST/PUT)" rows="2"></textarea>
+          </div>
+        `;
+
+        container.appendChild(endpointDiv);
+      }
+
+      // Remove endpoint function
+      function removeEndpoint(button) {
+        const endpointItem = button.closest(".endpoint-item");
+        endpointItem.remove();
+
+        // Renumber endpoints
+        const container = document.getElementById("endpoints_container");
+        const endpoints = container.querySelectorAll(".endpoint-item");
+        endpoints.forEach((endpoint, index) => {
+          const header = endpoint.querySelector("h5");
+          header.textContent = `Endpoint ${index + 1}`;
+        });
       }
 
       // Connect to WebSocket when page loads
