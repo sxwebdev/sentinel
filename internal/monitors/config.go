@@ -34,3 +34,12 @@ func GetConfig[T any](cfg map[string]any, protocol storage.ServiceProtocolType) 
 	}
 	return c, nil
 }
+
+// ConvertToMap converts the config to a map[string]any
+func (c *Config) ConvertToMap() map[string]any {
+	return map[string]any{
+		string(storage.ServiceProtocolTypeHTTP): c.HTTP,
+		string(storage.ServiceProtocolTypeTCP):  c.TCP,
+		string(storage.ServiceProtocolTypeGRPC): c.GRPC,
+	}
+}

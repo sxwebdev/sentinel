@@ -41,8 +41,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Dashboard statistics",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/web.DashboardStats"
                         }
                     },
                     "500": {
@@ -238,9 +237,9 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Service details",
+                        "description": "Service details with state",
                         "schema": {
-                            "$ref": "#/definitions/web.ServiceDTO"
+                            "$ref": "#/definitions/web.ServiceWithState"
                         }
                     },
                     "400": {
@@ -607,81 +606,15 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "storage.GRPCConfig": {
-            "type": "object",
-            "properties": {
-                "check_type": {
-                    "type": "string"
-                },
-                "insecure_tls": {
-                    "type": "boolean"
-                },
-                "service_name": {
-                    "type": "string"
-                },
-                "tls": {
-                    "type": "boolean"
-                }
-            }
-        },
-        "storage.HTTPConfig": {
-            "type": "object",
-            "properties": {
-                "expected_status": {
-                    "type": "integer"
-                },
-                "extended_config": {
-                    "description": "For multi-endpoint configuration",
-                    "type": "object",
-                    "additionalProperties": {}
-                },
-                "headers": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "method": {
-                    "type": "string"
-                }
-            }
-        },
-        "storage.MonitorConfig": {
-            "type": "object",
-            "properties": {
-                "grpc": {
-                    "$ref": "#/definitions/storage.GRPCConfig"
-                },
-                "http": {
-                    "$ref": "#/definitions/storage.HTTPConfig"
-                },
-                "redis": {
-                    "$ref": "#/definitions/storage.RedisConfig"
-                },
-                "tcp": {
-                    "$ref": "#/definitions/storage.TCPConfig"
-                }
-            }
-        },
-        "storage.RedisConfig": {
-            "type": "object",
-            "properties": {
-                "db": {
-                    "type": "integer"
-                },
-                "password": {
-                    "type": "string"
-                }
-            }
-        },
         "storage.Service": {
             "type": "object",
             "properties": {
-                "config": {
-                    "$ref": "#/definitions/storage.MonitorConfig"
+                "active_incidents": {
+                    "type": "integer"
                 },
-                "endpoint": {
-                    "type": "string"
+                "config": {
+                    "type": "object",
+                    "additionalProperties": {}
                 },
                 "id": {
                     "type": "string"
@@ -696,7 +629,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "protocol": {
-                    "type": "string"
+                    "$ref": "#/definitions/storage.ServiceProtocolType"
                 },
                 "retries": {
                     "type": "integer"
@@ -709,8 +642,24 @@ const docTemplate = `{
                 },
                 "timeout": {
                     "type": "integer"
+                },
+                "total_incidents": {
+                    "type": "integer"
                 }
             }
+        },
+        "storage.ServiceProtocolType": {
+            "type": "string",
+            "enum": [
+                "http",
+                "tcp",
+                "grpc"
+            ],
+            "x-enum-varnames": [
+                "ServiceProtocolTypeHTTP",
+                "ServiceProtocolTypeTCP",
+                "ServiceProtocolTypeGRPC"
+            ]
         },
         "storage.ServiceStateRecord": {
             "type": "object",
@@ -773,14 +722,58 @@ const docTemplate = `{
                 "StatusMaintenance"
             ]
         },
-        "storage.TCPConfig": {
+        "web.DashboardStats": {
+            "description": "Dashboard statistics",
             "type": "object",
             "properties": {
-                "expect_data": {
+                "active_incidents": {
+                    "type": "integer",
+                    "example": 2
+                },
+                "avg_response_time": {
+                    "type": "integer",
+                    "example": 150
+                },
+                "checks_per_minute": {
+                    "type": "integer",
+                    "example": 60
+                },
+                "last_check_time": {
                     "type": "string"
                 },
-                "send_data": {
-                    "type": "string"
+                "protocols": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "integer"
+                    }
+                },
+                "recent_incidents": {
+                    "type": "integer",
+                    "example": 5
+                },
+                "services_down": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "services_unknown": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "services_up": {
+                    "type": "integer",
+                    "example": 8
+                },
+                "total_checks": {
+                    "type": "integer",
+                    "example": 1000
+                },
+                "total_services": {
+                    "type": "integer",
+                    "example": 10
+                },
+                "uptime_percentage": {
+                    "type": "number",
+                    "example": 95.5
                 }
             }
         },
@@ -846,10 +839,6 @@ const docTemplate = `{
                     "type": "object",
                     "additionalProperties": {}
                 },
-                "endpoint": {
-                    "type": "string",
-                    "example": "https://example.com"
-                },
                 "id": {
                     "type": "string",
                     "example": "service-1"
@@ -867,7 +856,11 @@ const docTemplate = `{
                     "example": "Web Server"
                 },
                 "protocol": {
-                    "type": "string",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/storage.ServiceProtocolType"
+                        }
+                    ],
                     "example": "http"
                 },
                 "retries": {

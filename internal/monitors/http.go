@@ -23,15 +23,15 @@ type HTTPConfig struct {
 
 // EndpointConfig represents a single endpoint configuration
 type EndpointConfig struct {
-	Name           string            `json:"name"`
-	URL            string            `json:"url"`
-	Method         string            `json:"method"`
-	Headers        map[string]string `json:"headers"`
-	Body           string            `json:"body"`
-	ExpectedStatus int               `json:"expected_status"`
-	JSONPath       string            `json:"json_path"` // Path to extract value from JSON response
-	Username       string            `json:"username"`  // Basic Auth username
-	Password       string            `json:"password"`  // Basic Auth password
+	Name           string            `json:"name" validate:"required"`
+	URL            string            `json:"url" validate:"required"`
+	Method         string            `json:"method" validate:"required,oneof=GET POST PUT DELETE HEAD OPTIONS"`
+	Headers        map[string]string `json:"headers,omitempty"`
+	Body           string            `json:"body,omitempty"`
+	ExpectedStatus int               `json:"expected_status" validate:"required,min=100,max=599"`
+	JSONPath       string            `json:"json_path,omitempty"` // Path to extract value from JSON response
+	Username       string            `json:"username,omitempty"`  // Basic Auth username
+	Password       string            `json:"password,omitempty"`  // Basic Auth password
 }
 
 // EndpointResult represents result from a single endpoint

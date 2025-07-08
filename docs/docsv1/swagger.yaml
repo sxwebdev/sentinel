@@ -1,55 +1,12 @@
 basePath: /api/v1
 definitions:
-  storage.GRPCConfig:
-    properties:
-      check_type:
-        type: string
-      insecure_tls:
-        type: boolean
-      service_name:
-        type: string
-      tls:
-        type: boolean
-    type: object
-  storage.HTTPConfig:
-    properties:
-      expected_status:
-        type: integer
-      extended_config:
-        additionalProperties: {}
-        description: For multi-endpoint configuration
-        type: object
-      headers:
-        additionalProperties:
-          type: string
-        type: object
-      method:
-        type: string
-    type: object
-  storage.MonitorConfig:
-    properties:
-      grpc:
-        $ref: '#/definitions/storage.GRPCConfig'
-      http:
-        $ref: '#/definitions/storage.HTTPConfig'
-      redis:
-        $ref: '#/definitions/storage.RedisConfig'
-      tcp:
-        $ref: '#/definitions/storage.TCPConfig'
-    type: object
-  storage.RedisConfig:
-    properties:
-      db:
-        type: integer
-      password:
-        type: string
-    type: object
   storage.Service:
     properties:
+      active_incidents:
+        type: integer
       config:
-        $ref: '#/definitions/storage.MonitorConfig'
-      endpoint:
-        type: string
+        additionalProperties: {}
+        type: object
       id:
         type: string
       interval:
@@ -59,7 +16,7 @@ definitions:
       name:
         type: string
       protocol:
-        type: string
+        $ref: '#/definitions/storage.ServiceProtocolType'
       retries:
         type: integer
       tags:
@@ -68,7 +25,19 @@ definitions:
         type: array
       timeout:
         type: integer
+      total_incidents:
+        type: integer
     type: object
+  storage.ServiceProtocolType:
+    enum:
+    - http
+    - tcp
+    - grpc
+    type: string
+    x-enum-varnames:
+    - ServiceProtocolTypeHTTP
+    - ServiceProtocolTypeTCP
+    - ServiceProtocolTypeGRPC
   storage.ServiceStateRecord:
     properties:
       consecutive_fails:
@@ -110,12 +79,45 @@ definitions:
     - StatusUp
     - StatusDown
     - StatusMaintenance
-  storage.TCPConfig:
+  web.DashboardStats:
+    description: Dashboard statistics
     properties:
-      expect_data:
+      active_incidents:
+        example: 2
+        type: integer
+      avg_response_time:
+        example: 150
+        type: integer
+      checks_per_minute:
+        example: 60
+        type: integer
+      last_check_time:
         type: string
-      send_data:
-        type: string
+      protocols:
+        additionalProperties:
+          type: integer
+        type: object
+      recent_incidents:
+        example: 5
+        type: integer
+      services_down:
+        example: 1
+        type: integer
+      services_unknown:
+        example: 1
+        type: integer
+      services_up:
+        example: 8
+        type: integer
+      total_checks:
+        example: 1000
+        type: integer
+      total_services:
+        example: 10
+        type: integer
+      uptime_percentage:
+        example: 95.5
+        type: number
     type: object
   web.ErrorResponse:
     description: Error response
@@ -162,9 +164,6 @@ definitions:
         additionalProperties: {}
         description: JSON object
         type: object
-      endpoint:
-        example: https://example.com
-        type: string
       id:
         example: service-1
         type: string
@@ -178,8 +177,9 @@ definitions:
         example: Web Server
         type: string
       protocol:
+        allOf:
+        - $ref: '#/definitions/storage.ServiceProtocolType'
         example: http
-        type: string
       retries:
         example: 3
         type: integer
@@ -257,8 +257,7 @@ paths:
         "200":
           description: Dashboard statistics
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/web.DashboardStats'
         "500":
           description: Internal server error
           schema:
@@ -383,9 +382,9 @@ paths:
       - application/json
       responses:
         "200":
-          description: Service details
+          description: Service details with state
           schema:
-            $ref: '#/definitions/web.ServiceDTO'
+            $ref: '#/definitions/web.ServiceWithState'
         "400":
           description: Bad request
           schema:

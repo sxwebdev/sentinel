@@ -23,6 +23,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -41,17 +42,17 @@ var viewsFS embed.FS
 
 // ServiceDTO represents a service for API responses
 type ServiceDTO struct {
-	ID              string         `json:"id" example:"service-1"`
-	Name            string         `json:"name" example:"Web Server"`
-	Protocol        string         `json:"protocol" example:"http"`
-	Interval        time.Duration  `json:"interval" swaggertype:"primitive,integer" example:"30000000000"`
-	Timeout         time.Duration  `json:"timeout" swaggertype:"primitive,integer" example:"5000000000"`
-	Retries         int            `json:"retries" example:"3"`
-	Tags            []string       `json:"tags" example:"web,production"`
-	Config          monitors.Config `json:"config"` // JSON object
-	IsEnabled       bool           `json:"is_enabled" example:"true"`
-	ActiveIncidents int            `json:"active_incidents,omitempty" example:"2"`
-	TotalIncidents  int            `json:"total_incidents,omitempty" example:"10"`
+	ID              string                      `json:"id" example:"service-1"`
+	Name            string                      `json:"name" example:"Web Server"`
+	Protocol        storage.ServiceProtocolType `json:"protocol" example:"http"`
+	Interval        time.Duration               `json:"interval" swaggertype:"primitive,integer" example:"30000000000"`
+	Timeout         time.Duration               `json:"timeout" swaggertype:"primitive,integer" example:"5000000000"`
+	Retries         int                         `json:"retries" example:"3"`
+	Tags            []string                    `json:"tags" example:"web,production"`
+	Config          map[string]any              `json:"config"` // JSON object
+	IsEnabled       bool                        `json:"is_enabled" example:"true"`
+	ActiveIncidents int                         `json:"active_incidents,omitempty" example:"2"`
+	TotalIncidents  int                         `json:"total_incidents,omitempty" example:"10"`
 }
 
 // ServiceWithState represents a service with its current state
@@ -69,6 +70,7 @@ type Server struct {
 	app            *fiber.App
 	wsConnections  map[*websocket.Conn]bool
 	wsMutex        sync.Mutex
+	validator      *validator.Validate
 }
 
 // NewServer creates a new web server
@@ -142,6 +144,7 @@ func NewServer(
 		config:         cfg,
 		app:            app,
 		wsConnections:  make(map[*websocket.Conn]bool),
+		validator:      validator.New(),
 	}
 
 	// Set Swagger host from config
@@ -336,10 +339,10 @@ func (s *Server) handleAPIGetServices(c *fiber.Ctx) error {
 //	@Tags			services
 //	@Accept			json
 //	@Produce		json
-//	@Param			id	path		string			true	"Service ID"
+//	@Param			id	path		string				true	"Service ID"
 //	@Success		200	{object}	ServiceWithState	"Service details with state"
-//	@Failure		400	{object}	ErrorResponse	"Bad request"
-//	@Failure		404	{object}	ErrorResponse	"Service not found"
+//	@Failure		400	{object}	ErrorResponse		"Bad request"
+//	@Failure		404	{object}	ErrorResponse		"Service not found"
 //	@Router			/services/{id} [get]
 func (s *Server) handleAPIServiceDetail(c *fiber.Ctx) error {
 	serviceID := c.Params("id")
@@ -617,7 +620,7 @@ func (s *Server) handleAPIDeleteIncident(c *fiber.Ctx) error {
 //	@Tags			dashboard
 //	@Accept			json
 //	@Produce		json
-//	@Success		200	{object}	map[string]any	"Dashboard statistics"
+//	@Success		200	{object}	DashboardStats	"Dashboard statistics"
 //	@Failure		500	{object}	ErrorResponse	"Internal server error"
 //	@Router			/dashboard/stats [get]
 func (s *Server) handleAPIDashboardStats(c *fiber.Ctx) error {
@@ -652,18 +655,18 @@ func (s *Server) handleAPIDashboardStats(c *fiber.Ctx) error {
 	}
 
 	// Initialize stats
-	stats := fiber.Map{
-		"total_services":    len(services),
-		"services_up":       0,
-		"services_down":     0,
-		"services_unknown":  0,
-		"uptime_percentage": 0.0,
-		"avg_response_time": 0,
-		"total_checks":      0,
-		"active_incidents":  0,
-		"last_check_time":   nil,
-		"checks_per_minute": 0,
-		"protocols":         make(map[string]int),
+	stats := DashboardStats{
+		TotalServices:    len(services),
+		ServicesUp:       0,
+		ServicesDown:     0,
+		ServicesUnknown:  0,
+		UptimePercentage: 0.0,
+		AvgResponseTime:  0,
+		TotalChecks:      0,
+		ActiveIncidents:  0,
+		LastCheckTime:    nil,
+		ChecksPerMinute:  0,
+		Protocols:        make(map[storage.ServiceProtocolType]int),
 	}
 
 	// Calculate statistics
@@ -681,12 +684,12 @@ func (s *Server) handleAPIDashboardStats(c *fiber.Ctx) error {
 		if serviceState != nil {
 			switch serviceState.Status {
 			case storage.StatusUp:
-				stats["services_up"] = stats["services_up"].(int) + 1
+				stats.ServicesUp++
 				upServices++
 			case storage.StatusDown:
-				stats["services_down"] = stats["services_down"].(int) + 1
+				stats.ServicesDown++
 			case storage.StatusUnknown:
-				stats["services_unknown"] = stats["services_unknown"].(int) + 1
+				stats.ServicesUnknown++
 			}
 
 			// Add response time to total (only from services that have response time data)
@@ -709,17 +712,17 @@ func (s *Server) handleAPIDashboardStats(c *fiber.Ctx) error {
 		if protocol == "" {
 			protocol = "unknown"
 		}
-		stats["protocols"].(map[string]int)[protocol]++
+		stats.Protocols[protocol]++
 	}
 
 	// Calculate averages
 	if upServices > 0 {
-		stats["uptime_percentage"] = float64(upServices) / float64(len(services)) * 100
+		stats.UptimePercentage = float64(upServices) / float64(len(services)) * 100
 	}
 	if responseTimeCount > 0 {
-		stats["avg_response_time"] = totalResponseTimeMs / responseTimeCount
+		stats.AvgResponseTime = totalResponseTimeMs / responseTimeCount
 	}
-	stats["total_checks"] = totalChecks
+	stats.TotalChecks = totalChecks
 
 	// Count active incidents
 	activeIncidents := 0
@@ -728,10 +731,10 @@ func (s *Server) handleAPIDashboardStats(c *fiber.Ctx) error {
 			activeIncidents++
 		}
 	}
-	stats["active_incidents"] = activeIncidents
+	stats.ActiveIncidents = activeIncidents
 
 	// Set last check time
-	stats["last_check_time"] = lastCheckTime
+	stats.LastCheckTime = lastCheckTime
 
 	// Calculate checks per minute (estimate based on intervals)
 	checksPerMinute := 0
@@ -740,7 +743,7 @@ func (s *Server) handleAPIDashboardStats(c *fiber.Ctx) error {
 			checksPerMinute += int(time.Minute / service.Interval)
 		}
 	}
-	stats["checks_per_minute"] = checksPerMinute
+	stats.ChecksPerMinute = checksPerMinute
 
 	return c.JSON(stats)
 }
@@ -807,7 +810,8 @@ func (s *Server) handleAPICreateService(c *fiber.Ctx) error {
 			"error": "Invalid config: " + err.Error(),
 		})
 	}
-	service.Config = config
+
+	service.Config = config.ConvertToMap()
 
 	// Add service
 	if err := s.monitorService.AddService(c.Context(), &service); err != nil {
@@ -870,7 +874,8 @@ func (s *Server) handleAPIUpdateService(c *fiber.Ctx) error {
 			"error": "Invalid config: " + err.Error(),
 		})
 	}
-	service.Config = config
+
+	service.Config = config.ConvertToMap()
 
 	// Validate required fields
 	if service.Name == "" {
@@ -965,13 +970,10 @@ func (s *Server) handleAPIGetServiceConfig(c *fiber.Ctx) error {
 }
 
 // convertFlatConfigToMonitorConfig converts JSON config object to proper MonitorConfig structure
-func (s *Server) convertFlatConfigToMonitorConfig(protocol storage.ServiceProtocolType, configObj map[string]any) (storage.ServiceConfig, error) {
+func (s *Server) convertFlatConfigToMonitorConfig(protocol storage.ServiceProtocolType, configObj map[string]any) (monitors.Config, error) {
 	if configObj == nil {
-		// Return default config based on protocol
-		return s.getDefaultConfig(protocol), nil
+		return monitors.Config{}, fmt.Errorf("config is nil")
 	}
-
-	// Convert interface{} to map[string]interface{}
 
 	// Validate and convert based on protocol
 	switch protocol {
@@ -982,187 +984,78 @@ func (s *Server) convertFlatConfigToMonitorConfig(protocol storage.ServiceProtoc
 	case storage.ServiceProtocolTypeGRPC:
 		return s.parseGRPCConfig(configObj)
 	default:
-		return storage.ServiceConfig{}, fmt.Errorf("unsupported protocol: %s", protocol)
+		return monitors.Config{}, fmt.Errorf("unsupported protocol: %s", protocol)
 	}
 }
 
 // getDefaultConfig returns default config for a protocol
-func (s *Server) getDefaultConfig(protocol storage.ServiceProtocolType) storage.ServiceConfig {
-	switch protocol {
-	case storage.ServiceProtocolTypeHTTP:
-		return storage.ServiceConfig{
-			HTTP: map[string]any{
-				"method":          "GET",
-				"expected_status": 200,
-				"headers":         make(map[string]string),
-			},
-		}
-	case storage.ServiceProtocolTypeTCP:
-		return storage.ServiceConfig{
-			TCP: map[string]any{
-				"send_data":   "",
-				"expect_data": "",
-			},
-		}
-	case storage.ServiceProtocolTypeGRPC:
-		return storage.ServiceConfig{
-			GRPC: map[string]any{
-				"check_type":   "connectivity",
-				"service_name": "",
-				"tls":          false,
-				"insecure_tls": false,
-			},
-		}
-	default:
-		return storage.ServiceConfig{}
-	}
-}
+// func (s *Server) getDefaultConfig(protocol storage.ServiceProtocolType) monitors.Config {
+// 	switch protocol {
+// 	case storage.ServiceProtocolTypeHTTP:
+// 		return monitors.Config{
+// 			HTTP: &monitors.HTTPConfig{
+// 				Timeout:   10 * time.Second,
+// 				Endpoints: []monitors.EndpointConfig{},
+// 			},
+// 		}
+// 	case storage.ServiceProtocolTypeTCP:
+// 		return monitors.Config{
+// 			TCP: &monitors.TCPConfig{},
+// 		}
+// 	case storage.ServiceProtocolTypeGRPC:
+// 		return monitors.Config{
+// 			GRPC: &monitors.GRPCConfig{
+// 				CheckType: "connectivity",
+// 			},
+// 		}
+// 	default:
+// 		return monitors.Config{}
+// 	}
+// }
 
 // parseHTTPConfig parses and validates HTTP config
-func (s *Server) parseHTTPConfig(configMap map[string]any) (storage.ServiceConfig, error) {
-	configData, ok := configMap[string(storage.ServiceProtocolTypeHTTP)]
-	if 
-
-	httpConfig, err := monitors.GetConfig[monitors.HTTPConfig](configMap)
+func (s *Server) parseHTTPConfig(configMap map[string]any) (monitors.Config, error) {
+	httpConfig, err := monitors.GetConfig[monitors.HTTPConfig](configMap, storage.ServiceProtocolTypeHTTP)
 	if err != nil {
-		return storage.ServiceConfig{}, err
+		return monitors.Config{}, err
 	}
 
-	// Extract and validate method
-	if method, ok := configMap["method"].(string); ok {
-		method = strings.ToUpper(method)
-		if method != "GET" && method != "POST" && method != "PUT" && method != "DELETE" && method != "HEAD" && method != "OPTIONS" {
-			return storage.ServiceConfig{}, fmt.Errorf("invalid HTTP method: %s", method)
-		}
+	// Validate the HTTP config
+	if err := s.validator.Struct(httpConfig); err != nil {
+		return monitors.Config{}, fmt.Errorf("invalid HTTP config: %w", err)
 	}
 
-	// Extract and validate expected status
-	if expectedStatus, ok := configMap["expected_status"].(int); ok {
-		if expectedStatus < 100 || expectedStatus > 599 {
-			return storage.ServiceConfig{}, fmt.Errorf("invalid HTTP status code: %d", expectedStatus)
-		}
-	} else if expectedStatus, ok := configMap["expected_status"].(float64); ok {
-		status := int(expectedStatus)
-		if status < 100 || status > 599 {
-			return storage.ServiceConfig{}, fmt.Errorf("invalid HTTP status code: %d", status)
-		}
-	}
-
-	// Check for unknown fields
-	allowedFields := map[string]bool{"method": true, "expected_status": true, "headers": true, "multi_endpoint": true, "extended_config": true}
-	for field := range configMap {
-		if !allowedFields[field] {
-			return storage.MonitorConfig{}, fmt.Errorf("unknown field in HTTP config: %s", field)
-		}
-	}
-
-	return storage.MonitorConfig{HTTP: httpConfig}, nil
+	return monitors.Config{HTTP: &httpConfig}, nil
 }
 
 // parseTCPConfig parses and validates TCP config
-func (s *Server) parseTCPConfig(configMap map[string]interface{}) (storage.MonitorConfig, error) {
-	tcpConfig := &storage.TCPConfig{
-		SendData:   "",
-		ExpectData: "",
+func (s *Server) parseTCPConfig(configMap map[string]interface{}) (monitors.Config, error) {
+	tcpConfig, err := monitors.GetConfig[monitors.TCPConfig](configMap, storage.ServiceProtocolTypeTCP)
+	if err != nil {
+		return monitors.Config{}, err
 	}
 
-	// Extract send_data
-	if sendData, ok := configMap["send_data"].(string); ok {
-		tcpConfig.SendData = sendData
+	// Validate the TCP config
+	if err := s.validator.Struct(tcpConfig); err != nil {
+		return monitors.Config{}, fmt.Errorf("invalid TCP config: %w", err)
 	}
 
-	// Extract expect_data
-	if expectData, ok := configMap["expect_data"].(string); ok {
-		tcpConfig.ExpectData = expectData
-	}
-
-	// Check for unknown fields
-	allowedFields := map[string]bool{"send_data": true, "expect_data": true}
-	for field := range configMap {
-		if !allowedFields[field] {
-			return storage.MonitorConfig{}, fmt.Errorf("unknown field in TCP config: %s", field)
-		}
-	}
-
-	return storage.MonitorConfig{TCP: tcpConfig}, nil
+	return monitors.Config{TCP: &tcpConfig}, nil
 }
 
 // parseGRPCConfig parses and validates gRPC config
-func (s *Server) parseGRPCConfig(configMap map[string]interface{}) (storage.MonitorConfig, error) {
-	grpcConfig := &storage.GRPCConfig{
-		CheckType:   "health",
-		ServiceName: "",
-		TLS:         false,
-		InsecureTLS: false,
+func (s *Server) parseGRPCConfig(configMap map[string]interface{}) (monitors.Config, error) {
+	grpcConfig, err := monitors.GetConfig[monitors.GRPCConfig](configMap, storage.ServiceProtocolTypeGRPC)
+	if err != nil {
+		return monitors.Config{}, err
 	}
 
-	// Extract check_type
-	if checkType, ok := configMap["check_type"].(string); ok {
-		if checkType != "health" && checkType != "reflection" && checkType != "connectivity" {
-			return storage.MonitorConfig{}, fmt.Errorf("invalid gRPC check type: %s", checkType)
-		}
-		grpcConfig.CheckType = checkType
+	// Validate the gRPC config
+	if err := s.validator.Struct(grpcConfig); err != nil {
+		return monitors.Config{}, fmt.Errorf("invalid gRPC config: %w", err)
 	}
 
-	// Extract service_name
-	if serviceName, ok := configMap["service_name"].(string); ok {
-		grpcConfig.ServiceName = serviceName
-	}
-
-	// Extract TLS settings
-	if tls, ok := configMap["tls"].(bool); ok {
-		grpcConfig.TLS = tls
-	}
-	if insecureTLS, ok := configMap["insecure_tls"].(bool); ok {
-		grpcConfig.InsecureTLS = insecureTLS
-	}
-
-	// Check for unknown fields
-	allowedFields := map[string]bool{"check_type": true, "service_name": true, "tls": true, "insecure_tls": true}
-	for field := range configMap {
-		if !allowedFields[field] {
-			return storage.MonitorConfig{}, fmt.Errorf("unknown field in gRPC config: %s", field)
-		}
-	}
-
-	return storage.MonitorConfig{GRPC: grpcConfig}, nil
-}
-
-// parseRedisConfig parses and validates Redis config
-func (s *Server) parseRedisConfig(configMap map[string]interface{}) (storage.MonitorConfig, error) {
-	redisConfig := &storage.RedisConfig{
-		Password: "",
-		DB:       0,
-	}
-
-	// Extract password
-	if password, ok := configMap["password"].(string); ok {
-		redisConfig.Password = password
-	}
-
-	// Extract DB number
-	if db, ok := configMap["db"].(int); ok {
-		if db < 0 || db > 15 {
-			return storage.MonitorConfig{}, fmt.Errorf("invalid Redis DB number: %d (must be 0-15)", db)
-		}
-		redisConfig.DB = db
-	} else if db, ok := configMap["db"].(float64); ok {
-		dbNum := int(db)
-		if dbNum < 0 || dbNum > 15 {
-			return storage.MonitorConfig{}, fmt.Errorf("invalid Redis DB number: %d (must be 0-15)", dbNum)
-		}
-		redisConfig.DB = dbNum
-	}
-
-	// Check for unknown fields
-	allowedFields := map[string]bool{"password": true, "db": true}
-	for field := range configMap {
-		if !allowedFields[field] {
-			return storage.MonitorConfig{}, fmt.Errorf("unknown field in Redis config: %s", field)
-		}
-	}
-
-	return storage.MonitorConfig{Redis: redisConfig}, nil
+	return monitors.Config{GRPC: &grpcConfig}, nil
 }
 
 // handleWebSocket handles WebSocket connections
@@ -1365,39 +1258,6 @@ func (s *Server) subscribeEvents(ctx context.Context) error {
 			return nil
 		}
 	}
-}
-
-// convertConfigToMap converts storage.MonitorConfig to map[string]any
-func (s *Server) convertConfigToMap(cfg storage.MonitorConfig) map[string]any {
-	result := make(map[string]any)
-
-	if cfg.HTTP != nil {
-		result["method"] = cfg.HTTP.Method
-		result["expected_status"] = cfg.HTTP.ExpectedStatus
-		result["headers"] = cfg.HTTP.Headers
-		if cfg.HTTP.ExtendedConfig != nil {
-			result["multi_endpoint"] = cfg.HTTP.ExtendedConfig
-		}
-	}
-
-	if cfg.TCP != nil {
-		result["send_data"] = cfg.TCP.SendData
-		result["expect_data"] = cfg.TCP.ExpectData
-	}
-
-	if cfg.GRPC != nil {
-		result["check_type"] = cfg.GRPC.CheckType
-		result["service_name"] = cfg.GRPC.ServiceName
-		result["tls"] = cfg.GRPC.TLS
-		result["insecure_tls"] = cfg.GRPC.InsecureTLS
-	}
-
-	if cfg.Redis != nil {
-		result["password"] = cfg.Redis.Password
-		result["db"] = cfg.Redis.DB
-	}
-
-	return result
 }
 
 // getServiceWithState gets a service with its current state

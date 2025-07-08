@@ -16,11 +16,11 @@ import (
 
 // GRPCConfig represents gRPC monitor configuration
 type GRPCConfig struct {
-	TLS         bool   `json:"tls"`
-	ServiceName string `json:"service_name"`
-	InsecureTLS bool   `json:"insecure_tls"`
-	CheckType   string `json:"check_type"`
-	Endpoint    string `json:"endpoint"`
+	Endpoint    string `json:"endpoint" validate:"required"`
+	CheckType   string `json:"check_type" validate:"required,oneof=health reflection connectivity"`
+	ServiceName string `json:"service_name,omitempty"`
+	TLS         bool   `json:"tls,omitempty"`
+	InsecureTLS bool   `json:"insecure_tls,omitempty"`
 }
 
 // GRPCMonitor monitors gRPC services

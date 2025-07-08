@@ -12,9 +12,9 @@ import (
 
 // TCPConfig represents TCP monitor configuration
 type TCPConfig struct {
-	Endpoint   string `json:"endpoint"`
-	SendData   string `json:"send_data"`
-	ExpectData string `json:"expect_data"`
+	Endpoint   string `json:"endpoint" validate:"required"`
+	SendData   string `json:"send_data,omitempty"`
+	ExpectData string `json:"expect_data,omitempty"`
 }
 
 // TCPMonitor monitors TCP endpoints
