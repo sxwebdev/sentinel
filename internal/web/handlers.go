@@ -200,21 +200,26 @@ func (s *Server) setupRoutes() {
 	api := s.app.Group("/api/v1")
 	// Swagger UI
 	api.Get("/swagger/*", swagger.WrapHandler)
-	api.Get("/services", s.handleAPIGetServices)
-	api.Get("/services/:id", s.handleAPIServiceDetail)
-	api.Get("/services/:id/incidents", s.handleAPIServiceIncidents)
-	api.Delete("/services/:id/incidents/:incidentId", s.handleAPIDeleteIncident)
-	api.Get("/services/:id/stats", s.handleAPIServiceStats)
-	api.Post("/services/:id/check", s.handleAPIServiceCheck)
-	api.Post("/services/:id/resolve", s.handleAPIServiceResolve)
-	api.Get("/incidents", s.handleAPIRecentIncidents)
+
+	// Dashboard API
 	api.Get("/dashboard/stats", s.handleAPIDashboardStats)
 
 	// Service management API
+	api.Get("/services", s.handleAPIGetServices)
 	api.Post("/services", s.handleAPICreateService)
 	api.Put("/services/:id", s.handleAPIUpdateService)
 	api.Delete("/services/:id", s.handleAPIDeleteService)
-	api.Get("/services/config/:id", s.handleAPIGetServiceConfig)
+	api.Post("/services/:id/check", s.handleAPIServiceCheck)
+	api.Post("/services/:id/resolve", s.handleAPIServiceResolve)
+
+	// Service detail API
+	api.Get("/services/:id", s.handleAPIServiceDetail)
+	api.Get("/services/:id/stats", s.handleAPIServiceStats)
+
+	// Incident management API
+	api.Get("/incidents", s.handleAPIRecentIncidents)
+	api.Get("/services/:id/incidents", s.handleAPIServiceIncidents)
+	api.Delete("/services/:id/incidents/:incidentId", s.handleAPIDeleteIncident)
 
 	// WebSocket endpoint
 	s.app.Use("/ws", func(c *fiber.Ctx) error {
@@ -939,36 +944,6 @@ func (s *Server) handleAPIDeleteService(c *fiber.Ctx) error {
 	return c.SendStatus(fiber.StatusNoContent)
 }
 
-// handleAPIGetServiceConfig gets service configuration by ID
-//
-//	@Summary		Get service configuration
-//	@Description	Returns the complete service configuration by ID
-//	@Tags			services
-//	@Accept			json
-//	@Produce		json
-//	@Param			id	path		string			true	"Service ID"
-//	@Success		200	{object}	storage.Service	"Service configuration"
-//	@Failure		400	{object}	ErrorResponse	"Bad request"
-//	@Failure		404	{object}	ErrorResponse	"Service not found"
-//	@Router			/services/config/{id} [get]
-func (s *Server) handleAPIGetServiceConfig(c *fiber.Ctx) error {
-	id := c.Params("id")
-	if id == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Service ID is required",
-		})
-	}
-
-	service, err := s.monitorService.GetServiceByID(c.Context(), id)
-	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"error": "Service not found: " + err.Error(),
-		})
-	}
-
-	return c.JSON(service)
-}
-
 // convertFlatConfigToMonitorConfig converts JSON config object to proper MonitorConfig structure
 func (s *Server) convertFlatConfigToMonitorConfig(protocol storage.ServiceProtocolType, configObj map[string]any) (monitors.Config, error) {
 	if configObj == nil {
@@ -1122,7 +1097,7 @@ func (s *Server) sendServiceUpdate(conn *websocket.Conn) error {
 	}
 
 	// Get services with their states
-	var servicesWithState []*ServiceWithState
+	servicesWithState := []*ServiceWithState{}
 	for _, service := range services {
 		serviceWithState, err := s.getServiceWithState(context.Background(), service)
 		if err != nil {
@@ -1185,7 +1160,7 @@ func (s *Server) broadcastServiceUpdate(ctx context.Context) {
 	}
 
 	// Get services with their states
-	var servicesWithState []*ServiceWithState
+	servicesWithState := []*ServiceWithState{}
 	for _, service := range services {
 		serviceWithState, err := s.getServiceWithState(ctx, service)
 		if err != nil {

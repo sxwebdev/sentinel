@@ -97,7 +97,7 @@ func (o *ORMStorage) FindIncidentsByService(ctx context.Context, serviceID strin
 	}
 	defer rows.Close()
 
-	var incidents []*Incident
+	incidents := []*Incident{}
 	for rows.Next() {
 		var incidentRow IncidentRow
 		err := rows.Scan(
@@ -136,7 +136,7 @@ func (o *ORMStorage) FindActiveIncidents(ctx context.Context) ([]*Incident, erro
 	}
 	defer rows.Close()
 
-	var incidents []*Incident
+	incidents := []*Incident{}
 	for rows.Next() {
 		var incidentRow IncidentRow
 		err := rows.Scan(
@@ -178,7 +178,7 @@ func (o *ORMStorage) FindRecentIncidents(ctx context.Context, limit int) ([]*Inc
 	}
 	defer rows.Close()
 
-	var incidents []*Incident
+	incidents := []*Incident{}
 	for rows.Next() {
 		var incidentRow IncidentRow
 		err := rows.Scan(
@@ -304,7 +304,7 @@ func (o *ORMStorage) GetServiceStatsWithORM(ctx context.Context, serviceID strin
 	}
 	defer rows.Close()
 
-	var incidents []*Incident
+	incidents := []*Incident{}
 	for rows.Next() {
 		var incidentRow IncidentRow
 		err := rows.Scan(
@@ -396,7 +396,7 @@ func (o *ORMStorage) GetAllServicesIncidentStats(ctx context.Context) ([]*Servic
 	}
 	defer rows.Close()
 
-	var stats []*ServiceIncidentStats
+	stats := []*ServiceIncidentStats{}
 	for rows.Next() {
 		var serviceID string
 		var totalIncidents, activeIncidents int
@@ -488,7 +488,7 @@ func (o *ORMStorage) FindAllServices(ctx context.Context) ([]*Service, error) {
 	}
 	defer rows.Close()
 
-	var services []*Service
+	services := []*Service{}
 	for rows.Next() {
 		var serviceRow ServiceRow
 		err := rows.Scan(
@@ -533,7 +533,7 @@ func (o *ORMStorage) FindEnabledServices(ctx context.Context) ([]*Service, error
 	}
 	defer rows.Close()
 
-	var services []*Service
+	services := []*Service{}
 	for rows.Next() {
 		var serviceRow ServiceRow
 		err := rows.Scan(
@@ -795,7 +795,7 @@ func (o *ORMStorage) GetAllServiceStates(ctx context.Context) ([]*ServiceStateRe
 	}
 	defer rows.Close()
 
-	var states []*ServiceStateRecord
+	states := []*ServiceStateRecord{}
 	for rows.Next() {
 		var state ServiceStateRecord
 		err := rows.Scan(
