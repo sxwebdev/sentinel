@@ -139,6 +139,9 @@ func (h *HTTPMonitor) checkEndpoint(ctx context.Context, endpoint EndpointConfig
 		req.Header.Set(key, value)
 	}
 
+	// Inform remote service to close the connection after the transaction is complete
+	req.Header.Set("Connection", "close")
+
 	// Add Basic Auth if username and password are provided
 	if endpoint.Username != "" && endpoint.Password != "" {
 		auth := endpoint.Username + ":" + endpoint.Password
@@ -196,7 +199,7 @@ func (h *HTTPMonitor) checkEndpoint(ctx context.Context, endpoint EndpointConfig
 	}
 
 	// Extract value from JSON if path is specified
-	var value interface{}
+	var value any
 	if endpoint.JSONPath != "" {
 		value, err = extractValueFromJSON(body, endpoint.JSONPath)
 		if err != nil {

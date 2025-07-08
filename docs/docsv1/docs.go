@@ -169,50 +169,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/services/config/{id}": {
-            "get": {
-                "description": "Returns the complete service configuration by ID",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "services"
-                ],
-                "summary": "Get service configuration",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Service ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Service configuration",
-                        "schema": {
-                            "$ref": "#/definitions/storage.Service"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request",
-                        "schema": {
-                            "$ref": "#/definitions/web.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Service not found",
-                        "schema": {
-                            "$ref": "#/definitions/web.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
         "/services/{id}": {
             "get": {
                 "description": "Returns detailed information about a specific service",

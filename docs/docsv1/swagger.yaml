@@ -600,33 +600,4 @@ paths:
       summary: Get service statistics
       tags:
       - statistics
-  /services/config/{id}:
-    get:
-      consumes:
-      - application/json
-      description: Returns the complete service configuration by ID
-      parameters:
-      - description: Service ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Service configuration
-          schema:
-            $ref: '#/definitions/storage.Service'
-        "400":
-          description: Bad request
-          schema:
-            $ref: '#/definitions/web.ErrorResponse'
-        "404":
-          description: Service not found
-          schema:
-            $ref: '#/definitions/web.ErrorResponse'
-      summary: Get service configuration
-      tags:
-      - services
 swagger: "2.0"
