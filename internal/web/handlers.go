@@ -1,3 +1,15 @@
+// Package web provides HTTP handlers for the Sentinel monitoring system
+//
+//	@title			Sentinel Monitoring API
+//	@version		1.0
+//	@description	API for service monitoring and incident management
+//	@termsOfService	http://swagger.io/terms/
+//	@contact.name	API Support
+//	@contact.url	http://www.swagger.io/support
+//	@contact.email	support@swagger.io
+//	@license.name	Apache 2.0
+//	@license.url	http://www.apache.org/licenses/LICENSE-2.0.html
+//	@BasePath		/api/v1
 package web
 
 import (
@@ -11,65 +23,61 @@ import (
 	"sync"
 	"time"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/template/html/v2"
+	swagger "github.com/swaggo/fiber-swagger"
+	"github.com/sxwebdev/sentinel/docs/docsv1"
 	"github.com/sxwebdev/sentinel/internal/config"
+	"github.com/sxwebdev/sentinel/internal/monitors"
 	"github.com/sxwebdev/sentinel/internal/receiver"
 	"github.com/sxwebdev/sentinel/internal/service"
 	"github.com/sxwebdev/sentinel/internal/storage"
-	"gopkg.in/yaml.v3"
 )
 
 //go:embed views/*
 var viewsFS embed.FS
 
-// FlatServiceConfig represents a service with flat config structure
-type FlatServiceConfig struct {
-	ID        string        `json:"id"`
-	Name      string        `json:"name"`
-	Protocol  string        `json:"protocol"`
-	Endpoint  string        `json:"endpoint"`
-	Interval  time.Duration `json:"interval"`
-	Timeout   time.Duration `json:"timeout"`
-	Retries   int           `json:"retries"`
-	Tags      []string      `json:"tags"`
-	Config    string        `json:"config"` // YAML string
-	IsEnabled bool          `json:"is_enabled"`
+// ServiceDTO represents a service for API responses
+type ServiceDTO struct {
+	ID              string                      `json:"id" example:"service-1"`
+	Name            string                      `json:"name" example:"Web Server"`
+	Protocol        storage.ServiceProtocolType `json:"protocol" example:"http"`
+	Interval        time.Duration               `json:"interval" swaggertype:"primitive,integer" example:"30000000000"`
+	Timeout         time.Duration               `json:"timeout" swaggertype:"primitive,integer" example:"5000000000"`
+	Retries         int                         `json:"retries" example:"3"`
+	Tags            []string                    `json:"tags" example:"web,production"`
+	Config          map[string]any              `json:"config"` // JSON object
+	IsEnabled       bool                        `json:"is_enabled" example:"true"`
+	ActiveIncidents int                         `json:"active_incidents,omitempty" example:"2"`
+	TotalIncidents  int                         `json:"total_incidents,omitempty" example:"10"`
 }
 
-// ServiceTableDTO represents a service with incident statistics for table display
-type ServiceTableDTO struct {
-	ID              string                `json:"id"`
-	Name            string                `json:"name"`
-	Protocol        string                `json:"protocol"`
-	Endpoint        string                `json:"endpoint"`
-	Interval        time.Duration         `json:"interval"`
-	Timeout         time.Duration         `json:"timeout"`
-	Retries         int                   `json:"retries"`
-	Tags            []string              `json:"tags"`
-	Config          string                `json:"config"` // YAML string
-	State           *storage.ServiceState `json:"state,omitempty"`
-	IsEnabled       bool                  `json:"is_enabled"`
-	ActiveIncidents int                   `json:"active_incidents"`
-	TotalIncidents  int                   `json:"total_incidents"`
+// ServiceWithState represents a service with its current state
+type ServiceWithState struct {
+	Service *storage.Service            `json:"service"`
+	State   *storage.ServiceStateRecord `json:"state,omitempty"`
 }
 
 // Server represents the web server
 type Server struct {
 	monitorService *service.MonitorService
+	storage        storage.Storage
 	receiver       *receiver.Receiver
 	config         *config.Config
 	app            *fiber.App
 	wsConnections  map[*websocket.Conn]bool
 	wsMutex        sync.Mutex
+	validator      *validator.Validate
 }
 
 // NewServer creates a new web server
 func NewServer(
 	cfg *config.Config,
 	monitorService *service.MonitorService,
+	storage storage.Storage,
 	receiver *receiver.Receiver,
 ) (*Server, error) {
 	// Create template engine with embedded templates
@@ -78,11 +86,11 @@ func NewServer(
 	// Add template functions
 	templateEngine.
 		AddFunc("lower", strings.ToLower).
-		AddFunc("statusToString", func(status storage.ServiceStatus) string {
-			return status.String()
+		AddFunc("statusToString", func(status string) string {
+			return string(status)
 		}).
-		AddFunc("statusToLower", func(status storage.ServiceStatus) string {
-			return strings.ToLower(status.String())
+		AddFunc("statusToLower", func(status string) string {
+			return strings.ToLower(status)
 		}).
 		AddFunc("formatDateTime", func(t time.Time) string {
 			return t.Format("2006-01-02 15:04:05")
@@ -101,7 +109,8 @@ func NewServer(
 
 	// Create Fiber app
 	app := fiber.New(fiber.Config{
-		Views: templateEngine,
+		Views:   templateEngine,
+		AppName: "Sentinel",
 	})
 
 	app.Use(cors.New())
@@ -129,12 +138,19 @@ func NewServer(
 	})
 
 	server := &Server{
-		config:         cfg,
 		monitorService: monitorService,
+		storage:        storage,
 		receiver:       receiver,
+		config:         cfg,
 		app:            app,
 		wsConnections:  make(map[*websocket.Conn]bool),
+		validator:      validator.New(),
 	}
+
+	// Set Swagger host from config
+	docsv1.SwaggerInfo.Host = cfg.Server.BaseHost
+	docsv1.SwaggerInfo.BasePath = "/api/v1"
+	docsv1.SwaggerInfo.Schemes = []string{"http", "https"}
 
 	// Setup routes
 	server.setupRoutes()
@@ -159,6 +175,18 @@ func (s *Server) Start(ctx context.Context) error {
 }
 
 func (s *Server) Stop(_ context.Context) error {
+	fmt.Println("Web server: stopping, closing all WebSocket connections")
+
+	s.wsMutex.Lock()
+	// Закрываем все WebSocket соединения
+	for conn := range s.wsConnections {
+		conn.Close()
+	}
+	// Очищаем map
+	s.wsConnections = make(map[*websocket.Conn]bool)
+	s.wsMutex.Unlock()
+
+	fmt.Println("Web server: stopped")
 	return nil
 }
 
@@ -169,22 +197,29 @@ func (s *Server) setupRoutes() {
 	s.app.Get("/service/:id", s.handleServiceDetail)
 
 	// API routes
-	api := s.app.Group("/api")
-	api.Get("/services", s.handleAPIServices)
-	api.Get("/services/table", s.handleAPIServicesTable)
-	api.Get("/services/:id", s.handleAPIServiceDetail)
-	api.Get("/services/:id/incidents", s.handleAPIServiceIncidents)
-	api.Get("/services/:id/stats", s.handleAPIServiceStats)
-	api.Post("/services/:id/check", s.handleAPIServiceCheck)
-	api.Post("/services/:id/resolve", s.handleAPIServiceResolve)
-	api.Get("/incidents", s.handleAPIRecentIncidents)
+	api := s.app.Group("/api/v1")
+	// Swagger UI
+	api.Get("/swagger/*", swagger.WrapHandler)
+
+	// Dashboard API
 	api.Get("/dashboard/stats", s.handleAPIDashboardStats)
 
 	// Service management API
+	api.Get("/services", s.handleAPIGetServices)
 	api.Post("/services", s.handleAPICreateService)
 	api.Put("/services/:id", s.handleAPIUpdateService)
 	api.Delete("/services/:id", s.handleAPIDeleteService)
-	api.Get("/services/config/:id", s.handleAPIGetServiceConfig)
+	api.Post("/services/:id/check", s.handleAPIServiceCheck)
+	api.Post("/services/:id/resolve", s.handleAPIServiceResolve)
+
+	// Service detail API
+	api.Get("/services/:id", s.handleAPIServiceDetail)
+	api.Get("/services/:id/stats", s.handleAPIServiceStats)
+
+	// Incident management API
+	api.Get("/incidents", s.handleAPIRecentIncidents)
+	api.Get("/services/:id/incidents", s.handleAPIServiceIncidents)
+	api.Delete("/services/:id/incidents/:incidentId", s.handleAPIDeleteIncident)
 
 	// WebSocket endpoint
 	s.app.Use("/ws", func(c *fiber.Ctx) error {
@@ -228,23 +263,8 @@ func (s *Server) handleServiceDetail(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusNotFound).SendString("service not found: " + serviceID)
 	}
 
-	// Get recent incidents
-	incidents, err := s.monitorService.GetServiceIncidents(c.Context(), targetService.ID)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
-	}
-
-	// Get service stats
-	stats, err := s.monitorService.GetServiceStats(c.Context(), targetService.ID, time.Now().AddDate(0, 0, -30))
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
-	}
-
 	return c.Render("views/service_detail", fiber.Map{
 		"Service":      targetService,
-		"State":        targetService.State,
-		"Incidents":    incidents,
-		"Stats":        stats,
 		"Title":        "Service: " + targetService.Name,
 		"BackLink":     "/",
 		"BackLinkText": "Back to Dashboard",
@@ -261,83 +281,74 @@ func (s *Server) handleServiceDetail(c *fiber.Ctx) error {
 	})
 }
 
-// handleAPIServices returns all services
-func (s *Server) handleAPIServices(c *fiber.Ctx) error {
-	// Get all services with their states
-	services, err := s.monitorService.GetAllServiceConfigs(c.Context())
+// handleAPIGetServices handles GET /api/v1/services
+//
+//	@Summary		Get all services
+//	@Description	Returns a list of all services with their current states
+//	@Tags			services
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{array}		ServiceWithState	"List of services with states"
+//	@Failure		500	{object}	ErrorResponse		"Internal server error"
+//	@Router			/services [get]
+func (s *Server) handleAPIGetServices(c *fiber.Ctx) error {
+	ctx := c.Context()
+
+	services, err := s.monitorService.GetAllServices(ctx)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
 		})
 	}
 
-	return c.JSON(services)
-}
-
-// handleAPIServicesTable returns services with incident statistics for table display
-func (s *Server) handleAPIServicesTable(c *fiber.Ctx) error {
-	// Get all services with their states
-	services, err := s.monitorService.GetAllServiceConfigs(c.Context())
+	// Get incident statistics
+	incidentStats, err := s.monitorService.GetAllServicesIncidentStats(ctx)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
 		})
 	}
 
-	// Get incident statistics for all services
-	incidentStats, err := s.monitorService.GetAllServicesIncidentStats(c.Context())
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
-		})
-	}
-
-	// Create a map for quick lookup of incident stats by service ID
+	// Quick lookup map for incident stats by service ID
 	statsMap := make(map[string]*storage.ServiceIncidentStats)
 	for _, stats := range incidentStats {
 		statsMap[stats.ServiceID] = stats
 	}
 
-	// Convert services to DTO with incident statistics
-	serviceDTOs := make([]ServiceTableDTO, len(services))
-	for i, service := range services {
-		// Convert config to YAML string
-		configYAML, err := s.convertConfigToYAML(service.Config)
+	// Get services with their states
+	var servicesWithState []*ServiceWithState
+	for _, service := range services {
+		serviceWithState, err := s.getServiceWithState(ctx, service)
 		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": "failed to convert service config: " + err.Error(),
-			})
+			// Log error but continue with other services
+			continue
 		}
 
-		dto := ServiceTableDTO{
-			ID:              service.ID,
-			Name:            service.Name,
-			Protocol:        service.Protocol,
-			Endpoint:        service.Endpoint,
-			Interval:        service.Interval,
-			Timeout:         service.Timeout,
-			Retries:         service.Retries,
-			Tags:            service.Tags,
-			Config:          configYAML,
-			State:           service.State,
-			IsEnabled:       service.IsEnabled,
-			ActiveIncidents: 0,
-			TotalIncidents:  0,
-		}
-
-		// Add incident statistics if available
+		// Add incident statistics to the service
 		if stats, exists := statsMap[service.ID]; exists {
-			dto.ActiveIncidents = stats.ActiveIncidents
-			dto.TotalIncidents = stats.TotalIncidents
+			// Add incident stats to the service object
+			serviceWithState.Service.ActiveIncidents = stats.ActiveIncidents
+			serviceWithState.Service.TotalIncidents = stats.TotalIncidents
 		}
 
-		serviceDTOs[i] = dto
+		servicesWithState = append(servicesWithState, serviceWithState)
 	}
 
-	return c.JSON(serviceDTOs)
+	return c.JSON(servicesWithState)
 }
 
 // handleAPIServiceDetail returns service details
+//
+//	@Summary		Get service details
+//	@Description	Returns detailed information about a specific service
+//	@Tags			services
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	path		string				true	"Service ID"
+//	@Success		200	{object}	ServiceWithState	"Service details with state"
+//	@Failure		400	{object}	ErrorResponse		"Bad request"
+//	@Failure		404	{object}	ErrorResponse		"Service not found"
+//	@Router			/services/{id} [get]
 func (s *Server) handleAPIServiceDetail(c *fiber.Ctx) error {
 	serviceID := c.Params("id")
 	if serviceID == "" {
@@ -353,10 +364,46 @@ func (s *Server) handleAPIServiceDetail(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.JSON(targetService)
+	// Get service with state
+	serviceWithState, err := s.getServiceWithState(c.Context(), targetService)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	// Get incident statistics for this service
+	incidentStats, err := s.monitorService.GetAllServicesIncidentStats(c.Context())
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	// Find statistics for this service
+	for _, stats := range incidentStats {
+		if stats.ServiceID == serviceID {
+			serviceWithState.Service.ActiveIncidents = stats.ActiveIncidents
+			serviceWithState.Service.TotalIncidents = stats.TotalIncidents
+			break
+		}
+	}
+
+	return c.JSON(serviceWithState)
 }
 
 // handleAPIServiceIncidents returns service incidents
+//
+//	@Summary		Get service incidents
+//	@Description	Returns a list of incidents for a specific service
+//	@Tags			incidents
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	path		string			true	"Service ID"
+//	@Success		200	{array}		Incident		"List of incidents"
+//	@Failure		400	{object}	ErrorResponse	"Bad request"
+//	@Failure		500	{object}	ErrorResponse	"Internal server error"
+//	@Router			/services/{id}/incidents [get]
 func (s *Server) handleAPIServiceIncidents(c *fiber.Ctx) error {
 	serviceID := c.Params("id")
 	if serviceID == "" {
@@ -376,6 +423,18 @@ func (s *Server) handleAPIServiceIncidents(c *fiber.Ctx) error {
 }
 
 // handleAPIServiceStats returns service statistics
+//
+//	@Summary		Get service statistics
+//	@Description	Returns service statistics for the specified period
+//	@Tags			statistics
+//	@Accept			json
+//	@Produce		json
+//	@Param			id		path		string			true	"Service ID"
+//	@Param			days	query		int				false	"Number of days (default 30)"
+//	@Success		200		{object}	ServiceStats	"Service statistics"
+//	@Failure		400		{object}	ErrorResponse	"Bad request"
+//	@Failure		500		{object}	ErrorResponse	"Internal server error"
+//	@Router			/services/{id}/stats [get]
 func (s *Server) handleAPIServiceStats(c *fiber.Ctx) error {
 	serviceID := c.Params("id")
 	if serviceID == "" {
@@ -402,6 +461,18 @@ func (s *Server) handleAPIServiceStats(c *fiber.Ctx) error {
 }
 
 // handleAPIServiceCheck triggers a manual check
+//
+//	@Summary		Trigger service check
+//	@Description	Triggers a manual check of service status
+//	@Tags			services
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	path		string			true	"Service ID"
+//	@Success		200	{object}	SuccessResponse	"Check triggered successfully"
+//	@Failure		400	{object}	ErrorResponse	"Bad request"
+//	@Failure		404	{object}	ErrorResponse	"Service not found"
+//	@Failure		500	{object}	ErrorResponse	"Internal server error"
+//	@Router			/services/{id}/check [post]
 func (s *Server) handleAPIServiceCheck(c *fiber.Ctx) error {
 	serviceID := c.Params("id")
 	if serviceID == "" {
@@ -431,6 +502,18 @@ func (s *Server) handleAPIServiceCheck(c *fiber.Ctx) error {
 }
 
 // handleAPIServiceResolve resolves a service incident
+//
+//	@Summary		Resolve service incidents
+//	@Description	Forcefully resolves all active incidents for a service
+//	@Tags			incidents
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	path		string			true	"Service ID"
+//	@Success		200	{object}	SuccessResponse	"Incidents resolved successfully"
+//	@Failure		400	{object}	ErrorResponse	"Bad request"
+//	@Failure		404	{object}	ErrorResponse	"Service not found"
+//	@Failure		500	{object}	ErrorResponse	"Internal server error"
+//	@Router			/services/{id}/resolve [post]
 func (s *Server) handleAPIServiceResolve(c *fiber.Ctx) error {
 	serviceID := c.Params("id")
 	if serviceID == "" {
@@ -459,6 +542,16 @@ func (s *Server) handleAPIServiceResolve(c *fiber.Ctx) error {
 }
 
 // handleAPIRecentIncidents returns recent incidents
+//
+//	@Summary		Get recent incidents
+//	@Description	Returns a list of recent incidents across all services
+//	@Tags			incidents
+//	@Accept			json
+//	@Produce		json
+//	@Param			limit	query		int				false	"Number of incidents (default 50)"
+//	@Success		200		{array}		Incident		"List of incidents"
+//	@Failure		500		{object}	ErrorResponse	"Internal server error"
+//	@Router			/incidents [get]
 func (s *Server) handleAPIRecentIncidents(c *fiber.Ctx) error {
 	limitStr := c.Query("limit", "50")
 	limit, err := strconv.Atoi(limitStr)
@@ -476,10 +569,68 @@ func (s *Server) handleAPIRecentIncidents(c *fiber.Ctx) error {
 	return c.JSON(incidents)
 }
 
+// handleAPIDeleteIncident deletes a specific incident
+//
+//	@Summary		Delete incident
+//	@Description	Deletes a specific incident for a service
+//	@Tags			incidents
+//	@Accept			json
+//	@Produce		json
+//	@Param			id			path	string	true	"Service ID"
+//	@Param			incidentId	path	string	true	"Incident ID"
+//	@Success		204			"Incident deleted"
+//	@Failure		400			{object}	ErrorResponse	"Bad request"
+//	@Failure		404			{object}	ErrorResponse	"Incident not found"
+//	@Failure		500			{object}	ErrorResponse	"Internal server error"
+//	@Router			/services/{id}/incidents/{incidentId} [delete]
+func (s *Server) handleAPIDeleteIncident(c *fiber.Ctx) error {
+	serviceID := c.Params("id")
+	incidentID := c.Params("incidentId")
+
+	if serviceID == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "service ID is required",
+		})
+	}
+
+	if incidentID == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "incident ID is required",
+		})
+	}
+
+	// Check if service exists
+	_, err := s.monitorService.GetServiceByID(c.Context(), serviceID)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "service not found: " + serviceID,
+		})
+	}
+
+	// Delete incident
+	err = s.monitorService.DeleteIncident(c.Context(), serviceID, incidentID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.SendStatus(fiber.StatusNoContent)
+}
+
 // handleAPIDashboardStats returns dashboard statistics
+//
+//	@Summary		Get dashboard statistics
+//	@Description	Returns statistics for the dashboard
+//	@Tags			dashboard
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	DashboardStats	"Dashboard statistics"
+//	@Failure		500	{object}	ErrorResponse	"Internal server error"
+//	@Router			/dashboard/stats [get]
 func (s *Server) handleAPIDashboardStats(c *fiber.Ctx) error {
-	// Get all services
-	services, err := s.monitorService.GetAllServiceConfigs(c.Context())
+	// Get all services with their states
+	services, err := s.monitorService.GetAllServices(c.Context())
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
@@ -494,53 +645,69 @@ func (s *Server) handleAPIDashboardStats(c *fiber.Ctx) error {
 		})
 	}
 
-	// Calculate statistics
-	stats := fiber.Map{
-		"total_services":    len(services),
-		"services_up":       0,
-		"services_down":     0,
-		"services_unknown":  0,
-		"protocols":         make(map[string]int),
-		"recent_incidents":  len(recentIncidents),
-		"active_incidents":  0,
-		"avg_response_time": 0,
-		"total_checks":      0,
-		"uptime_percentage": 0,
-		"last_check_time":   nil,
-		"checks_per_minute": 0,
+	// Get all service states
+	serviceStates, err := s.storage.GetAllServiceStates(c.Context())
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
 	}
 
-	// Calculate service status distribution and protocol distribution
-	totalResponseTime := time.Duration(0)
-	servicesWithResponseTime := 0
+	// Create a map for quick lookup of service states by service ID
+	stateMap := make(map[string]*storage.ServiceStateRecord)
+	for _, state := range serviceStates {
+		stateMap[state.ServiceID] = state
+	}
+
+	// Initialize stats
+	stats := DashboardStats{
+		TotalServices:    len(services),
+		ServicesUp:       0,
+		ServicesDown:     0,
+		ServicesUnknown:  0,
+		UptimePercentage: 0.0,
+		AvgResponseTime:  0,
+		TotalChecks:      0,
+		ActiveIncidents:  0,
+		LastCheckTime:    nil,
+		ChecksPerMinute:  0,
+		Protocols:        make(map[storage.ServiceProtocolType]int),
+	}
+
+	// Calculate statistics
 	totalChecks := 0
 	upServices := 0
 	var lastCheckTime *time.Time
+	var totalResponseTimeMs int64
+	var responseTimeCount int64
 
 	for _, service := range services {
+		// Get service state
+		serviceState := stateMap[service.ID]
+
 		// Count by status
-		if service.State != nil {
-			switch service.State.Status {
+		if serviceState != nil {
+			switch serviceState.Status {
 			case storage.StatusUp:
-				stats["services_up"] = stats["services_up"].(int) + 1
+				stats.ServicesUp++
 				upServices++
 			case storage.StatusDown:
-				stats["services_down"] = stats["services_down"].(int) + 1
+				stats.ServicesDown++
 			case storage.StatusUnknown:
-				stats["services_unknown"] = stats["services_unknown"].(int) + 1
+				stats.ServicesUnknown++
 			}
 
-			// Sum response times (only from services that have response time data)
-			if service.State.ResponseTime > 0 {
-				totalResponseTime += service.State.ResponseTime
-				servicesWithResponseTime++
+			// Add response time to total (only from services that have response time data)
+			if serviceState.ResponseTimeNS != nil && *serviceState.ResponseTimeNS > 0 {
+				totalResponseTimeMs += *serviceState.ResponseTimeNS / 1000000 // Convert to milliseconds
+				responseTimeCount++
 			}
-			totalChecks += service.State.TotalChecks
+			totalChecks += serviceState.TotalChecks
 
 			// Track last check time
-			if service.State.LastCheck != nil {
-				if lastCheckTime == nil || service.State.LastCheck.After(*lastCheckTime) {
-					lastCheckTime = service.State.LastCheck
+			if serviceState.LastCheck != nil {
+				if lastCheckTime == nil || serviceState.LastCheck.After(*lastCheckTime) {
+					lastCheckTime = serviceState.LastCheck
 				}
 			}
 		}
@@ -550,17 +717,17 @@ func (s *Server) handleAPIDashboardStats(c *fiber.Ctx) error {
 		if protocol == "" {
 			protocol = "unknown"
 		}
-		stats["protocols"].(map[string]int)[protocol]++
+		stats.Protocols[protocol]++
 	}
 
 	// Calculate averages
 	if upServices > 0 {
-		stats["uptime_percentage"] = float64(upServices) / float64(len(services)) * 100
+		stats.UptimePercentage = float64(upServices) / float64(len(services)) * 100
 	}
-	if servicesWithResponseTime > 0 {
-		stats["avg_response_time"] = totalResponseTime.Milliseconds() / int64(servicesWithResponseTime)
+	if responseTimeCount > 0 {
+		stats.AvgResponseTime = totalResponseTimeMs / responseTimeCount
 	}
-	stats["total_checks"] = totalChecks
+	stats.TotalChecks = totalChecks
 
 	// Count active incidents
 	activeIncidents := 0
@@ -569,10 +736,10 @@ func (s *Server) handleAPIDashboardStats(c *fiber.Ctx) error {
 			activeIncidents++
 		}
 	}
-	stats["active_incidents"] = activeIncidents
+	stats.ActiveIncidents = activeIncidents
 
 	// Set last check time
-	stats["last_check_time"] = lastCheckTime
+	stats.LastCheckTime = lastCheckTime
 
 	// Calculate checks per minute (estimate based on intervals)
 	checksPerMinute := 0
@@ -581,48 +748,53 @@ func (s *Server) handleAPIDashboardStats(c *fiber.Ctx) error {
 			checksPerMinute += int(time.Minute / service.Interval)
 		}
 	}
-	stats["checks_per_minute"] = checksPerMinute
+	stats.ChecksPerMinute = checksPerMinute
 
 	return c.JSON(stats)
 }
 
 // handleAPICreateService creates a new service
+//
+//	@Summary		Create new service
+//	@Description	Creates a new service for monitoring
+//	@Tags			services
+//	@Accept			json
+//	@Produce		json
+//	@Param			service	body		ServiceDTO		true	"Service configuration"
+//	@Success		201		{object}	storage.Service	"Service created"
+//	@Failure		400		{object}	ErrorResponse	"Bad request"
+//	@Failure		500		{object}	ErrorResponse	"Internal server error"
+//	@Router			/services [post]
 func (s *Server) handleAPICreateService(c *fiber.Ctx) error {
-	var flatService FlatServiceConfig
-	if err := c.BodyParser(&flatService); err != nil {
+	var serviceDTO ServiceDTO
+	if err := c.BodyParser(&serviceDTO); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Invalid request body: " + err.Error(),
 		})
 	}
 
 	// Validate required fields
-	if flatService.Name == "" {
+	if serviceDTO.Name == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Service name is required",
 		})
 	}
-	if flatService.Protocol == "" {
+	if serviceDTO.Protocol == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Protocol is required",
-		})
-	}
-	if flatService.Endpoint == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Endpoint is required",
 		})
 	}
 
 	// Convert to storage.Service
 	service := storage.Service{
-		ID:        flatService.ID,
-		Name:      flatService.Name,
-		Protocol:  flatService.Protocol,
-		Endpoint:  flatService.Endpoint,
-		Interval:  flatService.Interval,
-		Timeout:   flatService.Timeout,
-		Retries:   flatService.Retries,
-		Tags:      flatService.Tags,
-		IsEnabled: flatService.IsEnabled,
+		ID:        serviceDTO.ID,
+		Name:      serviceDTO.Name,
+		Protocol:  serviceDTO.Protocol,
+		Interval:  serviceDTO.Interval,
+		Timeout:   serviceDTO.Timeout,
+		Retries:   serviceDTO.Retries,
+		Tags:      serviceDTO.Tags,
+		IsEnabled: serviceDTO.IsEnabled,
 	}
 
 	// Set default values
@@ -637,18 +809,19 @@ func (s *Server) handleAPICreateService(c *fiber.Ctx) error {
 	}
 
 	// Convert flat config to proper MonitorConfig structure
-	config, err := s.convertFlatConfigToMonitorConfig(flatService.Protocol, flatService.Config)
+	config, err := s.convertFlatConfigToMonitorConfig(serviceDTO.Protocol, serviceDTO.Config)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Invalid config: " + err.Error(),
 		})
 	}
-	service.Config = config
+
+	service.Config = config.ConvertToMap()
 
 	// Add service
 	if err := s.monitorService.AddService(c.Context(), &service); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to create service: " + err.Error(),
+			"error": err.Error(),
 		})
 	}
 
@@ -656,6 +829,19 @@ func (s *Server) handleAPICreateService(c *fiber.Ctx) error {
 }
 
 // handleAPIUpdateService updates an existing service
+//
+//	@Summary		Update service
+//	@Description	Updates an existing service
+//	@Tags			services
+//	@Accept			json
+//	@Produce		json
+//	@Param			id		path		string			true	"Service ID"
+//	@Param			service	body		ServiceDTO		true	"New service configuration"
+//	@Success		200		{object}	storage.Service	"Service updated"
+//	@Failure		400		{object}	ErrorResponse	"Bad request"
+//	@Failure		404		{object}	ErrorResponse	"Service not found"
+//	@Failure		500		{object}	ErrorResponse	"Internal server error"
+//	@Router			/services/{id} [put]
 func (s *Server) handleAPIUpdateService(c *fiber.Ctx) error {
 	id := c.Params("id")
 	if id == "" {
@@ -664,43 +850,37 @@ func (s *Server) handleAPIUpdateService(c *fiber.Ctx) error {
 		})
 	}
 
-	var flatService FlatServiceConfig
-	if err := c.BodyParser(&flatService); err != nil {
+	var serviceDTO ServiceDTO
+	if err := c.BodyParser(&serviceDTO); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Invalid request body: " + err.Error(),
 		})
 	}
 
-	// Get existing service to preserve state
-	existingService, err := s.monitorService.GetServiceByID(c.Context(), id)
-	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"error": "Service not found: " + err.Error(),
-		})
-	}
+	// Debug: log the received data
+	fmt.Printf("Update service request: %+v\n", serviceDTO)
 
-	// Convert to storage.Service, preserving existing state
+	// Convert to storage.Service
 	service := storage.Service{
 		ID:        id,
-		Name:      flatService.Name,
-		Protocol:  flatService.Protocol,
-		Endpoint:  flatService.Endpoint,
-		Interval:  flatService.Interval,
-		Timeout:   flatService.Timeout,
-		Retries:   flatService.Retries,
-		Tags:      flatService.Tags,
-		State:     existingService.State,
-		IsEnabled: flatService.IsEnabled,
+		Name:      serviceDTO.Name,
+		Protocol:  serviceDTO.Protocol,
+		Interval:  serviceDTO.Interval,
+		Timeout:   serviceDTO.Timeout,
+		Retries:   serviceDTO.Retries,
+		Tags:      serviceDTO.Tags,
+		IsEnabled: serviceDTO.IsEnabled,
 	}
 
 	// Convert flat config to proper MonitorConfig structure
-	config, err := s.convertFlatConfigToMonitorConfig(flatService.Protocol, flatService.Config)
+	config, err := s.convertFlatConfigToMonitorConfig(serviceDTO.Protocol, serviceDTO.Config)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Invalid config: " + err.Error(),
 		})
 	}
-	service.Config = config
+
+	service.Config = config.ConvertToMap()
 
 	// Validate required fields
 	if service.Name == "" {
@@ -711,11 +891,6 @@ func (s *Server) handleAPIUpdateService(c *fiber.Ctx) error {
 	if service.Protocol == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Protocol is required",
-		})
-	}
-	if service.Endpoint == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Endpoint is required",
 		})
 	}
 
@@ -733,7 +908,7 @@ func (s *Server) handleAPIUpdateService(c *fiber.Ctx) error {
 	// Update service
 	if err := s.monitorService.UpdateService(c.Context(), &service); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to update service: " + err.Error(),
+			"error": err.Error(),
 		})
 	}
 
@@ -741,6 +916,17 @@ func (s *Server) handleAPIUpdateService(c *fiber.Ctx) error {
 }
 
 // handleAPIDeleteService deletes a service
+//
+//	@Summary		Delete service
+//	@Description	Deletes a service from the monitoring system
+//	@Tags			services
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	path	string	true	"Service ID"
+//	@Success		204	"Service deleted"
+//	@Failure		400	{object}	ErrorResponse	"Bad request"
+//	@Failure		500	{object}	ErrorResponse	"Internal server error"
+//	@Router			/services/{id} [delete]
 func (s *Server) handleAPIDeleteService(c *fiber.Ctx) error {
 	id := c.Params("id")
 	if id == "" {
@@ -751,284 +937,127 @@ func (s *Server) handleAPIDeleteService(c *fiber.Ctx) error {
 
 	if err := s.monitorService.DeleteService(c.Context(), id); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to delete service: " + err.Error(),
+			"error": err.Error(),
 		})
 	}
 
 	return c.SendStatus(fiber.StatusNoContent)
 }
 
-// handleAPIGetServiceConfig gets service configuration by ID
-func (s *Server) handleAPIGetServiceConfig(c *fiber.Ctx) error {
-	id := c.Params("id")
-	if id == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Service ID is required",
-		})
-	}
-
-	service, err := s.monitorService.GetServiceByID(c.Context(), id)
-	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"error": "Service not found: " + err.Error(),
-		})
-	}
-
-	return c.JSON(service)
-}
-
-// convertFlatConfigToMonitorConfig converts YAML config string to proper MonitorConfig structure
-func (s *Server) convertFlatConfigToMonitorConfig(protocol string, yamlConfig string) (storage.MonitorConfig, error) {
-	if yamlConfig == "" {
-		// Return default config based on protocol
-		return s.getDefaultConfig(protocol), nil
-	}
-
-	// Parse YAML into map
-	var configMap map[string]any
-	if err := yaml.Unmarshal([]byte(yamlConfig), &configMap); err != nil {
-		return storage.MonitorConfig{}, fmt.Errorf("failed to parse YAML config: %w", err)
+// convertFlatConfigToMonitorConfig converts JSON config object to proper MonitorConfig structure
+func (s *Server) convertFlatConfigToMonitorConfig(protocol storage.ServiceProtocolType, configObj map[string]any) (monitors.Config, error) {
+	if configObj == nil {
+		return monitors.Config{}, fmt.Errorf("config is nil")
 	}
 
 	// Validate and convert based on protocol
 	switch protocol {
-	case "http", "https":
-		return s.parseHTTPConfig(configMap)
-	case "tcp":
-		return s.parseTCPConfig(configMap)
-	case "grpc":
-		return s.parseGRPCConfig(configMap)
-	case "redis":
-		return s.parseRedisConfig(configMap)
+	case storage.ServiceProtocolTypeHTTP:
+		return s.parseHTTPConfig(configObj)
+	case storage.ServiceProtocolTypeTCP:
+		return s.parseTCPConfig(configObj)
+	case storage.ServiceProtocolTypeGRPC:
+		return s.parseGRPCConfig(configObj)
 	default:
-		return storage.MonitorConfig{}, fmt.Errorf("unsupported protocol: %s", protocol)
+		return monitors.Config{}, fmt.Errorf("unsupported protocol: %s", protocol)
 	}
 }
 
 // getDefaultConfig returns default config for a protocol
-func (s *Server) getDefaultConfig(protocol string) storage.MonitorConfig {
-	switch protocol {
-	case "http", "https":
-		return storage.MonitorConfig{
-			HTTP: &storage.HTTPConfig{
-				Method:         "GET",
-				ExpectedStatus: 200,
-				Headers:        make(map[string]string),
-			},
-		}
-	case "tcp":
-		return storage.MonitorConfig{
-			TCP: &storage.TCPConfig{
-				SendData:   "",
-				ExpectData: "",
-			},
-		}
-	case "grpc":
-		return storage.MonitorConfig{
-			GRPC: &storage.GRPCConfig{
-				CheckType:   "connectivity",
-				ServiceName: "",
-				TLS:         false,
-				InsecureTLS: false,
-			},
-		}
-	case "redis":
-		return storage.MonitorConfig{
-			Redis: &storage.RedisConfig{
-				Password: "",
-				DB:       0,
-			},
-		}
-	default:
-		return storage.MonitorConfig{}
-	}
-}
+// func (s *Server) getDefaultConfig(protocol storage.ServiceProtocolType) monitors.Config {
+// 	switch protocol {
+// 	case storage.ServiceProtocolTypeHTTP:
+// 		return monitors.Config{
+// 			HTTP: &monitors.HTTPConfig{
+// 				Timeout:   10 * time.Second,
+// 				Endpoints: []monitors.EndpointConfig{},
+// 			},
+// 		}
+// 	case storage.ServiceProtocolTypeTCP:
+// 		return monitors.Config{
+// 			TCP: &monitors.TCPConfig{},
+// 		}
+// 	case storage.ServiceProtocolTypeGRPC:
+// 		return monitors.Config{
+// 			GRPC: &monitors.GRPCConfig{
+// 				CheckType: "connectivity",
+// 			},
+// 		}
+// 	default:
+// 		return monitors.Config{}
+// 	}
+// }
 
 // parseHTTPConfig parses and validates HTTP config
-func (s *Server) parseHTTPConfig(configMap map[string]interface{}) (storage.MonitorConfig, error) {
-	httpConfig := &storage.HTTPConfig{
-		Method:         "GET",
-		ExpectedStatus: 200,
-		Headers:        make(map[string]string),
+func (s *Server) parseHTTPConfig(configMap map[string]any) (monitors.Config, error) {
+	httpConfig, err := monitors.GetConfig[monitors.HTTPConfig](configMap, storage.ServiceProtocolTypeHTTP)
+	if err != nil {
+		return monitors.Config{}, err
 	}
 
-	// Extract and validate method
-	if method, ok := configMap["method"].(string); ok {
-		method = strings.ToUpper(method)
-		if method != "GET" && method != "POST" && method != "PUT" && method != "DELETE" && method != "HEAD" && method != "OPTIONS" {
-			return storage.MonitorConfig{}, fmt.Errorf("invalid HTTP method: %s", method)
-		}
-		httpConfig.Method = method
+	// Validate the HTTP config
+	if err := s.validator.Struct(httpConfig); err != nil {
+		return monitors.Config{}, fmt.Errorf("invalid HTTP config: %w", err)
 	}
 
-	// Extract and validate expected status
-	if expectedStatus, ok := configMap["expected_status"].(int); ok {
-		if expectedStatus < 100 || expectedStatus > 599 {
-			return storage.MonitorConfig{}, fmt.Errorf("invalid HTTP status code: %d", expectedStatus)
-		}
-		httpConfig.ExpectedStatus = expectedStatus
-	} else if expectedStatus, ok := configMap["expected_status"].(float64); ok {
-		status := int(expectedStatus)
-		if status < 100 || status > 599 {
-			return storage.MonitorConfig{}, fmt.Errorf("invalid HTTP status code: %d", status)
-		}
-		httpConfig.ExpectedStatus = status
-	}
-
-	// Extract headers
-	if headers, ok := configMap["headers"].(map[string]interface{}); ok {
-		for key, value := range headers {
-			if strValue, ok := value.(string); ok {
-				httpConfig.Headers[key] = strValue
-			} else {
-				return storage.MonitorConfig{}, fmt.Errorf("invalid header value for %s: must be string", key)
-			}
-		}
-	}
-
-	// Check for unknown fields
-	allowedFields := map[string]bool{"method": true, "expected_status": true, "headers": true}
-	for field := range configMap {
-		if !allowedFields[field] {
-			return storage.MonitorConfig{}, fmt.Errorf("unknown field in HTTP config: %s", field)
-		}
-	}
-
-	return storage.MonitorConfig{HTTP: httpConfig}, nil
+	return monitors.Config{HTTP: &httpConfig}, nil
 }
 
 // parseTCPConfig parses and validates TCP config
-func (s *Server) parseTCPConfig(configMap map[string]interface{}) (storage.MonitorConfig, error) {
-	tcpConfig := &storage.TCPConfig{
-		SendData:   "",
-		ExpectData: "",
+func (s *Server) parseTCPConfig(configMap map[string]interface{}) (monitors.Config, error) {
+	tcpConfig, err := monitors.GetConfig[monitors.TCPConfig](configMap, storage.ServiceProtocolTypeTCP)
+	if err != nil {
+		return monitors.Config{}, err
 	}
 
-	// Extract send_data
-	if sendData, ok := configMap["send_data"].(string); ok {
-		tcpConfig.SendData = sendData
+	// Validate the TCP config
+	if err := s.validator.Struct(tcpConfig); err != nil {
+		return monitors.Config{}, fmt.Errorf("invalid TCP config: %w", err)
 	}
 
-	// Extract expect_data
-	if expectData, ok := configMap["expect_data"].(string); ok {
-		tcpConfig.ExpectData = expectData
-	}
-
-	// Check for unknown fields
-	allowedFields := map[string]bool{"send_data": true, "expect_data": true}
-	for field := range configMap {
-		if !allowedFields[field] {
-			return storage.MonitorConfig{}, fmt.Errorf("unknown field in TCP config: %s", field)
-		}
-	}
-
-	return storage.MonitorConfig{TCP: tcpConfig}, nil
+	return monitors.Config{TCP: &tcpConfig}, nil
 }
 
 // parseGRPCConfig parses and validates gRPC config
-func (s *Server) parseGRPCConfig(configMap map[string]interface{}) (storage.MonitorConfig, error) {
-	grpcConfig := &storage.GRPCConfig{
-		CheckType:   "health",
-		ServiceName: "",
-		TLS:         false,
-		InsecureTLS: false,
-	}
-
-	// Extract check_type
-	if checkType, ok := configMap["check_type"].(string); ok {
-		if checkType != "health" && checkType != "reflection" && checkType != "connectivity" {
-			return storage.MonitorConfig{}, fmt.Errorf("invalid gRPC check type: %s", checkType)
-		}
-		grpcConfig.CheckType = checkType
-	}
-
-	// Extract service_name
-	if serviceName, ok := configMap["service_name"].(string); ok {
-		grpcConfig.ServiceName = serviceName
-	}
-
-	// Extract TLS settings
-	if tls, ok := configMap["tls"].(bool); ok {
-		grpcConfig.TLS = tls
-	}
-	if insecureTLS, ok := configMap["insecure_tls"].(bool); ok {
-		grpcConfig.InsecureTLS = insecureTLS
-	}
-
-	// Check for unknown fields
-	allowedFields := map[string]bool{"check_type": true, "service_name": true, "tls": true, "insecure_tls": true}
-	for field := range configMap {
-		if !allowedFields[field] {
-			return storage.MonitorConfig{}, fmt.Errorf("unknown field in gRPC config: %s", field)
-		}
-	}
-
-	return storage.MonitorConfig{GRPC: grpcConfig}, nil
-}
-
-// parseRedisConfig parses and validates Redis config
-func (s *Server) parseRedisConfig(configMap map[string]interface{}) (storage.MonitorConfig, error) {
-	redisConfig := &storage.RedisConfig{
-		Password: "",
-		DB:       0,
-	}
-
-	// Extract password
-	if password, ok := configMap["password"].(string); ok {
-		redisConfig.Password = password
-	}
-
-	// Extract DB number
-	if db, ok := configMap["db"].(int); ok {
-		if db < 0 || db > 15 {
-			return storage.MonitorConfig{}, fmt.Errorf("invalid Redis DB number: %d (must be 0-15)", db)
-		}
-		redisConfig.DB = db
-	} else if db, ok := configMap["db"].(float64); ok {
-		dbNum := int(db)
-		if dbNum < 0 || dbNum > 15 {
-			return storage.MonitorConfig{}, fmt.Errorf("invalid Redis DB number: %d (must be 0-15)", dbNum)
-		}
-		redisConfig.DB = dbNum
-	}
-
-	// Check for unknown fields
-	allowedFields := map[string]bool{"password": true, "db": true}
-	for field := range configMap {
-		if !allowedFields[field] {
-			return storage.MonitorConfig{}, fmt.Errorf("unknown field in Redis config: %s", field)
-		}
-	}
-
-	return storage.MonitorConfig{Redis: redisConfig}, nil
-}
-
-// convertConfigToYAML converts MonitorConfig to YAML string
-func (s *Server) convertConfigToYAML(config storage.MonitorConfig) (string, error) {
-	data, err := yaml.Marshal(config)
+func (s *Server) parseGRPCConfig(configMap map[string]interface{}) (monitors.Config, error) {
+	grpcConfig, err := monitors.GetConfig[monitors.GRPCConfig](configMap, storage.ServiceProtocolTypeGRPC)
 	if err != nil {
-		return "", fmt.Errorf("failed to marshal config to YAML: %w", err)
+		return monitors.Config{}, err
 	}
-	return string(data), nil
+
+	// Validate the gRPC config
+	if err := s.validator.Struct(grpcConfig); err != nil {
+		return monitors.Config{}, fmt.Errorf("invalid gRPC config: %w", err)
+	}
+
+	return monitors.Config{GRPC: &grpcConfig}, nil
 }
 
 // handleWebSocket handles WebSocket connections
 func (s *Server) handleWebSocket(c *websocket.Conn) {
+	fmt.Printf("WebSocket: new connection from %s\n", c.RemoteAddr())
+
 	// Add connection to the map
 	s.wsMutex.Lock()
 	s.wsConnections[c] = true
+	connectionCount := len(s.wsConnections)
 	s.wsMutex.Unlock()
+
+	fmt.Printf("WebSocket: total connections: %d\n", connectionCount)
 
 	// Remove connection when it closes
 	defer func() {
 		s.wsMutex.Lock()
 		delete(s.wsConnections, c)
+		remainingConnections := len(s.wsConnections)
 		s.wsMutex.Unlock()
 		c.Close()
+		fmt.Printf("WebSocket: connection closed, remaining connections: %d\n", remainingConnections)
 	}()
 
 	// Send initial data
 	if err := s.sendServiceUpdate(c); err != nil {
+		fmt.Printf("WebSocket: failed to send initial update: %v\n", err)
 		return
 	}
 
@@ -1036,6 +1065,7 @@ func (s *Server) handleWebSocket(c *websocket.Conn) {
 	for {
 		_, _, err := c.ReadMessage()
 		if err != nil {
+			fmt.Printf("WebSocket: read error: %v\n", err)
 			break
 		}
 	}
@@ -1043,142 +1073,135 @@ func (s *Server) handleWebSocket(c *websocket.Conn) {
 
 // sendServiceUpdate sends service updates to a specific WebSocket connection
 func (s *Server) sendServiceUpdate(conn *websocket.Conn) error {
-	// Get all services with incident statistics (without locking)
-	services, err := s.monitorService.GetAllServiceConfigs(context.Background())
-	if err != nil {
-		return err
+	// Проверяем, не закрыта ли база данных
+	if s.storage == nil {
+		return fmt.Errorf("storage is nil, cannot send service update")
 	}
 
+	// Get all services with their states
+	services, err := s.monitorService.GetAllServices(context.Background())
+	if err != nil {
+		return fmt.Errorf("failed to get services: %w", err)
+	}
+
+	// Get incident statistics
 	incidentStats, err := s.monitorService.GetAllServicesIncidentStats(context.Background())
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get incident stats: %w", err)
 	}
 
-	// Create a map for quick lookup of incident stats by service ID
+	// Quick lookup map for incident stats by service ID
 	statsMap := make(map[string]*storage.ServiceIncidentStats)
 	for _, stats := range incidentStats {
 		statsMap[stats.ServiceID] = stats
 	}
 
-	// Convert services to DTO with incident statistics
-	serviceDTOs := make([]ServiceTableDTO, len(services))
-	for i, service := range services {
-		// Convert config to YAML string
-		configYAML, err := s.convertConfigToYAML(service.Config)
+	// Get services with their states
+	servicesWithState := []*ServiceWithState{}
+	for _, service := range services {
+		serviceWithState, err := s.getServiceWithState(context.Background(), service)
 		if err != nil {
+			// Log error but continue with other services
+			fmt.Printf("WebSocket send error: failed to get state for service %s: %v\n", service.ID, err)
 			continue
 		}
 
-		dto := ServiceTableDTO{
-			ID:              service.ID,
-			Name:            service.Name,
-			Protocol:        service.Protocol,
-			Endpoint:        service.Endpoint,
-			Interval:        service.Interval,
-			Timeout:         service.Timeout,
-			Retries:         service.Retries,
-			Tags:            service.Tags,
-			Config:          configYAML,
-			State:           service.State,
-			IsEnabled:       service.IsEnabled,
-			ActiveIncidents: 0,
-			TotalIncidents:  0,
-		}
-
-		// Add incident statistics if available
+		// Add incident statistics to the service
 		if stats, exists := statsMap[service.ID]; exists {
-			dto.ActiveIncidents = stats.ActiveIncidents
-			dto.TotalIncidents = stats.TotalIncidents
+			// Add incident stats to the service object
+			serviceWithState.Service.ActiveIncidents = stats.ActiveIncidents
+			serviceWithState.Service.TotalIncidents = stats.TotalIncidents
 		}
 
-		serviceDTOs[i] = dto
+		servicesWithState = append(servicesWithState, serviceWithState)
 	}
 
-	// Send update message
 	update := fiber.Map{
 		"type":      "service_update",
-		"services":  serviceDTOs,
+		"services":  servicesWithState,
 		"timestamp": time.Now().Unix(),
 	}
 
-	// Lock only for WebSocket write
 	s.wsMutex.Lock()
 	defer s.wsMutex.Unlock()
 
-	return conn.WriteJSON(update)
+	if err := conn.WriteJSON(update); err != nil {
+		return fmt.Errorf("failed to write JSON to WebSocket: %w", err)
+	}
+
+	return nil
 }
 
 // BroadcastServiceUpdate sends service updates to all connected WebSocket clients
-func (s *Server) broadcastServiceUpdate() {
-	// Get updated service data (without locking)
-	services, err := s.monitorService.GetAllServiceConfigs(context.Background())
-	if err != nil {
+func (s *Server) broadcastServiceUpdate(ctx context.Context) {
+	// Проверяем, не закрыта ли база данных
+	if s.storage == nil {
+		fmt.Println("WebSocket broadcast: storage is nil, skipping update")
 		return
 	}
 
-	incidentStats, err := s.monitorService.GetAllServicesIncidentStats(context.Background())
+	services, err := s.monitorService.GetAllServices(ctx)
 	if err != nil {
+		fmt.Printf("WebSocket broadcast error: failed to get services: %v\n", err)
 		return
 	}
 
-	// Create a map for quick lookup of incident stats by service ID
+	// Get incident statistics
+	incidentStats, err := s.monitorService.GetAllServicesIncidentStats(ctx)
+	if err != nil {
+		fmt.Printf("WebSocket broadcast error: failed to get incident stats: %v\n", err)
+		return
+	}
+
+	// Quick lookup map for incident stats by service ID
 	statsMap := make(map[string]*storage.ServiceIncidentStats)
 	for _, stats := range incidentStats {
 		statsMap[stats.ServiceID] = stats
 	}
 
-	// Convert services to DTO with incident statistics
-	serviceDTOs := make([]ServiceTableDTO, len(services))
-	for i, service := range services {
-		// Convert config to YAML string
-		configYAML, err := s.convertConfigToYAML(service.Config)
+	// Get services with their states
+	servicesWithState := []*ServiceWithState{}
+	for _, service := range services {
+		serviceWithState, err := s.getServiceWithState(ctx, service)
 		if err != nil {
+			// Log error but continue with other services
+			fmt.Printf("WebSocket broadcast error: failed to get state for service %s: %v\n", service.ID, err)
 			continue
 		}
 
-		dto := ServiceTableDTO{
-			ID:              service.ID,
-			Name:            service.Name,
-			Protocol:        service.Protocol,
-			Endpoint:        service.Endpoint,
-			Interval:        service.Interval,
-			Timeout:         service.Timeout,
-			Retries:         service.Retries,
-			Tags:            service.Tags,
-			Config:          configYAML,
-			State:           service.State,
-			IsEnabled:       service.IsEnabled,
-			ActiveIncidents: 0,
-			TotalIncidents:  0,
-		}
-
-		// Add incident statistics if available
+		// Add incident statistics to the service
 		if stats, exists := statsMap[service.ID]; exists {
-			dto.ActiveIncidents = stats.ActiveIncidents
-			dto.TotalIncidents = stats.TotalIncidents
+			// Add incident stats to the service object
+			serviceWithState.Service.ActiveIncidents = stats.ActiveIncidents
+			serviceWithState.Service.TotalIncidents = stats.TotalIncidents
 		}
 
-		serviceDTOs[i] = dto
+		servicesWithState = append(servicesWithState, serviceWithState)
 	}
 
-	// Prepare update message
 	update := fiber.Map{
 		"type":      "service_update",
-		"services":  serviceDTOs,
+		"services":  servicesWithState,
 		"timestamp": time.Now().Unix(),
 	}
 
-	// Lock only for WebSocket operations
 	s.wsMutex.Lock()
 	defer s.wsMutex.Unlock()
 
-	// Send to all connections
+	// Send to all connections and handle errors
+	activeConnections := 0
 	for conn := range s.wsConnections {
 		if err := conn.WriteJSON(update); err != nil {
-			// Remove failed connection
+			fmt.Printf("WebSocket broadcast error: failed to send to connection: %v\n", err)
 			delete(s.wsConnections, conn)
 			conn.Close()
+		} else {
+			activeConnections++
 		}
+	}
+
+	if activeConnections > 0 {
+		fmt.Printf("WebSocket broadcast: sent update to %d connections\n", activeConnections)
 	}
 }
 
@@ -1187,24 +1210,41 @@ func (s *Server) subscribeEvents(ctx context.Context) error {
 	sub := broker.Subscribe()
 	defer broker.Unsubscribe(sub)
 
-	errChan := make(chan error, 1)
-	go func() {
-		for ctx.Err() == nil {
-			select {
-			case <-sub:
-				s.broadcastServiceUpdate()
-
-			case <-ctx.Done():
-				return
-			}
-		}
-	}()
-
-	select {
-	case <-ctx.Done():
-	case err := <-errChan:
-		return err
+	if sub == nil {
+		return fmt.Errorf("failed to subscribe to service updates broker")
 	}
 
-	return nil
+	fmt.Println("WebSocket: starting event subscription")
+
+	// Используем select для обработки событий с проверкой контекста
+	for {
+		select {
+		case <-sub:
+			// Проверяем, не закрыта ли база данных перед отправкой обновлений
+			if s.storage == nil {
+				fmt.Println("WebSocket: storage is nil, skipping broadcast")
+				continue
+			}
+			fmt.Println("WebSocket: received service update event")
+			s.broadcastServiceUpdate(ctx)
+
+		case <-ctx.Done():
+			fmt.Println("WebSocket: context cancelled, stopping event subscription")
+			return nil
+		}
+	}
+}
+
+// getServiceWithState gets a service with its current state
+func (s *Server) getServiceWithState(ctx context.Context, service *storage.Service) (*ServiceWithState, error) {
+	// Get service state
+	serviceState, err := s.storage.GetServiceState(ctx, service.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get service state: %w", err)
+	}
+
+	return &ServiceWithState{
+		Service: service,
+		State:   serviceState,
+	}, nil
 }

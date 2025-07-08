@@ -164,8 +164,6 @@ func (s *Scheduler) monitorService(ctx context.Context, job *job) {
 func (s *Scheduler) performCheck(ctx context.Context, job *job) error {
 	serviceName := job.ServiceName
 
-	startTime := time.Now()
-
 	// Get current service configuration from database
 	service, err := s.monitorSvc.GetServiceByID(ctx, job.ServiceID)
 	if err != nil {
@@ -180,20 +178,25 @@ func (s *Scheduler) performCheck(ctx context.Context, job *job) error {
 
 	// Perform the check with retries
 	var lastErr error
+	var lastAttemptResponseTime time.Duration
 	for attempt := 1; attempt <= job.Retries; attempt++ {
 		// Create context with timeout for this specific check
 		checkCtx, cancel := context.WithTimeout(ctx, job.Timeout)
 		defer cancel()
 
+		// Measure time for this specific attempt
+		attemptStartTime := time.Now()
 		err := monitor.Check(checkCtx)
+		attemptResponseTime := time.Since(attemptStartTime)
+		lastAttemptResponseTime = attemptResponseTime
+
 		if err == nil {
-			// Success
-			responseTime := time.Since(startTime)
-			if err := s.monitorSvc.RecordSuccess(ctx, job.ServiceID, responseTime); err != nil {
+			// Success - record the time of this successful attempt
+			if err := s.monitorSvc.RecordSuccess(ctx, job.ServiceID, attemptResponseTime); err != nil {
 				return fmt.Errorf("failed to record success for %s: %w", serviceName, err)
 			}
 
-			log.Printf("Service %s check successful (attempt %d/%d)\n", serviceName, attempt, job.Retries)
+			log.Printf("Service %s check successful (attempt %d/%d) in %v\n", serviceName, attempt, job.Retries, attemptResponseTime)
 
 			return nil
 		}
@@ -215,9 +218,8 @@ func (s *Scheduler) performCheck(ctx context.Context, job *job) error {
 		log.Printf("Service %s check failed (attempt %d/%d): %s\n", serviceName, attempt, job.Retries, err)
 	}
 
-	// All attempts failed
-	responseTime := time.Since(startTime)
-	if err := s.monitorSvc.RecordFailure(ctx, job.ServiceID, lastErr, responseTime); err != nil {
+	// All attempts failed - record the time of the last attempt
+	if err := s.monitorSvc.RecordFailure(ctx, job.ServiceID, lastErr, lastAttemptResponseTime); err != nil {
 		return fmt.Errorf("failed to record failure for %s: %w", serviceName, err)
 	}
 

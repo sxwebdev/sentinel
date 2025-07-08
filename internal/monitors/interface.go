@@ -3,7 +3,6 @@ package monitors
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/sxwebdev/sentinel/internal/storage"
 )
@@ -11,24 +10,20 @@ import (
 // ServiceMonitor defines the interface for all service monitors
 type ServiceMonitor interface {
 	Name() string
-	Protocol() string
+	Protocol() storage.ServiceProtocolType
 	Check(ctx context.Context) error
 	Config() storage.Service
 }
 
 // NewMonitor creates a new monitor based on the service configuration
 func NewMonitor(cfg storage.Service) (ServiceMonitor, error) {
-	protocol := strings.ToLower(cfg.Protocol)
-
-	switch protocol {
-	case "http", "https":
+	switch cfg.Protocol {
+	case storage.ServiceProtocolTypeHTTP:
 		return NewHTTPMonitor(cfg)
-	case "tcp":
+	case storage.ServiceProtocolTypeTCP:
 		return NewTCPMonitor(cfg)
-	case "grpc":
+	case storage.ServiceProtocolTypeGRPC:
 		return NewGRPCMonitor(cfg)
-	case "redis":
-		return NewRedisMonitor(cfg)
 	default:
 		return nil, fmt.Errorf("unsupported protocol: %s", cfg.Protocol)
 	}
@@ -37,7 +32,7 @@ func NewMonitor(cfg storage.Service) (ServiceMonitor, error) {
 // BaseMonitor provides common functionality for all monitors
 type BaseMonitor struct {
 	name     string
-	protocol string
+	protocol storage.ServiceProtocolType
 	config   storage.Service
 }
 
@@ -53,7 +48,7 @@ func (b *BaseMonitor) Name() string {
 	return b.name
 }
 
-func (b *BaseMonitor) Protocol() string {
+func (b *BaseMonitor) Protocol() storage.ServiceProtocolType {
 	return b.protocol
 }
 

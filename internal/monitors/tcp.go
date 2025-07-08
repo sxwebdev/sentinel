@@ -10,29 +10,30 @@ import (
 	"github.com/sxwebdev/sentinel/internal/storage"
 )
 
+// TCPConfig represents TCP monitor configuration
+type TCPConfig struct {
+	Endpoint   string `json:"endpoint" validate:"required"`
+	SendData   string `json:"send_data,omitempty"`
+	ExpectData string `json:"expect_data,omitempty"`
+}
+
 // TCPMonitor monitors TCP endpoints
 type TCPMonitor struct {
 	BaseMonitor
-	sendData   string
-	expectData string
+	conf TCPConfig
 }
 
 // NewTCPMonitor creates a new TCP monitor
-func NewTCPMonitor(cfg storage.Service) (*TCPMonitor, error) {
+func NewTCPMonitor(svc storage.Service) (*TCPMonitor, error) {
 	// Extract TCP config
-	var tcpConfig *storage.TCPConfig
-	if cfg.Config.TCP != nil {
-		tcpConfig = cfg.Config.TCP
+	conf, err := GetConfig[TCPConfig](svc.Config, storage.ServiceProtocolTypeTCP)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get TCP config: %w", err)
 	}
 
 	monitor := &TCPMonitor{
-		BaseMonitor: NewBaseMonitor(cfg),
-	}
-
-	// Apply TCP-specific config if available
-	if tcpConfig != nil {
-		monitor.sendData = tcpConfig.SendData
-		monitor.expectData = tcpConfig.ExpectData
+		BaseMonitor: NewBaseMonitor(svc),
+		conf:        conf,
 	}
 
 	return monitor, nil
@@ -40,27 +41,33 @@ func NewTCPMonitor(cfg storage.Service) (*TCPMonitor, error) {
 
 // Check performs the TCP health check
 func (t *TCPMonitor) Check(ctx context.Context) error {
+	// Get endpoint from config
+	if t.conf.Endpoint == "" {
+		return fmt.Errorf("TCP endpoint not configured")
+	}
+	endpoint := t.conf.Endpoint
+
 	// Create connection with timeout
 	dialer := net.Dialer{
 		Timeout: t.config.Timeout,
 	}
 
-	conn, err := dialer.DialContext(ctx, "tcp", t.config.Endpoint)
+	conn, err := dialer.DialContext(ctx, "tcp", endpoint)
 	if err != nil {
 		return fmt.Errorf("failed to connect: %w", err)
 	}
 	defer conn.Close()
 
 	// Send data if specified
-	if t.sendData != "" {
-		_, err = conn.Write([]byte(t.sendData))
+	if t.conf.SendData != "" {
+		_, err = conn.Write([]byte(t.conf.SendData))
 		if err != nil {
 			return fmt.Errorf("failed to send data: %w", err)
 		}
 	}
 
 	// Expect data if specified
-	if t.expectData != "" {
+	if t.conf.ExpectData != "" {
 		// Set read deadline
 		deadline := time.Now().Add(t.config.Timeout)
 		err = conn.SetReadDeadline(deadline)
@@ -76,8 +83,8 @@ func (t *TCPMonitor) Check(ctx context.Context) error {
 		}
 
 		response := string(buffer[:n])
-		if !strings.Contains(response, t.expectData) {
-			return fmt.Errorf("expected data not found in response: %s", t.expectData)
+		if !strings.Contains(response, t.conf.ExpectData) {
+			return fmt.Errorf("expected data not found in response: %s", t.conf.ExpectData)
 		}
 	}
 

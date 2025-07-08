@@ -14,6 +14,7 @@ type Storage interface {
 	SaveIncident(ctx context.Context, incident *Incident) error
 	GetIncident(ctx context.Context, serviceID, incidentID string) (*Incident, error)
 	UpdateIncident(ctx context.Context, incident *Incident) error
+	DeleteIncident(ctx context.Context, incidentID string) error
 	GetIncidentsByService(ctx context.Context, serviceID string) ([]*Incident, error)
 	GetRecentIncidents(ctx context.Context, limit int) ([]*Incident, error)
 	GetActiveIncidents(ctx context.Context) ([]*Incident, error)
@@ -26,6 +27,11 @@ type Storage interface {
 	UpdateService(ctx context.Context, service *Service) error
 	DeleteService(ctx context.Context, id string) error
 
+	// Service state management
+	GetServiceState(ctx context.Context, serviceID string) (*ServiceStateRecord, error)
+	UpdateServiceState(ctx context.Context, state *ServiceStateRecord) error
+	GetAllServiceStates(ctx context.Context) ([]*ServiceStateRecord, error)
+
 	// Statistics
 	GetServiceStats(ctx context.Context, serviceID string, since time.Time) (*ServiceStats, error)
 	GetAllServicesIncidentStats(ctx context.Context) ([]*ServiceIncidentStats, error)
@@ -34,19 +40,27 @@ type Storage interface {
 	Close() error
 }
 
+type ServiceProtocolType string
+
+const (
+	ServiceProtocolTypeHTTP ServiceProtocolType = "http"
+	ServiceProtocolTypeTCP  ServiceProtocolType = "tcp"
+	ServiceProtocolTypeGRPC ServiceProtocolType = "grpc"
+)
+
 // Service represents a monitored service
 type Service struct {
-	ID        string        `json:"id" yaml:"id"`
-	Name      string        `json:"name" yaml:"name"`
-	Protocol  string        `json:"protocol" yaml:"protocol"`
-	Endpoint  string        `json:"endpoint" yaml:"endpoint"`
-	Interval  time.Duration `json:"interval" yaml:"interval"`
-	Timeout   time.Duration `json:"timeout" yaml:"timeout"`
-	Retries   int           `json:"retries" yaml:"retries"`
-	Tags      []string      `json:"tags" yaml:"tags"`
-	Config    MonitorConfig `json:"config" yaml:"config"`
-	State     *ServiceState `json:"state,omitempty" yaml:"state,omitempty"`
-	IsEnabled bool          `json:"is_enabled" yaml:"is_enabled"`
+	ID              string              `json:"id" yaml:"id"`
+	Name            string              `json:"name" yaml:"name"`
+	Protocol        ServiceProtocolType `json:"protocol" yaml:"protocol"`
+	Interval        time.Duration       `json:"interval" yaml:"interval" swaggertype:"primitive,integer"`
+	Timeout         time.Duration       `json:"timeout" yaml:"timeout" swaggertype:"primitive,integer"`
+	Retries         int                 `json:"retries" yaml:"retries"`
+	Tags            []string            `json:"tags" yaml:"tags"`
+	Config          map[string]any      `json:"config" yaml:"config"`
+	IsEnabled       bool                `json:"is_enabled" yaml:"is_enabled"`
+	ActiveIncidents int                 `json:"active_incidents,omitempty" yaml:"active_incidents,omitempty"`
+	TotalIncidents  int                 `json:"total_incidents,omitempty" yaml:"total_incidents,omitempty"`
 }
 
 // ServiceState represents the current state of a monitored service
@@ -58,7 +72,7 @@ type ServiceState struct {
 	ConsecutiveFails   int           `json:"consecutive_fails"`
 	ConsecutiveSuccess int           `json:"consecutive_success"`
 	TotalChecks        int           `json:"total_checks"`
-	ResponseTime       time.Duration `json:"response_time"`
+	ResponseTime       time.Duration `json:"response_time" swaggertype:"primitive,integer"`
 }
 
 // MarshalJSON кастомно сериализует LastCheck и NextCheck, чтобы если они нулевые — не попадали в json
@@ -97,7 +111,7 @@ type Incident struct {
 	StartTime time.Time      `json:"start_time"`
 	EndTime   *time.Time     `json:"end_time,omitempty"`
 	Error     string         `json:"error"`
-	Duration  *time.Duration `json:"duration,omitempty"`
+	Duration  *time.Duration `json:"duration,omitempty" swaggertype:"primitive,integer"`
 	Resolved  bool           `json:"resolved"`
 }
 
@@ -105,9 +119,10 @@ type Incident struct {
 type ServiceStats struct {
 	ServiceID        string        `json:"service_id"`
 	TotalIncidents   int           `json:"total_incidents"`
-	TotalDowntime    time.Duration `json:"total_downtime"`
+	TotalDowntime    time.Duration `json:"total_downtime" swaggertype:"primitive,integer"`
 	UptimePercentage float64       `json:"uptime_percentage"`
-	Period           time.Duration `json:"period"`
+	Period           time.Duration `json:"period" swaggertype:"primitive,integer"`
+	AvgResponseTime  time.Duration `json:"avg_response_time" swaggertype:"primitive,integer"`
 }
 
 // ServiceIncidentStats holds incident statistics for a service
@@ -117,39 +132,20 @@ type ServiceIncidentStats struct {
 	TotalIncidents  int    `json:"total_incidents"`
 }
 
-// MonitorConfig represents configuration for different monitor types
-type MonitorConfig struct {
-	HTTP  *HTTPConfig  `json:"http,omitempty" yaml:"http,omitempty"`
-	TCP   *TCPConfig   `json:"tcp,omitempty" yaml:"tcp,omitempty"`
-	GRPC  *GRPCConfig  `json:"grpc,omitempty" yaml:"grpc,omitempty"`
-	Redis *RedisConfig `json:"redis,omitempty" yaml:"redis,omitempty"`
-}
-
-// HTTPConfig represents HTTP/HTTPS monitor configuration
-type HTTPConfig struct {
-	Method         string            `json:"method" yaml:"method"`
-	ExpectedStatus int               `json:"expected_status" yaml:"expected_status"`
-	Headers        map[string]string `json:"headers" yaml:"headers"`
-}
-
-// TCPConfig represents TCP monitor configuration
-type TCPConfig struct {
-	SendData   string `json:"send_data" yaml:"send_data"`
-	ExpectData string `json:"expect_data" yaml:"expect_data"`
-}
-
-// GRPCConfig represents gRPC monitor configuration
-type GRPCConfig struct {
-	CheckType   string `json:"check_type" yaml:"check_type"`
-	ServiceName string `json:"service_name" yaml:"service_name"`
-	TLS         bool   `json:"tls" yaml:"tls"`
-	InsecureTLS bool   `json:"insecure_tls" yaml:"insecure_tls"`
-}
-
-// RedisConfig represents Redis monitor configuration
-type RedisConfig struct {
-	Password string `json:"password" yaml:"password"`
-	DB       int    `json:"db" yaml:"db"`
+// ServiceStateRecord represents a service state record in the database
+type ServiceStateRecord struct {
+	ID                 string        `json:"id"`
+	ServiceID          string        `json:"service_id"`
+	Status             ServiceStatus `json:"status"` // "up", "down", "unknown"
+	LastCheck          *time.Time    `json:"last_check,omitempty"`
+	NextCheck          *time.Time    `json:"next_check,omitempty"`
+	LastError          string        `json:"last_error,omitempty"`
+	ConsecutiveFails   int           `json:"consecutive_fails"`
+	ConsecutiveSuccess int           `json:"consecutive_success"`
+	TotalChecks        int           `json:"total_checks"`
+	ResponseTimeNS     *int64        `json:"response_time_ns,omitempty"`
+	CreatedAt          time.Time     `json:"created_at"`
+	UpdatedAt          time.Time     `json:"updated_at"`
 }
 
 // GenerateULID generates a new ULID

@@ -1,0 +1,603 @@
+basePath: /api/v1
+definitions:
+  storage.Service:
+    properties:
+      active_incidents:
+        type: integer
+      config:
+        additionalProperties: {}
+        type: object
+      id:
+        type: string
+      interval:
+        type: integer
+      is_enabled:
+        type: boolean
+      name:
+        type: string
+      protocol:
+        $ref: '#/definitions/storage.ServiceProtocolType'
+      retries:
+        type: integer
+      tags:
+        items:
+          type: string
+        type: array
+      timeout:
+        type: integer
+      total_incidents:
+        type: integer
+    type: object
+  storage.ServiceProtocolType:
+    enum:
+    - http
+    - tcp
+    - grpc
+    type: string
+    x-enum-varnames:
+    - ServiceProtocolTypeHTTP
+    - ServiceProtocolTypeTCP
+    - ServiceProtocolTypeGRPC
+  storage.ServiceStateRecord:
+    properties:
+      consecutive_fails:
+        type: integer
+      consecutive_success:
+        type: integer
+      created_at:
+        type: string
+      id:
+        type: string
+      last_check:
+        type: string
+      last_error:
+        type: string
+      next_check:
+        type: string
+      response_time_ns:
+        type: integer
+      service_id:
+        type: string
+      status:
+        allOf:
+        - $ref: '#/definitions/storage.ServiceStatus'
+        description: '"up", "down", "unknown"'
+      total_checks:
+        type: integer
+      updated_at:
+        type: string
+    type: object
+  storage.ServiceStatus:
+    enum:
+    - unknown
+    - up
+    - down
+    - maintenance
+    type: string
+    x-enum-varnames:
+    - StatusUnknown
+    - StatusUp
+    - StatusDown
+    - StatusMaintenance
+  web.DashboardStats:
+    description: Dashboard statistics
+    properties:
+      active_incidents:
+        example: 2
+        type: integer
+      avg_response_time:
+        example: 150
+        type: integer
+      checks_per_minute:
+        example: 60
+        type: integer
+      last_check_time:
+        type: string
+      protocols:
+        additionalProperties:
+          type: integer
+        type: object
+      recent_incidents:
+        example: 5
+        type: integer
+      services_down:
+        example: 1
+        type: integer
+      services_unknown:
+        example: 1
+        type: integer
+      services_up:
+        example: 8
+        type: integer
+      total_checks:
+        example: 1000
+        type: integer
+      total_services:
+        example: 10
+        type: integer
+      uptime_percentage:
+        example: 95.5
+        type: number
+    type: object
+  web.ErrorResponse:
+    description: Error response
+    properties:
+      error:
+        example: Error description
+        type: string
+    type: object
+  web.Incident:
+    description: Service incident
+    properties:
+      duration:
+        example: 2h30m
+        type: string
+      id:
+        example: 01HXYZ1234567890ABCDEF
+        type: string
+      message:
+        example: Connection timeout
+        type: string
+      resolved:
+        example: false
+        type: boolean
+      resolved_at:
+        type: string
+      service_id:
+        example: service-1
+        type: string
+      service_name:
+        example: Web Server
+        type: string
+      started_at:
+        type: string
+      status:
+        example: down
+        type: string
+    type: object
+  web.ServiceDTO:
+    properties:
+      active_incidents:
+        example: 2
+        type: integer
+      config:
+        additionalProperties: {}
+        description: JSON object
+        type: object
+      id:
+        example: service-1
+        type: string
+      interval:
+        example: 30000000000
+        type: integer
+      is_enabled:
+        example: true
+        type: boolean
+      name:
+        example: Web Server
+        type: string
+      protocol:
+        allOf:
+        - $ref: '#/definitions/storage.ServiceProtocolType'
+        example: http
+      retries:
+        example: 3
+        type: integer
+      tags:
+        example:
+        - web
+        - production
+        items:
+          type: string
+        type: array
+      timeout:
+        example: 5000000000
+        type: integer
+      total_incidents:
+        example: 10
+        type: integer
+    type: object
+  web.ServiceStats:
+    description: Service statistics
+    properties:
+      avg_response_time:
+        example: 150000000
+        type: integer
+      period:
+        example: 2592000000000000
+        type: integer
+      service_id:
+        example: service-1
+        type: string
+      total_downtime:
+        example: 1800000000000
+        type: integer
+      total_incidents:
+        example: 5
+        type: integer
+      uptime_percentage:
+        example: 95
+        type: number
+    type: object
+  web.ServiceWithState:
+    properties:
+      service:
+        $ref: '#/definitions/storage.Service'
+      state:
+        $ref: '#/definitions/storage.ServiceStateRecord'
+    type: object
+  web.SuccessResponse:
+    description: Successful response
+    properties:
+      message:
+        example: Operation completed successfully
+        type: string
+    type: object
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: API for service monitoring and incident management
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Sentinel Monitoring API
+  version: "1.0"
+paths:
+  /dashboard/stats:
+    get:
+      consumes:
+      - application/json
+      description: Returns statistics for the dashboard
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Dashboard statistics
+          schema:
+            $ref: '#/definitions/web.DashboardStats'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+      summary: Get dashboard statistics
+      tags:
+      - dashboard
+  /incidents:
+    get:
+      consumes:
+      - application/json
+      description: Returns a list of recent incidents across all services
+      parameters:
+      - description: Number of incidents (default 50)
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of incidents
+          schema:
+            items:
+              $ref: '#/definitions/web.Incident'
+            type: array
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+      summary: Get recent incidents
+      tags:
+      - incidents
+  /services:
+    get:
+      consumes:
+      - application/json
+      description: Returns a list of all services with their current states
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of services with states
+          schema:
+            items:
+              $ref: '#/definitions/web.ServiceWithState'
+            type: array
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+      summary: Get all services
+      tags:
+      - services
+    post:
+      consumes:
+      - application/json
+      description: Creates a new service for monitoring
+      parameters:
+      - description: Service configuration
+        in: body
+        name: service
+        required: true
+        schema:
+          $ref: '#/definitions/web.ServiceDTO'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Service created
+          schema:
+            $ref: '#/definitions/storage.Service'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+      summary: Create new service
+      tags:
+      - services
+  /services/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes a service from the monitoring system
+      parameters:
+      - description: Service ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Service deleted
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+      summary: Delete service
+      tags:
+      - services
+    get:
+      consumes:
+      - application/json
+      description: Returns detailed information about a specific service
+      parameters:
+      - description: Service ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Service details with state
+          schema:
+            $ref: '#/definitions/web.ServiceWithState'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+        "404":
+          description: Service not found
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+      summary: Get service details
+      tags:
+      - services
+    put:
+      consumes:
+      - application/json
+      description: Updates an existing service
+      parameters:
+      - description: Service ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: New service configuration
+        in: body
+        name: service
+        required: true
+        schema:
+          $ref: '#/definitions/web.ServiceDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Service updated
+          schema:
+            $ref: '#/definitions/storage.Service'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+        "404":
+          description: Service not found
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+      summary: Update service
+      tags:
+      - services
+  /services/{id}/check:
+    post:
+      consumes:
+      - application/json
+      description: Triggers a manual check of service status
+      parameters:
+      - description: Service ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Check triggered successfully
+          schema:
+            $ref: '#/definitions/web.SuccessResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+        "404":
+          description: Service not found
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+      summary: Trigger service check
+      tags:
+      - services
+  /services/{id}/incidents:
+    get:
+      consumes:
+      - application/json
+      description: Returns a list of incidents for a specific service
+      parameters:
+      - description: Service ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of incidents
+          schema:
+            items:
+              $ref: '#/definitions/web.Incident'
+            type: array
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+      summary: Get service incidents
+      tags:
+      - incidents
+  /services/{id}/incidents/{incidentId}:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes a specific incident for a service
+      parameters:
+      - description: Service ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Incident ID
+        in: path
+        name: incidentId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Incident deleted
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+        "404":
+          description: Incident not found
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+      summary: Delete incident
+      tags:
+      - incidents
+  /services/{id}/resolve:
+    post:
+      consumes:
+      - application/json
+      description: Forcefully resolves all active incidents for a service
+      parameters:
+      - description: Service ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Incidents resolved successfully
+          schema:
+            $ref: '#/definitions/web.SuccessResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+        "404":
+          description: Service not found
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+      summary: Resolve service incidents
+      tags:
+      - incidents
+  /services/{id}/stats:
+    get:
+      consumes:
+      - application/json
+      description: Returns service statistics for the specified period
+      parameters:
+      - description: Service ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Number of days (default 30)
+        in: query
+        name: days
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Service statistics
+          schema:
+            $ref: '#/definitions/web.ServiceStats'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+      summary: Get service statistics
+      tags:
+      - statistics
+swagger: "2.0"

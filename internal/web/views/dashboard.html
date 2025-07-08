@@ -106,7 +106,6 @@
                   <th>Service</th>
                   <th>Status</th>
                   <th>Tags</th>
-                  <th>Endpoint</th>
                   <th>Last Check</th>
                   <th>Incidents</th>
                   <th>Actions</th>
@@ -150,13 +149,9 @@
                 <option value="http">HTTP/HTTPS</option>
                 <option value="tcp">TCP</option>
                 <option value="grpc">gRPC</option>
-                <option value="redis">Redis</option>
               </select>
             </div>
-            <div class="form-group">
-              <label for="endpoint">Endpoint *</label>
-              <input type="text" id="endpoint" name="endpoint" required />
-            </div>
+
             <div class="form-row">
               <div class="form-group">
                 <label for="interval">Interval (seconds)</label>
@@ -210,15 +205,151 @@
                 <span class="switch-slider"></span>
               </div>
             </div>
-            <div class="form-group">
-              <label for="config">Configuration (YAML)</label>
-              <textarea
-                id="config"
-                name="config"
-                rows="8"
-                placeholder="# Protocol-specific configuration"
-              ></textarea>
+
+            <!-- TCP Configuration -->
+            <div class="form-group" id="tcpConfig" style="display: none">
+              <div class="card">
+                <div class="card-header">
+                  <h4>TCP Configuration</h4>
+                </div>
+                <div class="card-body">
+                  <div class="form-group">
+                    <label for="tcpEndpoint">Endpoint *</label>
+                    <input
+                      type="text"
+                      id="tcpEndpoint"
+                      name="tcpEndpoint"
+                      placeholder="localhost:8080"
+                    />
+                  </div>
+                  <div class="form-group">
+                    <label for="sendData">Send Data</label>
+                    <input
+                      type="text"
+                      id="sendData"
+                      name="sendData"
+                      placeholder="Data to send to TCP endpoint"
+                    />
+                  </div>
+                  <div class="form-group">
+                    <label for="expectData">Expected Response</label>
+                    <input
+                      type="text"
+                      id="expectData"
+                      name="expectData"
+                      placeholder="Expected response data"
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
+
+            <!-- gRPC Configuration -->
+            <div class="form-group" id="grpcConfig" style="display: none">
+              <div class="card">
+                <div class="card-header">
+                  <h4>gRPC Configuration</h4>
+                </div>
+                <div class="card-body">
+                  <div class="form-group">
+                    <label for="grpcEndpoint">Endpoint *</label>
+                    <input
+                      type="text"
+                      id="grpcEndpoint"
+                      name="grpcEndpoint"
+                      placeholder="localhost:9090"
+                    />
+                  </div>
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label for="checkType">Check Type</label>
+                      <select id="checkType" name="checkType">
+                        <option value="health">Health Check</option>
+                        <option value="connectivity">Connectivity</option>
+                        <option value="reflection">Reflection</option>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label for="serviceName">Service Name</label>
+                      <input
+                        type="text"
+                        id="serviceName"
+                        name="serviceName"
+                        placeholder="Service name for health check"
+                      />
+                    </div>
+                  </div>
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label for="tls">Use TLS</label>
+                      <div class="switch-container" onclick="toggleTLS()">
+                        <input type="checkbox" id="tls" name="tls" checked />
+                        <span class="switch-slider"></span>
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <label for="insecureTLS">Insecure TLS</label>
+                      <div
+                        class="switch-container"
+                        onclick="toggleInsecureTLS()"
+                      >
+                        <input
+                          type="checkbox"
+                          id="insecureTLS"
+                          name="insecureTLS"
+                        />
+                        <span class="switch-slider"></span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Multi-endpoint configuration section -->
+            <div
+              class="form-group"
+              id="multi_endpoint_config"
+              style="display: none"
+            >
+              <div class="card">
+                <div class="card-header">
+                  <h4>HTTP Configuration</h4>
+                </div>
+                <div class="card-body">
+                  <div class="form-group">
+                    <label for="condition">JavaScript Condition</label>
+                    <textarea
+                      id="condition"
+                      name="condition"
+                      placeholder="// Example: return Math.abs(results.main.value - results.backup.value) > 5;"
+                      rows="4"
+                    ></textarea>
+                    <small class="form-text">
+                      JavaScript condition that returns true to trigger an
+                      incident. Available variables:
+                      <code>results.endpoint_name.value</code>,
+                      <code>results.endpoint_name.success</code>, etc.
+                    </small>
+                  </div>
+
+                  <div class="form-group">
+                    <label>Endpoints</label>
+                    <div id="endpoints_container">
+                      <!-- Endpoints will be added here dynamically -->
+                    </div>
+                    <button
+                      type="button"
+                      class="btn btn-secondary"
+                      onclick="addEndpoint()"
+                    >
+                      Add Endpoint
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div class="form-actions">
               <button
                 type="button"
@@ -241,7 +372,7 @@
 
       // Load dashboard statistics
       function loadDashboardStats() {
-        fetch("/api/dashboard/stats")
+        fetch("/api/v1/dashboard/stats")
           .then((response) => {
             if (!response.ok) {
               throw new Error(`HTTP error! status: ${response.status}`);
@@ -317,7 +448,6 @@
           http: "HTTP/HTTPS",
           tcp: "TCP",
           grpc: "gRPC",
-          redis: "Redis",
           unknown: "Неизвестно",
         };
         return names[protocol] || protocol.toUpperCase();
@@ -366,7 +496,7 @@
 
       function triggerCheck(serviceId) {
         closeAllDropdowns();
-        fetch(`/api/services/${serviceId}/check`, {
+        fetch(`/api/v1/services/${serviceId}/check`, {
           method: "POST",
         })
           .then((response) => response.json())
@@ -385,7 +515,15 @@
         currentServiceId = null;
         document.getElementById("modalTitle").textContent = "Add Service";
         document.getElementById("serviceForm").reset();
-        document.getElementById("config").value = "";
+
+        // Reset multi-endpoint section
+        document.getElementById("multi_endpoint_config").style.display = "none";
+        document.getElementById("endpoints_container").innerHTML = "";
+
+        // Hide all config sections
+        document.getElementById("tcpConfig").style.display = "none";
+        document.getElementById("grpcConfig").style.display = "none";
+
         document.getElementById("serviceModal").style.display = "block";
       }
 
@@ -394,71 +532,226 @@
         currentServiceId = serviceId;
         document.getElementById("modalTitle").textContent = "Edit Service";
 
-        // Load service config for editing
-        fetch(`/api/services/config/${serviceId}`)
+        // Load service details for editing
+        fetch(`/api/v1/services/${serviceId}`)
           .then((response) => response.json())
-          .then((serviceConfig) => {
-            document.getElementById("name").value = serviceConfig.name;
-            document.getElementById("protocol").value = serviceConfig.protocol;
-            document.getElementById("endpoint").value = serviceConfig.endpoint;
+          .then((serviceData) => {
+            const service = serviceData.service;
+
+            // Reset multi-endpoint section
+            document.getElementById("multi_endpoint_config").style.display =
+              "none";
+            document.getElementById("endpoints_container").innerHTML = "";
+
+            // Fill basic fields
+            document.getElementById("name").value = service.name;
+            document.getElementById("protocol").value = service.protocol;
             document.getElementById("interval").value = Math.floor(
-              serviceConfig.interval / 1000000000
+              service.interval / 1000000000
             ); // Convert from nanoseconds
             document.getElementById("timeout").value = Math.floor(
-              serviceConfig.timeout / 1000000000
+              service.timeout / 1000000000
             );
-            document.getElementById("retries").value = serviceConfig.retries;
-            document.getElementById("tags").value =
-              serviceConfig.tags.join(", ");
+            document.getElementById("retries").value = service.retries;
+            document.getElementById("tags").value = service.tags
+              ? service.tags.join(", ")
+              : "";
             document.getElementById("is_enabled").checked =
-              serviceConfig.is_enabled !== false;
+              service.is_enabled !== false;
 
-            // Convert config object to YAML string
-            let configYaml = "";
-            if (serviceConfig.config) {
-              if (serviceConfig.config.http) {
-                configYaml = `method: "${
-                  serviceConfig.config.http.method || "GET"
-                }"\nexpected_status: ${
-                  serviceConfig.config.http.expected_status || 200
-                }`;
-                if (serviceConfig.config.http.headers) {
-                  configYaml += "\nheaders:";
-                  for (const [key, value] of Object.entries(
-                    serviceConfig.config.http.headers
-                  )) {
-                    configYaml += `\n  ${key}: "${value}"`;
+            // Fill protocol-specific fields
+            const config = service.config || {};
+
+            if (service.protocol === "http" && config.http) {
+              const httpConfig = config.http;
+
+              // Fill endpoints if they exist
+              if (httpConfig.endpoints && httpConfig.endpoints.length > 0) {
+                document.getElementById("condition").value =
+                  httpConfig.condition || "";
+
+                // Clear existing endpoints
+                const container = document.getElementById(
+                  "endpoints_container"
+                );
+                container.innerHTML = "";
+
+                httpConfig.endpoints.forEach((endpoint, index) => {
+                  if (index === 0) {
+                    // Create first endpoint
+                    const endpointDiv = document.createElement("div");
+                    endpointDiv.className = "endpoint-item";
+                    endpointDiv.innerHTML = `
+                    <div class="endpoint-header">
+                      <h5>Endpoint 1</h5>
+                      <button type="button" class="btn btn-danger btn-sm" onclick="removeEndpoint(this)">
+                        Remove
+                      </button>
+                    </div>
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label>Name</label>
+                        <input type="text" name="endpoint_name[]" placeholder="main" />
+                      </div>
+                      <div class="form-group">
+                        <label>URL</label>
+                        <input type="url" name="endpoint_url[]" placeholder="https://api.example.com/status" />
+                      </div>
+                    </div>
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label>Method</label>
+                        <select name="endpoint_method[]">
+                          <option value="GET">GET</option>
+                          <option value="POST">POST</option>
+                          <option value="PUT">PUT</option>
+                          <option value="DELETE">DELETE</option>
+                          <option value="HEAD">HEAD</option>
+                        </select>
+                      </div>
+                      <div class="form-group">
+                        <label>Expected Status</label>
+                        <input type="number" name="endpoint_expected_status[]" value="200" min="100" max="599" />
+                      </div>
+                    </div>
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label>JSON Path</label>
+                        <input type="text" name="endpoint_json_path[]" placeholder="result.block_number" />
+                        <small class="form-text">Path to extract value from JSON response (e.g., "result.block_number")</small>
+                      </div>
+                    </div>
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label>Username (Basic Auth)</label>
+                        <input type="text" name="endpoint_username[]" placeholder="username" />
+                      </div>
+                      <div class="form-group">
+                        <label>Password (Basic Auth)</label>
+                        <input type="password" name="endpoint_password[]" placeholder="password" />
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <label>Headers (JSON)</label>
+                      <textarea name="endpoint_headers[]" rows="2" placeholder='{"Content-Type": "application/json"}'></textarea>
+                    </div>
+                    <div class="form-group">
+                      <label>Request Body</label>
+                      <textarea name="endpoint_body[]" rows="2" placeholder="Request body for POST/PUT requests"></textarea>
+                    </div>
+                  `;
+                    container.appendChild(endpointDiv);
+
+                    // Fill first endpoint data
+                    const nameInput = container.querySelector(
+                      'input[name="endpoint_name[]"]'
+                    );
+                    const urlInput = container.querySelector(
+                      'input[name="endpoint_url[]"]'
+                    );
+                    const methodSelect = container.querySelector(
+                      'select[name="endpoint_method[]"]'
+                    );
+                    const expectedStatusInput = container.querySelector(
+                      'input[name="endpoint_expected_status[]"]'
+                    );
+                    const jsonPathInput = container.querySelector(
+                      'input[name="endpoint_json_path[]"]'
+                    );
+                    const usernameInput = container.querySelector(
+                      'input[name="endpoint_username[]"]'
+                    );
+                    const passwordInput = container.querySelector(
+                      'input[name="endpoint_password[]"]'
+                    );
+                    const headersTextarea = container.querySelector(
+                      'textarea[name="endpoint_headers[]"]'
+                    );
+                    const bodyTextarea = container.querySelector(
+                      'textarea[name="endpoint_body[]"]'
+                    );
+
+                    if (nameInput) nameInput.value = endpoint.name || "";
+                    if (urlInput) urlInput.value = endpoint.url || "";
+                    if (methodSelect)
+                      methodSelect.value = endpoint.method || "GET";
+                    if (expectedStatusInput)
+                      expectedStatusInput.value =
+                        endpoint.expected_status || 200;
+                    if (jsonPathInput)
+                      jsonPathInput.value = endpoint.json_path || "";
+                    if (usernameInput)
+                      usernameInput.value = endpoint.username || "";
+                    if (passwordInput)
+                      passwordInput.value = endpoint.password || "";
+                    if (headersTextarea)
+                      headersTextarea.value = endpoint.headers
+                        ? JSON.stringify(endpoint.headers, null, 2)
+                        : "";
+                    if (bodyTextarea) bodyTextarea.value = endpoint.body || "";
+                  } else {
+                    // Add additional endpoints
+                    addEndpoint();
+                    const currentItem = container.lastElementChild;
+                    currentItem.querySelector(
+                      'input[name="endpoint_name[]"]'
+                    ).value = endpoint.name || "";
+                    currentItem.querySelector(
+                      'input[name="endpoint_url[]"]'
+                    ).value = endpoint.url || "";
+                    currentItem.querySelector(
+                      'select[name="endpoint_method[]"]'
+                    ).value = endpoint.method || "GET";
+                    currentItem.querySelector(
+                      'input[name="endpoint_expected_status[]"]'
+                    ).value = endpoint.expected_status || 200;
+                    currentItem.querySelector(
+                      'input[name="endpoint_json_path[]"]'
+                    ).value = endpoint.json_path || "";
+                    currentItem.querySelector(
+                      'input[name="endpoint_username[]"]'
+                    ).value = endpoint.username || "";
+                    currentItem.querySelector(
+                      'input[name="endpoint_password[]"]'
+                    ).value = endpoint.password || "";
+                    currentItem.querySelector(
+                      'textarea[name="endpoint_headers[]"]'
+                    ).value = endpoint.headers
+                      ? JSON.stringify(endpoint.headers, null, 2)
+                      : "";
+                    currentItem.querySelector(
+                      'textarea[name="endpoint_body[]"]'
+                    ).value = endpoint.body || "";
                   }
-                }
-              } else if (serviceConfig.config.tcp) {
-                configYaml = `send_data: "${
-                  serviceConfig.config.tcp.send_data || ""
-                }"\nexpect_data: "${
-                  serviceConfig.config.tcp.expect_data || ""
-                }"`;
-              } else if (serviceConfig.config.grpc) {
-                configYaml = `check_type: "${
-                  serviceConfig.config.grpc.check_type || "connectivity"
-                }"\nservice_name: "${
-                  serviceConfig.config.grpc.service_name || ""
-                }"\ntls: ${
-                  serviceConfig.config.grpc.tls || false
-                }\ninsecure_tls: ${
-                  serviceConfig.config.grpc.insecure_tls || false
-                }`;
-              } else if (serviceConfig.config.redis) {
-                configYaml = `password: "${
-                  serviceConfig.config.redis.password || ""
-                }"\ndb: ${serviceConfig.config.redis.db || 0}`;
+                });
               }
+            } else if (service.protocol === "tcp" && config.tcp) {
+              const tcpConfig = config.tcp;
+              document.getElementById("tcpEndpoint").value =
+                tcpConfig.endpoint || "";
+              document.getElementById("sendData").value =
+                tcpConfig.send_data || "";
+              document.getElementById("expectData").value =
+                tcpConfig.expect_data || "";
+            } else if (service.protocol === "grpc" && config.grpc) {
+              const grpcConfig = config.grpc;
+              document.getElementById("grpcEndpoint").value =
+                grpcConfig.endpoint || "";
+              document.getElementById("checkType").value =
+                grpcConfig.check_type || "health";
+              document.getElementById("serviceName").value =
+                grpcConfig.service_name || "";
+              document.getElementById("tls").checked = grpcConfig.tls !== false;
+              document.getElementById("insecureTLS").checked =
+                grpcConfig.insecure_tls === true;
             }
-            document.getElementById("config").value = configYaml;
+
             updateConfigFields();
             document.getElementById("serviceModal").style.display = "block";
           })
           .catch((error) => {
-            console.error("Failed to load service config:", error);
-            alert("Failed to load service config");
+            console.error("Failed to load service:", error);
+            alert("Failed to load service");
           });
       }
 
@@ -467,7 +760,7 @@
         if (
           confirm(`Are you sure you want to delete service "${serviceName}"?`)
         ) {
-          fetch(`/api/services/${serviceId}`, {
+          fetch(`/api/v1/services/${serviceId}`, {
             method: "DELETE",
           })
             .then((response) => {
@@ -496,40 +789,37 @@
 
       function updateConfigFields() {
         const protocol = document.getElementById("protocol").value;
-        const configTextarea = document.getElementById("config");
 
-        // Если поле конфигурации пустое или содержит только базовый placeholder,
-        // устанавливаем дефолтное значение для выбранного протокола
-        const currentValue = configTextarea.value.trim();
-        if (
-          currentValue === "" ||
-          currentValue === "{}" ||
-          currentValue === "# Protocol-specific configuration"
-        ) {
-          let exampleConfig = "";
-          switch (protocol) {
-            case "http":
-              exampleConfig = `method: "GET"
-expected_status: 200
-headers:`;
-              break;
-            case "tcp":
-              exampleConfig = `send_data: ""
-expect_data: ""`;
-              break;
-            case "grpc":
-              exampleConfig = `check_type: "connectivity"
-service_name: ""
-tls: true
-insecure_tls: false`;
-              break;
-            case "redis":
-              exampleConfig = `password: ""
-db: 0`;
-              break;
+        // Hide all config sections first
+        document.getElementById("tcpConfig").style.display = "none";
+        document.getElementById("grpcConfig").style.display = "none";
+        document.getElementById("multi_endpoint_config").style.display = "none";
+
+        if (protocol === "http") {
+          document.getElementById("multi_endpoint_config").style.display =
+            "block";
+
+          // Add first endpoint if none exists
+          const container = document.getElementById("endpoints_container");
+          if (container.children.length === 0) {
+            addEndpoint();
           }
-          configTextarea.value = exampleConfig;
+        } else if (protocol === "tcp") {
+          document.getElementById("tcpConfig").style.display = "block";
+        } else if (protocol === "grpc") {
+          document.getElementById("grpcConfig").style.display = "block";
         }
+      }
+
+      // Toggle functions for gRPC switches
+      function toggleTLS() {
+        const checkbox = document.getElementById("tls");
+        checkbox.checked = !checkbox.checked;
+      }
+
+      function toggleInsecureTLS() {
+        const checkbox = document.getElementById("insecureTLS");
+        checkbox.checked = !checkbox.checked;
       }
 
       document
@@ -538,10 +828,105 @@ db: 0`;
           e.preventDefault();
 
           const formData = new FormData(e.target);
+          const protocol = formData.get("protocol");
+
+          // Validate required fields based on protocol
+          if (protocol === "tcp") {
+            const tcpEndpoint = formData.get("tcpEndpoint");
+            if (!tcpEndpoint || !tcpEndpoint.trim()) {
+              alert("TCP Endpoint is required");
+              return;
+            }
+          } else if (protocol === "grpc") {
+            const grpcEndpoint = formData.get("grpcEndpoint");
+            if (!grpcEndpoint || !grpcEndpoint.trim()) {
+              alert("gRPC Endpoint is required");
+              return;
+            }
+          } else if (protocol === "http") {
+            const names = formData.getAll("endpoint_name[]");
+            const urls = formData.getAll("endpoint_url[]");
+            if (names.length === 0 || !names[0].trim() || !urls[0].trim()) {
+              alert("At least one HTTP endpoint with name and URL is required");
+              return;
+            }
+          }
+
+          let config = null;
+
+          // Build config based on protocol
+          if (protocol === "http") {
+            // HTTP config with endpoints
+            const endpoints = [];
+            const names = formData.getAll("endpoint_name[]");
+            const urls = formData.getAll("endpoint_url[]");
+            const methods = formData.getAll("endpoint_method[]");
+            const expectedStatuses = formData.getAll(
+              "endpoint_expected_status[]"
+            );
+            const jsonPaths = formData.getAll("endpoint_json_path[]");
+            const headers = formData.getAll("endpoint_headers[]");
+            const bodies = formData.getAll("endpoint_body[]");
+            const usernames = formData.getAll("endpoint_username[]");
+            const passwords = formData.getAll("endpoint_password[]");
+
+            if (names.length > 0 && names[0].trim()) {
+              for (let i = 0; i < names.length; i++) {
+                const endpoint = {
+                  name: names[i],
+                  url: urls[i],
+                  method: methods[i] || "GET",
+                  expected_status: parseInt(expectedStatuses[i]) || 200,
+                  json_path: jsonPaths[i] || "",
+                  headers: {},
+                  body: bodies[i] || "",
+                  username: usernames[i] || "",
+                  password: passwords[i] || "",
+                };
+
+                // Parse headers JSON
+                if (headers[i] && headers[i].trim()) {
+                  try {
+                    endpoint.headers = JSON.parse(headers[i]);
+                  } catch (e) {
+                    console.error("Invalid headers JSON:", headers[i]);
+                  }
+                }
+
+                endpoints.push(endpoint);
+              }
+            }
+
+            config = {
+              http: {
+                timeout: parseInt(formData.get("timeout")) * 1000000000, // Convert to nanoseconds
+                endpoints: endpoints,
+                condition: formData.get("condition") || "",
+              },
+            };
+          } else if (protocol === "tcp") {
+            config = {
+              tcp: {
+                endpoint: formData.get("tcpEndpoint"),
+                send_data: formData.get("sendData") || "",
+                expect_data: formData.get("expectData") || "",
+              },
+            };
+          } else if (protocol === "grpc") {
+            config = {
+              grpc: {
+                endpoint: formData.get("grpcEndpoint"),
+                check_type: formData.get("checkType") || "health",
+                service_name: formData.get("serviceName") || "",
+                tls: formData.get("tls") === "on",
+                insecure_tls: formData.get("insecureTLS") === "on",
+              },
+            };
+          }
+
           const service = {
             name: formData.get("name"),
             protocol: formData.get("protocol"),
-            endpoint: formData.get("endpoint"),
             interval: parseInt(formData.get("interval")) * 1000000000, // Convert to nanoseconds
             timeout: parseInt(formData.get("timeout")) * 1000000000,
             retries: parseInt(formData.get("retries")),
@@ -551,12 +936,12 @@ db: 0`;
               .map((tag) => tag.trim())
               .filter((tag) => tag),
             is_enabled: formData.get("is_enabled") === "on",
-            config: formData.get("config") || "",
+            config: config,
           };
 
           const url = currentServiceId
-            ? `/api/services/${currentServiceId}`
-            : "/api/services";
+            ? `/api/v1/services/${currentServiceId}`
+            : "/api/v1/services";
           const method = currentServiceId ? "PUT" : "POST";
 
           fetch(url, {
@@ -592,16 +977,61 @@ db: 0`;
         }
       };
 
+      // Prevent modal from closing when mouse leaves during drag operations
+      let isMouseDown = false;
+      let isDragging = false;
+
+      document.addEventListener("mousedown", function (event) {
+        isMouseDown = true;
+        isDragging = false;
+      });
+
+      document.addEventListener("mousemove", function (event) {
+        if (isMouseDown) {
+          isDragging = true;
+        }
+      });
+
+      document.addEventListener("mouseup", function (event) {
+        isMouseDown = false;
+        // Reset dragging state after a short delay
+        setTimeout(() => {
+          isDragging = false;
+        }, 100);
+      });
+
+      // Override the window.onclick for modal to prevent closing during drag
+      const originalWindowOnclick = window.onclick;
+      window.onclick = function (event) {
+        const modal = document.getElementById("serviceModal");
+        if (event.target === modal && !isDragging) {
+          closeModal();
+        }
+      };
+
+      // Add event listener for protocol change
+      document
+        .getElementById("protocol")
+        .addEventListener("change", function () {
+          const protocol = this.value;
+          if (protocol !== "http") {
+            // Reset multi-endpoint section for non-HTTP protocols
+            document.getElementById("multi_endpoint_config").style.display =
+              "none";
+            document.getElementById("endpoints_container").innerHTML = "";
+          }
+        });
+
       // Auto-refresh table every 30 seconds
       function refreshServicesTable() {
-        fetch("/api/services/table")
+        fetch("/api/v1/services")
           .then((response) => {
             if (!response.ok) {
               throw new Error(`HTTP error! status: ${response.status}`);
             }
             return response.json();
           })
-          .then((services) => {
+          .then((servicesWithState) => {
             const tbody = document.querySelector(".table tbody");
             if (!tbody) {
               return;
@@ -610,23 +1040,27 @@ db: 0`;
 
             // Handle both array and object formats
             let servicesArray = [];
-            if (Array.isArray(services)) {
-              servicesArray = services;
-            } else if (typeof services === "object" && services !== null) {
-              servicesArray = Object.values(services);
+            if (Array.isArray(servicesWithState)) {
+              servicesArray = servicesWithState;
+            } else if (
+              typeof servicesWithState === "object" &&
+              servicesWithState !== null
+            ) {
+              servicesArray = Object.values(servicesWithState);
             } else {
               return;
             }
 
-            servicesArray.forEach((service, index) => {
+            servicesArray.forEach((serviceWithState, index) => {
+              const service = serviceWithState.service;
+              const state = serviceWithState.state;
+
               const row = document.createElement("tr");
 
               // Get status and last check from state
-              const status = service.state ? service.state.status : "unknown";
+              const status = state ? state.status : "unknown";
               const lastCheck =
-                service.state && service.state.last_check
-                  ? service.state.last_check
-                  : null;
+                state && state.last_check ? state.last_check : null;
 
               // Generate tags HTML
               let tagsHtml = "";
@@ -657,7 +1091,6 @@ db: 0`;
                   </span>
                 </td>
                 <td>${tagsHtml}</td>
-                <td>${service.endpoint}</td>
                 <td>${formatDateTime(lastCheck)}</td>
                 <td>
                   <div class="incidents-info">
@@ -870,162 +1303,399 @@ db: 0`;
       // WebSocket connection for real-time updates
       let ws = null;
       let wsReconnectAttempts = 0;
+      let maxReconnectAttempts = 10;
 
       function connectWebSocket() {
         const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
         const wsUrl = `${protocol}//${window.location.host}/ws`;
 
+        console.log("WebSocket: attempting to connect to", wsUrl);
+
         try {
           ws = new WebSocket(wsUrl);
 
           ws.onopen = function () {
-            console.log("WebSocket connected");
+            console.log("WebSocket: connected successfully");
             wsReconnectAttempts = 0;
           };
 
           ws.onmessage = function (event) {
             try {
               const data = JSON.parse(event.data);
+              console.log("WebSocket: received message", data.type);
               if (data.type === "service_update") {
                 updateServicesTableFromWebSocket(data.services);
               }
             } catch (error) {
-              console.error("Failed to parse WebSocket message:", error);
+              console.error("WebSocket: failed to parse message:", error);
+              console.error("WebSocket: raw message:", event.data);
             }
           };
 
-          ws.onclose = function () {
-            console.log("WebSocket disconnected");
+          ws.onclose = function (event) {
+            console.log("WebSocket: disconnected", {
+              code: event.code,
+              reason: event.reason,
+              wasClean: event.wasClean,
+            });
 
-            setTimeout(connectWebSocket, 1000);
+            if (wsReconnectAttempts < maxReconnectAttempts) {
+              wsReconnectAttempts++;
+              const delay = Math.min(
+                1000 * Math.pow(2, wsReconnectAttempts),
+                30000
+              ); // exponential backoff, max 30s
+              console.log(
+                `WebSocket: attempting to reconnect in ${delay}ms (attempt ${wsReconnectAttempts}/${maxReconnectAttempts})`
+              );
+              setTimeout(connectWebSocket, delay);
+            } else {
+              console.error(
+                "WebSocket: max reconnection attempts reached, giving up"
+              );
+            }
           };
 
           ws.onerror = function (error) {
-            console.error("WebSocket error:", error);
+            console.error("WebSocket: connection error:", error);
+            console.error("WebSocket: error details:", {
+              readyState: ws.readyState,
+              url: ws.url,
+            });
           };
         } catch (error) {
-          console.error("Failed to create WebSocket connection:", error);
+          console.error("WebSocket: failed to create connection:", error);
         }
       }
 
       function updateServicesTableFromWebSocket(services) {
         const tbody = document.querySelector(".table tbody");
         if (!tbody) {
+          console.log("WebSocket: table body not found");
           return;
         }
 
-        tbody.innerHTML = "";
+        console.log(
+          "WebSocket: updating table with",
+          services.length,
+          "services"
+        );
 
-        services.forEach((service) => {
-          const row = document.createElement("tr");
+        // Получаем существующие строки таблицы
+        const existingRows = tbody.querySelectorAll("tr");
+        const existingServices = new Map();
 
-          // Get status and last check from state
-          const status = service.state ? service.state.status : "unknown";
-          const lastCheck =
-            service.state && service.state.last_check
-              ? service.state.last_check
-              : null;
+        existingRows.forEach((row) => {
+          const serviceLink = row.querySelector(".service-name");
+          if (serviceLink) {
+            const serviceId = serviceLink.getAttribute("href").split("/").pop();
+            existingServices.set(serviceId, row);
+          }
+        });
 
-          // Generate tags HTML
-          let tagsHtml = "";
-          if (service.tags && service.tags.length > 0) {
-            tagsHtml = service.tags
-              .map((tag) => `<span class="tag-badge">${tag}</span>`)
-              .join("");
-          } else {
-            tagsHtml = '<span class="no-tags">—</span>';
+        // Обрабатываем каждый сервис из WebSocket
+        services.forEach((serviceWithState) => {
+          // Структура данных: {service: {...}, state: {...}}
+          const service = serviceWithState.service;
+          const state = serviceWithState.state;
+
+          if (!service || !service.id) {
+            console.error("WebSocket: invalid service data", serviceWithState);
+            return;
           }
 
-          row.innerHTML = `
-            <td style="text-align: center;">
-              <div class="activity-indicator ${
-                service.is_enabled !== false ? "active" : "inactive"
-              }" title="${
-            service.is_enabled !== false ? "Enabled" : "Disabled"
-          }"></div>
-            </td>
-            <td>
-              <a href="/service/${service.id}" class="service-name">${
-            service.name
-          }</a>
-            </td>
-            <td>
-              <span class="badge badge-${status.toLowerCase()}">
-                ${status.toUpperCase()}
-              </span>
-            </td>
-            <td>${tagsHtml}</td>
-            <td>${service.endpoint}</td>
-            <td>${formatDateTime(lastCheck)}</td>
-            <td>
-              <div class="incidents-info">
-                <span class="incident-count active ${
-                  (service.active_incidents || 0) === 0 ? "no-incidents" : ""
-                }" data-service-id="${service.id}">${
-            service.active_incidents || 0
-          }</span>
-                <span class="incident-separator">/</span>
-                <span class="incident-count total" data-service-id="${
-                  service.id
-                }">${service.total_incidents || 0}</span>
-              </div>
-            </td>
-            <td>
-              <div class="dropdown">
-                <button class="dropdown-toggle" onclick="toggleDropdown('${
-                  service.id
-                }', event)">
-                  Actions
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down-icon lucide-chevron-down">
-                    <path d="m6 9 6 6 6-6"/>
-                  </svg>
-                </button>
-                <div class="dropdown-menu" id="dropdown-${service.id}">
-                  <button class="dropdown-item" onclick="triggerCheck('${
-                    service.id
-                  }')">
-                    <span class="dropdown-icon">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-refresh-cw-icon lucide-refresh-cw">
-                        <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
-                        <path d="M21 3v5h-5"/>
-                        <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
-                        <path d="M8 16H3v5"/>
-                      </svg>
-                    </span> Check
-                  </button>
-                  <button class="dropdown-item" onclick="editService('${
-                    service.id
-                  }')">
-                    <span class="dropdown-icon">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pencil-icon lucide-pencil">
-                        <path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/>
-                        <path d="m15 5 4 4"/>
-                      </svg>
-                    </span> Edit
-                  </button>
-                  <button class="dropdown-item" onclick="deleteService('${
-                    service.id
-                  }', '${service.name}')">
-                    <span class="dropdown-icon">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash-icon lucide-trash">
-                        <path d="M3 6h18"/>
-                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
-                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
-                      </svg>
-                    </span> Delete
-                  </button>
-                </div>
-              </div>
-            </td>
-          `;
-          tbody.appendChild(row);
+          console.log(
+            "WebSocket: processing service",
+            service.id,
+            "status:",
+            state?.status
+          );
+
+          const existingRow = existingServices.get(service.id);
+
+          if (existingRow) {
+            // Обновляем существующую строку без анимации
+            updateExistingRow(existingRow, serviceWithState);
+            existingServices.delete(service.id); // Убираем из списка обработанных
+          } else {
+            // Добавляем новую строку
+            const newRow = createServiceRow(serviceWithState);
+            tbody.appendChild(newRow);
+          }
         });
+
+        // Удаляем строки сервисов, которых больше нет
+        existingServices.forEach((row) => {
+          row.remove();
+        });
+      }
+
+      function updateExistingRow(row, serviceWithState) {
+        const service = serviceWithState.service;
+        const state = serviceWithState.state;
+
+        // Обновляем статус
+        const statusCell = row.querySelector("td:nth-child(3) .badge");
+        if (statusCell) {
+          const status = state ? state.status : "unknown";
+          statusCell.className = `badge badge-${status.toLowerCase()}`;
+          statusCell.textContent = status.toUpperCase();
+          console.log(
+            "WebSocket: updated status for",
+            service.id,
+            "to",
+            status
+          );
+        }
+
+        // Обновляем время последней проверки
+        const lastCheckCell = row.querySelector("td:nth-child(5)");
+        if (lastCheckCell) {
+          const lastCheck = state && state.last_check ? state.last_check : null;
+          lastCheckCell.textContent = formatDateTime(lastCheck);
+        }
+
+        // Обновляем количество инцидентов
+        const incidentsCell = row.querySelector("td:nth-child(6)");
+        if (incidentsCell) {
+          const activeIncidentsSpan = incidentsCell.querySelector(
+            ".incident-count.active"
+          );
+          const totalIncidentsSpan = incidentsCell.querySelector(
+            ".incident-count.total"
+          );
+
+          if (activeIncidentsSpan) {
+            const activeCount = service.active_incidents || 0;
+            activeIncidentsSpan.textContent = activeCount;
+            activeIncidentsSpan.className = `incident-count active ${
+              activeCount === 0 ? "no-incidents" : ""
+            }`;
+          }
+
+          if (totalIncidentsSpan) {
+            totalIncidentsSpan.textContent = service.total_incidents || 0;
+          }
+        }
+
+        // Обновляем индикатор активности
+        const activityIndicator = row.querySelector(".activity-indicator");
+        if (activityIndicator) {
+          activityIndicator.className = `activity-indicator ${
+            service.is_enabled !== false ? "active" : "inactive"
+          }`;
+          activityIndicator.title =
+            service.is_enabled !== false ? "Enabled" : "Disabled";
+        }
+      }
+
+      function createServiceRow(serviceWithState) {
+        const service = serviceWithState.service;
+        const state = serviceWithState.state;
+        const row = document.createElement("tr");
+
+        // Get status and last check from state
+        const status = state ? state.status : "unknown";
+        const lastCheck = state && state.last_check ? state.last_check : null;
+
+        // Generate tags HTML
+        let tagsHtml = "";
+        if (service.tags && service.tags.length > 0) {
+          tagsHtml = service.tags
+            .map((tag) => `<span class="tag-badge">${tag}</span>`)
+            .join("");
+        } else {
+          tagsHtml = '<span class="no-tags">—</span>';
+        }
+
+        row.innerHTML = `
+          <td style="text-align: center;">
+            <div class="activity-indicator ${
+              service.is_enabled !== false ? "active" : "inactive"
+            }" title="${
+          service.is_enabled !== false ? "Enabled" : "Disabled"
+        }"></div>
+          </td>
+          <td>
+            <a href="/service/${service.id}" class="service-name">${
+          service.name
+        }</a>
+          </td>
+          <td>
+            <span class="badge badge-${status.toLowerCase()}">
+              ${status.toUpperCase()}
+            </span>
+          </td>
+          <td>${tagsHtml}</td>
+          <td>${formatDateTime(lastCheck)}</td>
+          <td>
+            <div class="incidents-info">
+              <span class="incident-count active ${
+                (service.active_incidents || 0) === 0 ? "no-incidents" : ""
+              }" data-service-id="${service.id}">${
+          service.active_incidents || 0
+        }</span>
+              <span class="incident-separator">/</span>
+              <span class="incident-count total" data-service-id="${
+                service.id
+              }">${service.total_incidents || 0}</span>
+            </div>
+          </td>
+          <td>
+            <div class="dropdown">
+              <button class="dropdown-toggle" onclick="toggleDropdown('${
+                service.id
+              }', event)">
+                Actions
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down-icon lucide-chevron-down">
+                  <path d="m6 9 6 6 6-6"/>
+                </svg>
+              </button>
+              <div class="dropdown-menu" id="dropdown-${service.id}">
+                <button class="dropdown-item" onclick="triggerCheck('${
+                  service.id
+                }')">
+                  <span class="dropdown-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-refresh-cw-icon lucide-refresh-cw">
+                      <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                      <path d="M21 3v5h-5"/>
+                      <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                      <path d="M8 16H3v5"/>
+                    </svg>
+                  </span> Check
+                </button>
+                <button class="dropdown-item" onclick="editService('${
+                  service.id
+                }')">
+                  <span class="dropdown-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pencil-icon lucide-pencil">
+                      <path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/>
+                      <path d="m15 5 4 4"/>
+                    </svg>
+                  </span> Edit
+                </button>
+                <button class="dropdown-item" onclick="deleteService('${
+                  service.id
+                }', '${service.name}')">
+                  <span class="dropdown-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash-icon lucide-trash">
+                      <path d="M3 6h18"/>
+                      <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+                      <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                    </svg>
+                  </span> Delete
+                </button>
+              </div>
+            </div>
+          </td>
+        `;
+
+        return row;
       }
 
       // Toggle switch function
       function toggleSwitch() {
         const checkbox = document.getElementById("is_enabled");
         checkbox.checked = !checkbox.checked;
+      }
+
+      // Toggle multi-endpoint function
+      function toggleMultiEndpoint() {
+        const checkbox = document.getElementById("multi_endpoint_enabled");
+        checkbox.checked = !checkbox.checked;
+
+        const configDiv = document.getElementById("multi_endpoint_config");
+        if (checkbox.checked) {
+          configDiv.style.display = "block";
+          console.log("Multi-endpoint section enabled");
+        } else {
+          configDiv.style.display = "none";
+          console.log("Multi-endpoint section disabled");
+        }
+      }
+
+      // Add endpoint function
+      function addEndpoint() {
+        const container = document.getElementById("endpoints_container");
+        const endpointCount = container.children.length + 1;
+
+        const endpointDiv = document.createElement("div");
+        endpointDiv.className = "endpoint-item";
+        endpointDiv.innerHTML = `
+          <div class="endpoint-header">
+            <h5>Endpoint ${endpointCount}</h5>
+            <button type="button" class="btn btn-danger btn-sm" onclick="removeEndpoint(this)">
+              Remove
+            </button>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Name</label>
+              <input type="text" name="endpoint_name[]" placeholder="endpoint${endpointCount}" />
+            </div>
+            <div class="form-group">
+              <label>URL</label>
+              <input type="url" name="endpoint_url[]" placeholder="https://api.example.com/status" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Method</label>
+              <select name="endpoint_method[]">
+                <option value="GET">GET</option>
+                <option value="POST">POST</option>
+                <option value="PUT">PUT</option>
+                <option value="DELETE">DELETE</option>
+                <option value="HEAD">HEAD</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Expected Status</label>
+              <input type="number" name="endpoint_expected_status[]" value="200" min="100" max="599" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>JSON Path</label>
+              <input type="text" name="endpoint_json_path[]" placeholder="result.block_number" />
+              <small class="form-text">Path to extract value from JSON response (e.g., "result.block_number")</small>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Username (Basic Auth)</label>
+              <input type="text" name="endpoint_username[]" placeholder="username" />
+            </div>
+            <div class="form-group">
+              <label>Password (Basic Auth)</label>
+              <input type="password" name="endpoint_password[]" placeholder="password" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Headers (JSON)</label>
+            <textarea name="endpoint_headers[]" placeholder='{"Authorization": "Bearer token"}' rows="2"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Body</label>
+            <textarea name="endpoint_body[]" placeholder="Request body (for POST/PUT)" rows="2"></textarea>
+          </div>
+        `;
+
+        container.appendChild(endpointDiv);
+      }
+
+      // Remove endpoint function
+      function removeEndpoint(button) {
+        const endpointItem = button.closest(".endpoint-item");
+        endpointItem.remove();
+
+        // Renumber endpoints
+        const container = document.getElementById("endpoints_container");
+        const endpoints = container.querySelectorAll(".endpoint-item");
+        endpoints.forEach((endpoint, index) => {
+          const header = endpoint.querySelector("h5");
+          header.textContent = `Endpoint ${index + 1}`;
+        });
       }
 
       // Connect to WebSocket when page loads

@@ -14,10 +14,19 @@ import (
 	"google.golang.org/grpc/health/grpc_health_v1"
 )
 
+// GRPCConfig represents gRPC monitor configuration
+type GRPCConfig struct {
+	Endpoint    string `json:"endpoint" validate:"required"`
+	CheckType   string `json:"check_type" validate:"required,oneof=health reflection connectivity"`
+	ServiceName string `json:"service_name,omitempty"`
+	TLS         bool   `json:"tls,omitempty"`
+	InsecureTLS bool   `json:"insecure_tls,omitempty"`
+}
+
 // GRPCMonitor monitors gRPC services
 type GRPCMonitor struct {
 	BaseMonitor
-	conf storage.GRPCConfig
+	conf GRPCConfig
 	conn *grpc.ClientConn
 }
 
@@ -27,15 +36,12 @@ func NewGRPCMonitor(cfg storage.Service) (*GRPCMonitor, error) {
 		BaseMonitor: NewBaseMonitor(cfg),
 	}
 
-	if cfg.Config.GRPC != nil {
-		monitor.conf = *cfg.Config.GRPC
-	} else {
-		monitor.conf = storage.GRPCConfig{
-			TLS:         true,
-			InsecureTLS: false,
-			CheckType:   "health",
-		}
+	conf, err := GetConfig[GRPCConfig](cfg.Config, storage.ServiceProtocolTypeGRPC)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get gRPC config: %w", err)
 	}
+
+	monitor.conf = conf
 
 	// Create gRPC connection options
 	var opts []grpc.DialOption
@@ -52,8 +58,14 @@ func NewGRPCMonitor(cfg storage.Service) (*GRPCMonitor, error) {
 		opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	}
 
+	// Get endpoint from config
+	if conf.Endpoint == "" {
+		return nil, fmt.Errorf("gRPC endpoint not configured")
+	}
+	endpoint := conf.Endpoint
+
 	// Create connection without blocking
-	conn, err := grpc.NewClient(cfg.Endpoint, opts...)
+	conn, err := grpc.NewClient(endpoint, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create gRPC connection: %w", err)
 	}

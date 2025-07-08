@@ -118,3 +118,8 @@ init-config: ## Copy example configuration
 release: clean build-all test ## Create release build
 	@echo "Release $(VERSION) built successfully"
 	@ls -la $(BUILD_DIR)/
+
+genswagger:
+	rm -rf ./docs/*
+	swag fmt -d ./internal/web
+	swag init -o docs/docsv1 --dir ./internal/web -g handlers.go --parseDependency

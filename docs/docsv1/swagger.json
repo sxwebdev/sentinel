@@ -1,0 +1,891 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "API for service monitoring and incident management",
+        "title": "Sentinel Monitoring API",
+        "termsOfService": "http://swagger.io/terms/",
+        "contact": {
+            "name": "API Support",
+            "url": "http://www.swagger.io/support",
+            "email": "support@swagger.io"
+        },
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        },
+        "version": "1.0"
+    },
+    "basePath": "/api/v1",
+    "paths": {
+        "/dashboard/stats": {
+            "get": {
+                "description": "Returns statistics for the dashboard",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "dashboard"
+                ],
+                "summary": "Get dashboard statistics",
+                "responses": {
+                    "200": {
+                        "description": "Dashboard statistics",
+                        "schema": {
+                            "$ref": "#/definitions/web.DashboardStats"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/incidents": {
+            "get": {
+                "description": "Returns a list of recent incidents across all services",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "incidents"
+                ],
+                "summary": "Get recent incidents",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Number of incidents (default 50)",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of incidents",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/web.Incident"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/services": {
+            "get": {
+                "description": "Returns a list of all services with their current states",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "services"
+                ],
+                "summary": "Get all services",
+                "responses": {
+                    "200": {
+                        "description": "List of services with states",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/web.ServiceWithState"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Creates a new service for monitoring",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "services"
+                ],
+                "summary": "Create new service",
+                "parameters": [
+                    {
+                        "description": "Service configuration",
+                        "name": "service",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/web.ServiceDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Service created",
+                        "schema": {
+                            "$ref": "#/definitions/storage.Service"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/services/{id}": {
+            "get": {
+                "description": "Returns detailed information about a specific service",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "services"
+                ],
+                "summary": "Get service details",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Service ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Service details with state",
+                        "schema": {
+                            "$ref": "#/definitions/web.ServiceWithState"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Service not found",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Updates an existing service",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "services"
+                ],
+                "summary": "Update service",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Service ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "New service configuration",
+                        "name": "service",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/web.ServiceDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Service updated",
+                        "schema": {
+                            "$ref": "#/definitions/storage.Service"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Service not found",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Deletes a service from the monitoring system",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "services"
+                ],
+                "summary": "Delete service",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Service ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Service deleted"
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/services/{id}/check": {
+            "post": {
+                "description": "Triggers a manual check of service status",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "services"
+                ],
+                "summary": "Trigger service check",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Service ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Check triggered successfully",
+                        "schema": {
+                            "$ref": "#/definitions/web.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Service not found",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/services/{id}/incidents": {
+            "get": {
+                "description": "Returns a list of incidents for a specific service",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "incidents"
+                ],
+                "summary": "Get service incidents",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Service ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of incidents",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/web.Incident"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/services/{id}/incidents/{incidentId}": {
+            "delete": {
+                "description": "Deletes a specific incident for a service",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "incidents"
+                ],
+                "summary": "Delete incident",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Service ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Incident ID",
+                        "name": "incidentId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Incident deleted"
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Incident not found",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/services/{id}/resolve": {
+            "post": {
+                "description": "Forcefully resolves all active incidents for a service",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "incidents"
+                ],
+                "summary": "Resolve service incidents",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Service ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Incidents resolved successfully",
+                        "schema": {
+                            "$ref": "#/definitions/web.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Service not found",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/services/{id}/stats": {
+            "get": {
+                "description": "Returns service statistics for the specified period",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "statistics"
+                ],
+                "summary": "Get service statistics",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Service ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of days (default 30)",
+                        "name": "days",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Service statistics",
+                        "schema": {
+                            "$ref": "#/definitions/web.ServiceStats"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "storage.Service": {
+            "type": "object",
+            "properties": {
+                "active_incidents": {
+                    "type": "integer"
+                },
+                "config": {
+                    "type": "object",
+                    "additionalProperties": {}
+                },
+                "id": {
+                    "type": "string"
+                },
+                "interval": {
+                    "type": "integer"
+                },
+                "is_enabled": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "protocol": {
+                    "$ref": "#/definitions/storage.ServiceProtocolType"
+                },
+                "retries": {
+                    "type": "integer"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "timeout": {
+                    "type": "integer"
+                },
+                "total_incidents": {
+                    "type": "integer"
+                }
+            }
+        },
+        "storage.ServiceProtocolType": {
+            "type": "string",
+            "enum": [
+                "http",
+                "tcp",
+                "grpc"
+            ],
+            "x-enum-varnames": [
+                "ServiceProtocolTypeHTTP",
+                "ServiceProtocolTypeTCP",
+                "ServiceProtocolTypeGRPC"
+            ]
+        },
+        "storage.ServiceStateRecord": {
+            "type": "object",
+            "properties": {
+                "consecutive_fails": {
+                    "type": "integer"
+                },
+                "consecutive_success": {
+                    "type": "integer"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "last_check": {
+                    "type": "string"
+                },
+                "last_error": {
+                    "type": "string"
+                },
+                "next_check": {
+                    "type": "string"
+                },
+                "response_time_ns": {
+                    "type": "integer"
+                },
+                "service_id": {
+                    "type": "string"
+                },
+                "status": {
+                    "description": "\"up\", \"down\", \"unknown\"",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/storage.ServiceStatus"
+                        }
+                    ]
+                },
+                "total_checks": {
+                    "type": "integer"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "storage.ServiceStatus": {
+            "type": "string",
+            "enum": [
+                "unknown",
+                "up",
+                "down",
+                "maintenance"
+            ],
+            "x-enum-varnames": [
+                "StatusUnknown",
+                "StatusUp",
+                "StatusDown",
+                "StatusMaintenance"
+            ]
+        },
+        "web.DashboardStats": {
+            "description": "Dashboard statistics",
+            "type": "object",
+            "properties": {
+                "active_incidents": {
+                    "type": "integer",
+                    "example": 2
+                },
+                "avg_response_time": {
+                    "type": "integer",
+                    "example": 150
+                },
+                "checks_per_minute": {
+                    "type": "integer",
+                    "example": 60
+                },
+                "last_check_time": {
+                    "type": "string"
+                },
+                "protocols": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "integer"
+                    }
+                },
+                "recent_incidents": {
+                    "type": "integer",
+                    "example": 5
+                },
+                "services_down": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "services_unknown": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "services_up": {
+                    "type": "integer",
+                    "example": 8
+                },
+                "total_checks": {
+                    "type": "integer",
+                    "example": 1000
+                },
+                "total_services": {
+                    "type": "integer",
+                    "example": 10
+                },
+                "uptime_percentage": {
+                    "type": "number",
+                    "example": 95.5
+                }
+            }
+        },
+        "web.ErrorResponse": {
+            "description": "Error response",
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string",
+                    "example": "Error description"
+                }
+            }
+        },
+        "web.Incident": {
+            "description": "Service incident",
+            "type": "object",
+            "properties": {
+                "duration": {
+                    "type": "string",
+                    "example": "2h30m"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "01HXYZ1234567890ABCDEF"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Connection timeout"
+                },
+                "resolved": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "resolved_at": {
+                    "type": "string"
+                },
+                "service_id": {
+                    "type": "string",
+                    "example": "service-1"
+                },
+                "service_name": {
+                    "type": "string",
+                    "example": "Web Server"
+                },
+                "started_at": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "down"
+                }
+            }
+        },
+        "web.ServiceDTO": {
+            "type": "object",
+            "properties": {
+                "active_incidents": {
+                    "type": "integer",
+                    "example": 2
+                },
+                "config": {
+                    "description": "JSON object",
+                    "type": "object",
+                    "additionalProperties": {}
+                },
+                "id": {
+                    "type": "string",
+                    "example": "service-1"
+                },
+                "interval": {
+                    "type": "integer",
+                    "example": 30000000000
+                },
+                "is_enabled": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Web Server"
+                },
+                "protocol": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/storage.ServiceProtocolType"
+                        }
+                    ],
+                    "example": "http"
+                },
+                "retries": {
+                    "type": "integer",
+                    "example": 3
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "web",
+                        "production"
+                    ]
+                },
+                "timeout": {
+                    "type": "integer",
+                    "example": 5000000000
+                },
+                "total_incidents": {
+                    "type": "integer",
+                    "example": 10
+                }
+            }
+        },
+        "web.ServiceStats": {
+            "description": "Service statistics",
+            "type": "object",
+            "properties": {
+                "avg_response_time": {
+                    "type": "integer",
+                    "example": 150000000
+                },
+                "period": {
+                    "type": "integer",
+                    "example": 2592000000000000
+                },
+                "service_id": {
+                    "type": "string",
+                    "example": "service-1"
+                },
+                "total_downtime": {
+                    "type": "integer",
+                    "example": 1800000000000
+                },
+                "total_incidents": {
+                    "type": "integer",
+                    "example": 5
+                },
+                "uptime_percentage": {
+                    "type": "number",
+                    "example": 95
+                }
+            }
+        },
+        "web.ServiceWithState": {
+            "type": "object",
+            "properties": {
+                "service": {
+                    "$ref": "#/definitions/storage.Service"
+                },
+                "state": {
+                    "$ref": "#/definitions/storage.ServiceStateRecord"
+                }
+            }
+        },
+        "web.SuccessResponse": {
+            "description": "Successful response",
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "Operation completed successfully"
+                }
+            }
+        }
+    }
+}

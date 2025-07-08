@@ -15,8 +15,9 @@ type Config struct {
 
 // ServerConfig holds web server configuration
 type ServerConfig struct {
-	Port int    `yaml:"port"`
-	Host string `yaml:"host"`
+	Port     int    `yaml:"port"`
+	Host     string `yaml:"host"`
+	BaseHost string `yaml:"base_host"`
 }
 
 // MonitoringConfig holds global monitoring settings

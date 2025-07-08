@@ -37,83 +37,16 @@
           <h3>Service Information</h3>
         </div>
         <div class="card-body">
-          <div class="service-info">
-            <div class="service-info-item">
-              <span class="service-info-label">Status:</span>
-              <span class="badge badge-{{.State.Status | statusToLower}}">
-                {{.State.Status | statusToString}}
-              </span>
-            </div>
-            <div class="service-info-item">
-              <span class="service-info-label">Enabled:</span>
-              <div
-                class="activity-indicator {{if .Service.IsEnabled}}active{{else}}inactive{{end}}"
-              ></div>
-            </div>
-            <div class="service-info-item">
-              <span class="service-info-label">Protocol:</span>
-              <span class="service-info-value">{{.Service.Protocol}}</span>
-            </div>
-            <div class="service-info-item">
-              <span class="service-info-label">Endpoint:</span>
-              <span class="service-info-value">{{.Service.Endpoint}}</span>
-            </div>
-            <div class="service-info-item">
-              <span class="service-info-label">Total Checks:</span>
-              <span class="service-info-value">{{.State.TotalChecks}}</span>
-            </div>
-            <div class="service-info-item">
-              <span class="service-info-label">Consecutive Success:</span>
-              <span class="service-info-value"
-                >{{.State.ConsecutiveSuccess}}</span
-              >
-            </div>
-            <div class="service-info-item">
-              <span class="service-info-label">Consecutive Fails:</span>
-              <span class="service-info-value"
-                >{{.State.ConsecutiveFails}}</span
-              >
-            </div>
-            {{if .State.ResponseTime}}
-            <div class="service-info-item">
-              <span class="service-info-label">Response Time:</span>
-              <span class="service-info-value">{{.State.ResponseTime}}</span>
-            </div>
-            {{end}}
-            <div class="service-info-item">
-              <span class="service-info-label">Last Check:</span>
-              <span class="service-info-value"
-                >{{.State.LastCheck | formatDateTimePtr}}</span
-              >
-            </div>
-            {{if .State.LastError}}
-            <div class="service-error">
-              <strong>Last Error:</strong> {{.State.LastError}}
-            </div>
-            {{end}}
+          <div class="service-info" id="serviceInfo">
+            <div class="loading">Loading service information...</div>
           </div>
         </div>
       </div>
 
       <!-- Stats Grid -->
-      {{if .Stats}}
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-value">{{.Stats.TotalIncidents}}</div>
-          <div class="stat-label">Total Incidents</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value">
-            {{printf "%.1f" .Stats.UptimePercentage}}%
-          </div>
-          <div class="stat-label">Uptime</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value">{{.Stats.TotalDowntime}}</div>
-          <div class="stat-label">Total Downtime</div>
-        </div>
+      <div class="stats-grid" id="statsGrid">
+        <div class="loading">Loading statistics...</div>
       </div>
-      {{end}}
 
       <!-- Incidents List -->
       <div class="card">
@@ -121,38 +54,245 @@
           <h3>Recent Incidents</h3>
         </div>
         <div class="card-body">
-          {{if .Incidents}} {{range .Incidents}}
-          <div class="incident-item">
-            <div class="incident-header">
-              <span class="incident-time">{{.StartTime | formatDateTime}}</span>
-              {{if .Resolved}}
-              <span class="incident-status resolved">Resolved</span>
-              {{else}}
-              <span class="incident-status active">Active</span>
-              {{end}}
-            </div>
-            {{if .Error}}
-            <div class="incident-error">{{.Error}}</div>
-            {{end}} {{if .Duration}}
-            <div class="incident-duration">Duration: {{.Duration}}</div>
-            {{end}}
+          <div id="incidentsList">
+            <div class="loading">Loading incidents...</div>
           </div>
-          {{end}} {{else}}
-          <p>No incidents found.</p>
-          {{end}}
         </div>
       </div>
     </div>
 
     <script>
+      const serviceId = "{{.Service.ID}}";
+
+      // Load service information
+      function loadServiceInfo() {
+        fetch(`/api/v1/services/${serviceId}`)
+          .then((response) => response.json())
+          .then((serviceWithState) => {
+            const service = serviceWithState.service;
+            const state = serviceWithState.state;
+
+            const serviceInfo = document.getElementById("serviceInfo");
+            serviceInfo.innerHTML = `
+              <div class="service-info-item">
+                <span class="service-info-label">Status:</span>
+                <span class="badge badge-${
+                  state?.status?.toLowerCase() || "unknown"
+                }">
+                  ${state?.status || "Unknown"}
+                </span>
+              </div>
+              <div class="service-info-item">
+                <span class="service-info-label">Enabled:</span>
+                <div class="activity-indicator ${
+                  service.is_enabled ? "active" : "inactive"
+                }"></div>
+              </div>
+              <div class="service-info-item">
+                <span class="service-info-label">Protocol:</span>
+                <span class="service-info-value">${service.protocol}</span>
+              </div>
+              ${
+                service.config.url
+                  ? `
+              <div class="service-info-item">
+                <span class="service-info-label">URL:</span>
+                <span class="service-info-value">${service.config.url}</span>
+              </div>
+              `
+                  : ""
+              }
+              ${
+                service.config.endpoint
+                  ? `
+              <div class="service-info-item">
+                <span class="service-info-label">Endpoint:</span>
+                <span class="service-info-value">${service.config.endpoint}</span>
+              </div>
+              `
+                  : ""
+              }
+              <div class="service-info-item">
+                <span class="service-info-label">Total Checks:</span>
+                <span class="service-info-value">${
+                  state?.total_checks || 0
+                }</span>
+              </div>
+              <div class="service-info-item">
+                <span class="service-info-label">Consecutive Success:</span>
+                <span class="service-info-value">${
+                  state?.consecutive_success || 0
+                }</span>
+              </div>
+              <div class="service-info-item">
+                <span class="service-info-label">Consecutive Fails:</span>
+                <span class="service-info-value">${
+                  state?.consecutive_fails || 0
+                }</span>
+              </div>
+              ${
+                state?.response_time_ns
+                  ? `
+              <div class="service-info-item">
+                <span class="service-info-label">Response Time:</span>
+                <span class="service-info-value">${Math.round(
+                  state.response_time_ns / 1000000
+                )}ms</span>
+              </div>
+              `
+                  : ""
+              }
+              <div class="service-info-item">
+                <span class="service-info-label">Last Check:</span>
+                <span class="service-info-value">${
+                  state?.last_check
+                    ? new Date(state.last_check).toLocaleString()
+                    : "Never"
+                }</span>
+              </div>
+              ${
+                state?.last_error
+                  ? `
+              <div class="service-error">
+                <strong>Last Error:</strong> ${state.last_error}
+              </div>
+              `
+                  : ""
+              }
+            `;
+          })
+          .catch((error) => {
+            console.error("Failed to load service info:", error);
+            document.getElementById("serviceInfo").innerHTML =
+              '<div class="error">Failed to load service information</div>';
+          });
+      }
+
+      // Load service statistics
+      function loadServiceStats() {
+        fetch(`/api/v1/services/${serviceId}/stats`)
+          .then((response) => response.json())
+          .then((stats) => {
+            const statsGrid = document.getElementById("statsGrid");
+            statsGrid.innerHTML = `
+              <div class="stat-card">
+                <div class="stat-value">${stats.total_incidents || 0}</div>
+                <div class="stat-label">Total Incidents</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-value">${(
+                  stats.uptime_percentage || 0
+                ).toFixed(1)}%</div>
+                <div class="stat-label">Uptime</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-value">${Math.round(
+                  (stats.avg_response_time || 0) / 1000000
+                )}ms</div>
+                <div class="stat-label">Avg Response Time</div>
+              </div>
+            `;
+          })
+          .catch((error) => {
+            console.error("Failed to load service stats:", error);
+            document.getElementById("statsGrid").innerHTML =
+              '<div class="error">Failed to load statistics</div>';
+          });
+      }
+
+      // Load incidents
+      function loadIncidents() {
+        fetch(`/api/v1/services/${serviceId}/incidents`)
+          .then((response) => response.json())
+          .then((incidents) => {
+            const incidentsList = document.getElementById("incidentsList");
+            if (incidents && incidents.length > 0) {
+              incidentsList.innerHTML = incidents
+                .map((incident) => {
+                  const startTime = new Date(
+                    incident.start_time
+                  ).toLocaleString();
+                  const endTime = incident.end_time
+                    ? new Date(incident.end_time).toLocaleString()
+                    : "Ongoing";
+                  const duration = incident.duration
+                    ? `${Math.round(incident.duration / 1000000000)}s`
+                    : "";
+
+                  return `
+                  <div class="incident-item">
+                    <div class="incident-header">
+                      <span class="incident-time">${startTime}</span>
+                      <div class="incident-actions">
+                        <span class="incident-status ${
+                          incident.resolved ? "resolved" : "active"
+                        }">
+                          ${incident.resolved ? "Resolved" : "Active"}
+                        </span>
+                        <button 
+                          class="btn btn-danger btn-sm" 
+                          onclick="deleteIncident('${incident.id}')"
+                          title="Delete incident"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash-icon lucide-trash">
+                            <path d="M3 6h18"/>
+                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+                            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                    ${
+                      incident.error
+                        ? `<div class="incident-error">${incident.error}</div>`
+                        : ""
+                    }
+                    <div class="incident-details">
+                      <div class="incident-detail-item">
+                        <strong>Start:</strong> ${startTime}
+                      </div>
+                      <div class="incident-detail-item">
+                        <strong>End:</strong> ${endTime}
+                      </div>
+                      ${
+                        duration
+                          ? `<div class="incident-detail-item"><strong>Duration:</strong> ${duration}</div>`
+                          : ""
+                      }
+                    </div>
+                  </div>
+                `;
+                })
+                .join("");
+            } else {
+              incidentsList.innerHTML = "<p>No incidents found.</p>";
+            }
+          })
+          .catch((error) => {
+            console.error("Failed to load incidents:", error);
+            document.getElementById("incidentsList").innerHTML =
+              '<div class="error">Failed to load incidents</div>';
+          });
+      }
+
+      // Load all data on page load
+      document.addEventListener("DOMContentLoaded", function () {
+        loadServiceInfo();
+        loadServiceStats();
+        loadIncidents();
+      });
+
       function triggerCheck() {
-        fetch(`/api/services/{{.Service.ID}}/check`, {
+        fetch(`/api/v1/services/${serviceId}/check`, {
           method: "POST",
         })
           .then((response) => response.json())
           .then((data) => {
             if (data.message) {
-              location.reload();
+              // Reload data instead of full page reload
+              loadServiceInfo();
+              loadServiceStats();
+              loadIncidents();
             }
           })
           .catch((error) => {
@@ -166,19 +306,50 @@
             "Are you sure you want to resolve all active incidents for this service?"
           )
         ) {
-          fetch(`/api/services/{{.Service.ID}}/resolve`, {
+          fetch(`/api/v1/services/${serviceId}/resolve`, {
             method: "POST",
           })
             .then((response) => response.json())
             .then((data) => {
               if (data.message) {
                 alert("Incidents resolved successfully");
-                location.reload();
+                // Reload data instead of full page reload
+                loadServiceInfo();
+                loadServiceStats();
+                loadIncidents();
               }
             })
             .catch((error) => {
               console.error("Failed to resolve incidents:", error);
               alert("Failed to resolve incidents: " + error);
+            });
+        }
+      }
+
+      function deleteIncident(incidentId) {
+        if (
+          confirm(
+            "Are you sure you want to delete this incident? This action cannot be undone."
+          )
+        ) {
+          fetch(`/api/v1/services/${serviceId}/incidents/${incidentId}`, {
+            method: "DELETE",
+          })
+            .then((response) => {
+              if (response.ok) {
+                // Reload data instead of full page reload
+                loadServiceInfo();
+                loadServiceStats();
+                loadIncidents();
+              } else {
+                return response.json().then((data) => {
+                  throw new Error(data.error || "Failed to delete incident");
+                });
+              }
+            })
+            .catch((error) => {
+              console.error("Failed to delete incident:", error);
+              alert("Failed to delete incident: " + error.message);
             });
         }
       }

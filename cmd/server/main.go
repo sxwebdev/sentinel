@@ -44,7 +44,6 @@ func run(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to initialize storage: %w", err)
 	}
-	defer stor.Close()
 
 	// Initialize notifier
 	var notif notifier.Notifier
@@ -64,8 +63,8 @@ func run(ctx context.Context) error {
 		return err
 	}
 
-	// Initialize monitor service
-	monitorService := service.NewMonitorService(stor, notif, rc)
+	// Create monitor service
+	monitorService := service.NewMonitorService(stor, cfg, notif, rc)
 
 	// Initialize scheduler
 	sched := scheduler.New(monitorService, rc)
@@ -84,8 +83,8 @@ func run(ctx context.Context) error {
 		}
 	}()
 
-	// Initialize web server
-	webServer, err := web.NewServer(cfg, monitorService, rc)
+	// Create web server
+	webServer, err := web.NewServer(cfg, monitorService, stor, rc)
 	if err != nil {
 		return fmt.Errorf("failed to initialize web server: %w", err)
 	}
@@ -120,13 +119,16 @@ func run(ctx context.Context) error {
 		return err
 	}
 
-	// Graceful shutdown
+	// Graceful shutdown - сначала останавливаем WebSocket, потом базу данных
 	shutdownCtx, shutdownCancel = context.WithTimeout(context.Background(), 500*time.Millisecond)
 	defer shutdownCancel()
 
 	if err := webServer.App().ShutdownWithContext(shutdownCtx); err != nil {
 		return fmt.Errorf("failed to shutdown Fiber server: %w", err)
 	}
+
+	// Закрываем базу данных в последнюю очередь
+	defer stor.Close()
 
 	return nil
 }

@@ -83,6 +83,11 @@ func (s *SQLiteStorage) UpdateIncident(ctx context.Context, incident *Incident) 
 	return s.orm.UpdateIncident(ctx, incident)
 }
 
+// DeleteIncident deletes an incident by ID
+func (s *SQLiteStorage) DeleteIncident(ctx context.Context, incidentID string) error {
+	return s.orm.DeleteIncident(ctx, incidentID)
+}
+
 // GetIncidentsByService retrieves all incidents for a specific service
 func (s *SQLiteStorage) GetIncidentsByService(ctx context.Context, serviceID string) ([]*Incident, error) {
 	return s.orm.FindIncidentsByService(ctx, serviceID)
@@ -140,4 +145,21 @@ func (s *SQLiteStorage) UpdateService(ctx context.Context, service *Service) err
 // DeleteService deletes a service by ID
 func (s *SQLiteStorage) DeleteService(ctx context.Context, id string) error {
 	return s.orm.DeleteService(ctx, id)
+}
+
+// Service state management methods
+
+// GetServiceState gets service state
+func (s *SQLiteStorage) GetServiceState(ctx context.Context, serviceID string) (*ServiceStateRecord, error) {
+	return s.orm.GetServiceState(ctx, serviceID)
+}
+
+// UpdateServiceState updates service state
+func (s *SQLiteStorage) UpdateServiceState(ctx context.Context, state *ServiceStateRecord) error {
+	return s.orm.UpdateServiceState(ctx, state)
+}
+
+// GetAllServiceStates gets all service states
+func (s *SQLiteStorage) GetAllServiceStates(ctx context.Context) ([]*ServiceStateRecord, error) {
+	return s.orm.GetAllServiceStates(ctx)
 }
