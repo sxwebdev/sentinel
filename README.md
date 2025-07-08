@@ -1,10 +1,10 @@
 # Sentinel - Service Monitoring System
 
-Sentinel is a lightweight, multi-protocol service monitoring system written in Go. It monitors HTTP/HTTPS, TCP, gRPC, and Redis services, providing real-time status updates and incident management with multi-provider notifications.
+Sentinel is a lightweight, multi-protocol service monitoring system written in Go. It monitors HTTP/HTTPS, TCP and gRPC services, providing real-time status updates and incident management with multi-provider notifications.
 
 ## Features
 
-- **Multi-Protocol Support**: HTTP/HTTPS, TCP, gRPC, Redis
+- **Multi-Protocol Support**: HTTP/HTTPS, TCP, gRPC
 - **Real-time Monitoring**: Configurable check intervals and timeouts
 - **Incident Management**: Automatic incident creation and resolution
 - **Multi-Provider Notifications**: Alert and recovery notifications via multiple providers (Telegram, Discord, Slack, Email, Webhooks, etc.)
@@ -111,7 +111,7 @@ notifications:
 
 When creating or editing services through the web interface:
 
-1. **Protocol Selection**: Choose from HTTP/HTTPS, TCP, gRPC, or Redis
+1. **Protocol Selection**: Choose from HTTP/HTTPS, TCP or gRPC
 2. **JSON Configuration**: Enter protocol-specific configuration in JSON format
 3. **Default Templates**: UI provides default YAML templates for each protocol
 4. **Validation**: Configuration is validated before saving
@@ -148,15 +148,6 @@ Example JSON configurations for each protocol:
   "service_name": "",
   "tls": true,
   "insecure_tls": false
-}
-```
-
-**Redis:**
-
-```json
-{
-  "password": "your_password",
-  "db": 0
 }
 ```
 
