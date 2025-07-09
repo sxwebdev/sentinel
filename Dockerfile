@@ -21,7 +21,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix -ldflags="-w -s -X" -o s
 FROM alpine:latest
 
 # Install ca-certificates for HTTPS requests
-RUN apk --no-cache add ca-certificates
+RUN apk --no-cache add ca-certificates tzdata
 
 WORKDIR /root/
 
