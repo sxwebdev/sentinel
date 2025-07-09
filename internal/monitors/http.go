@@ -94,7 +94,7 @@ func (h *HTTPMonitor) checkEndpoints(ctx context.Context) error {
 	}
 
 	// Collect results
-	for i := 0; i < len(config); i++ {
+	for range config {
 		select {
 		case result := <-resultChan:
 			results = append(results, result.result)
@@ -103,14 +103,29 @@ func (h *HTTPMonitor) checkEndpoints(ctx context.Context) error {
 		}
 	}
 
-	// Evaluate condition
-	conditionMet, err := evaluateCondition(h.conf.Condition, results)
-	if err != nil {
-		return fmt.Errorf("failed to evaluate condition: %w", err)
+	var errsCount int
+	errs := make([]string, 0, len(results))
+	for _, result := range results {
+		if !result.Success {
+			errs = append(errs, fmt.Sprintf("%s (%s): %s", result.Name, result.URL, result.Error))
+			errsCount++
+		}
 	}
 
-	if conditionMet {
-		return fmt.Errorf("multi-endpoint condition triggered, results: %v", results)
+	if errsCount > 0 {
+		return fmt.Errorf("check endpoints failed: %d errors: %s", errsCount, strings.Join(errs, "; "))
+	}
+
+	// Evaluate condition
+	if h.conf.Condition != "" {
+		conditionMet, err := evaluateCondition(h.conf.Condition, results)
+		if err != nil {
+			return fmt.Errorf("failed to evaluate condition: %w", err)
+		}
+
+		if conditionMet {
+			return fmt.Errorf("%v", results)
+		}
 	}
 
 	return nil
@@ -192,7 +207,7 @@ func (h *HTTPMonitor) checkEndpoint(ctx context.Context, endpoint EndpointConfig
 			Name:     endpoint.Name,
 			URL:      endpoint.URL,
 			Success:  false,
-			Error:    fmt.Sprintf("HTTP %d: %s", resp.StatusCode, string(body)),
+			Error:    fmt.Sprintf("expected status %d, got %d", endpoint.ExpectedStatus, resp.StatusCode),
 			Response: string(body),
 			Duration: duration,
 		}

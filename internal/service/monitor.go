@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/sxwebdev/sentinel/internal/config"
@@ -324,7 +325,9 @@ func (m *MonitorService) createIncident(ctx context.Context, serviceID, serviceN
 	// Send alert notification
 	if m.notifier != nil {
 		if err := m.notifier.SendAlert(serviceName, incident); err != nil {
-			return fmt.Errorf("failed to send alert for %s: %w", serviceName, err)
+			err := fmt.Errorf("failed to send alert notification for %s: %w", serviceName, err)
+			log.Println(err)
+			return nil
 		}
 	}
 
@@ -359,7 +362,9 @@ func (m *MonitorService) resolveActiveIncident(ctx context.Context, serviceID st
 			// Send recovery notification
 			if m.notifier != nil {
 				if err := m.notifier.SendRecovery(serviceName, incident); err != nil {
-					return fmt.Errorf("failed to send recovery notification: %w", err)
+					err := fmt.Errorf("failed to send recovery notification for %s: %w", serviceName, err)
+					log.Println(err)
+					return nil
 				}
 			}
 
