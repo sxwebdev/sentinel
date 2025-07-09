@@ -16,6 +16,7 @@ import (
 	"context"
 	"embed"
 	"fmt"
+	goHTML "html"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -372,6 +373,10 @@ func (s *Server) handleAPIServiceDetail(c *fiber.Ctx) error {
 		})
 	}
 
+	if serviceWithState.Service != nil && serviceWithState.State != nil && serviceWithState.State.LastError != "" {
+		serviceWithState.State.LastError = goHTML.EscapeString(serviceWithState.State.LastError)
+	}
+
 	// Get incident statistics for this service
 	incidentStats, err := s.monitorService.GetAllServicesIncidentStats(c.Context())
 	if err != nil {
@@ -417,6 +422,10 @@ func (s *Server) handleAPIServiceIncidents(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
 		})
+	}
+
+	for _, incident := range incidents {
+		incident.Error = goHTML.EscapeString(incident.Error)
 	}
 
 	return c.JSON(incidents)
@@ -564,6 +573,10 @@ func (s *Server) handleAPIRecentIncidents(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
 		})
+	}
+
+	for _, incident := range incidents {
+		incident.Error = goHTML.EscapeString(incident.Error)
 	}
 
 	return c.JSON(incidents)
