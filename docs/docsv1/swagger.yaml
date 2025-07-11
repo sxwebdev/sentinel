@@ -1,5 +1,97 @@
 basePath: /api/v1
 definitions:
+  monitors.Config:
+    properties:
+      grpc:
+        $ref: '#/definitions/monitors.GRPCConfig'
+      http:
+        $ref: '#/definitions/monitors.HTTPConfig'
+      tcp:
+        $ref: '#/definitions/monitors.TCPConfig'
+    type: object
+  monitors.EndpointConfig:
+    properties:
+      body:
+        type: string
+      expected_status:
+        maximum: 599
+        minimum: 100
+        type: integer
+      headers:
+        additionalProperties:
+          type: string
+        type: object
+      json_path:
+        description: Path to extract value from JSON response
+        type: string
+      method:
+        enum:
+        - GET
+        - POST
+        - PUT
+        - DELETE
+        - HEAD
+        - OPTIONS
+        type: string
+      name:
+        type: string
+      password:
+        description: Basic Auth password
+        type: string
+      url:
+        type: string
+      username:
+        description: Basic Auth username
+        type: string
+    required:
+    - expected_status
+    - method
+    - name
+    - url
+    type: object
+  monitors.GRPCConfig:
+    properties:
+      check_type:
+        enum:
+        - health
+        - reflection
+        - connectivity
+        type: string
+      endpoint:
+        type: string
+      insecure_tls:
+        type: boolean
+      service_name:
+        type: string
+      tls:
+        type: boolean
+    required:
+    - check_type
+    - endpoint
+    type: object
+  monitors.HTTPConfig:
+    properties:
+      condition:
+        type: string
+      endpoints:
+        items:
+          $ref: '#/definitions/monitors.EndpointConfig'
+        type: array
+      timeout:
+        example: 30000000000
+        type: integer
+    type: object
+  monitors.TCPConfig:
+    properties:
+      endpoint:
+        type: string
+      expect_data:
+        type: string
+      send_data:
+        type: string
+    required:
+    - endpoint
+    type: object
   storage.Service:
     properties:
       active_incidents:
@@ -161,9 +253,7 @@ definitions:
         example: 2
         type: integer
       config:
-        additionalProperties: {}
-        description: JSON object
-        type: object
+        $ref: '#/definitions/monitors.Config'
       id:
         example: service-1
         type: string

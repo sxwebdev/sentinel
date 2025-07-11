@@ -50,7 +50,7 @@ type ServiceDTO struct {
 	Timeout         time.Duration               `json:"timeout" swaggertype:"primitive,integer" example:"5000000000"`
 	Retries         int                         `json:"retries" example:"3"`
 	Tags            []string                    `json:"tags" example:"web,production"`
-	Config          map[string]any              `json:"config"` // JSON object
+	Config          monitors.Config             `json:"config"`
 	IsEnabled       bool                        `json:"is_enabled" example:"true"`
 	ActiveIncidents int                         `json:"active_incidents,omitempty" example:"2"`
 	TotalIncidents  int                         `json:"total_incidents,omitempty" example:"10"`
@@ -822,14 +822,13 @@ func (s *Server) handleAPICreateService(c *fiber.Ctx) error {
 	}
 
 	// Convert flat config to proper MonitorConfig structure
-	config, err := s.convertFlatConfigToMonitorConfig(serviceDTO.Protocol, serviceDTO.Config)
-	if err != nil {
+	if err := s.validateConfig(serviceDTO.Protocol, serviceDTO.Config); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Invalid config: " + err.Error(),
 		})
 	}
 
-	service.Config = config.ConvertToMap()
+	service.Config = serviceDTO.Config.ConvertToMap()
 
 	// Add service
 	if err := s.monitorService.AddService(c.Context(), &service); err != nil {
@@ -886,14 +885,13 @@ func (s *Server) handleAPIUpdateService(c *fiber.Ctx) error {
 	}
 
 	// Convert flat config to proper MonitorConfig structure
-	config, err := s.convertFlatConfigToMonitorConfig(serviceDTO.Protocol, serviceDTO.Config)
-	if err != nil {
+	if err := s.validateConfig(serviceDTO.Protocol, serviceDTO.Config); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Invalid config: " + err.Error(),
 		})
 	}
 
-	service.Config = config.ConvertToMap()
+	service.Config = serviceDTO.Config.ConvertToMap()
 
 	// Validate required fields
 	if service.Name == "" {
@@ -958,92 +956,45 @@ func (s *Server) handleAPIDeleteService(c *fiber.Ctx) error {
 }
 
 // convertFlatConfigToMonitorConfig converts JSON config object to proper MonitorConfig structure
-func (s *Server) convertFlatConfigToMonitorConfig(protocol storage.ServiceProtocolType, configObj map[string]any) (monitors.Config, error) {
-	if configObj == nil {
-		return monitors.Config{}, fmt.Errorf("config is nil")
-	}
-
+func (s *Server) validateConfig(protocol storage.ServiceProtocolType, configObj monitors.Config) error {
 	// Validate and convert based on protocol
 	switch protocol {
 	case storage.ServiceProtocolTypeHTTP:
-		return s.parseHTTPConfig(configObj)
+		if configObj.HTTP == nil {
+			return fmt.Errorf("HTTP config is required for HTTP protocol")
+		}
+
+		// Validate HTTP config
+		if err := s.validator.Struct(configObj.HTTP); err != nil {
+			return fmt.Errorf("invalid HTTP config: %w", err)
+		}
+
+		return nil
 	case storage.ServiceProtocolTypeTCP:
-		return s.parseTCPConfig(configObj)
+		if configObj.TCP == nil {
+			return fmt.Errorf("TCP config is required for TCP protocol")
+		}
+
+		// Validate TCP config
+		if err := s.validator.Struct(configObj.TCP); err != nil {
+			return fmt.Errorf("invalid TCP config: %w", err)
+		}
+
+		return nil
 	case storage.ServiceProtocolTypeGRPC:
-		return s.parseGRPCConfig(configObj)
+		if configObj.GRPC == nil {
+			return fmt.Errorf("gRPC config is required for gRPC protocol")
+		}
+
+		// Validate gRPC config
+		if err := s.validator.Struct(configObj.GRPC); err != nil {
+			return fmt.Errorf("invalid gRPC config: %w", err)
+		}
+
+		return nil
 	default:
-		return monitors.Config{}, fmt.Errorf("unsupported protocol: %s", protocol)
+		return fmt.Errorf("unsupported protocol: %s", protocol)
 	}
-}
-
-// getDefaultConfig returns default config for a protocol
-// func (s *Server) getDefaultConfig(protocol storage.ServiceProtocolType) monitors.Config {
-// 	switch protocol {
-// 	case storage.ServiceProtocolTypeHTTP:
-// 		return monitors.Config{
-// 			HTTP: &monitors.HTTPConfig{
-// 				Timeout:   10 * time.Second,
-// 				Endpoints: []monitors.EndpointConfig{},
-// 			},
-// 		}
-// 	case storage.ServiceProtocolTypeTCP:
-// 		return monitors.Config{
-// 			TCP: &monitors.TCPConfig{},
-// 		}
-// 	case storage.ServiceProtocolTypeGRPC:
-// 		return monitors.Config{
-// 			GRPC: &monitors.GRPCConfig{
-// 				CheckType: "connectivity",
-// 			},
-// 		}
-// 	default:
-// 		return monitors.Config{}
-// 	}
-// }
-
-// parseHTTPConfig parses and validates HTTP config
-func (s *Server) parseHTTPConfig(configMap map[string]any) (monitors.Config, error) {
-	httpConfig, err := monitors.GetConfig[monitors.HTTPConfig](configMap, storage.ServiceProtocolTypeHTTP)
-	if err != nil {
-		return monitors.Config{}, err
-	}
-
-	// Validate the HTTP config
-	if err := s.validator.Struct(httpConfig); err != nil {
-		return monitors.Config{}, fmt.Errorf("invalid HTTP config: %w", err)
-	}
-
-	return monitors.Config{HTTP: &httpConfig}, nil
-}
-
-// parseTCPConfig parses and validates TCP config
-func (s *Server) parseTCPConfig(configMap map[string]interface{}) (monitors.Config, error) {
-	tcpConfig, err := monitors.GetConfig[monitors.TCPConfig](configMap, storage.ServiceProtocolTypeTCP)
-	if err != nil {
-		return monitors.Config{}, err
-	}
-
-	// Validate the TCP config
-	if err := s.validator.Struct(tcpConfig); err != nil {
-		return monitors.Config{}, fmt.Errorf("invalid TCP config: %w", err)
-	}
-
-	return monitors.Config{TCP: &tcpConfig}, nil
-}
-
-// parseGRPCConfig parses and validates gRPC config
-func (s *Server) parseGRPCConfig(configMap map[string]interface{}) (monitors.Config, error) {
-	grpcConfig, err := monitors.GetConfig[monitors.GRPCConfig](configMap, storage.ServiceProtocolTypeGRPC)
-	if err != nil {
-		return monitors.Config{}, err
-	}
-
-	// Validate the gRPC config
-	if err := s.validator.Struct(grpcConfig); err != nil {
-		return monitors.Config{}, fmt.Errorf("invalid gRPC config: %w", err)
-	}
-
-	return monitors.Config{GRPC: &grpcConfig}, nil
 }
 
 // handleWebSocket handles WebSocket connections

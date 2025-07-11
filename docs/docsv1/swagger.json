@@ -555,6 +555,138 @@
         }
     },
     "definitions": {
+        "monitors.Config": {
+            "type": "object",
+            "properties": {
+                "grpc": {
+                    "$ref": "#/definitions/monitors.GRPCConfig"
+                },
+                "http": {
+                    "$ref": "#/definitions/monitors.HTTPConfig"
+                },
+                "tcp": {
+                    "$ref": "#/definitions/monitors.TCPConfig"
+                }
+            }
+        },
+        "monitors.EndpointConfig": {
+            "type": "object",
+            "required": [
+                "expected_status",
+                "method",
+                "name",
+                "url"
+            ],
+            "properties": {
+                "body": {
+                    "type": "string"
+                },
+                "expected_status": {
+                    "type": "integer",
+                    "maximum": 599,
+                    "minimum": 100
+                },
+                "headers": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "json_path": {
+                    "description": "Path to extract value from JSON response",
+                    "type": "string"
+                },
+                "method": {
+                    "type": "string",
+                    "enum": [
+                        "GET",
+                        "POST",
+                        "PUT",
+                        "DELETE",
+                        "HEAD",
+                        "OPTIONS"
+                    ]
+                },
+                "name": {
+                    "type": "string"
+                },
+                "password": {
+                    "description": "Basic Auth password",
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                },
+                "username": {
+                    "description": "Basic Auth username",
+                    "type": "string"
+                }
+            }
+        },
+        "monitors.GRPCConfig": {
+            "type": "object",
+            "required": [
+                "check_type",
+                "endpoint"
+            ],
+            "properties": {
+                "check_type": {
+                    "type": "string",
+                    "enum": [
+                        "health",
+                        "reflection",
+                        "connectivity"
+                    ]
+                },
+                "endpoint": {
+                    "type": "string"
+                },
+                "insecure_tls": {
+                    "type": "boolean"
+                },
+                "service_name": {
+                    "type": "string"
+                },
+                "tls": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "monitors.HTTPConfig": {
+            "type": "object",
+            "properties": {
+                "condition": {
+                    "type": "string"
+                },
+                "endpoints": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/monitors.EndpointConfig"
+                    }
+                },
+                "timeout": {
+                    "type": "integer",
+                    "example": 30000000000
+                }
+            }
+        },
+        "monitors.TCPConfig": {
+            "type": "object",
+            "required": [
+                "endpoint"
+            ],
+            "properties": {
+                "endpoint": {
+                    "type": "string"
+                },
+                "expect_data": {
+                    "type": "string"
+                },
+                "send_data": {
+                    "type": "string"
+                }
+            }
+        },
         "storage.Service": {
             "type": "object",
             "properties": {
@@ -784,9 +916,7 @@
                     "example": 2
                 },
                 "config": {
-                    "description": "JSON object",
-                    "type": "object",
-                    "additionalProperties": {}
+                    "$ref": "#/definitions/monitors.Config"
                 },
                 "id": {
                     "type": "string",

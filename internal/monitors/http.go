@@ -16,7 +16,7 @@ import (
 
 // HTTPConfig represents configuration for HTTP monitoring
 type HTTPConfig struct {
-	Timeout   time.Duration    `json:"timeout"`
+	Timeout   time.Duration    `json:"timeout" swaggertype:"primitive,integer" example:"30000000000"`
 	Endpoints []EndpointConfig `json:"endpoints"`
 	Condition string           `json:"condition"`
 }
@@ -42,7 +42,7 @@ type EndpointResult struct {
 	Value    any           `json:"value,omitempty"`
 	Error    string        `json:"error,omitempty"`
 	Response string        `json:"response,omitempty"`
-	Duration time.Duration `json:"duration"`
+	Duration time.Duration `json:"duration" swaggertype:"primitive,integer" example:"30000000000"`
 }
 
 // HTTPMonitor monitors HTTP/HTTPS endpoints
