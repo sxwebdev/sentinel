@@ -64,6 +64,25 @@
     <script>
       const serviceId = "{{.Service.ID}}";
 
+      // Format duration in Go-like format (1d 2h 20m 30s)
+      function formatDuration(nanoseconds) {
+        if (!nanoseconds || nanoseconds === 0) return "";
+
+        const totalSeconds = Math.floor(nanoseconds / 1000000000);
+        const days = Math.floor(totalSeconds / 86400);
+        const hours = Math.floor((totalSeconds % 86400) / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+
+        let result = "";
+        if (days > 0) result += `${days}d `;
+        if (hours > 0) result += `${hours}h `;
+        if (minutes > 0) result += `${minutes}m `;
+        if (seconds > 0) result += `${seconds}s`;
+
+        return result.trim() || "0s";
+      }
+
       // Load service information
       function loadServiceInfo() {
         fetch(`/api/v1/services/${serviceId}`)
@@ -216,7 +235,7 @@
                     ? new Date(incident.end_time).toLocaleString()
                     : "Ongoing";
                   const duration = incident.duration
-                    ? `${Math.round(incident.duration / 1000000000)}s`
+                    ? formatDuration(incident.duration)
                     : "";
 
                   return `
