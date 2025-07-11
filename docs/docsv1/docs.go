@@ -495,12 +495,6 @@ const docTemplate = `{
                             "$ref": "#/definitions/web.ErrorResponse"
                         }
                     },
-                    "404": {
-                        "description": "Service not found",
-                        "schema": {
-                            "$ref": "#/definitions/web.ErrorResponse"
-                        }
-                    },
                     "500": {
                         "description": "Internal server error",
                         "schema": {

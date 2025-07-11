@@ -297,16 +297,16 @@ func (s *Server) handleAPIGetServices(c *fiber.Ctx) error {
 
 	services, err := s.monitorService.GetAllServices(ctx)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+		return c.Status(fiber.StatusInternalServerError).JSON(ErrorResponse{
+			Error: err.Error(),
 		})
 	}
 
 	// Get incident statistics
 	incidentStats, err := s.monitorService.GetAllServicesIncidentStats(ctx)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+		return c.Status(fiber.StatusInternalServerError).JSON(ErrorResponse{
+			Error: err.Error(),
 		})
 	}
 
@@ -353,23 +353,23 @@ func (s *Server) handleAPIGetServices(c *fiber.Ctx) error {
 func (s *Server) handleAPIServiceDetail(c *fiber.Ctx) error {
 	serviceID := c.Params("id")
 	if serviceID == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "service ID is required",
+		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
+			Error: "service ID is required",
 		})
 	}
 
 	targetService, err := s.monitorService.GetServiceByID(c.Context(), serviceID)
 	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"error": "service not found: " + serviceID,
+		return c.Status(fiber.StatusNotFound).JSON(ErrorResponse{
+			Error: "service not found: " + serviceID,
 		})
 	}
 
 	// Get service with state
 	serviceWithState, err := s.getServiceWithState(c.Context(), targetService)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+		return c.Status(fiber.StatusInternalServerError).JSON(ErrorResponse{
+			Error: err.Error(),
 		})
 	}
 
@@ -380,8 +380,8 @@ func (s *Server) handleAPIServiceDetail(c *fiber.Ctx) error {
 	// Get incident statistics for this service
 	incidentStats, err := s.monitorService.GetAllServicesIncidentStats(c.Context())
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+		return c.Status(fiber.StatusInternalServerError).JSON(ErrorResponse{
+			Error: err.Error(),
 		})
 	}
 
@@ -412,15 +412,15 @@ func (s *Server) handleAPIServiceDetail(c *fiber.Ctx) error {
 func (s *Server) handleAPIServiceIncidents(c *fiber.Ctx) error {
 	serviceID := c.Params("id")
 	if serviceID == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "service ID is required",
+		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
+			Error: "service ID is required",
 		})
 	}
 
 	incidents, err := s.monitorService.GetServiceIncidents(c.Context(), serviceID)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+		return c.Status(fiber.StatusInternalServerError).JSON(ErrorResponse{
+			Error: err.Error(),
 		})
 	}
 
@@ -447,8 +447,8 @@ func (s *Server) handleAPIServiceIncidents(c *fiber.Ctx) error {
 func (s *Server) handleAPIServiceStats(c *fiber.Ctx) error {
 	serviceID := c.Params("id")
 	if serviceID == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "service ID is required",
+		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
+			Error: "service ID is required",
 		})
 	}
 
@@ -461,8 +461,8 @@ func (s *Server) handleAPIServiceStats(c *fiber.Ctx) error {
 	since := time.Now().AddDate(0, 0, -days)
 	stats, err := s.monitorService.GetServiceStats(c.Context(), serviceID, since)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+		return c.Status(fiber.StatusInternalServerError).JSON(ErrorResponse{
+			Error: err.Error(),
 		})
 	}
 
@@ -485,28 +485,28 @@ func (s *Server) handleAPIServiceStats(c *fiber.Ctx) error {
 func (s *Server) handleAPIServiceCheck(c *fiber.Ctx) error {
 	serviceID := c.Params("id")
 	if serviceID == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "service ID is required",
+		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
+			Error: "service ID is required",
 		})
 	}
 
 	// First check if service exists
 	_, err := s.monitorService.GetServiceByID(c.Context(), serviceID)
 	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"error": "service not found: " + serviceID,
+		return c.Status(fiber.StatusNotFound).JSON(ErrorResponse{
+			Error: "service not found: " + serviceID,
 		})
 	}
 
 	err = s.monitorService.TriggerCheck(c.Context(), serviceID)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+		return c.Status(fiber.StatusInternalServerError).JSON(ErrorResponse{
+			Error: err.Error(),
 		})
 	}
 
-	return c.JSON(fiber.Map{
-		"message": "check triggered successfully",
+	return c.JSON(SuccessResponse{
+		Message: "check triggered successfully",
 	})
 }
 
@@ -520,33 +520,25 @@ func (s *Server) handleAPIServiceCheck(c *fiber.Ctx) error {
 //	@Param			id	path		string			true	"Service ID"
 //	@Success		200	{object}	SuccessResponse	"Incidents resolved successfully"
 //	@Failure		400	{object}	ErrorResponse	"Bad request"
-//	@Failure		404	{object}	ErrorResponse	"Service not found"
 //	@Failure		500	{object}	ErrorResponse	"Internal server error"
 //	@Router			/services/{id}/resolve [post]
 func (s *Server) handleAPIServiceResolve(c *fiber.Ctx) error {
 	serviceID := c.Params("id")
 	if serviceID == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "service ID is required",
+		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
+			Error: "service ID is required",
 		})
 	}
 
-	service, err := s.monitorService.GetServiceByID(c.Context(), serviceID)
+	err := s.monitorService.ForceResolveIncidents(c.Context(), serviceID)
 	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"error": "service not found: " + serviceID,
+		return c.Status(fiber.StatusInternalServerError).JSON(ErrorResponse{
+			Error: err.Error(),
 		})
 	}
 
-	err = s.monitorService.ForceResolveIncidents(c.Context(), serviceID, service.Name)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
-		})
-	}
-
-	return c.JSON(fiber.Map{
-		"message": "incident resolved successfully",
+	return c.JSON(SuccessResponse{
+		Message: "incident resolved successfully",
 	})
 }
 
@@ -570,8 +562,8 @@ func (s *Server) handleAPIRecentIncidents(c *fiber.Ctx) error {
 
 	incidents, err := s.monitorService.GetRecentIncidents(c.Context(), limit)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+		return c.Status(fiber.StatusInternalServerError).JSON(ErrorResponse{
+			Error: err.Error(),
 		})
 	}
 
@@ -601,30 +593,30 @@ func (s *Server) handleAPIDeleteIncident(c *fiber.Ctx) error {
 	incidentID := c.Params("incidentId")
 
 	if serviceID == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "service ID is required",
+		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
+			Error: "service ID is required",
 		})
 	}
 
 	if incidentID == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "incident ID is required",
+		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
+			Error: "incident ID is required",
 		})
 	}
 
 	// Check if service exists
 	_, err := s.monitorService.GetServiceByID(c.Context(), serviceID)
 	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"error": "service not found: " + serviceID,
+		return c.Status(fiber.StatusNotFound).JSON(ErrorResponse{
+			Error: "service not found: " + serviceID,
 		})
 	}
 
 	// Delete incident
 	err = s.monitorService.DeleteIncident(c.Context(), serviceID, incidentID)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+		return c.Status(fiber.StatusInternalServerError).JSON(ErrorResponse{
+			Error: err.Error(),
 		})
 	}
 
@@ -645,24 +637,24 @@ func (s *Server) handleAPIDashboardStats(c *fiber.Ctx) error {
 	// Get all services with their states
 	services, err := s.monitorService.GetAllServices(c.Context())
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+		return c.Status(fiber.StatusInternalServerError).JSON(ErrorResponse{
+			Error: err.Error(),
 		})
 	}
 
 	// Get recent incidents
 	recentIncidents, err := s.monitorService.GetRecentIncidents(c.Context(), 100)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+		return c.Status(fiber.StatusInternalServerError).JSON(ErrorResponse{
+			Error: err.Error(),
 		})
 	}
 
 	// Get all service states
 	serviceStates, err := s.storage.GetAllServiceStates(c.Context())
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+		return c.Status(fiber.StatusInternalServerError).JSON(ErrorResponse{
+			Error: err.Error(),
 		})
 	}
 
@@ -781,20 +773,20 @@ func (s *Server) handleAPIDashboardStats(c *fiber.Ctx) error {
 func (s *Server) handleAPICreateService(c *fiber.Ctx) error {
 	var serviceDTO ServiceDTO
 	if err := c.BodyParser(&serviceDTO); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid request body: " + err.Error(),
+		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
+			Error: "Invalid request body: " + err.Error(),
 		})
 	}
 
 	// Validate required fields
 	if serviceDTO.Name == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Service name is required",
+		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
+			Error: "Service name is required",
 		})
 	}
 	if serviceDTO.Protocol == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Protocol is required",
+		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
+			Error: "Protocol is required",
 		})
 	}
 
@@ -823,8 +815,8 @@ func (s *Server) handleAPICreateService(c *fiber.Ctx) error {
 
 	// Convert flat config to proper MonitorConfig structure
 	if err := s.validateConfig(serviceDTO.Protocol, serviceDTO.Config); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid config: " + err.Error(),
+		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
+			Error: "Invalid config: " + err.Error(),
 		})
 	}
 
@@ -832,8 +824,8 @@ func (s *Server) handleAPICreateService(c *fiber.Ctx) error {
 
 	// Add service
 	if err := s.monitorService.AddService(c.Context(), &service); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+		return c.Status(fiber.StatusInternalServerError).JSON(ErrorResponse{
+			Error: err.Error(),
 		})
 	}
 
@@ -857,15 +849,15 @@ func (s *Server) handleAPICreateService(c *fiber.Ctx) error {
 func (s *Server) handleAPIUpdateService(c *fiber.Ctx) error {
 	id := c.Params("id")
 	if id == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Service ID is required",
+		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
+			Error: "Service ID is required",
 		})
 	}
 
 	var serviceDTO ServiceDTO
 	if err := c.BodyParser(&serviceDTO); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid request body: " + err.Error(),
+		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
+			Error: "Invalid request body: " + err.Error(),
 		})
 	}
 
@@ -886,8 +878,8 @@ func (s *Server) handleAPIUpdateService(c *fiber.Ctx) error {
 
 	// Convert flat config to proper MonitorConfig structure
 	if err := s.validateConfig(serviceDTO.Protocol, serviceDTO.Config); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid config: " + err.Error(),
+		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
+			Error: "Invalid config: " + err.Error(),
 		})
 	}
 
@@ -895,13 +887,13 @@ func (s *Server) handleAPIUpdateService(c *fiber.Ctx) error {
 
 	// Validate required fields
 	if service.Name == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Service name is required",
+		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
+			Error: "Service name is required",
 		})
 	}
 	if service.Protocol == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Protocol is required",
+		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
+			Error: "Protocol is required",
 		})
 	}
 
@@ -918,8 +910,8 @@ func (s *Server) handleAPIUpdateService(c *fiber.Ctx) error {
 
 	// Update service
 	if err := s.monitorService.UpdateService(c.Context(), &service); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+		return c.Status(fiber.StatusInternalServerError).JSON(ErrorResponse{
+			Error: err.Error(),
 		})
 	}
 
@@ -941,14 +933,14 @@ func (s *Server) handleAPIUpdateService(c *fiber.Ctx) error {
 func (s *Server) handleAPIDeleteService(c *fiber.Ctx) error {
 	id := c.Params("id")
 	if id == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Service ID is required",
+		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
+			Error: "Service ID is required",
 		})
 	}
 
 	if err := s.monitorService.DeleteService(c.Context(), id); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+		return c.Status(fiber.StatusInternalServerError).JSON(ErrorResponse{
+			Error: err.Error(),
 		})
 	}
 

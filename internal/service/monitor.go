@@ -241,7 +241,7 @@ func (m *MonitorService) RecordSuccess(ctx context.Context, serviceID string, re
 	}
 
 	// Resolve any active incidents
-	if err := m.resolveActiveIncident(ctx, serviceID, service.Name); err != nil {
+	if err := m.resolveActiveIncident(ctx, serviceID); err != nil {
 		return fmt.Errorf("failed to resolve incident: %w", err)
 	}
 
@@ -296,7 +296,7 @@ func (m *MonitorService) RecordFailure(ctx context.Context, serviceID string, ch
 
 	// Create incident if service was up before
 	if wasUp {
-		if err := m.createIncident(ctx, serviceID, service.Name, checkErr); err != nil {
+		if err := m.createIncident(ctx, service, checkErr); err != nil {
 			return fmt.Errorf("failed to create incident: %w", err)
 		}
 	}
@@ -308,10 +308,10 @@ func (m *MonitorService) RecordFailure(ctx context.Context, serviceID string, ch
 }
 
 // createIncident creates a new incident when a service goes down
-func (m *MonitorService) createIncident(ctx context.Context, serviceID, serviceName string, err error) error {
+func (m *MonitorService) createIncident(ctx context.Context, svc *storage.Service, err error) error {
 	incident := &storage.Incident{
 		ID:        storage.GenerateULID(),
-		ServiceID: serviceID,
+		ServiceID: svc.ID,
 		StartTime: time.Now(),
 		Error:     err.Error(),
 		Resolved:  false,
@@ -319,13 +319,13 @@ func (m *MonitorService) createIncident(ctx context.Context, serviceID, serviceN
 
 	// Save incident to storage
 	if err := m.storage.SaveIncident(ctx, incident); err != nil {
-		return fmt.Errorf("failed to save incident for %s: %w", serviceName, err)
+		return fmt.Errorf("failed to save incident for %s: %w", svc.Name, err)
 	}
 
 	// Send alert notification
 	if m.notifier != nil {
-		if err := m.notifier.SendAlert(serviceName, incident); err != nil {
-			err := fmt.Errorf("failed to send alert notification for %s: %w", serviceName, err)
+		if err := m.notifier.SendAlert(svc, incident); err != nil {
+			err := fmt.Errorf("failed to send alert notification for %s: %w", svc.Name, err)
 			log.Println(err)
 			return nil
 		}
@@ -335,11 +335,16 @@ func (m *MonitorService) createIncident(ctx context.Context, serviceID, serviceN
 }
 
 // resolveActiveIncident resolves the active incident when a service recovers
-func (m *MonitorService) resolveActiveIncident(ctx context.Context, serviceID string, serviceName string) error {
+func (m *MonitorService) resolveActiveIncident(ctx context.Context, serviceID string) error {
 	// Get active incidents for the service
 	incidents, err := m.storage.GetActiveIncidents(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get active incidents: %w", err)
+	}
+
+	svc, err := m.storage.GetService(ctx, serviceID)
+	if err != nil {
+		return fmt.Errorf("failed to get service: %w", err)
 	}
 
 	// Find and resolve all active incidents for this service
@@ -361,8 +366,8 @@ func (m *MonitorService) resolveActiveIncident(ctx context.Context, serviceID st
 
 			// Send recovery notification
 			if m.notifier != nil {
-				if err := m.notifier.SendRecovery(serviceName, incident); err != nil {
-					err := fmt.Errorf("failed to send recovery notification for %s: %w", serviceName, err)
+				if err := m.notifier.SendRecovery(svc, incident); err != nil {
+					err := fmt.Errorf("failed to send recovery notification for %s: %w", svc.Name, err)
 					log.Println(err)
 					return nil
 				}
@@ -431,13 +436,13 @@ func (m *MonitorService) TriggerCheck(ctx context.Context, serviceID string) err
 }
 
 // resolveAllActiveIncidents resolves all active incidents for a service
-func (m *MonitorService) resolveAllActiveIncidents(ctx context.Context, serviceID string, serviceName string) error {
-	return m.resolveActiveIncident(ctx, serviceID, serviceName)
+func (m *MonitorService) resolveAllActiveIncidents(ctx context.Context, serviceID string) error {
+	return m.resolveActiveIncident(ctx, serviceID)
 }
 
 // ForceResolveIncidents manually resolves all active incidents for a service
-func (m *MonitorService) ForceResolveIncidents(ctx context.Context, serviceID string, serviceName string) error {
-	return m.resolveAllActiveIncidents(ctx, serviceID, serviceName)
+func (m *MonitorService) ForceResolveIncidents(ctx context.Context, serviceID string) error {
+	return m.resolveAllActiveIncidents(ctx, serviceID)
 }
 
 // broadcastWebSocketUpdate sends WebSocket updates to all connected clients
@@ -483,7 +488,7 @@ func (m *MonitorService) CheckService(ctx context.Context, service *storage.Serv
 
 	// Resolve incident if service was down before
 	if wasDown {
-		if err := m.resolveActiveIncident(ctx, service.ID, service.Name); err != nil {
+		if err := m.resolveActiveIncident(ctx, service.ID); err != nil {
 			return fmt.Errorf("failed to resolve incident: %w", err)
 		}
 	}

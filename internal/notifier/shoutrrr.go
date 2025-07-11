@@ -2,6 +2,7 @@ package notifier
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -11,8 +12,8 @@ import (
 
 // Notifier определяет интерфейс для отправки уведомлений
 type Notifier interface {
-	SendAlert(serviceName string, incident *storage.Incident) error
-	SendRecovery(serviceName string, incident *storage.Incident) error
+	SendAlert(service *storage.Service, incident *storage.Incident) error
+	SendRecovery(sservice *storage.Service, incident *storage.Incident) error
 }
 
 var _ Notifier = (*NotifierImpl)(nil)
@@ -30,14 +31,14 @@ func NewNotifier(urls []string) (Notifier, error) {
 }
 
 // SendAlert sends an alert notification when a service goes down
-func (s *NotifierImpl) SendAlert(serviceName string, incident *storage.Incident) error {
-	message := s.formatAlertMessage(serviceName, incident)
+func (s *NotifierImpl) SendAlert(service *storage.Service, incident *storage.Incident) error {
+	message := s.formatAlertMessage(service, incident)
 	return s.sendMessage(message)
 }
 
 // SendRecovery sends a recovery notification when a service comes back up
-func (s *NotifierImpl) SendRecovery(serviceName string, incident *storage.Incident) error {
-	message := s.formatRecoveryMessage(serviceName, incident)
+func (s *NotifierImpl) SendRecovery(service *storage.Service, incident *storage.Incident) error {
+	message := s.formatRecoveryMessage(service, incident)
 	return s.sendMessage(message)
 }
 
@@ -109,15 +110,22 @@ func (s *NotifierImpl) sendMessage(message string) error {
 }
 
 // formatAlertMessage formats an alert message
-func (s *NotifierImpl) formatAlertMessage(serviceName string, incident *storage.Incident) string {
+func (s *NotifierImpl) formatAlertMessage(service *storage.Service, incident *storage.Incident) string {
+	tags := "-"
+	if len(service.Tags) > 0 {
+		tags = strings.Join(service.Tags, ", ")
+	}
+
 	return fmt.Sprintf(
 		"🔴 [ALERT] %s is DOWN\n\n"+
 			"• Service: %s\n"+
+			"• Tags: %s\n"+
 			"• Error: %s\n"+
 			"• Started: %s\n"+
 			"• Incident ID: %s",
-		serviceName,
-		serviceName,
+		service.Name,
+		service.Name,
+		tags,
 		incident.Error,
 		incident.StartTime.Format("2006-01-02 15:04:05"),
 		incident.ID,
@@ -125,7 +133,7 @@ func (s *NotifierImpl) formatAlertMessage(serviceName string, incident *storage.
 }
 
 // formatRecoveryMessage formats a recovery message
-func (s *NotifierImpl) formatRecoveryMessage(serviceName string, incident *storage.Incident) string {
+func (s *NotifierImpl) formatRecoveryMessage(service *storage.Service, incident *storage.Incident) string {
 	var duration string
 	if incident.Duration != nil {
 		duration = formatDuration(*incident.Duration)
@@ -140,14 +148,21 @@ func (s *NotifierImpl) formatRecoveryMessage(serviceName string, incident *stora
 		endTime = time.Now().Format("2006-01-02 15:04:05")
 	}
 
+	tags := "-"
+	if len(service.Tags) > 0 {
+		tags = strings.Join(service.Tags, ", ")
+	}
+
 	return fmt.Sprintf(
 		"🟢 [RECOVERY] %s is UP\n\n"+
 			"• Service: %s\n"+
+			"• Tags: %s\n"+
 			"• Downtime: %s\n"+
 			"• Recovered: %s\n"+
 			"• Incident ID: %s",
-		serviceName,
-		serviceName,
+		service.Name,
+		service.Name,
+		tags,
 		duration,
 		endTime,
 		incident.ID,
