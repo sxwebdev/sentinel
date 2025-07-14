@@ -154,22 +154,22 @@
 
             <div class="form-row">
               <div class="form-group">
-                <label for="interval">Interval (seconds)</label>
+                <label for="interval">Interval (milliseconds)</label>
                 <input
                   type="number"
                   id="interval"
                   name="interval"
-                  value="30"
+                  value="30000"
                   min="1"
                 />
               </div>
               <div class="form-group">
-                <label for="timeout">Timeout (seconds)</label>
+                <label for="timeout">Timeout (milliseconds)</label>
                 <input
                   type="number"
                   id="timeout"
                   name="timeout"
-                  value="10"
+                  value="10000"
                   min="1"
                 />
               </div>
@@ -546,12 +546,8 @@
             // Fill basic fields
             document.getElementById("name").value = service.name;
             document.getElementById("protocol").value = service.protocol;
-            document.getElementById("interval").value = Math.floor(
-              service.interval / 1000000000
-            ); // Convert from nanoseconds
-            document.getElementById("timeout").value = Math.floor(
-              service.timeout / 1000000000
-            );
+            document.getElementById("interval").value = service.interval;
+            document.getElementById("timeout").value = service.timeout;
             document.getElementById("retries").value = service.retries;
             document.getElementById("tags").value = service.tags
               ? service.tags.join(", ")
@@ -899,7 +895,7 @@
 
             config = {
               http: {
-                timeout: parseInt(formData.get("timeout")) * 1000000000, // Convert to nanoseconds
+                timeout: parseInt(formData.get("timeout")),
                 endpoints: endpoints,
                 condition: formData.get("condition") || "",
               },
@@ -927,8 +923,8 @@
           const service = {
             name: formData.get("name"),
             protocol: formData.get("protocol"),
-            interval: parseInt(formData.get("interval")) * 1000000000, // Convert to nanoseconds
-            timeout: parseInt(formData.get("timeout")) * 1000000000,
+            interval: parseInt(formData.get("interval")),
+            timeout: parseInt(formData.get("timeout")),
             retries: parseInt(formData.get("retries")),
             tags: formData
               .get("tags")

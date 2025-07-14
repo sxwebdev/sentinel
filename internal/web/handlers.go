@@ -46,20 +46,20 @@ type ServiceDTO struct {
 	ID              string                      `json:"id" example:"service-1"`
 	Name            string                      `json:"name" example:"Web Server"`
 	Protocol        storage.ServiceProtocolType `json:"protocol" example:"http"`
-	Interval        time.Duration               `json:"interval" swaggertype:"primitive,integer" example:"30000000000"`
-	Timeout         time.Duration               `json:"timeout" swaggertype:"primitive,integer" example:"5000000000"`
+	Interval        uint32                      `json:"interval" swaggertype:"primitive,integer" example:"30000"`
+	Timeout         uint32                      `json:"timeout" swaggertype:"primitive,integer" example:"5000"`
 	Retries         int                         `json:"retries" example:"3"`
 	Tags            []string                    `json:"tags" example:"web,production"`
 	Config          monitors.Config             `json:"config"`
 	IsEnabled       bool                        `json:"is_enabled" example:"true"`
-	ActiveIncidents int                         `json:"active_incidents,omitempty" example:"2"`
-	TotalIncidents  int                         `json:"total_incidents,omitempty" example:"10"`
+	ActiveIncidents int                         `json:"active_incidents" example:"2"`
+	TotalIncidents  int                         `json:"total_incidents" example:"10"`
 }
 
 // ServiceWithState represents a service with its current state
 type ServiceWithState struct {
-	Service *storage.Service            `json:"service"`
-	State   *storage.ServiceStateRecord `json:"state,omitempty"`
+	Service ServiceDTO                  `json:"service"`
+	State   *storage.ServiceStateRecord `json:"state"`
 }
 
 // Server represents the web server
@@ -373,7 +373,7 @@ func (s *Server) handleAPIServiceDetail(c *fiber.Ctx) error {
 		})
 	}
 
-	if serviceWithState.Service != nil && serviceWithState.State != nil && serviceWithState.State.LastError != "" {
+	if serviceWithState.State != nil && serviceWithState.State.LastError != "" {
 		serviceWithState.State.LastError = goHTML.EscapeString(serviceWithState.State.LastError)
 	}
 
@@ -795,8 +795,8 @@ func (s *Server) handleAPICreateService(c *fiber.Ctx) error {
 		ID:        serviceDTO.ID,
 		Name:      serviceDTO.Name,
 		Protocol:  serviceDTO.Protocol,
-		Interval:  serviceDTO.Interval,
-		Timeout:   serviceDTO.Timeout,
+		Interval:  time.Millisecond * time.Duration(serviceDTO.Interval),
+		Timeout:   time.Millisecond * time.Duration(serviceDTO.Timeout),
 		Retries:   serviceDTO.Retries,
 		Tags:      serviceDTO.Tags,
 		IsEnabled: serviceDTO.IsEnabled,
@@ -869,8 +869,8 @@ func (s *Server) handleAPIUpdateService(c *fiber.Ctx) error {
 		ID:        id,
 		Name:      serviceDTO.Name,
 		Protocol:  serviceDTO.Protocol,
-		Interval:  serviceDTO.Interval,
-		Timeout:   serviceDTO.Timeout,
+		Interval:  time.Millisecond * time.Duration(serviceDTO.Interval),
+		Timeout:   time.Millisecond * time.Duration(serviceDTO.Timeout),
 		Retries:   serviceDTO.Retries,
 		Tags:      serviceDTO.Tags,
 		IsEnabled: serviceDTO.IsEnabled,
@@ -1199,8 +1199,29 @@ func (s *Server) getServiceWithState(ctx context.Context, service *storage.Servi
 		return nil, fmt.Errorf("failed to get service state: %w", err)
 	}
 
+	config := monitors.Config{}
+	if service.Config != nil {
+		var err error
+		config, err = monitors.ConvertFromMap(service.Config)
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert service config: %w", err)
+		}
+	}
+
 	return &ServiceWithState{
-		Service: service,
-		State:   serviceState,
+		Service: ServiceDTO{
+			ID:              service.ID,
+			Name:            service.Name,
+			Protocol:        service.Protocol,
+			Interval:        uint32(service.Interval.Milliseconds()),
+			Timeout:         uint32(service.Timeout.Milliseconds()),
+			Retries:         service.Retries,
+			Tags:            service.Tags,
+			Config:          config,
+			IsEnabled:       service.IsEnabled,
+			ActiveIncidents: service.ActiveIncidents,
+			TotalIncidents:  service.TotalIncidents,
+		},
+		State: serviceState,
 	}, nil
 }

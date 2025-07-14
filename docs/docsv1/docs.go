@@ -667,7 +667,7 @@ const docTemplate = `{
                 },
                 "timeout": {
                     "type": "integer",
-                    "example": 30000000000
+                    "example": 30000
                 }
             }
         },
@@ -925,7 +925,7 @@ const docTemplate = `{
                 },
                 "interval": {
                     "type": "integer",
-                    "example": 30000000000
+                    "example": 30000
                 },
                 "is_enabled": {
                     "type": "boolean",
@@ -959,7 +959,7 @@ const docTemplate = `{
                 },
                 "timeout": {
                     "type": "integer",
-                    "example": 5000000000
+                    "example": 5000
                 },
                 "total_incidents": {
                     "type": "integer",
@@ -1001,7 +1001,7 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "service": {
-                    "$ref": "#/definitions/storage.Service"
+                    "$ref": "#/definitions/web.ServiceDTO"
                 },
                 "state": {
                     "$ref": "#/definitions/storage.ServiceStateRecord"

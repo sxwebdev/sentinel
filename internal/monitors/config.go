@@ -43,3 +43,22 @@ func (c *Config) ConvertToMap() map[string]any {
 		string(storage.ServiceProtocolTypeGRPC): c.GRPC,
 	}
 }
+
+// ConvertFromMap converts a map[string]any to Config
+func ConvertFromMap(cfg map[string]any) (Config, error) {
+	conf := Config{}
+	if cfg == nil {
+		return conf, fmt.Errorf("config is nil")
+	}
+
+	jsonData, err := json.Marshal(cfg)
+	if err != nil {
+		return conf, err
+	}
+
+	if err := json.Unmarshal(jsonData, &conf); err != nil {
+		return conf, err
+	}
+
+	return conf, nil
+}
