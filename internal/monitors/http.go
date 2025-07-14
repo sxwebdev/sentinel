@@ -16,7 +16,7 @@ import (
 
 // HTTPConfig represents configuration for HTTP monitoring
 type HTTPConfig struct {
-	Timeout   time.Duration    `json:"timeout" swaggertype:"primitive,integer" example:"30000000000"`
+	Timeout   uint64           `json:"timeout" swaggertype:"primitive,integer" example:"30000"`
 	Endpoints []EndpointConfig `json:"endpoints"`
 	Condition string           `json:"condition"`
 }

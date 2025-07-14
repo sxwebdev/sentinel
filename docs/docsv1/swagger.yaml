@@ -78,7 +78,7 @@ definitions:
           $ref: '#/definitions/monitors.EndpointConfig'
         type: array
       timeout:
-        example: 30000000000
+        example: 30000
         type: integer
     type: object
   monitors.TCPConfig:
@@ -258,7 +258,7 @@ definitions:
         example: service-1
         type: string
       interval:
-        example: 30000000000
+        example: 30000
         type: integer
       is_enabled:
         example: true
@@ -281,7 +281,7 @@ definitions:
           type: string
         type: array
       timeout:
-        example: 5000000000
+        example: 5000
         type: integer
       total_incidents:
         example: 10
@@ -312,7 +312,7 @@ definitions:
   web.ServiceWithState:
     properties:
       service:
-        $ref: '#/definitions/storage.Service'
+        $ref: '#/definitions/web.ServiceDTO'
       state:
         $ref: '#/definitions/storage.ServiceStateRecord'
     type: object
