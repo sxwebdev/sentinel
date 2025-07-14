@@ -6,7 +6,7 @@ import {useServiceTableStore} from "../store/useServiceTableStore";
 import {toast} from "sonner";
 
 export const useServiceUpdate = () => {
-  const [service, setService] = useState<ServiceForm | null>(null);
+  const [serviceData, setServiceData] = useState<ServiceForm | null>(null);
   const {updateServiceId, setUpdateServiceId} = useServiceTableStore(
     useShallow((s) => ({
       setUpdateServiceId: s.setUpdateServiceId,
@@ -16,7 +16,7 @@ export const useServiceUpdate = () => {
 
   const getService = async () => {
     await $api.get(`/services/${updateServiceId}`).then((res) => {
-      setService(res.data);
+      setServiceData(res.data);
     });
   };
 
@@ -28,7 +28,7 @@ export const useServiceUpdate = () => {
         setUpdateServiceId(null);
       })
       .catch((err) => {
-        toast.error(err.response.data.message);
+        toast.error(err.message);
       });
   };
 
@@ -38,5 +38,5 @@ export const useServiceUpdate = () => {
     }
   }, [updateServiceId]);
 
-  return {service, setUpdateServiceId, onUpdateService};
+  return {serviceData, setUpdateServiceId, onUpdateService};
 };

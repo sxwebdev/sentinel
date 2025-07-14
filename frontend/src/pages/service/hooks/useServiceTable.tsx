@@ -53,7 +53,7 @@ export const useServiceTable = () => {
         toast.success("Service deleted");
       })
       .catch((err) => {
-        toast.error(err.response.data.message);
+        toast.error(err.message);
       })
       .finally(() => {
         setDeleteService(null);
@@ -95,7 +95,7 @@ export const useServiceTable = () => {
           <Button
             onClick={() => navigate(`/service/${row.original.service.id}`)}
             variant="link"
-            className="cursor-pointer font-bold"
+            className="cursor-pointer font-bold text-sm"
           >
             {row.original.service.name}
           </Button>
@@ -109,10 +109,13 @@ export const useServiceTable = () => {
         return (
           <Badge
             className={cn(
+              "text-sm font-medium",
               row.original.state.status === "up" &&
-                "bg-[#dcfce7] text-[#166534]",
+                "bg-green-light text-green",
               row.original.state.status === "down" &&
-                "bg-[#fee2e2] text-[#991B1B]"
+                "bg-red-light text-red",
+              row.original.state.status === "unknown" &&
+                "bg-orange-light text-orange"
             )}
           >
             {row.original.state.status}
@@ -145,13 +148,29 @@ export const useServiceTable = () => {
       header: "Incidents",
       accessorKey: "incidents",
       cell: ({row}) => {
+        console.log(row.original.state.consecutive_fails);
+
         return (
           <>
-            <Badge variant="outline">
+            <Badge
+              variant="outline"
+              className={cn(
+                "text-sm font-medium",
+                row.original.state.consecutive_fails > 0 &&
+                  "bg-color-red-light text-color-red",
+                !row.original.state.consecutive_fails &&
+                  "bg-color-green-light text-color-green"
+              )}
+            >
               {row.original.state.consecutive_fails ?? 0}
             </Badge>
             {" / "}
-            <Badge variant="outline">
+            <Badge
+              variant="outline"
+              className={cn(
+                "text-sm font-medium"
+              )}
+            >
               {row.original.service.total_incidents ?? 0}
             </Badge>
           </>

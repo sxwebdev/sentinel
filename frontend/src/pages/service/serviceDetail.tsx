@@ -138,7 +138,18 @@ const ServiceDetail = () => {
                 Status:
               </span>
               <span>
-                <Badge>{serviceDetailData?.state.status}</Badge>
+                <Badge className={cn(
+                    "text-sm font-medium",
+                    serviceDetailData?.state.status === "up" &&
+                      "text-green bg-green-light",
+                    serviceDetailData?.state.status === "down" &&
+                      "text-red bg-red-light",
+                    serviceDetailData?.state.status === "unknown" &&
+                      "text-orange bg-orange-light"
+                  )}
+                >
+                  {serviceDetailData?.state.status}
+                </Badge>
               </span>
             </div>
             <div className="flex items-center gap-2 justify-between">
@@ -239,8 +250,14 @@ const ServiceDetail = () => {
                     })}
                   </span>
                   <div className="flex items-center gap-2">
-                    <span className="text-muted-foreground text-sm font-medium">
-                      Resolved
+                    <span
+                      className={cn(
+                        "text-muted-foreground text-sm font-medium",
+                        incident.resolved && "text-green",
+                        !incident.resolved && "text-red"
+                      )}
+                    >
+                      {incident.resolved ? "Resolved" : "Active"}
                     </span>
                     <Button
                       size="sm"

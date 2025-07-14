@@ -228,22 +228,24 @@ const HTTPForm = ({
                   <div className="flex flex-col gap-2">
                     <Label required>Name</Label>
                     <Input
-                      name={`endpoints.${index}.name`}
+                      name={`endpoints.name`}
                       placeholder="Name"
-                      value={endpoint.name}
-                      onChange={(e) =>
-                        setFieldValue(`endpoints.${index}.name`, e.target.value)
-                      }
+                      value={values?.config?.http?.endpoints[index].name}
+                      onChange={(e) => {
+                        console.log(endpoint);
+
+                        setFieldValue(`values.config.http.endpoints.${index}.name`, e.target.value);
+                      }}
                     />
                   </div>
                   <div className="flex flex-col gap-2">
                     <Label required>URL</Label>
                     <Input
-                      name={`endpoints.${index}.url`}
+                      name={endpoint.url}
                       placeholder="URL"
                       value={endpoint.url}
                       onChange={(e) =>
-                        setFieldValue(`endpoints.${index}.url`, e.target.value)
+                        setFieldValue(`endpoint.${index}.url`, e.target.value)
                       }
                     />
                   </div>
@@ -314,12 +316,13 @@ const HTTPForm = ({
                       name={`endpoints.${index}.username`}
                       placeholder="Username"
                       value={endpoint.username}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        console.log(endpoint);
                         setFieldValue(
                           `endpoints.${index}.username`,
                           e.target.value
                         )
-                      }
+                      }}
                     />
                   </div>
                   <div className="flex flex-col gap-2">
