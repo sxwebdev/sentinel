@@ -69,14 +69,14 @@ const Dashboard = () => {
 
        const value =
          item.key === "uptime_percentage"
-           ? Number(dashboardInfo[item.key as keyof DashboardInfo]).toFixed(2) +
+           ? Number(dashboardInfo[item.key as keyof DashboardInfo]).toFixed(1) +
              "%"
            : item.key === "avg_response_time"
              ? dashboardInfo[item.key as keyof DashboardInfo].toString() + "ms"
              : dashboardInfo[item.key as keyof DashboardInfo].toString();
             
  
-            
+
             return (
             <InfoCardStats
               key={item.key}
@@ -93,7 +93,7 @@ const Dashboard = () => {
                 <h3 className="no-underline">Distribution by protocol</h3>
               </AccordionTrigger>
               <AccordionContent className="px-6 py-4 bg-white rounded-b-lg flex flex-col gap-4">
-                {Object.entries(dashboardInfo.protocols).map(
+                {dashboardInfo.protocols && Object.entries(dashboardInfo.protocols).length > 0 ? Object.entries(dashboardInfo.protocols).map(
                   ([protocol, count]) => {
                     const percentage = (
                       (count /
@@ -131,6 +131,8 @@ const Dashboard = () => {
                       </Card>
                     );
                   }
+                ) : (
+                  <p className="text-muted-foreground text-center">No protocols found</p>
                 )}
               </AccordionContent>
             </AccordionItem>

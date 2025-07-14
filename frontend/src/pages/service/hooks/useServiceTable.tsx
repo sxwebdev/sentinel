@@ -194,7 +194,11 @@ export const useServiceTable = () => {
 
   const getAllServices = async () => {
     const res = await $api.get("/services");
-    setData(res.data);
+    if (res.data === null) {
+      setData([]);
+    } else {
+      setData(res.data);
+    }
   };
 
   const table = useReactTable({
