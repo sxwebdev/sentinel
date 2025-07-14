@@ -18,7 +18,7 @@ import {
 } from "@tanstack/react-table";
 import {useEffect} from "react";
 import {useNavigate} from "react-router";
-import type {Service} from "../types/type";
+import type {Service} from "../../../features/service/types/type";
 import $api from "@/shared/api/baseApi";
 import {
   EllipsisVerticalIcon,
@@ -29,7 +29,7 @@ import {
 import {toast} from "sonner";
 import {useServiceTableStore} from "../store/useServiceTableStore";
 import {useServiceApi} from "./useServiceApi";
-import { ActivityIndicatorSVG } from "@/entities/ActivityIndicatorSVG/ActivityIndicatorSVG";
+import {ActivityIndicatorSVG} from "@/entities/ActivityIndicatorSVG/ActivityIndicatorSVG";
 
 export const useServiceTable = () => {
   const {
@@ -40,6 +40,7 @@ export const useServiceTable = () => {
     setSearch,
     setPage,
     setDeleteService,
+    setUpdateServiceId,
   } = useServiceTableStore();
 
   const navigate = useNavigate();
@@ -147,11 +148,11 @@ export const useServiceTable = () => {
         return (
           <>
             <Badge variant="outline">
-              {row.original.state.consecutive_fails}
+              {row.original.state.consecutive_fails ?? 0}
             </Badge>
             {" / "}
             <Badge variant="outline">
-              {row.original.service.total_incidents}
+              {row.original.service.total_incidents ?? 0}
             </Badge>
           </>
         );
@@ -174,7 +175,9 @@ export const useServiceTable = () => {
                   <RefreshCcwIcon className="w-4 h-4" />
                   <span>Check</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setUpdateServiceId(row.original.service.id)}
+                >
                   <PencilIcon /> <span>Edit</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem

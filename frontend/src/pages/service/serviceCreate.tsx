@@ -13,19 +13,23 @@ import {useServiceCreate} from "./hooks/useServiceCreate";
 
 const ServiceCreate = () => {
   const isMobile = useIsMobile();
-  const {initialValues} = useServiceCreate();
+  const {initialValues, onCreateService} = useServiceCreate();
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button size="sm" className={cn(isMobile && "w-full")} variant="outline">
+        <Button
+          size="sm"
+          className={cn(isMobile && "w-full")}
+          variant="outline"
+        >
           <PlusIcon />
           Add Service
         </Button>
       </DialogTrigger>
-      <DialogContent className="overflow-y-auto max-h-[90vh]">
+      <DialogContent className="overflow-y-auto max-h-[90vh]  sm:max-w-[90%] lg:max-w-[80%]">
         <DialogTitle>Create Service</DialogTitle>
         <hr />
-        <ServiceForm initialValues={initialValues} />
+        <ServiceForm initialValues={initialValues} onSubmit={onCreateService} />
       </DialogContent>
     </Dialog>
   );

@@ -1,23 +1,35 @@
+import type {ServiceForm} from "@/features/service/types/type";
+import $api from "@/shared/api/baseApi";
+import {toast} from "sonner";
+
 export const useServiceCreate = () => {
-  const initialValues = {
+  const initialValues: ServiceForm = {
     name: "",
     protocol: "",
     interval: 30,
     timeout: 10,
     retries: 3,
-    tags: "",
-    enabled: true,
-    http_condition: "",
-    endpoints: [
-      {
-        name: "",
-        url: "",
-        method: "GET",
-        expected_status: 200,
-      },
-    ],
+    tags: [],
+    is_enabled: true,
+    config: {
+      grpc: null,
+      tcp: null,
+      http: null,
+    },
+  };
+
+  const onCreateService = async (values: ServiceForm) => {
+    await $api
+      .post("/services", values)
+      .then(() => {
+        toast.success("Service created successfully");
+      })
+      .catch((err) => {
+        toast.error(err.response.data.message);
+      });
   };
   return {
     initialValues,
+    onCreateService,
   };
 };

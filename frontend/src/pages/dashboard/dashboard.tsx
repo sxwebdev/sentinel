@@ -34,6 +34,7 @@ const Dashboard = () => {
         return "gRPC";
     }
   };
+  if(!dashboardInfo) return <Loader loaderPage />;
 
   return (
     <ContentWrapper>
@@ -72,8 +73,8 @@ const Dashboard = () => {
            ? Number(dashboardInfo[item.key as keyof DashboardInfo]).toFixed(1) +
              "%"
            : item.key === "avg_response_time"
-             ? dashboardInfo[item.key as keyof DashboardInfo].toString() + "ms"
-             : dashboardInfo[item.key as keyof DashboardInfo].toString();
+             ? dashboardInfo[item.key as keyof DashboardInfo]?.toString() + "ms"
+             : dashboardInfo[item.key as keyof DashboardInfo]?.toString() ?? "0";
             
  
 

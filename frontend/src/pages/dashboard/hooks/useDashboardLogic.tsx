@@ -1,5 +1,8 @@
+import { useServiceTableStore } from "@/pages/service/store/useServiceTableStore";
 import $api from "@/shared/api/baseApi";
-import {useEffect, useState} from "react";
+import {useEffect, useMemo, useState} from "react";
+import useWebSocket from "react-use-websocket";
+import {useShallow} from "zustand/react/shallow";
 
 export interface DashboardInfo {
   total_services: number;
@@ -17,44 +20,14 @@ export interface DashboardInfo {
 }
 
 export const useDashboardLogic = () => {
+  const {setServices} = useServiceTableStore(
+    useShallow((s) => ({
+      setServices: s.setData,
+    }))
+  );
   const [dashboardInfo, setDashboardInfo] = useState<DashboardInfo | null>(
     null
   );
-
-  const infoKeysDashboard = [
-    {
-      key: "total_services",
-      label: "Total Services",
-    },
-    {
-      key: "services_up",
-      label: "Services Up",
-    },
-    {
-      key: "services_down",
-      label: "Services Down",
-    },
-    {
-      key: "active_incidents",
-      label: "Active Incidents",
-    },
-    {
-      key: "avg_response_time",
-      label: "Average Response Time (ms)",
-    },
-    {
-      key: "total_checks",
-      label: "Total Checks",
-    },
-    {
-      key: "uptime_percentage",
-      label: "Uptime Percentage",
-    },
-    {
-      key: "checks_per_minute",
-      label: "Checks Per Minute",
-    },
-  ];
 
   const getDashboardInfo = async () => {
     const res = await $api.get("/dashboard/stats");
@@ -73,7 +46,45 @@ export const useDashboardLogic = () => {
     };
   }, []);
 
+  const socketUrl = "ws://localhost:8080/ws";
+
+  const { lastMessage, readyState} = useWebSocket(socketUrl, {
+    shouldReconnect: () => true,
+  });
+
+  useEffect(() => {
+    if (lastMessage !== null) {
+      try {
+        const data = JSON.parse(lastMessage.data);
+        console.log(data);
+        if (data.stats) {
+          setDashboardInfo(data.stats);
+        }
+        if (data.services) {
+          setServices(data.services);
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  }, [lastMessage]);
+
+  const infoKeysDashboard = useMemo(
+    () => [
+      {key: "total_services", label: "Total Services"},
+      {key: "services_up", label: "Services Up"},
+      {key: "services_down", label: "Services Down"},
+      {key: "active_incidents", label: "Active Incidents"},
+      {key: "avg_response_time", label: "Average Response Time (ms)"},
+      {key: "total_checks", label: "Total Checks"},
+      {key: "uptime_percentage", label: "Uptime Percentage"},
+      {key: "checks_per_minute", label: "Checks Per Minute"},
+    ],
+    []
+  );
+
   return {
+    readyState,
     dashboardInfo,
     infoKeysDashboard,
     onRefreshDashboard,

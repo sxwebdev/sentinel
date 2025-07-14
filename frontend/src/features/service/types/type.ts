@@ -27,7 +27,7 @@ export interface Service {
     retries: number;
     tags: string[];
     config: {
-      grpc: object | null;
+      grpc: GRPC | null;
       http: {
         condition: string;
         endpoints: {
@@ -54,5 +54,53 @@ export interface Service {
     response_time_ns: number;
     created_at: string;
     updated_at: string;
+  };
+}
+
+export interface HTTPEndpoint {
+  body?: string;
+  expected_status: number; // max 599 min 100
+  headers?: string;
+  json_path?: string;
+  method: "GET" | "POST" | "PUT" | "DELETE" | "HEAD" | "OPTIONS";
+  name: string;
+  url: string;
+  username?: string;
+  password?: string;
+}
+
+export interface HTTP {
+  condition?: string;
+  endpoints?: HTTPEndpoint[];
+  timeout?: number;
+}
+
+export interface TCP {
+  endpoint: string;
+  expect_data?: string;
+  send_data?: string;
+}
+
+export interface GRPC {
+  check_type: "health" | "reflection" | "connectivity";
+  endpoint: string;
+  tls?: boolean;
+  service_name?: string;
+  insecure_tls?: boolean;
+}
+
+
+export interface ServiceForm {
+  name: string;
+  protocol: string;
+  interval?: number;
+  timeout?: number;
+  retries?: number;
+  tags?: string[];
+  is_enabled?: boolean;
+  config?: {
+    http?: HTTP | null;
+    tcp?: TCP | null;
+    grpc?: GRPC | null;
   };
 }

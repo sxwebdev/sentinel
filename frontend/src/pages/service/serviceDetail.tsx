@@ -13,10 +13,10 @@ import {useNavigate} from "react-router";
 import {useIsMobile} from "@/shared/hooks/useIsMobile";
 import {cn} from "@/shared/lib/utils";
 import {InfoCardStats} from "@/entities/infoStatsCard/infoCardStats";
-import type {Incident} from "./types/type";
+import type {Incident} from "../../features/service/types/type";
 import {Loader} from "@/entities/loader/loader";
 import {ConfirmDialog} from "@/entities/confirmDialog/confirmDialog";
-import { ActivityIndicatorSVG } from "@/entities/ActivityIndicatorSVG/ActivityIndicatorSVG";
+import {ActivityIndicatorSVG} from "@/entities/ActivityIndicatorSVG/ActivityIndicatorSVG";
 
 const ServiceDetail = () => {
   const navigate = useNavigate();
