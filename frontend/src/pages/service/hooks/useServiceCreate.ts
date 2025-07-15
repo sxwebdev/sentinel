@@ -6,10 +6,10 @@ export const useServiceCreate = () => {
   const initialValues: ServiceForm = {
     name: "",
     protocol: "",
-    interval: 30,
-    timeout: 10,
+    interval: 30000,
+    timeout: 10000,
     retries: 3,
-    tags: [],
+    tags: "",
     is_enabled: true,
     config: {
       grpc: null,

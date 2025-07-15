@@ -18,7 +18,7 @@ import {
 } from "@tanstack/react-table";
 import {useEffect} from "react";
 import {useNavigate} from "react-router";
-import type {Service} from "../../../features/service/types/type";
+import type {Service} from "@features/service/types/type";
 import $api from "@/shared/api/baseApi";
 import {
   EllipsisVerticalIcon,
@@ -110,10 +110,8 @@ export const useServiceTable = () => {
           <Badge
             className={cn(
               "text-sm font-medium",
-              row.original.state.status === "up" &&
-                "bg-green-light text-green",
-              row.original.state.status === "down" &&
-                "bg-red-light text-red",
+              row.original.state.status === "up" && "bg-green-light text-green",
+              row.original.state.status === "down" && "bg-red-light text-red",
               row.original.state.status === "unknown" &&
                 "bg-orange-light text-orange"
             )}
@@ -148,29 +146,21 @@ export const useServiceTable = () => {
       header: "Incidents",
       accessorKey: "incidents",
       cell: ({row}) => {
-        console.log(row.original.state.consecutive_fails);
-
         return (
           <>
             <Badge
-              variant="outline"
               className={cn(
                 "text-sm font-medium",
                 row.original.state.consecutive_fails > 0 &&
-                  "bg-color-red-light text-color-red",
+                  "bg-red-light text-red",
                 !row.original.state.consecutive_fails &&
-                  "bg-color-green-light text-color-green"
+                  "bg-green-light text-green"
               )}
             >
               {row.original.state.consecutive_fails ?? 0}
             </Badge>
             {" / "}
-            <Badge
-              variant="outline"
-              className={cn(
-                "text-sm font-medium"
-              )}
-            >
+            <Badge variant="outline" className={cn("text-sm font-medium")}>
               {row.original.service.total_incidents ?? 0}
             </Badge>
           </>

@@ -1,4 +1,6 @@
-import {Form, Formik} from "formik";
+import React, {useEffect, useCallback} from "react";
+import {Form, Formik, FastField, Field, useFormikContext} from "formik";
+import type {FieldProps} from "formik";
 import {
   Button,
   Card,
@@ -17,8 +19,6 @@ import {
 } from "@/shared/components/ui";
 import {PlusIcon, TrashIcon} from "lucide-react";
 import type {HTTPEndpoint, ServiceForm as ServiceFormType} from "./types/type";
-import {useEffect} from "react";
-import {useFormikContext} from "formik";
 
 interface ServiceFormProps {
   initialValues: ServiceFormType;
@@ -26,97 +26,96 @@ interface ServiceFormProps {
   onSubmit: (values: ServiceFormType) => Promise<void> | void;
 }
 
-const GRPCForm = ({
-  values,
-  setFieldValue,
-}: {
-  values: ServiceFormType;
-  setFieldValue: (field: string, value: any) => void;
-}) => {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>gRPC Configuration</CardTitle>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-4">
-        <div className="flex flex-col gap-2">
-          <Label required>Endpoint</Label>
-          <Input
-            name="config.grpc.endpoint"
-            placeholder="localhost:50051"
-            value={values.config?.grpc?.endpoint}
-            onChange={(e) =>
-              setFieldValue("config.grpc.endpoint", e.target.value)
-            }
-          />
-        </div>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+const GRPCForm = React.memo(
+  ({
+    setFieldValue,
+  }: {
+    setFieldValue: (field: string, value: unknown) => void;
+  }) => {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>gRPC Configuration</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
-            <Label required>Check Type</Label>
-            <Select
-              name="config.grpc.check_type"
-              value={values.config?.grpc?.check_type}
-              onValueChange={(value) =>
-                setFieldValue("config.grpc.check_type", value)
-              }
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue
-                  className="w-full"
-                  placeholder="Select Check Type"
-                />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="health">Health Check</SelectItem>
-                <SelectItem value="connectivity">Connectivity</SelectItem>
-                <SelectItem value="reflection">Reflection</SelectItem>
-              </SelectContent>
-            </Select>
+            <Label required>Endpoint</Label>
+            <FastField name="config.grpc.endpoint">
+              {({field}: FieldProps) => (
+                <Input {...field} placeholder="localhost:50051" />
+              )}
+            </FastField>
           </div>
-          <div className="flex flex-col gap-2">
-            <Label>Service Name</Label>
-            <Input
-              name="config.grpc.service_name"
-              placeholder="Service Name"
-              value={values.config?.grpc?.service_name}
-              onChange={(e) =>
-                setFieldValue("config.grpc.service_name", e.target.value)
-              }
-            />
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="flex flex-col gap-2">
+              <Label required>Check Type</Label>
+              <Field name="config.grpc.check_type">
+                {({field}: FieldProps) => (
+                  <Select
+                    value={field.value}
+                    onValueChange={(value) =>
+                      setFieldValue("config.grpc.check_type", value)
+                    }
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue
+                        className="w-full"
+                        placeholder="Select Check Type"
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="health">Health Check</SelectItem>
+                      <SelectItem value="connectivity">Connectivity</SelectItem>
+                      <SelectItem value="reflection">Reflection</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              </Field>
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label>Service Name</Label>
+              <FastField name="config.grpc.service_name">
+                {({field}: FieldProps) => (
+                  <Input {...field} placeholder="Service Name" />
+                )}
+              </FastField>
+            </div>
           </div>
-        </div>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <div className="flex flex-col gap-2">
-            <Label>Use TLS</Label>
-            <Switch
-              checked={values.config?.grpc?.tls}
-              onCheckedChange={(checked) =>
-                setFieldValue("config.grpc.tls", checked)
-              }
-            />
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="flex flex-col gap-2">
+              <Label>Use TLS</Label>
+              <Field name="config.grpc.tls">
+                {({field}: FieldProps) => (
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={(checked) =>
+                      setFieldValue("config.grpc.tls", checked)
+                    }
+                  />
+                )}
+              </Field>
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label>Insecure TLS</Label>
+              <Field name="config.grpc.insecure_tls">
+                {({field}: FieldProps) => (
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={(checked) =>
+                      setFieldValue("config.grpc.insecure_tls", checked)
+                    }
+                  />
+                )}
+              </Field>
+            </div>
           </div>
-          <div className="flex flex-col gap-2">
-            <Label>Insecure TLS</Label>
-            <Switch
-              checked={values.config?.grpc?.insecure_tls}
-              onCheckedChange={(checked) =>
-                setFieldValue("config.grpc.insecure_tls", checked)
-              }
-            />
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
+        </CardContent>
+      </Card>
+    );
+  }
+);
 
-const TCPForm = ({
-  values,
-  setFieldValue,
-}: {
-  values: ServiceFormType;
-  setFieldValue: (field: string, value: unknown) => void;
-}) => {
+const TCPForm = React.memo(() => {
   return (
     <Card>
       <CardHeader>
@@ -125,66 +124,94 @@ const TCPForm = ({
       <CardContent className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
           <Label required>Endpoint</Label>
-          <Input
-            name="config.tcp.endpoint"
-            placeholder="localhost:8080"
-            value={values.config?.tcp?.endpoint || ""}
-            onChange={(e) =>
-              setFieldValue("config.tcp.endpoint", e.target.value)
-            }
-          />
+          <FastField name="config.tcp.endpoint">
+            {({field}: FieldProps) => (
+              <Input {...field} placeholder="localhost:8080" />
+            )}
+          </FastField>
         </div>
         <div className="flex flex-col gap-2">
           <Label>Send Data</Label>
-          <Textarea
-            name="config.tcp.send_data"
-            placeholder="Send Data"
-            value={values.config?.tcp?.send_data || ""}
-            onChange={(e) =>
-              setFieldValue("config.tcp.send_data", e.target.value)
-            }
-          />
+          <FastField name="config.tcp.send_data">
+            {({field}: FieldProps) => (
+              <Textarea {...field} placeholder="Send Data" />
+            )}
+          </FastField>
         </div>
         <div className="flex flex-col gap-2">
           <Label>Expected Response</Label>
-          <Input
-            name="config.tcp.expect_data"
-            placeholder="Expected Response"
-            value={values.config?.tcp?.expect_data || ""}
-            onChange={(e) =>
-              setFieldValue("config.tcp.expect_data", e.target.value)
-            }
-          />
+          <FastField name="config.tcp.expect_data">
+            {({field}: FieldProps) => (
+              <Input {...field} placeholder="Expected Response" />
+            )}
+          </FastField>
         </div>
       </CardContent>
     </Card>
   );
-};
+});
 
-const HTTPForm = ({
-  values,
-  setFieldValue,
-}: {
-  values: ServiceFormType;
-  setFieldValue: (field: string, value: any) => void;
-}) => {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>HTTP Configuration</CardTitle>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-4">
-        <div className="flex flex-col gap-2">
-          <Label>JavaScript Condition</Label>
-          <div>
-            <Textarea
-              name="config.http.condition"
-              placeholder="// Example: return Math.abs(results.main.value - results.backup.value) > 5;"
-              value={values.config?.http?.condition || ""}
-              onChange={(e) =>
-                setFieldValue("config.http.condition", e.target.value)
-              }
-            />
+const HTTPForm = React.memo(
+  ({
+    values,
+    setFieldValue,
+  }: {
+    values: ServiceFormType;
+    setFieldValue: (field: string, value: unknown) => void;
+  }) => {
+    // Мемоизированные обработчики
+    const handleEndpointChange = useCallback(
+      (index: number, field: string, value: any) => {
+        const endpoints = [...(values.config?.http?.endpoints || [])];
+        endpoints[index] = {...endpoints[index], [field]: value};
+        setFieldValue("config.http.endpoints", endpoints);
+      },
+      [setFieldValue, values.config?.http?.endpoints]
+    );
+
+    const handleRemoveEndpoint = useCallback(
+      (index: number) => {
+        setFieldValue(
+          "config.http.endpoints",
+          (values.config?.http?.endpoints || []).filter((_, i) => i !== index)
+        );
+      },
+      [setFieldValue, values.config?.http?.endpoints]
+    );
+
+    const handleAddEndpoint = useCallback(() => {
+      setFieldValue("config.http.endpoints", [
+        ...(values.config?.http?.endpoints || []),
+        {
+          name: "",
+          url: "",
+          method: "GET",
+          expected_status: 200,
+          json_path: "",
+          headers: "",
+          username: "",
+          password: "",
+          body: "",
+        },
+      ]);
+    }, [setFieldValue, values.config?.http?.endpoints]);
+
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>HTTP Configuration</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2">
+            <Label>JavaScript Condition</Label>
+            <FastField name="config.http.condition">
+              {({field}: FieldProps) => (
+                <Textarea
+                  {...field}
+                  placeholder="// Example: return Math.abs(results.main.value - results.backup.value) > 5;"
+                />
+              )}
+            </FastField>
             <small className="text-muted-foreground text-xs">
               JavaScript condition that returns true to trigger an incident.
               Available variables:
@@ -198,212 +225,164 @@ const HTTPForm = ({
               , etc.
             </small>
           </div>
-        </div>
-        {(values.config?.http?.endpoints || []).map(
-          (endpoint: HTTPEndpoint, index: number) => (
-            <Card key={index}>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>Endpoint {index + 1}</CardTitle>
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => {
-                      setFieldValue(
-                        "config.http.endpoints",
-                        (values.config?.http?.endpoints || []).filter(
-                          (_, i) => i !== index
-                        )
-                      );
-                    }}
-                  >
-                    <TrashIcon />
-                    Remove
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent className="flex flex-col gap-4">
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  <div className="flex flex-col gap-2">
-                    <Label required>Name</Label>
-                    <Input
-                      name={`endpoints.name`}
-                      placeholder="Name"
-                      value={values?.config?.http?.endpoints[index].name}
-                      onChange={(e) => {
-                        console.log(endpoint);
-
-                        setFieldValue(`values.config.http.endpoints.${index}.name`, e.target.value);
-                      }}
-                    />
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <Label required>URL</Label>
-                    <Input
-                      name={endpoint.url}
-                      placeholder="URL"
-                      value={endpoint.url}
-                      onChange={(e) =>
-                        setFieldValue(`endpoint.${index}.url`, e.target.value)
-                      }
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-2">
-                    <Label>Method</Label>
-                    <Select
-                      name={`endpoints.${index}.method`}
-                      value={endpoint.method}
-                      onValueChange={(value) =>
-                        setFieldValue(`endpoints.${index}.method`, value)
-                      }
+          {(values.config?.http?.endpoints || []).map(
+            (endpoint: HTTPEndpoint, index: number) => (
+              <Card key={index}>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle>Endpoint {index + 1}</CardTitle>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleRemoveEndpoint(index)}
                     >
-                      <SelectTrigger className="w-full">
-                        <SelectValue
-                          className="w-full"
-                          placeholder="Select Method"
-                        />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="GET">GET</SelectItem>
-                        <SelectItem value="POST">POST</SelectItem>
-                        <SelectItem value="PUT">PUT</SelectItem>
-                        <SelectItem value="DELETE">DELETE</SelectItem>
-                        <SelectItem value="HEAD">HEAD</SelectItem>
-                      </SelectContent>
-                    </Select>
+                      <TrashIcon /> Remove
+                    </Button>
                   </div>
-                  <div className="flex flex-col gap-2">
-                    <Label>Expected Status</Label>
-                    <Input
-                      name={`endpoints.${index}.expected_status`}
-                      placeholder="Expected Status"
-                      value={endpoint.expected_status}
-                      onChange={(e) =>
-                        setFieldValue(
-                          `endpoints.${index}.expected_status`,
-                          e.target.value
-                        )
-                      }
-                    />
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <Label>JSON Path</Label>
-                    <div>
-                      <Input
-                        name={`endpoints.${index}.json_path`}
-                        placeholder="results.block_number"
-                        value={endpoint.json_path}
-                        onChange={(e) =>
-                          setFieldValue(
-                            `endpoints.${index}.json_path`,
-                            e.target.value
-                          )
-                        }
-                      />
+                </CardHeader>
+                <CardContent className="flex flex-col gap-4">
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div className="flex flex-col gap-2">
+                      <Label required>Name</Label>
+                      <FastField name={`config.http.endpoints.${index}.name`}>
+                        {({field}: FieldProps) => (
+                          <Input {...field} placeholder="Name" />
+                        )}
+                      </FastField>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <Label required>URL</Label>
+                      <FastField name={`config.http.endpoints.${index}.url`}>
+                        {({field}: FieldProps) => (
+                          <Input {...field} placeholder="URL" />
+                        )}
+                      </FastField>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <Label>Method</Label>
+                      <Field name={`config.http.endpoints.${index}.method`}>
+                        {({field}: FieldProps) => (
+                          <Select
+                            value={field.value}
+                            onValueChange={(value) =>
+                              handleEndpointChange(index, "method", value)
+                            }
+                          >
+                            <SelectTrigger className="w-full">
+                              <SelectValue
+                                className="w-full"
+                                placeholder="Select Method"
+                              />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="GET">GET</SelectItem>
+                              <SelectItem value="POST">POST</SelectItem>
+                              <SelectItem value="PUT">PUT</SelectItem>
+                              <SelectItem value="DELETE">DELETE</SelectItem>
+                              <SelectItem value="HEAD">HEAD</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        )}
+                      </Field>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <Label>Expected Status</Label>
+                      <FastField
+                        name={`config.http.endpoints.${index}.expected_status`}
+                      >
+                        {({field}: FieldProps) => (
+                          <Input {...field} placeholder="Expected Status" />
+                        )}
+                      </FastField>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <Label>JSON Path</Label>
+                      <FastField
+                        name={`config.http.endpoints.${index}.json_path`}
+                      >
+                        {({field}: FieldProps) => (
+                          <Input
+                            {...field}
+                            placeholder="results.block_number"
+                          />
+                        )}
+                      </FastField>
                       <small className="text-muted-foreground text-xs">
                         Path to extract value from JSON response (e.g.,
                         "result.block_number")
                       </small>
                     </div>
                   </div>
-                </div>
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  <div className="flex flex-col gap-2">
-                    <Label>Username</Label>
-                    <Input
-                      name={`endpoints.${index}.username`}
-                      placeholder="Username"
-                      value={endpoint.username}
-                      onChange={(e) => {
-                        console.log(endpoint);
-                        setFieldValue(
-                          `endpoints.${index}.username`,
-                          e.target.value
-                        )
-                      }}
-                    />
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div className="flex flex-col gap-2">
+                      <Label>Username</Label>
+                      <FastField
+                        name={`config.http.endpoints.${index}.username`}
+                      >
+                        {({field}: FieldProps) => (
+                          <Input {...field} placeholder="Username" />
+                        )}
+                      </FastField>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <Label>Password</Label>
+                      <FastField
+                        name={`config.http.endpoints.${index}.password`}
+                      >
+                        {({field}: FieldProps) => (
+                          <Input {...field} placeholder="Password" />
+                        )}
+                      </FastField>
+                    </div>
                   </div>
                   <div className="flex flex-col gap-2">
-                    <Label>Password</Label>
-                    <Input
-                      name={`endpoints.${index}.password`}
-                      placeholder="Password"
-                      value={endpoint.password}
-                      onChange={(e) =>
-                        setFieldValue(
-                          `endpoints.${index}.password`,
-                          e.target.value
-                        )
-                      }
-                    />
+                    <Label>Headers</Label>
+                    <FastField name={`config.http.endpoints.${index}.headers`}>
+                      {({field}: FieldProps) => (
+                        <Textarea
+                          {...field}
+                          placeholder="Content-Type: application/json"
+                        />
+                      )}
+                    </FastField>
                   </div>
-                </div>
-                <div className="flex flex-col gap-2">
-                  <Label>Headers</Label>
-                  <Textarea
-                    name={`endpoints.${index}.headers`}
-                    placeholder="Content-Type: application/json"
-                    value={endpoint.headers}
-                    onChange={(e) =>
-                      setFieldValue(
-                        `endpoints.${index}.headers`,
-                        e.target.value
-                      )
-                    }
-                  />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <Label>Body</Label>
-                  <Textarea
-                    name={`endpoints.${index}.body`}
-                    placeholder="Body"
-                    value={endpoint.body}
-                    onChange={(e) =>
-                      setFieldValue(`endpoints.${index}.body`, e.target.value)
-                    }
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          )
-        )}
-        <Button
-          type="button"
-          className="w-fit"
-          variant="outline"
-          onClick={() => {
-            setFieldValue("config.http.endpoints", [
-              ...(values.config?.http?.endpoints || []),
-              {
-                name: "",
-                url: "",
-                method: "GET",
-                expected_status: 200,
-                json_path: "",
-                headers: "",
-                body: "",
-              },
-            ]);
-          }}
-        >
-          <PlusIcon /> Add Endpoint
-        </Button>
-      </CardContent>
-    </Card>
-  );
-};
+                  <div className="flex flex-col gap-2">
+                    <Label>Body</Label>
+                    <FastField name={`config.http.endpoints.${index}.body`}>
+                      {({field}: FieldProps) => (
+                        <Textarea {...field} placeholder="Body" />
+                      )}
+                    </FastField>
+                  </div>
+                </CardContent>
+              </Card>
+            )
+          )}
+          <Button
+            type="button"
+            className="w-fit"
+            variant="outline"
+            onClick={handleAddEndpoint}
+          >
+            <PlusIcon /> Add Endpoint
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+);
 
 const ServiceFormInner = () => {
   const {values, setFieldValue} = useFormikContext<ServiceFormType>();
   useEffect(() => {
-    // Сброс невыбранных конфигов при смене протокола
     if (values.protocol === "http") {
       if (
         !values.config?.http?.endpoints ||
         values.config.http.endpoints.length === 0
       ) {
+        setFieldValue("config.http.timeout", 10000);
+        setFieldValue("config.http.condition", "");
         setFieldValue("config.http.endpoints", [
           {
             name: "",
@@ -412,6 +391,8 @@ const ServiceFormInner = () => {
             expected_status: 200,
             json_path: "",
             headers: "",
+            username: "",
+            password: "",
             body: "",
           },
         ]);
@@ -461,86 +442,114 @@ const ServiceFormInner = () => {
     <Form className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
         <Label required>Service Name</Label>
-        <Input
-          name="name"
-          placeholder="Name"
-          value={values.name}
-          onChange={(e) => setFieldValue("name", e.target.value)}
-        />
+        <FastField name="name">
+          {({field}: FieldProps) => <Input {...field} placeholder="Name" />}
+        </FastField>
       </div>
       <div className="flex flex-col gap-2">
         <Label required>Protocol</Label>
-        <Select
-          value={values.protocol}
-          onValueChange={(value) => setFieldValue("protocol", value)}
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue className="w-full" placeholder="Select Protocol" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="http">HTTP/HTTPS</SelectItem>
-            <SelectItem value="tcp">TCP</SelectItem>
-            <SelectItem value="grpc">gRPC</SelectItem>
-          </SelectContent>
-        </Select>
+        <Field name="protocol">
+          {({field}: FieldProps) => (
+            <Select
+              value={field.value}
+              onValueChange={(value) => setFieldValue("protocol", value)}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue className="w-full" placeholder="Select Protocol" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="http">HTTP/HTTPS</SelectItem>
+                <SelectItem value="tcp">TCP</SelectItem>
+                <SelectItem value="grpc">gRPC</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
+        </Field>
       </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <div className="flex flex-col gap-2">
-          <Label>Interval(seconds)</Label>
-          <Input
-            name="interval"
-            placeholder="Interval"
-            value={values.interval}
-            onChange={(e) => setFieldValue("interval", e.target.value)}
-          />
+          <Label>Interval(milliseconds)</Label>
+          <FastField name="interval">
+            {({field}: FieldProps) => (
+              <Input
+                {...field}
+                placeholder="Interval"
+                onChange={(e) => {
+                  if (!isNaN(Number(e.target.value))) {
+                    setFieldValue("interval", Number(e.target.value));
+                  }
+                }}
+              />
+            )}
+          </FastField>
         </div>
         <div className="flex flex-col gap-2">
-          <Label>Timeout(seconds)</Label>
-          <Input
-            name="timeout"
-            placeholder="Timeout"
-            value={values.timeout}
-            onChange={(e) => setFieldValue("timeout", e.target.value)}
-          />
+          <Label>Timeout(milliseconds)</Label>
+          <FastField name="timeout">
+            {({field}: FieldProps) => (
+              <Input
+                {...field}
+                placeholder="Timeout"
+                onChange={(e) => {
+                  if (!isNaN(Number(e.target.value))) {
+                    setFieldValue("timeout", Number(e.target.value));
+                  }
+                }}
+              />
+            )}
+          </FastField>
         </div>
         <div className="flex flex-col gap-2">
           <Label>Retries</Label>
-          <Input
-            name="retries"
-            placeholder="Retries"
-            value={values.retries}
-            onChange={(e) => setFieldValue("retries", e.target.value)}
-          />
+          <FastField name="retries">
+            {({field}: FieldProps) => (
+              <Input
+                {...field}
+                placeholder="Retries"
+                onChange={(e) => {
+                  if (!isNaN(Number(e.target.value))) {
+                    setFieldValue("retries", Number(e.target.value));
+                  }
+                }}
+              />
+            )}
+          </FastField>
         </div>
       </div>
       <div className="flex flex-col gap-2">
         <Label>Tags (comma-separated)</Label>
-        <Input
-          name="tags"
-          placeholder="api, critical, production"
-          value={values.tags}
-          onChange={(e) => setFieldValue("tags", e.target.value)}
-        />
+        <FastField name="tags">
+          {({field}: FieldProps) => (
+            <Input
+              {...field}
+              placeholder="api, critical, production"
+              value={field.value}
+              onChange={(e) => setFieldValue("tags", e.target.value)}
+            />
+          )}
+        </FastField>
       </div>
       <div className="flex flex-col gap-2">
         <Label>Enabled Service</Label>
-        <Switch
-          checked={values.is_enabled}
-          onCheckedChange={(checked) => setFieldValue("is_enabled", checked)}
-        />
+        <Field name="is_enabled">
+          {({field}: FieldProps) => (
+            <Switch
+              checked={field.value}
+              onCheckedChange={(checked) =>
+                setFieldValue("is_enabled", checked)
+              }
+            />
+          )}
+        </Field>
       </div>
       {/*  HTTP/HTTPS */}
       {values.protocol === "http" && (
         <HTTPForm values={values} setFieldValue={setFieldValue} />
       )}
       {/*  TCP */}
-      {values.protocol === "tcp" && (
-        <TCPForm values={values} setFieldValue={setFieldValue} />
-      )}
+      {values.protocol === "tcp" && <TCPForm />}
       {/*  GRPC */}
-      {values.protocol === "grpc" && (
-        <GRPCForm values={values} setFieldValue={setFieldValue} />
-      )}
+      {values.protocol === "grpc" && <GRPCForm setFieldValue={setFieldValue} />}
       <hr />
       <div className="flex justify-end">
         <Button type="submit">Create</Button>
@@ -554,8 +563,18 @@ export const ServiceForm = ({initialValues, onSubmit}: ServiceFormProps) => {
     <Formik
       initialValues={initialValues}
       enableReinitialize
-      onSubmit={async (values) => {
-        await onSubmit(values);
+      onSubmit={(values) => {
+        if (values.tags) {
+          values.tags = values.tags.split(",").map((tag: string) => tag.trim());
+        }
+        if (values.config?.http?.endpoints) {
+          values.config.http.endpoints.forEach((endpoint) => {
+            if (endpoint.headers) {
+              endpoint.headers = JSON.parse(endpoint.headers);
+            }
+          });
+        }
+        onSubmit(values);
       }}
     >
       <ServiceFormInner />

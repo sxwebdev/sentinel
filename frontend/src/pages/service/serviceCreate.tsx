@@ -10,6 +10,7 @@ import {useIsMobile} from "@/shared/hooks/useIsMobile";
 import {cn} from "@/shared/lib/utils";
 import {PlusIcon} from "lucide-react";
 import {useServiceCreate} from "./hooks/useServiceCreate";
+import { DialogDescription } from "@radix-ui/react-dialog";
 
 const ServiceCreate = () => {
   const isMobile = useIsMobile();
@@ -26,6 +27,7 @@ const ServiceCreate = () => {
           Add Service
         </Button>
       </DialogTrigger>
+      <DialogDescription />
       <DialogContent className="overflow-y-auto max-h-[90vh]  sm:max-w-[90%] lg:max-w-[80%]">
         <DialogTitle>Create Service</DialogTitle>
         <hr />
