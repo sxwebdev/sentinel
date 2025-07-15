@@ -16,6 +16,7 @@ import {useServiceTable} from "./hooks/useServiceTable";
 import {Loader} from "@/entities/loader/loader";
 import {PaginationBar} from "@/entities/paginationBar/paginationBar";
 import { ConfirmDialog } from "@/entities/confirmDialog/confirmDialog";
+import { ServiceUpdate } from "./serviceUpdate";
 
 interface ServiceTableProps {
   onRefreshDashboard?: () => void;
@@ -37,6 +38,9 @@ export const ServiceTable = ({onRefreshDashboard}: ServiceTableProps) => {
 
   return (
     <>
+      <ServiceUpdate
+        onRefreshDashboard={onRefreshDashboard}
+      />
       <ConfirmDialog
         open={!!deleteService}
         setOpen={() => setDeleteService(null)}

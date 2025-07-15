@@ -44,7 +44,7 @@ export const useServiceTable = () => {
   } = useServiceTableStore();
 
   const navigate = useNavigate();
-  const {onCheckService} = useServiceApi();
+  const {onCheckService, getAllServices} = useServiceApi();
 
   const onDeleteService = async () => {
     await $api
@@ -219,15 +219,6 @@ export const useServiceTable = () => {
     },
   ];
 
-  const getAllServices = async () => {
-    const res = await $api.get("/services");
-    if (res.data === null) {
-      setData([]);
-    } else {
-      setData(res.data);
-    }
-  };
-
   const table = useReactTable({
     data: data ?? [],
     columns,
@@ -235,7 +226,6 @@ export const useServiceTable = () => {
   });
 
   useEffect(() => {
-    getAllServices();
   }, [filters]);
 
   return {

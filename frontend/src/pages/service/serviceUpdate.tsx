@@ -7,12 +7,15 @@ import {
   DialogDescription,
   DialogTitle,
 } from "@/shared/components/ui";
+import { useServiceApi } from "./hooks/useServiceApi";
 
 interface ServiceUpdateProps {
   onRefreshDashboard?: () => void;
+
 }
 
 export const ServiceUpdate = ({onRefreshDashboard}: ServiceUpdateProps) => {
+  const {getAllServices} = useServiceApi();
   const {
     serviceData,
     onUpdateService,
@@ -40,6 +43,7 @@ export const ServiceUpdate = ({onRefreshDashboard}: ServiceUpdateProps) => {
             onSubmit={(values) => {
               onUpdateService(values).then(() => {
                 onRefreshDashboard?.();
+                getAllServices?.();
               });
             }}
           />

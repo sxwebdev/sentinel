@@ -19,7 +19,7 @@ import {
 } from "@/shared/components/ui";
 import {PlusIcon, TrashIcon} from "lucide-react";
 import type {HTTPEndpoint, ServiceForm as ServiceFormType} from "./types/type";
-import { toast } from "sonner";
+import {toast} from "sonner";
 
 interface ServiceFormProps {
   initialValues: ServiceFormType;
@@ -230,12 +230,17 @@ const HTTPForm = React.memo(
             <Label>Timeout(milliseconds)</Label>
             <FastField name="config.http.timeout">
               {({field}: FieldProps) => (
-                <Input {...field} placeholder="Timeout"
-                onChange={(e) => {
-                  if (!isNaN(Number(e.target.value))) {
-                    setFieldValue("config.http.timeout", Number(e.target.value));
-                  }
-                }}
+                <Input
+                  {...field}
+                  placeholder="Timeout"
+                  onChange={(e) => {
+                    if (!isNaN(Number(e.target.value))) {
+                      setFieldValue(
+                        "config.http.timeout",
+                        Number(e.target.value)
+                      );
+                    }
+                  }}
                 />
               )}
             </FastField>
@@ -311,8 +316,11 @@ const HTTPForm = React.memo(
                             {...field}
                             placeholder="Expected Status"
                             onChange={(e) => {
-                              if (!isNaN(Number(e.target.value))) { 
-                                setFieldValue(`config.http.endpoints.${index}.expected_status`, Number(e.target.value));
+                              if (!isNaN(Number(e.target.value))) {
+                                setFieldValue(
+                                  `config.http.endpoints.${index}.expected_status`,
+                                  Number(e.target.value)
+                                );
                               }
                             }}
                           />
@@ -361,11 +369,24 @@ const HTTPForm = React.memo(
                   </div>
                   <div className="flex flex-col gap-2">
                     <Label>Headers</Label>
-                    <FastField name={`config.http.endpoints.${index}.headers`}>
+                    <FastField
+                      name={`config.http.endpoints.${index}.headers`}
+                      value={JSON.stringify(
+                        values.config?.http?.endpoints?.[index]?.headers ?? {},
+                        null,
+                        2
+                      )}
+                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
+                        setFieldValue(
+                          `config.http.endpoints.${index}.headers`,
+                          JSON.parse(e.target.value)
+                        );
+                      }}
+                    >
                       {({field}: FieldProps) => (
                         <Textarea
                           {...field}
-                          placeholder={"{\"Content-Type\": \"application/json\"}"}
+                          placeholder={'{"Content-Type": "application/json"}'}
                         />
                       )}
                     </FastField>
@@ -581,21 +602,31 @@ const ServiceFormInner = ({type}: {type: "create" | "update"}) => {
   );
 };
 
-export const ServiceForm = ({initialValues, onSubmit, type}: ServiceFormProps) => {
+export const ServiceForm = ({
+  initialValues,
+  onSubmit,
+  type,
+}: ServiceFormProps) => {
   return (
     <Formik
       initialValues={initialValues}
       enableReinitialize
       onSubmit={(values) => {
         if (values.tags && typeof values.tags === "string") {
-          values.tags = values.tags.split(",").map((tag: string) => tag.trim());
+          values.tags = (values.tags as string)
+            .split(",")
+            .map((tag: string) => tag.trim())
+            .filter((tag: string) => tag.length > 0);
         }
 
-    if (values.config?.http?.endpoints) {
+        if (values.config?.http?.endpoints) {
           values.config.http.endpoints.forEach((endpoint) => {
             if (endpoint.headers) {
               try {
-                endpoint.headers = JSON.parse(endpoint.headers);
+                endpoint.headers = JSON.parse(endpoint.headers) as Record<
+                  string,
+                  string
+                >;
               } catch {
                 toast.error("Invalid headers format");
                 delete endpoint.headers;

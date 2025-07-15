@@ -11,12 +11,14 @@ import {cn} from "@/shared/lib/utils";
 import {PlusIcon} from "lucide-react";
 import {useServiceCreate} from "./hooks/useServiceCreate";
 import { DialogDescription } from "@radix-ui/react-dialog";
+import { useServiceApi } from "./hooks/useServiceApi";
 
 interface ServiceCreateProps {
-  onRefreshDashboard?: () => void;
+  onRefreshDashboard: () => void;
 }
 
 const ServiceCreate = ({onRefreshDashboard}: ServiceCreateProps) => {
+  const {getAllServices} = useServiceApi();
   const isMobile = useIsMobile();
   const {initialValues, onCreateService, isOpenModal, setIsOpenModal} =
     useServiceCreate();
@@ -40,7 +42,8 @@ const ServiceCreate = ({onRefreshDashboard}: ServiceCreateProps) => {
           initialValues={initialValues}
           onSubmit={(values) => {
             onCreateService(values).then(() => {
-              onRefreshDashboard?.();
+              onRefreshDashboard();
+              getAllServices();
             });
           }}
           type="create"

@@ -16,7 +16,6 @@ import {InfoCardStats} from "@/entities/infoStatsCard/infoCardStats";
 import ServiceCreate from "../service/serviceCreate";
 import {ServiceTable} from "../service/serviceTable";
 import {Loader} from "@/entities/loader/loader";
-import { ServiceUpdate } from "../service/serviceUpdate";
 
 const Dashboard = () => {
   const {infoKeysDashboard, dashboardInfo, onRefreshDashboard} =
@@ -39,7 +38,6 @@ const Dashboard = () => {
 
   return (
     <ContentWrapper>
-      <ServiceUpdate />
       <div className="flex flex-col gap-6">
         <Card className={cn("p-6", isMobile && "p-4")}>
           <header
@@ -62,7 +60,9 @@ const Dashboard = () => {
                 <RefreshCcwIcon />
                 Refresh
               </Button>
-              <ServiceCreate />
+              <ServiceCreate
+                onRefreshDashboard={onRefreshDashboard}
+              />
             </div>
           </header>
         </Card>
