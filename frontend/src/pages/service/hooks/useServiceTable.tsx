@@ -124,8 +124,23 @@ export const useServiceTable = () => {
     {
       header: "Tags",
       accessorKey: "tags",
-      cell: ({row}) => {
-        return row.original.service.tags.join(", ") || "-";
+      cell: ({ row }) => {
+        if (row.original.service.tags.length === 0) {
+          return (
+            <div className="flex items-center justify-center">
+              <div className="h-[3px] w-4 bg-gray-300 rounded-full" />
+            </div>
+          );
+        }
+        return (
+          <div className="flex items-center justify-center flex-wrap gap-2">
+            {row.original.service.tags.map((tag) => (
+              <Badge key={tag} variant="outline" className="text-sm font-medium">
+                {tag}
+              </Badge>
+            ))}
+          </div>
+        );
       },
     },
     {

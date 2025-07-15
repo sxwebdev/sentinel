@@ -15,9 +15,13 @@ import {flexRender} from "@tanstack/react-table";
 import {useServiceTable} from "./hooks/useServiceTable";
 import {Loader} from "@/entities/loader/loader";
 import {PaginationBar} from "@/entities/paginationBar/paginationBar";
-import {ConfirmDialog} from "@/entities/confirmDialog/confirmDialog";
+import { ConfirmDialog } from "@/entities/confirmDialog/confirmDialog";
 
-export const ServiceTable = () => {
+interface ServiceTableProps {
+  onRefreshDashboard?: () => void;
+}
+
+export const ServiceTable = ({onRefreshDashboard}: ServiceTableProps) => {
   const {
     table,
     filters,
@@ -36,7 +40,11 @@ export const ServiceTable = () => {
       <ConfirmDialog
         open={!!deleteService}
         setOpen={() => setDeleteService(null)}
-        onSubmit={onDeleteService}
+        onSubmit={() => {
+          onDeleteService().then(() => {
+            onRefreshDashboard?.();
+          });
+        }}
         title="Delete Service"
         description="Are you sure you want to delete this service?"
         type="delete"

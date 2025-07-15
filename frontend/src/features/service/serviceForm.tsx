@@ -19,10 +19,12 @@ import {
 } from "@/shared/components/ui";
 import {PlusIcon, TrashIcon} from "lucide-react";
 import type {HTTPEndpoint, ServiceForm as ServiceFormType} from "./types/type";
+import { toast } from "sonner";
 
 interface ServiceFormProps {
   initialValues: ServiceFormType;
   onSubmit: (values: ServiceFormType) => Promise<void> | void;
+  type: "create" | "update";
 }
 
 const GRPCForm = React.memo(
@@ -224,6 +226,20 @@ const HTTPForm = React.memo(
               , etc.
             </small>
           </div>
+          <div className="flex flex-col gap-2">
+            <Label>Timeout(milliseconds)</Label>
+            <FastField name="config.http.timeout">
+              {({field}: FieldProps) => (
+                <Input {...field} placeholder="Timeout"
+                onChange={(e) => {
+                  if (!isNaN(Number(e.target.value))) {
+                    setFieldValue("config.http.timeout", Number(e.target.value));
+                  }
+                }}
+                />
+              )}
+            </FastField>
+          </div>
           {(values.config?.http?.endpoints || []).map(
             (endpoint: HTTPEndpoint, index: number) => (
               <Card key={index}>
@@ -291,7 +307,15 @@ const HTTPForm = React.memo(
                         name={`config.http.endpoints.${index}.expected_status`}
                       >
                         {({field}: FieldProps) => (
-                          <Input {...field} placeholder="Expected Status" />
+                          <Input
+                            {...field}
+                            placeholder="Expected Status"
+                            onChange={(e) => {
+                              if (!isNaN(Number(e.target.value))) { 
+                                setFieldValue(`config.http.endpoints.${index}.expected_status`, Number(e.target.value));
+                              }
+                            }}
+                          />
                         )}
                       </FastField>
                     </div>
@@ -341,7 +365,7 @@ const HTTPForm = React.memo(
                       {({field}: FieldProps) => (
                         <Textarea
                           {...field}
-                          placeholder="Content-Type: application/json"
+                          placeholder={"{\"Content-Type\": \"application/json\"}"}
                         />
                       )}
                     </FastField>
@@ -372,7 +396,7 @@ const HTTPForm = React.memo(
   }
 );
 
-const ServiceFormInner = () => {
+const ServiceFormInner = ({type}: {type: "create" | "update"}) => {
   const {values, setFieldValue} = useFormikContext<ServiceFormType>();
   useEffect(() => {
     if (values.protocol === "http") {
@@ -551,32 +575,40 @@ const ServiceFormInner = () => {
       {values.protocol === "grpc" && <GRPCForm setFieldValue={setFieldValue} />}
       <hr />
       <div className="flex justify-end">
-        <Button type="submit">Create</Button>
+        <Button type="submit">{type === "create" ? "Create" : "Update"}</Button>
       </div>
     </Form>
   );
 };
 
-export const ServiceForm = ({initialValues, onSubmit}: ServiceFormProps) => {
+export const ServiceForm = ({initialValues, onSubmit, type}: ServiceFormProps) => {
   return (
     <Formik
       initialValues={initialValues}
       enableReinitialize
       onSubmit={(values) => {
-        if (values.tags) {
+        if (values.tags && typeof values.tags === "string") {
           values.tags = values.tags.split(",").map((tag: string) => tag.trim());
         }
-        if (values.config?.http?.endpoints) {
+
+    if (values.config?.http?.endpoints) {
           values.config.http.endpoints.forEach((endpoint) => {
             if (endpoint.headers) {
-              endpoint.headers = JSON.parse(endpoint.headers);
+              try {
+                endpoint.headers = JSON.parse(endpoint.headers);
+              } catch {
+                toast.error("Invalid headers format");
+                delete endpoint.headers;
+              }
+            } else {
+              delete endpoint.headers;
             }
           });
         }
         onSubmit(values);
       }}
     >
-      <ServiceFormInner />
+      <ServiceFormInner type={type} />
     </Formik>
   );
 };

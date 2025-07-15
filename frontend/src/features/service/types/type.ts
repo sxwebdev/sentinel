@@ -96,7 +96,7 @@ export interface ServiceForm {
   interval?: number;
   timeout?: number;
   retries?: number;
-  tags?: string | string[];
+  tags?: string[];
   is_enabled?: boolean;
   config?: {
     http?: HTTP | null;

@@ -12,11 +12,16 @@ import {PlusIcon} from "lucide-react";
 import {useServiceCreate} from "./hooks/useServiceCreate";
 import { DialogDescription } from "@radix-ui/react-dialog";
 
-const ServiceCreate = () => {
+interface ServiceCreateProps {
+  onRefreshDashboard?: () => void;
+}
+
+const ServiceCreate = ({onRefreshDashboard}: ServiceCreateProps) => {
   const isMobile = useIsMobile();
-  const {initialValues, onCreateService} = useServiceCreate();
+  const {initialValues, onCreateService, isOpenModal, setIsOpenModal} =
+    useServiceCreate();
   return (
-    <Dialog>
+    <Dialog open={isOpenModal} onOpenChange={setIsOpenModal}>
       <DialogTrigger asChild>
         <Button
           size="sm"
@@ -31,7 +36,15 @@ const ServiceCreate = () => {
       <DialogContent className="overflow-y-auto max-h-[90vh]  sm:max-w-[90%] lg:max-w-[80%]">
         <DialogTitle>Create Service</DialogTitle>
         <hr />
-        <ServiceForm initialValues={initialValues} onSubmit={onCreateService} />
+        <ServiceForm
+          initialValues={initialValues}
+          onSubmit={(values) => {
+            onCreateService(values).then(() => {
+              onRefreshDashboard?.();
+            });
+          }}
+          type="create"
+        />
       </DialogContent>
     </Dialog>
   );

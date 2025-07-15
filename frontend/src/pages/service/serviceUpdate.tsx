@@ -8,7 +8,11 @@ import {
   DialogTitle,
 } from "@/shared/components/ui";
 
-export const ServiceUpdate = () => {
+interface ServiceUpdateProps {
+  onRefreshDashboard?: () => void;
+}
+
+export const ServiceUpdate = ({onRefreshDashboard}: ServiceUpdateProps) => {
   const {
     serviceData,
     onUpdateService,
@@ -30,7 +34,15 @@ export const ServiceUpdate = () => {
         <DialogContent className="overflow-y-auto max-h-[90vh]  sm:max-w-[90%] lg:max-w-[80%]">
           <DialogTitle>Update Service</DialogTitle>
           <hr />
-          <ServiceForm initialValues={serviceData} onSubmit={onUpdateService} />
+          <ServiceForm
+            type="update"
+            initialValues={serviceData}
+            onSubmit={(values) => {
+              onUpdateService(values).then(() => {
+                onRefreshDashboard?.();
+              });
+            }}
+          />
         </DialogContent>
       ) : (
         <DialogContent>
