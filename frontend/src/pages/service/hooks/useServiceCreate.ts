@@ -5,18 +5,45 @@ import {toast} from "sonner";
 
 export const useServiceCreate = () => {
   const [isOpenModal, setIsOpenModal] = useState(false);
-  const initialValues: ServiceForm = {
+  
+  const initialValues = {
     name: "",
     protocol: "",
-    interval: 30000,
-    timeout: 10000,
-    retries: 3,
+    interval: undefined,
+    timeout: undefined,
+    retries: undefined,
     tags: [],
-    is_enabled: true,
+    is_enabled: false,
     config: {
-      grpc: null,
-      tcp: null,
-      http: null,
+      http: {
+        condition: "",
+        timeout: undefined,
+        endpoints: [
+          {
+            name: "",
+            url: "",
+            expected_status: 200,
+            method: "GET",
+            body: "",
+            headers: "",
+            json_path: "",
+            username: "",
+            password: "",
+          },
+        ],
+      },
+      tcp: {
+        endpoint: "",
+        expect_data: "",
+        send_data: "",
+      },
+      grpc: {
+        endpoint: "",
+        check_type: "",
+        tls: false,
+        service_name: "",
+        insecure_tls: false,
+      },
     },
   };
 

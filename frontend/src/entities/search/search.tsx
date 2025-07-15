@@ -11,7 +11,7 @@ interface SearchProps {
 
 export const Search = ({
   placeholder = "Search",
-  value,
+  value = "",
   onChange,
   clear = false,
 }: SearchProps) => {

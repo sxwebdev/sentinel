@@ -60,7 +60,7 @@ export interface Service {
 export interface HTTPEndpoint {
   body?: string;
   expected_status: number; // max 599 min 100
-  headers?: Record<string, string>;
+  headers?: string;
   json_path?: string;
   method: "GET" | "POST" | "PUT" | "DELETE" | "HEAD" | "OPTIONS";
   name: string;
@@ -98,7 +98,7 @@ export interface ServiceForm {
   retries?: number;
   tags?: string[];
   is_enabled?: boolean;
-  config?: {
+  config: {
     http?: HTTP | null;
     tcp?: TCP | null;
     grpc?: GRPC | null;
