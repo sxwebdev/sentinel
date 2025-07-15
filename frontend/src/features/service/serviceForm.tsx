@@ -22,7 +22,6 @@ import type {HTTPEndpoint, ServiceForm as ServiceFormType} from "./types/type";
 
 interface ServiceFormProps {
   initialValues: ServiceFormType;
-  // resetForm можно использовать для сброса формы после успешного создания
   onSubmit: (values: ServiceFormType) => Promise<void> | void;
 }
 

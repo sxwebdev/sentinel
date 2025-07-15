@@ -56,7 +56,6 @@ export const useDashboardLogic = () => {
     if (lastMessage !== null) {
       try {
         const data = JSON.parse(lastMessage.data);
-        console.log(data);
         if (data.stats) {
           setDashboardInfo(data.stats);
         }

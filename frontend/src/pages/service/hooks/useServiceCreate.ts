@@ -25,8 +25,6 @@ export const useServiceCreate = () => {
         toast.success("Service created successfully");
       })
       .catch((err) => {
-        console.log(err);
-
         toast.error(err.message);
       });
   };
