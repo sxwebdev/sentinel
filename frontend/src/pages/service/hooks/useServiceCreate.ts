@@ -5,19 +5,19 @@ import {toast} from "sonner";
 
 export const useServiceCreate = () => {
   const [isOpenModal, setIsOpenModal] = useState(false);
-  
-  const initialValues = {
+
+  const initialValues: ServiceForm = {
     name: "",
     protocol: "",
-    interval: undefined,
-    timeout: undefined,
-    retries: undefined,
+    interval: 30000,
+    timeout: 10000,
+    retries: 3,
     tags: [],
-    is_enabled: false,
+    is_enabled: true,
     config: {
       http: {
         condition: "",
-        timeout: undefined,
+        timeout: 10000,
         endpoints: [
           {
             name: "",
@@ -39,8 +39,8 @@ export const useServiceCreate = () => {
       },
       grpc: {
         endpoint: "",
-        check_type: "",
-        tls: false,
+        check_type: "health",
+        tls: true,
         service_name: "",
         insecure_tls: false,
       },
@@ -48,7 +48,7 @@ export const useServiceCreate = () => {
   };
 
   const onCreateService = async (values: ServiceForm) => {
-    await $api
+    return await $api
       .post("/services", values)
       .then(() => {
         toast.success("Service created successfully");

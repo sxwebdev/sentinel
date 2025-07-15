@@ -40,11 +40,12 @@ const ServiceCreate = ({onRefreshDashboard}: ServiceCreateProps) => {
         <hr />
         <ServiceForm
           initialValues={initialValues}
-          onSubmit={(values) => {
-            onCreateService(values).then(() => {
+          onSubmit={async (values) => {
+            return await onCreateService(values).then(() => {
               onRefreshDashboard();
               getAllServices();
             });
+
           }}
           type="create"
         />

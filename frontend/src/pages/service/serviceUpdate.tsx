@@ -40,8 +40,8 @@ export const ServiceUpdate = ({onRefreshDashboard}: ServiceUpdateProps) => {
           <ServiceForm
             type="update"
             initialValues={serviceData}
-            onSubmit={(values) => {
-              onUpdateService(values).then(() => {
+            onSubmit={async (values) => {
+              return await onUpdateService(values).then(() => {
                 onRefreshDashboard?.();
                 getAllServices?.();
               });

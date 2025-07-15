@@ -25,7 +25,7 @@ export const useServiceUpdate = () => {
   };
 
   const onUpdateService = async (values: ServiceForm) => {
-    await $api
+    return await $api
       .put(`/services/${updateServiceId}`, values)
       .then(() => {
         toast.success("Service updated successfully");
