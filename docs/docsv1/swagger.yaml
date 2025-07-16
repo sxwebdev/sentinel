@@ -92,34 +92,6 @@ definitions:
     required:
     - endpoint
     type: object
-  storage.Service:
-    properties:
-      active_incidents:
-        type: integer
-      config:
-        additionalProperties: {}
-        type: object
-      id:
-        type: string
-      interval:
-        type: integer
-      is_enabled:
-        type: boolean
-      name:
-        type: string
-      protocol:
-        $ref: '#/definitions/storage.ServiceProtocolType'
-      retries:
-        type: integer
-      tags:
-        items:
-          type: string
-        type: array
-      timeout:
-        type: integer
-      total_incidents:
-        type: integer
-    type: object
   storage.ServiceProtocolType:
     enum:
     - http
@@ -419,7 +391,7 @@ paths:
         "201":
           description: Service created
           schema:
-            $ref: '#/definitions/storage.Service'
+            $ref: '#/definitions/web.ServiceDTO'
         "400":
           description: Bad request
           schema:
@@ -508,7 +480,7 @@ paths:
         "200":
           description: Service updated
           schema:
-            $ref: '#/definitions/storage.Service'
+            $ref: '#/definitions/web.ServiceDTO'
         "400":
           description: Bad request
           schema:

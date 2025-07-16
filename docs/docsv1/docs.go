@@ -151,7 +151,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Service created",
                         "schema": {
-                            "$ref": "#/definitions/storage.Service"
+                            "$ref": "#/definitions/web.ServiceDTO"
                         }
                     },
                     "400": {
@@ -246,7 +246,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Service updated",
                         "schema": {
-                            "$ref": "#/definitions/storage.Service"
+                            "$ref": "#/definitions/web.ServiceDTO"
                         }
                     },
                     "400": {
@@ -685,48 +685,6 @@ const docTemplate = `{
                 },
                 "send_data": {
                     "type": "string"
-                }
-            }
-        },
-        "storage.Service": {
-            "type": "object",
-            "properties": {
-                "active_incidents": {
-                    "type": "integer"
-                },
-                "config": {
-                    "type": "object",
-                    "additionalProperties": {}
-                },
-                "id": {
-                    "type": "string"
-                },
-                "interval": {
-                    "type": "integer"
-                },
-                "is_enabled": {
-                    "type": "boolean"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "protocol": {
-                    "$ref": "#/definitions/storage.ServiceProtocolType"
-                },
-                "retries": {
-                    "type": "integer"
-                },
-                "tags": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "timeout": {
-                    "type": "integer"
-                },
-                "total_incidents": {
-                    "type": "integer"
                 }
             }
         },
