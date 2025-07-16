@@ -32,7 +32,7 @@ export const useServiceUpdate = () => {
         setUpdateServiceId(null);
       })
       .catch((err) => {
-        toast.error(err.message);
+        toast.error(err.data.error);
       });
   };
 

@@ -39,10 +39,10 @@ const Dashboard = () => {
   return (
     <ContentWrapper>
       <div className="flex flex-col gap-6">
-        <Card className={cn("p-6", isMobile && "p-4")}>
+
           <header
             className={cn(
-              "flex justify-between items-center",
+              "flex justify-between items-center py-2",
               isMobile && "flex-col gap-2"
             )}
           >
@@ -50,11 +50,11 @@ const Dashboard = () => {
               Sentinel Dashboard
             </h1>
             <div
-              className={cn("flex gap-3", isMobile && "flex-col gap-2 w-full")}
+              className={cn("flex ", isMobile && "flex-col w-full")}
             >
               <Button
                 size="sm"
-                className={cn(isMobile && "w-full")}
+                className={cn("mr-3",isMobile && "w-full mb-3 mr-0")}
                 onClick={onRefreshDashboard}
               >
                 <RefreshCcwIcon />
@@ -65,7 +65,7 @@ const Dashboard = () => {
               />
             </div>
           </header>
-        </Card>
+
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {infoKeysDashboard.map((item) => {
             const value =

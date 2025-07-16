@@ -13,3 +13,4 @@ export * from "./select";
 export * from "./switch";
 export * from "./pagination";
 export * from "./progress";
+export * from "./inputTag";

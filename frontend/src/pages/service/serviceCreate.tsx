@@ -35,7 +35,7 @@ const ServiceCreate = ({onRefreshDashboard}: ServiceCreateProps) => {
         </Button>
       </DialogTrigger>
       <DialogDescription />
-      <DialogContent className="overflow-y-auto max-h-[90vh]  sm:max-w-[90%] lg:max-w-[80%]">
+      <DialogContent className="overflow-y-auto max-h-[90vh] sm:max-w-[90%] lg:max-w-[800px]">
         <DialogTitle>Create Service</DialogTitle>
         <hr />
         <ServiceForm

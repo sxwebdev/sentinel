@@ -74,54 +74,53 @@ const ServiceDetail = () => {
         type="delete"
       />
       <div className="flex flex-col gap-6">
-        <Card className={cn("p-6", isMobile && "p-4")}>
-          <header
+        <header
+          className={cn(
+            "flex items-center gap-2 justify-between py-2",
+            isMobile && "flex-col gap-2"
+          )}
+        >
+          <Button
+            size={"sm"}
+            variant="link"
             className={cn(
-              "flex items-center gap-2 justify-between",
-              isMobile && "flex-col gap-2"
+              "cursor-pointer  text-lg",
+              isMobile && "w-full text-base"
+            )}
+            onClick={() => navigate("/")}
+          >
+            <ArrowLeftIcon />
+            Back
+          </Button>
+          <h1 className={cn("text-2xl font-bold", isMobile && "text-lg")}>
+            Service: {serviceDetailData?.service.name}
+          </h1>
+          <div
+            className={cn(
+              "flex items-center gap-2",
+              isMobile && "w-full flex-col"
             )}
           >
             <Button
-              size={"sm"}
-              variant="link"
-              className={cn(
-                "cursor-pointer  text-lg",
-                isMobile && "w-full text-base"
-              )}
-              onClick={() => navigate("/")}
+              size="sm"
+              className={cn(isMobile && "w-full")}
+              onClick={() => onCheckService(serviceDetailData?.service.id)}
             >
-              <ArrowLeftIcon />
-              Back
+              <PlayIcon />
+              Trigger Check
             </Button>
-            <h1 className={cn("text-2xl font-bold", isMobile && "text-lg")}>
-              Service: {serviceDetailData?.service.name}
-            </h1>
-            <div
-              className={cn(
-                "flex items-center gap-2",
-                isMobile && "w-full flex-col"
-              )}
+            <Button
+              size="sm"
+              variant="outline"
+              className={cn(isMobile && "w-full")}
+              onClick={() => setResolveIncident(true)}
             >
-              <Button
-                size="sm"
-                className={cn(isMobile && "w-full")}
-                onClick={() => onCheckService(serviceDetailData?.service.id)}
-              >
-                <PlayIcon />
-                Trigger Check
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                className={cn(isMobile && "w-full")}
-                onClick={() => setResolveIncident(true)}
-              >
-                <CheckIcon />
-                Resolve Incidents
-              </Button>
-            </div>
-          </header>
-        </Card>
+              <CheckIcon />
+              Resolve Incidents
+            </Button>
+          </div>
+        </header>
+
         <Card>
           <CardHeader className="border-b">
             <CardTitle
@@ -138,7 +137,8 @@ const ServiceDetail = () => {
                 Status:
               </span>
               <span>
-                <Badge className={cn(
+                <Badge
+                  className={cn(
                     "text-sm font-medium",
                     serviceDetailData?.state.status === "up" &&
                       "text-green bg-green-light",

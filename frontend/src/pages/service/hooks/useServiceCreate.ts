@@ -55,7 +55,7 @@ export const useServiceCreate = () => {
         setIsOpenModal(false);
       })
       .catch((err) => {
-        toast.error(err.message);
+        toast.error(err.data.error);
       });
   };
   return {

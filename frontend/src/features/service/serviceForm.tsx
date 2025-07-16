@@ -21,7 +21,7 @@ import {PlusIcon, TrashIcon} from "lucide-react";
 import type {ServiceForm as ServiceFormType} from "./types/type";
 import {toast} from "sonner";
 import * as Yup from "yup";
-
+import InputTag from "@/shared/components/ui/inputTag";
 interface ServiceFormProps {
   initialValues: ServiceFormType;
   onSubmit: (values: ServiceFormType) => Promise<void>;
@@ -500,16 +500,6 @@ export const ServiceForm = ({
     }
   };
 
-  const tagsModificate = (values: ServiceFormType) => {
-    if (values.tags && typeof values.tags === "string") {
-      values.tags = (values.tags as string)
-        .split(",")
-        .map((tag: string) => tag.trim())
-        .filter((tag: string) => tag.length > 0);
-    }
-    return values;
-  };
-
   const configModificate = (values: ServiceFormType) => {
     switch (values.protocol) {
       case "http":
@@ -536,8 +526,6 @@ export const ServiceForm = ({
       enableReinitialize
       onSubmit={(values, {setSubmitting}) => {
         configModificate(values);
-        tagsModificate(values);
-
         onSubmit(values).finally(() => {
           setSubmitting(false);
         });
@@ -563,7 +551,7 @@ export const ServiceForm = ({
                 break;
             }
           }
-          return {}; 
+          return {};
         } catch (err) {
           if (err instanceof Yup.ValidationError) {
             const errors: Record<string, string> = {};
@@ -572,9 +560,9 @@ export const ServiceForm = ({
                 errors[e.path] = e.message;
               }
             });
-            return errors; 
+            return errors;
           }
-          throw err; 
+          throw err;
         }
       }}
     >
@@ -673,11 +661,19 @@ export const ServiceForm = ({
               <Label>Tags (comma-separated)</Label>
               <FastField name="tags">
                 {({field}: FieldProps) => (
-                  <Input
-                    {...field}
-                    value={field.value ?? ""}
-                    placeholder="api, critical, production"
-                    onChange={(e) => setFieldValue("tags", e.target.value)}
+                  <InputTag
+                    tags={field.value.map((tag: string, index: number) => ({
+                      id: index.toString(),
+                      text: tag,
+                    }))}
+                    setTags={(tags) => {
+                      setFieldValue(
+                        "tags",
+                        typeof tags === "object"
+                          ? tags.map((tag) => tag.text)
+                          : []
+                      );
+                    }}
                   />
                 )}
               </FastField>

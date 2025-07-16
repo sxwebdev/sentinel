@@ -1,4 +1,3 @@
-import {Search} from "@/entities/search/search";
 import {
   Card,
   CardContent,
@@ -26,7 +25,6 @@ export const ServiceTable = ({onRefreshDashboard}: ServiceTableProps) => {
   const {
     table,
     filters,
-    setSearch,
     setPage,
     data,
     deleteService,
@@ -60,14 +58,14 @@ export const ServiceTable = ({onRefreshDashboard}: ServiceTableProps) => {
           </CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-6">
-          <div className="flex justify-between items-center">
+          {/* <div className="flex justify-between items-center">
             <Search
               placeholder="Search"
               value={filters.search}
               onChange={setSearch}
               clear
             />
-          </div>
+          </div> */}
           <div className="rounded-xl overflow-hidden border border-border">
             <Table>
               <TableHeader className="bg-gray-100 rounded-t-lg">
