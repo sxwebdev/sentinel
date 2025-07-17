@@ -2,7 +2,6 @@ package receiver
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/sxwebdev/sentinel/internal/storage"
 	"github.com/sxwebdev/sentinel/pkg/broker"
@@ -11,11 +10,31 @@ import (
 type TriggerServiceEventType int
 
 const (
-	TriggerServiceEventTypeCreated = iota
+	TriggerServiceEventTypeUnknown = iota
+	TriggerServiceEventTypeCreated
 	TriggerServiceEventTypeUpdated
 	TriggerServiceEventTypeDeleted
 	TriggerServiceEventTypeCheck
+	TriggerServiceEventTypeUpdatedState
 )
+
+// String returns a string representation of the TriggerServiceEventType
+func (e TriggerServiceEventType) String() string {
+	switch e {
+	case TriggerServiceEventTypeCreated:
+		return "created"
+	case TriggerServiceEventTypeUpdated:
+		return "updated"
+	case TriggerServiceEventTypeDeleted:
+		return "deleted"
+	case TriggerServiceEventTypeCheck:
+		return "check"
+	case TriggerServiceEventTypeUpdatedState:
+		return "updated_state"
+	default:
+		return "unknown"
+	}
+}
 
 type TriggerServiceData struct {
 	EventType TriggerServiceEventType
@@ -33,13 +52,11 @@ func NewTriggerServiceData(
 }
 
 type Receiver struct {
-	serviceUpdated *broker.Broker[struct{}]
 	triggerService *broker.Broker[TriggerServiceData]
 }
 
 func New() *Receiver {
 	return &Receiver{
-		serviceUpdated: broker.NewBroker[struct{}](),
 		triggerService: broker.NewBroker[TriggerServiceData](),
 	}
 }
@@ -47,20 +64,13 @@ func New() *Receiver {
 func (s Receiver) Name() string { return "receiver" }
 
 func (s *Receiver) Start(_ context.Context) error {
-	fmt.Println("Receiver: starting brokers")
-	go s.serviceUpdated.Start()
 	go s.triggerService.Start()
-	fmt.Println("Receiver: brokers started successfully")
 	return nil
 }
 
 func (s *Receiver) Stop(_ context.Context) error {
-	fmt.Println("Receiver: stopping brokers")
-	s.serviceUpdated.Stop()
 	s.triggerService.Stop()
-	fmt.Println("Receiver: brokers stopped")
 	return nil
 }
 
-func (s *Receiver) ServiceUpdated() *broker.Broker[struct{}]           { return s.serviceUpdated }
 func (s *Receiver) TriggerService() *broker.Broker[TriggerServiceData] { return s.triggerService }
