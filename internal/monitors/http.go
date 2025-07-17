@@ -17,21 +17,21 @@ import (
 // HTTPConfig represents configuration for HTTP monitoring
 type HTTPConfig struct {
 	Timeout   uint64           `json:"timeout" swaggertype:"primitive,integer" example:"30000"`
-	Endpoints []EndpointConfig `json:"endpoints"`
+	Endpoints []EndpointConfig `json:"endpoints" validate:"required,dive"`
 	Condition string           `json:"condition"`
 }
 
 // EndpointConfig represents a single endpoint configuration
 type EndpointConfig struct {
 	Name           string            `json:"name" validate:"required"`
-	URL            string            `json:"url" validate:"required"`
+	URL            string            `json:"url" validate:"required,uri"`
 	Method         string            `json:"method" validate:"required,oneof=GET POST PUT DELETE HEAD OPTIONS"`
-	Headers        map[string]string `json:"headers,omitempty"`
-	Body           string            `json:"body,omitempty"`
+	Headers        map[string]string `json:"headers"`
+	Body           string            `json:"body"`
 	ExpectedStatus int               `json:"expected_status" validate:"required,min=100,max=599"`
-	JSONPath       string            `json:"json_path,omitempty"` // Path to extract value from JSON response
-	Username       string            `json:"username,omitempty"`  // Basic Auth username
-	Password       string            `json:"password,omitempty"`  // Basic Auth password
+	JSONPath       string            `json:"json_path"` // Path to extract value from JSON response
+	Username       string            `json:"username"`  // Basic Auth username
+	Password       string            `json:"password"`  // Basic Auth password
 }
 
 // EndpointResult represents result from a single endpoint

@@ -766,7 +766,7 @@ func (s *Server) handleAPIDashboardStats(c *fiber.Ctx) error {
 //	@Accept			json
 //	@Produce		json
 //	@Param			service	body		ServiceDTO		true	"Service configuration"
-//	@Success		201		{object}	storage.Service	"Service created"
+//	@Success		201		{object}	ServiceDTO		"Service created"
 //	@Failure		400		{object}	ErrorResponse	"Bad request"
 //	@Failure		500		{object}	ErrorResponse	"Internal server error"
 //	@Router			/services [post]
@@ -814,7 +814,7 @@ func (s *Server) handleAPICreateService(c *fiber.Ctx) error {
 	}
 
 	// Convert flat config to proper MonitorConfig structure
-	if err := s.validateConfig(serviceDTO.Protocol, serviceDTO.Config); err != nil {
+	if err := serviceDTO.Config.Validate(serviceDTO.Protocol); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
 			Error: "Invalid config: " + err.Error(),
 		})
@@ -829,7 +829,14 @@ func (s *Server) handleAPICreateService(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(service)
+	res, err := s.convertServiceToDTO(&service)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(ErrorResponse{
+			Error: err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(res)
 }
 
 // handleAPIUpdateService updates an existing service
@@ -841,7 +848,7 @@ func (s *Server) handleAPICreateService(c *fiber.Ctx) error {
 //	@Produce		json
 //	@Param			id		path		string			true	"Service ID"
 //	@Param			service	body		ServiceDTO		true	"New service configuration"
-//	@Success		200		{object}	storage.Service	"Service updated"
+//	@Success		200		{object}	ServiceDTO		"Service updated"
 //	@Failure		400		{object}	ErrorResponse	"Bad request"
 //	@Failure		404		{object}	ErrorResponse	"Service not found"
 //	@Failure		500		{object}	ErrorResponse	"Internal server error"
@@ -877,7 +884,7 @@ func (s *Server) handleAPIUpdateService(c *fiber.Ctx) error {
 	}
 
 	// Convert flat config to proper MonitorConfig structure
-	if err := s.validateConfig(serviceDTO.Protocol, serviceDTO.Config); err != nil {
+	if err := serviceDTO.Config.Validate(serviceDTO.Protocol); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
 			Error: "Invalid config: " + err.Error(),
 		})
@@ -915,7 +922,14 @@ func (s *Server) handleAPIUpdateService(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.JSON(service)
+	res, err := s.convertServiceToDTO(&service)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(ErrorResponse{
+			Error: err.Error(),
+		})
+	}
+
+	return c.JSON(res)
 }
 
 // handleAPIDeleteService deletes a service
@@ -945,48 +959,6 @@ func (s *Server) handleAPIDeleteService(c *fiber.Ctx) error {
 	}
 
 	return c.SendStatus(fiber.StatusNoContent)
-}
-
-// convertFlatConfigToMonitorConfig converts JSON config object to proper MonitorConfig structure
-func (s *Server) validateConfig(protocol storage.ServiceProtocolType, configObj monitors.Config) error {
-	// Validate and convert based on protocol
-	switch protocol {
-	case storage.ServiceProtocolTypeHTTP:
-		if configObj.HTTP == nil {
-			return fmt.Errorf("HTTP config is required for HTTP protocol")
-		}
-
-		// Validate HTTP config
-		if err := s.validator.Struct(configObj.HTTP); err != nil {
-			return fmt.Errorf("invalid HTTP config: %w", err)
-		}
-
-		return nil
-	case storage.ServiceProtocolTypeTCP:
-		if configObj.TCP == nil {
-			return fmt.Errorf("TCP config is required for TCP protocol")
-		}
-
-		// Validate TCP config
-		if err := s.validator.Struct(configObj.TCP); err != nil {
-			return fmt.Errorf("invalid TCP config: %w", err)
-		}
-
-		return nil
-	case storage.ServiceProtocolTypeGRPC:
-		if configObj.GRPC == nil {
-			return fmt.Errorf("gRPC config is required for gRPC protocol")
-		}
-
-		// Validate gRPC config
-		if err := s.validator.Struct(configObj.GRPC); err != nil {
-			return fmt.Errorf("invalid gRPC config: %w", err)
-		}
-
-		return nil
-	default:
-		return fmt.Errorf("unsupported protocol: %s", protocol)
-	}
 }
 
 // handleWebSocket handles WebSocket connections
@@ -1199,29 +1171,39 @@ func (s *Server) getServiceWithState(ctx context.Context, service *storage.Servi
 		return nil, fmt.Errorf("failed to get service state: %w", err)
 	}
 
+	res, err := s.convertServiceToDTO(service)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert service to DTO: %w", err)
+	}
+
+	return &ServiceWithState{
+		Service: res,
+		State:   serviceState,
+	}, nil
+}
+
+// convertServiceToDTO converts a storage.Service to ServiceDTO
+func (s *Server) convertServiceToDTO(service *storage.Service) (ServiceDTO, error) {
 	config := monitors.Config{}
 	if service.Config != nil {
 		var err error
 		config, err = monitors.ConvertFromMap(service.Config)
 		if err != nil {
-			return nil, fmt.Errorf("failed to convert service config: %w", err)
+			return ServiceDTO{}, fmt.Errorf("failed to convert service config: %w", err)
 		}
 	}
 
-	return &ServiceWithState{
-		Service: ServiceDTO{
-			ID:              service.ID,
-			Name:            service.Name,
-			Protocol:        service.Protocol,
-			Interval:        uint32(service.Interval.Milliseconds()),
-			Timeout:         uint32(service.Timeout.Milliseconds()),
-			Retries:         service.Retries,
-			Tags:            service.Tags,
-			Config:          config,
-			IsEnabled:       service.IsEnabled,
-			ActiveIncidents: service.ActiveIncidents,
-			TotalIncidents:  service.TotalIncidents,
-		},
-		State: serviceState,
+	return ServiceDTO{
+		ID:              service.ID,
+		Name:            service.Name,
+		Protocol:        service.Protocol,
+		Interval:        uint32(service.Interval.Milliseconds()),
+		Timeout:         uint32(service.Timeout.Milliseconds()),
+		Retries:         service.Retries,
+		Tags:            service.Tags,
+		Config:          config,
+		IsEnabled:       service.IsEnabled,
+		ActiveIncidents: service.ActiveIncidents,
+		TotalIncidents:  service.TotalIncidents,
 	}, nil
 }
