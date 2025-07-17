@@ -1,9 +1,10 @@
-import $api from "@/shared/api/baseApi";
+import $api, {socketUrl} from "@/shared/api/baseApi";
 import {useEffect} from "react";
 import {useParams} from "react-router";
 import {useServiceApi} from "./useServiceApi";
 import {toast} from "sonner";
-import { useServiceDetailStore } from "../store/useServiceDeteilStore";
+import {useServiceDetailStore} from "../store/useServiceDeteilStore";
+import useWebSocket from "react-use-websocket";
 
 export const useServiceDetail = () => {
   const {
@@ -16,6 +17,7 @@ export const useServiceDetail = () => {
     setServiceDetailData,
     setIncidentsData,
     setServiceStatsData,
+    setUpdateServiceStatsData,
     setResolveIncident,
   } = useServiceDetailStore();
   const {id} = useParams();
@@ -32,6 +34,22 @@ export const useServiceDetail = () => {
         toast.error(err.response.data.error);
       });
   };
+
+  const {lastMessage} = useWebSocket(socketUrl, {
+    shouldReconnect: () => true,
+  });
+
+  useEffect(() => {
+    if (!lastMessage) return;
+    const data = JSON.parse(lastMessage.data);
+    switch (data.type) {
+      case "service_updated_state":
+        if (data.data.service.id === id) {
+          setUpdateServiceStatsData(data.data);
+        }
+        break;
+    }
+  }, [lastMessage]);
 
   const onDeleteIncident = async (incidentId: string) => {
     await $api

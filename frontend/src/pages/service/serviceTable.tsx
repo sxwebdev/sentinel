@@ -28,18 +28,18 @@ export const ServiceTable = ({onRefreshDashboard}: ServiceTableProps) => {
     filters,
     setPage,
     data,
-    deleteService,
-    setDeleteService,
+    deleteServiceId,
+    setDeleteServiceId,
     onDeleteService,
     isLoadingAllServices,
   } = useServiceTable();
 
   return (
     <>
-      <ServiceUpdate onRefreshDashboard={onRefreshDashboard} />
+      <ServiceUpdate />
       <ConfirmDialog
-        open={!!deleteService}
-        setOpen={() => setDeleteService(null)}
+        open={!!deleteServiceId}
+        setOpen={() => setDeleteServiceId(null)}
         onSubmit={() => {
           onDeleteService().then(() => {
             onRefreshDashboard?.();

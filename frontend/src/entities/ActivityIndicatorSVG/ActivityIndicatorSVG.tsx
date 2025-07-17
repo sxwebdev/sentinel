@@ -9,7 +9,6 @@ export const ActivityIndicatorSVG = ({active = true, size = 16}) => {
       viewBox="0 0 32 32"
       style={{display: "inline-block", verticalAlign: "middle"}}
     >
-      {/* Пульсирующее кольцо */}
       <circle cx="16" cy="16" r="8" fill={pulseColor} opacity="0.3">
         <animate
           attributeName="r"
@@ -19,7 +18,7 @@ export const ActivityIndicatorSVG = ({active = true, size = 16}) => {
         />
         <animate
           attributeName="opacity"
-          values="0.8;0.3"
+          values="0.8;0"
           dur="1.3s"
           repeatCount="indefinite"
         />

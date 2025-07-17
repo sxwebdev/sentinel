@@ -35,7 +35,7 @@ export const useServiceTable = () => {
   const {
     data,
     filters,
-    deleteService,
+    deleteServiceId,
     isOpenDropdownIdAction,
     isLoadingAllServices,
     setData,
@@ -43,7 +43,7 @@ export const useServiceTable = () => {
     setPage,
     setIsOpenDropdownIdAction,
     setIsLoadingAllServices,
-    setDeleteService,
+    setDeleteServiceId,
     setUpdateServiceId,
   } = useServiceTableStore();
 
@@ -52,7 +52,7 @@ export const useServiceTable = () => {
 
   const onDeleteService = async () => {
     await $api
-      .delete(`/services/${deleteService?.service?.id}`)
+      .delete(`/services/${deleteServiceId}`)
       .then(() => {
         toast.success("Service deleted");
       })
@@ -60,8 +60,7 @@ export const useServiceTable = () => {
         toast.error(err.response.data.error);
       })
       .finally(() => {
-        setDeleteService(null);
-        getAllServices();
+        setDeleteServiceId(null);
       });
   };
 
@@ -227,7 +226,7 @@ export const useServiceTable = () => {
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     className="group focus:bg-destructive focus:text-white"
-                    onClick={() => setDeleteService(row.original)}
+                    onClick={() => setDeleteServiceId(row.original.service.id)}
                   >
                     <TrashIcon className="text-muted-foreground group-hover:text-white" />
                     <span>Delete</span>
@@ -264,7 +263,7 @@ export const useServiceTable = () => {
     setPage,
     data,
     setData,
-    deleteService,
-    setDeleteService,
+    deleteServiceId,
+    setDeleteServiceId,
   };
 };

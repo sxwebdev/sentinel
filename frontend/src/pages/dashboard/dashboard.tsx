@@ -60,9 +60,7 @@ const Dashboard = () => {
                 <RefreshCcwIcon />
                 Refresh
               </Button>
-              <ServiceCreate
-                onRefreshDashboard={onRefreshDashboard}
-              />
+              <ServiceCreate />
             </div>
           </header>
 

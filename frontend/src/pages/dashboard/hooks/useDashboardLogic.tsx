@@ -1,8 +1,9 @@
-import { useServiceTableStore } from "@/pages/service/store/useServiceTableStore";
-import $api from "@/shared/api/baseApi";
-import {useEffect, useMemo, useState} from "react";
+import $api, {socketUrl} from "@/shared/api/baseApi";
+import {useEffect, useMemo} from "react";
 import useWebSocket from "react-use-websocket";
 import {useShallow} from "zustand/react/shallow";
+import {useServiceTableStore} from "@/pages/service/store/useServiceTableStore";
+import {useDashboardStore} from "../store/useDashboardStore";
 
 export interface DashboardInfo {
   total_services: number;
@@ -20,13 +21,25 @@ export interface DashboardInfo {
 }
 
 export const useDashboardLogic = () => {
-  const {setServices} = useServiceTableStore(
+  const {
+    deleteServiceInData,
+    setUpdateService,
+    setUpdateAllServices,
+    addServiceInData,
+  } = useServiceTableStore(
     useShallow((s) => ({
-      setServices: s.setData,
+      deleteServiceInData: s.deleteServiceInData,
+      setUpdateService: s.setUpdateService,
+      setUpdateAllServices: s.setUpdateAllServices,
+      addServiceInData: s.addServiceInData,
     }))
   );
-  const [dashboardInfo, setDashboardInfo] = useState<DashboardInfo | null>(
-    null
+
+  const {dashboardInfo, setDashboardInfo} = useDashboardStore(
+    useShallow((s) => ({
+      dashboardInfo: s.dashboardInfo,
+      setDashboardInfo: s.setDashboardInfo,
+    }))
   );
 
   const getDashboardInfo = async () => {
@@ -46,25 +59,29 @@ export const useDashboardLogic = () => {
     };
   }, []);
 
-  const socketUrl = "ws://localhost:8080/ws";
-
-  const { lastMessage, readyState} = useWebSocket(socketUrl, {
+  const {lastMessage} = useWebSocket(socketUrl, {
     shouldReconnect: () => true,
   });
 
   useEffect(() => {
-    if (lastMessage !== null) {
-      try {
-        const data = JSON.parse(lastMessage.data);
-        if (data.stats) {
-          setDashboardInfo(data.stats);
-        }
-        if (data.services) {
-          setServices(data.services);
-        }
-      } catch (e) {
-        console.error(e);
-      }
+    if (!lastMessage) return;
+    const data = JSON.parse(lastMessage.data);
+    switch (data.type) {
+      case "stats_update":
+        setDashboardInfo(data.data);
+        break;
+      case "service_deleted":
+        deleteServiceInData(data.data.service_id);
+        break;
+      case "service_updated":
+        setUpdateService(data.data);
+        break;
+      case "service_created":
+        addServiceInData(data.data);
+        break;
+      case "service_updated_state":
+        setUpdateAllServices(data.data);
+        break;
     }
   }, [lastMessage]);
 
@@ -83,7 +100,6 @@ export const useDashboardLogic = () => {
   );
 
   return {
-    readyState,
     dashboardInfo,
     infoKeysDashboard,
     onRefreshDashboard,

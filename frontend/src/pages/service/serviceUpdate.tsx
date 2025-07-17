@@ -7,15 +7,9 @@ import {
   DialogDescription,
   DialogTitle,
 } from "@/shared/components/ui";
-import {useServiceApi} from "./hooks/useServiceApi";
 import { cn } from "@/shared/lib/utils";
 
-interface ServiceUpdateProps {
-  onRefreshDashboard?: () => void;
-}
-
-export const ServiceUpdate = ({onRefreshDashboard}: ServiceUpdateProps) => {
-  const {getAllServices} = useServiceApi();
+export const ServiceUpdate = () => {
   const {
     serviceData,
     onUpdateService,
@@ -50,12 +44,7 @@ export const ServiceUpdate = ({onRefreshDashboard}: ServiceUpdateProps) => {
               <ServiceForm
                 type="update"
                 initialValues={serviceData}
-                onSubmit={async (values) => {
-                  return await onUpdateService(values).then(() => {
-                    onRefreshDashboard?.();
-                    getAllServices?.();
-                  });
-                }}
+                onSubmit={onUpdateService}
               />
             ) : (
               <div className="flex items-center justify-center h-full">

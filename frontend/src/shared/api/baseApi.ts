@@ -7,3 +7,5 @@ const $api = axios.create({
 });
 
 export default $api;
+
+export const socketUrl = "ws://localhost:8080/ws";

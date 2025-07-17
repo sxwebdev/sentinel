@@ -16,6 +16,7 @@ interface ServiceDetailStore {
   setServiceDetailData: (serviceDetailData: Service | null) => void;
   setIncidentsData: (incidentsData: Incident[] | null) => void;
   setServiceStatsData: (serviceStatsData: ServiceStats | null) => void;
+  setUpdateServiceStatsData: (serviceStatsData: Service | null) => void;
 }
 
 const initialState = {
@@ -33,4 +34,15 @@ export const useServiceDetailStore = create<ServiceDetailStore>((set) => ({
   setServiceDetailData: (serviceDetailData) => set({serviceDetailData}),
   setIncidentsData: (incidentsData) => set({incidentsData}),
   setServiceStatsData: (serviceStatsData) => set({serviceStatsData}),
+  setUpdateServiceStatsData: (serviceStatsData) =>
+    set((store) => {
+      if (!serviceStatsData) return store;
+
+      return {
+        serviceDetailData: {
+          service: serviceStatsData.service,
+          state: serviceStatsData.state,
+        },
+      };
+    }),
 }));
