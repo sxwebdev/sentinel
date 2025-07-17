@@ -3,17 +3,51 @@ package web
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
+	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
 	"github.com/sxwebdev/sentinel/internal/storage"
 )
 
+// handleWebSocket handles WebSocket connections
+func (s *Server) handleWebSocket(c *websocket.Conn) {
+	fmt.Printf("WebSocket: new connection from %s\n", c.RemoteAddr())
+
+	// Add connection to the map
+	s.wsMutex.Lock()
+	s.wsConnections[c] = true
+	connectionCount := len(s.wsConnections)
+	s.wsMutex.Unlock()
+
+	fmt.Printf("WebSocket: total connections: %d\n", connectionCount)
+
+	// Remove connection when it closes
+	defer func() {
+		s.wsMutex.Lock()
+		delete(s.wsConnections, c)
+		remainingConnections := len(s.wsConnections)
+		s.wsMutex.Unlock()
+		c.Close()
+		fmt.Printf("WebSocket: connection closed, remaining connections: %d\n", remainingConnections)
+	}()
+
+	// Keep connection alive and handle messages
+	for {
+		_, _, err := c.ReadMessage()
+		if err != nil {
+			if !strings.Contains(err.Error(), "close 1001") {
+				fmt.Printf("WebSocket: read error: %v\n", err)
+			}
+			break
+		}
+	}
+}
+
 // BroadcastServiceUpdate sends service updates to all connected WebSocket clients
 func (s *Server) broadcastServiceUpdate(ctx context.Context) {
-	// Проверяем, не закрыта ли база данных
 	if s.storage == nil {
-		fmt.Println("WebSocket broadcast: storage is nil, skipping update")
 		return
 	}
 
@@ -41,14 +75,12 @@ func (s *Server) broadcastServiceUpdate(ctx context.Context) {
 	for _, service := range services {
 		serviceWithState, err := s.getServiceWithState(ctx, service)
 		if err != nil {
-			// Log error but continue with other services
 			fmt.Printf("WebSocket broadcast error: failed to get state for service %s: %v\n", service.ID, err)
 			continue
 		}
 
 		// Add incident statistics to the service
 		if stats, exists := statsMap[service.ID]; exists {
-			// Add incident stats to the service object
 			serviceWithState.Service.ActiveIncidents = stats.ActiveIncidents
 			serviceWithState.Service.TotalIncidents = stats.TotalIncidents
 		}
@@ -82,6 +114,40 @@ func (s *Server) broadcastServiceUpdate(ctx context.Context) {
 	// }
 }
 
+// broadcastStatsUpdate sends dashboard statistics updates to all connected WebSocket clients
+func (s *Server) broadcastStatsUpdate(ctx context.Context) {
+	if s.storage == nil {
+		return
+	}
+
+	stats, err := s.getDashboardStats(ctx)
+	if err != nil {
+		fmt.Printf("WebSocket broadcast error: failed to get dashboard stats: %v\n", err)
+		return
+	}
+
+	update := fiber.Map{
+		"type":      "stats_update",
+		"stats":     stats,
+		"timestamp": time.Now().Unix(),
+	}
+
+	s.wsMutex.Lock()
+	defer s.wsMutex.Unlock()
+
+	// Send to all connections and handle errors
+	activeConnections := 0
+	for conn := range s.wsConnections {
+		if err := conn.WriteJSON(update); err != nil {
+			fmt.Printf("WebSocket broadcast error: failed to send stats update: %v\n", err)
+			delete(s.wsConnections, conn)
+			conn.Close()
+		} else {
+			activeConnections++
+		}
+	}
+}
+
 func (s *Server) subscribeEvents(ctx context.Context) error {
 	broker := s.receiver.ServiceUpdated()
 	sub := broker.Subscribe()
@@ -91,16 +157,14 @@ func (s *Server) subscribeEvents(ctx context.Context) error {
 		return fmt.Errorf("failed to subscribe to service updates broker")
 	}
 
-	// Используем select для обработки событий с проверкой контекста
 	for ctx.Err() == nil {
 		select {
 		case <-sub:
-			// Проверяем, не закрыта ли база данных перед отправкой обновлений
 			if s.storage == nil {
-				fmt.Println("WebSocket: storage is nil, skipping broadcast")
 				continue
 			}
 			s.broadcastServiceUpdate(ctx)
+			s.broadcastStatsUpdate(ctx)
 
 		case <-ctx.Done():
 			return nil
