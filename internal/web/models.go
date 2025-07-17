@@ -3,6 +3,7 @@ package web
 import (
 	"time"
 
+	"github.com/sxwebdev/sentinel/internal/monitors"
 	"github.com/sxwebdev/sentinel/internal/storage"
 )
 
@@ -58,4 +59,38 @@ type ServiceStats struct {
 	UptimePercentage float64       `json:"uptime_percentage" example:"95.0"`
 	Period           time.Duration `json:"period" swaggertype:"primitive,integer" example:"2592000000000000"`
 	AvgResponseTime  time.Duration `json:"avg_response_time" swaggertype:"primitive,integer" example:"150000000"`
+}
+
+// CreateUpdateServiceRequest represents a request to create or update a service
+type CreateUpdateServiceRequest struct {
+	ID        string                      `json:"id" example:"service-1"`
+	Name      string                      `json:"name" example:"Web Server"`
+	Protocol  storage.ServiceProtocolType `json:"protocol" example:"http"`
+	Interval  uint32                      `json:"interval" swaggertype:"primitive,integer" example:"30000"`
+	Timeout   uint32                      `json:"timeout" swaggertype:"primitive,integer" example:"5000"`
+	Retries   int                         `json:"retries" example:"3"`
+	Tags      []string                    `json:"tags" example:"web,production"`
+	Config    monitors.Config             `json:"config"`
+	IsEnabled bool                        `json:"is_enabled" example:"true"`
+}
+
+// ServiceDTO represents a service for API responses
+type ServiceDTO struct {
+	ID              string                      `json:"id" example:"service-1"`
+	Name            string                      `json:"name" example:"Web Server"`
+	Protocol        storage.ServiceProtocolType `json:"protocol" example:"http"`
+	Interval        uint32                      `json:"interval" swaggertype:"primitive,integer" example:"30000"`
+	Timeout         uint32                      `json:"timeout" swaggertype:"primitive,integer" example:"5000"`
+	Retries         int                         `json:"retries" example:"3"`
+	Tags            []string                    `json:"tags" example:"web,production"`
+	Config          monitors.Config             `json:"config"`
+	IsEnabled       bool                        `json:"is_enabled" example:"true"`
+	ActiveIncidents int                         `json:"active_incidents" example:"2"`
+	TotalIncidents  int                         `json:"total_incidents" example:"10"`
+}
+
+// ServiceWithState represents a service with its current state
+type ServiceWithState struct {
+	Service ServiceDTO                  `json:"service"`
+	State   *storage.ServiceStateRecord `json:"state"`
 }
