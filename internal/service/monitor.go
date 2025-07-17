@@ -32,12 +32,7 @@ func NewMonitorService(storage storage.Storage, config *config.Config, notifier 
 
 // FindServices loads all enabled services from storage and initializes monitoring
 func (m *MonitorService) FindServices(ctx context.Context, params storage.FindServicesParams) ([]*storage.Service, error) {
-	services, err := m.storage.FindServices(ctx, params)
-	if err != nil {
-		return nil, fmt.Errorf("failed to find services: %w", err)
-	}
-
-	return services, nil
+	return m.storage.FindServices(ctx, params)
 }
 
 // CreateService adds a new service and starts monitoring it

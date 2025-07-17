@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/huandu/go-sqlbuilder"
@@ -424,19 +425,28 @@ func (o *ORMStorage) FindServices(ctx context.Context, params FindServicesParams
 	sb.GroupBy("s.id")
 
 	if params.Name != "" {
-		sb.Where(sb.ILike("name", "%"+params.Name+"%"))
+		sb.Where(sb.Like("s.name", "%"+params.Name+"%"))
 	}
 
 	if params.Protocol != "" {
-		sb.Where(sb.Equal("protocol", params.Protocol))
+		sb.Where(sb.Equal("s.protocol", params.Protocol))
 	}
 
 	if params.IsEnabled != nil {
-		sb.Where(sb.Equal("is_enabled", *params.IsEnabled))
+		sb.Where(sb.Equal("s.is_enabled", *params.IsEnabled))
 	}
 
 	if len(params.Tags) > 0 {
-		sb.Where(sb.In("tags", params.Tags))
+		var tagConditions []string
+		for _, tag := range params.Tags {
+			tagConditions = append(tagConditions,
+				fmt.Sprintf("EXISTS (SELECT 1 FROM json_each(s.tags) WHERE json_each.value = %s)",
+					sb.Args.Add(tag)))
+		}
+
+		if len(tagConditions) > 0 {
+			sb.Where(fmt.Sprintf("(%s)", strings.Join(tagConditions, " OR ")))
+		}
 	}
 
 	if params.OrderBy != "" {

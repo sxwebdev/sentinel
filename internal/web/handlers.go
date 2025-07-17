@@ -313,7 +313,7 @@ func (s *Server) handleFindServices(c *fiber.Ctx) error {
 	}
 
 	// Get services with their states
-	var servicesWithState []*ServiceWithState
+	servicesWithState := make([]*ServiceWithState, 0, len(services))
 	for _, service := range services {
 		serviceWithState, err := s.getServiceWithState(ctx, service)
 		if err != nil {
