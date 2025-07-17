@@ -57,7 +57,7 @@ func convertServiceToDTO(service *storage.Service) (ServiceDTO, error) {
 // getDashboardStats calculates dashboard statistics
 func (s *Server) getDashboardStats(ctx context.Context) (*DashboardStats, error) {
 	// Get all services with their states
-	services, err := s.monitorService.GetAllServices(ctx)
+	services, err := s.monitorService.FindServices(ctx, storage.FindServicesParams{})
 	if err != nil {
 		return nil, err
 	}

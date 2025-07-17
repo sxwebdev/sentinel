@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
@@ -33,60 +34,17 @@ type IncidentRow struct {
 	UpdatedAt  time.Time  `db:"updated_at"`
 }
 
-// ServiceRow represents a database row for services
-type ServiceRow struct {
-	ID        string    `db:"id"`
-	Name      string    `db:"name"`
-	Protocol  string    `db:"protocol"`
-	Interval  string    `db:"interval"`
-	Timeout   string    `db:"timeout"`
-	Retries   int       `db:"retries"`
-	Tags      string    `db:"tags"`
-	Config    string    `db:"config"`
-	IsEnabled bool      `db:"is_enabled"`
-	CreatedAt time.Time `db:"created_at"`
-	UpdatedAt time.Time `db:"updated_at"`
-}
-
-// QueryIncidents creates a query builder for incidents
-func (o *ORMStorage) QueryIncidents() *sqlbuilder.SelectBuilder {
+// queryIncidents creates a query builder for incidents
+func (o *ORMStorage) queryIncidents() *sqlbuilder.SelectBuilder {
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select("id", "service_id", "start_time", "end_time", "error", "duration_ns", "resolved")
 	sb.From("incidents")
 	return sb
 }
 
-// FindIncidentByID finds an incident by ID using ORM
-func (o *ORMStorage) FindIncidentByID(ctx context.Context, serviceID, incidentID string) (*Incident, error) {
-	sb := o.QueryIncidents()
-	sb.Where(sb.Equal("id", incidentID), sb.Equal("service_id", serviceID))
-
-	sql, args := sb.Build()
-	row := o.db.QueryRowContext(ctx, sql, args...)
-
-	var incidentRow IncidentRow
-	err := row.Scan(
-		&incidentRow.ID,
-		&incidentRow.ServiceID,
-		&incidentRow.StartTime,
-		&incidentRow.EndTime,
-		&incidentRow.Error,
-		&incidentRow.DurationNS,
-		&incidentRow.Resolved,
-	)
-	if err != nil {
-		if err.Error() == "sql: no rows in result set" {
-			return nil, fmt.Errorf("incident not found")
-		}
-		return nil, fmt.Errorf("failed to scan incident: %w", err)
-	}
-
-	return o.rowToIncident(&incidentRow), nil
-}
-
 // FindIncidentsByService finds incidents by service ID using ORM
 func (o *ORMStorage) FindIncidentsByService(ctx context.Context, serviceID string) ([]*Incident, error) {
-	sb := o.QueryIncidents()
+	sb := o.queryIncidents()
 	sb.Where(sb.Equal("service_id", serviceID))
 	sb.OrderBy("start_time").Desc()
 
@@ -125,7 +83,7 @@ func (o *ORMStorage) FindIncidentsByService(ctx context.Context, serviceID strin
 
 // FindActiveIncidents finds all active incidents using ORM
 func (o *ORMStorage) FindActiveIncidents(ctx context.Context) ([]*Incident, error) {
-	sb := o.QueryIncidents()
+	sb := o.queryIncidents()
 	sb.Where(sb.Equal("resolved", false))
 	sb.OrderBy("start_time").Desc()
 
@@ -164,7 +122,7 @@ func (o *ORMStorage) FindActiveIncidents(ctx context.Context) ([]*Incident, erro
 
 // FindRecentIncidents finds recent incidents with limit using ORM
 func (o *ORMStorage) FindRecentIncidents(ctx context.Context, limit int) ([]*Incident, error) {
-	sb := o.QueryIncidents()
+	sb := o.queryIncidents()
 	sb.OrderBy("start_time").Desc()
 
 	if limit > 0 {
@@ -243,22 +201,14 @@ func (o *ORMStorage) UpdateIncident(ctx context.Context, incident *Incident) err
 			ub.Assign("error", incident.Error),
 			ub.Assign("duration_ns", durationToNS(incident.Duration)),
 			ub.Assign("resolved", incident.Resolved),
+			ub.Assign("updated_at", time.Now()),
 		)
 		ub.Where(ub.Equal("id", incident.ID))
 
 		sql, args := ub.Build()
-		result, err := o.db.ExecContext(ctx, sql, args...)
+		_, err := o.db.ExecContext(ctx, sql, args...)
 		if err != nil {
 			return fmt.Errorf("failed to update incident: %w", err)
-		}
-
-		rowsAffected, err := result.RowsAffected()
-		if err != nil {
-			return fmt.Errorf("failed to get rows affected: %w", err)
-		}
-
-		if rowsAffected == 0 {
-			return fmt.Errorf("incident not found")
 		}
 
 		return nil
@@ -273,18 +223,9 @@ func (o *ORMStorage) DeleteIncident(ctx context.Context, incidentID string) erro
 		db.Where(db.Equal("id", incidentID))
 
 		sql, args := db.Build()
-		result, err := o.db.ExecContext(ctx, sql, args...)
+		_, err := o.db.ExecContext(ctx, sql, args...)
 		if err != nil {
 			return fmt.Errorf("failed to delete incident: %w", err)
-		}
-
-		rowsAffected, err := result.RowsAffected()
-		if err != nil {
-			return fmt.Errorf("failed to get rows affected: %w", err)
-		}
-
-		if rowsAffected == 0 {
-			return fmt.Errorf("incident not found")
 		}
 
 		return nil
@@ -294,7 +235,7 @@ func (o *ORMStorage) DeleteIncident(ctx context.Context, incidentID string) erro
 // GetServiceStatsWithORM calculates statistics for a service using ORM
 func (o *ORMStorage) GetServiceStatsWithORM(ctx context.Context, serviceID string, since time.Time) (*ServiceStats, error) {
 	// Get all incidents for the service since the specified time
-	sb := o.QueryIncidents()
+	sb := o.queryIncidents()
 	sb.Where(sb.Equal("service_id", serviceID), sb.GE("start_time", since))
 
 	sql, args := sb.Build()
@@ -377,48 +318,6 @@ func (o *ORMStorage) GetServiceStatsWithORM(ctx context.Context, serviceID strin
 	}, nil
 }
 
-// GetAllServicesIncidentStats gets incident statistics for all services using ORM
-func (o *ORMStorage) GetAllServicesIncidentStats(ctx context.Context) ([]*ServiceIncidentStats, error) {
-	// Query to get incident statistics for all services
-	sb := sqlbuilder.NewSelectBuilder()
-	sb.Select(
-		"service_id",
-		"COUNT(*) as total_incidents",
-		"SUM(CASE WHEN resolved = 0 THEN 1 ELSE 0 END) as active_incidents",
-	)
-	sb.From("incidents")
-	sb.GroupBy("service_id")
-
-	sql, args := sb.Build()
-	rows, err := o.db.QueryContext(ctx, sql, args...)
-	if err != nil {
-		return nil, fmt.Errorf("failed to query incident statistics: %w", err)
-	}
-	defer rows.Close()
-
-	stats := []*ServiceIncidentStats{}
-	for rows.Next() {
-		var serviceID string
-		var totalIncidents, activeIncidents int
-		err := rows.Scan(&serviceID, &totalIncidents, &activeIncidents)
-		if err != nil {
-			return nil, fmt.Errorf("failed to scan incident statistics: %w", err)
-		}
-
-		stats = append(stats, &ServiceIncidentStats{
-			ServiceID:       serviceID,
-			ActiveIncidents: activeIncidents,
-			TotalIncidents:  totalIncidents,
-		})
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("error iterating rows: %w", err)
-	}
-
-	return stats, nil
-}
-
 // rowToIncident converts an IncidentRow to Incident
 func (o *ORMStorage) rowToIncident(row *IncidentRow) *Incident {
 	incident := &Incident{
@@ -438,48 +337,113 @@ func (o *ORMStorage) rowToIncident(row *IncidentRow) *Incident {
 	return incident
 }
 
-// QueryServices creates a query builder for services
-func (o *ORMStorage) QueryServices() *sqlbuilder.SelectBuilder {
+// GetServiceByID finds a service by ID using ORM
+func (o *ORMStorage) GetServiceByID(ctx context.Context, id string) (*Service, error) {
 	sb := sqlbuilder.NewSelectBuilder()
-	sb.Select("id", "name", "protocol", "interval", "timeout", "retries", "tags", "config", "is_enabled")
-	sb.From("services")
-	return sb
-}
+	sb.Select(
+		"s.id",
+		"s.name",
+		"s.protocol",
+		"s.interval",
+		"s.timeout",
+		"s.retries",
+		"s.tags",
+		"s.config",
+		"s.is_enabled",
+		"s.created_at",
+		"s.updated_at",
+		"count(incidents.id) as total_incidents",
+		"sum(case when incidents.resolved = 0 then 1 else 0 end) as active_incidents",
+	)
+	sb.From("services s")
+	sb.Join("incidents", "s.id = incidents.service_id")
+	sb.Where(sb.Equal("s.id", id))
 
-// FindServiceByID finds a service by ID using ORM
-func (o *ORMStorage) FindServiceByID(ctx context.Context, id string) (*Service, error) {
-	sb := o.QueryServices()
-	sb.Where(sb.Equal("id", id))
+	query, args := sb.Build()
+	row := o.db.QueryRowContext(ctx, query, args...)
 
-	sql, args := sb.Build()
-	row := o.db.QueryRowContext(ctx, sql, args...)
-
-	var serviceRow ServiceRow
+	var item serviceRow
 	err := row.Scan(
-		&serviceRow.ID,
-		&serviceRow.Name,
-		&serviceRow.Protocol,
-		&serviceRow.Interval,
-		&serviceRow.Timeout,
-		&serviceRow.Retries,
-		&serviceRow.Tags,
-		&serviceRow.Config,
-		&serviceRow.IsEnabled,
+		&item.ID,
+		&item.Name,
+		&item.Protocol,
+		&item.Interval,
+		&item.Timeout,
+		&item.Retries,
+		&item.Tags,
+		&item.Config,
+		&item.IsEnabled,
+		&item.CreatedAt,
+		&item.UpdatedAt,
+		&item.TotalIncidents,
+		&item.ActiveIncidents,
 	)
 	if err != nil {
-		if err.Error() == "sql: no rows in result set" {
-			return nil, fmt.Errorf("service not found")
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrNotFound
 		}
-		return nil, fmt.Errorf("failed to scan service: %w", err)
+		return nil, err
 	}
 
-	return o.rowToService(&serviceRow)
+	svc, err := rowToService(&item)
+	if err != nil {
+		return nil, err
+	}
+
+	return svc, nil
 }
 
-// FindAllServices finds all services using ORM
-func (o *ORMStorage) FindAllServices(ctx context.Context) ([]*Service, error) {
-	sb := o.QueryServices()
-	sb.OrderBy("name")
+type FindServicesParams struct {
+	Name      string
+	IsEnabled *bool
+	Protocol  string
+	Tags      []string
+	OrderBy   string
+}
+
+// GetAllServices finds all services using ORM
+func (o *ORMStorage) FindServices(ctx context.Context, params FindServicesParams) ([]*Service, error) {
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select(
+		"s.id",
+		"s.name",
+		"s.protocol",
+		"s.interval",
+		"s.timeout",
+		"s.retries",
+		"s.tags",
+		"s.config",
+		"s.is_enabled",
+		"s.created_at",
+		"s.updated_at",
+		"count(incidents.id) as total_incidents",
+		"sum(case when incidents.resolved = 0 then 1 else 0 end) as active_incidents",
+	)
+	sb.From("services s")
+	sb.Join("incidents", "s.id = incidents.service_id")
+	sb.GroupBy("s.id")
+
+	if params.Name != "" {
+		sb.Where(sb.ILike("name", "%"+params.Name+"%"))
+	}
+
+	if params.Protocol != "" {
+		sb.Where(sb.Equal("protocol", params.Protocol))
+	}
+
+	if params.IsEnabled != nil {
+		sb.Where(sb.Equal("is_enabled", *params.IsEnabled))
+	}
+
+	if len(params.Tags) > 0 {
+		sb.Where(sb.In("tags", params.Tags))
+	}
+
+	if params.OrderBy != "" {
+		sb.OrderBy(params.OrderBy)
+	} else {
+		sb.OrderBy("name")
+	}
 
 	sql, args := sb.Build()
 	rows, err := o.db.QueryContext(ctx, sql, args...)
@@ -490,72 +454,32 @@ func (o *ORMStorage) FindAllServices(ctx context.Context) ([]*Service, error) {
 
 	services := []*Service{}
 	for rows.Next() {
-		var serviceRow ServiceRow
+		var item serviceRow
 		err := rows.Scan(
-			&serviceRow.ID,
-			&serviceRow.Name,
-			&serviceRow.Protocol,
-			&serviceRow.Interval,
-			&serviceRow.Timeout,
-			&serviceRow.Retries,
-			&serviceRow.Tags,
-			&serviceRow.Config,
-			&serviceRow.IsEnabled,
+			&item.ID,
+			&item.Name,
+			&item.Protocol,
+			&item.Interval,
+			&item.Timeout,
+			&item.Retries,
+			&item.Tags,
+			&item.Config,
+			&item.IsEnabled,
+			&item.CreatedAt,
+			&item.UpdatedAt,
+			&item.TotalIncidents,
+			&item.ActiveIncidents,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan service: %w", err)
 		}
 
-		service, err := o.rowToService(&serviceRow)
+		svc, err := rowToService(&item)
 		if err != nil {
-			return nil, err
-		}
-		services = append(services, service)
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("error iterating rows: %w", err)
-	}
-
-	return services, nil
-}
-
-// FindEnabledServices finds all enabled services using ORM
-func (o *ORMStorage) FindEnabledServices(ctx context.Context) ([]*Service, error) {
-	sb := o.QueryServices()
-	sb.Where(sb.Equal("is_enabled", true))
-	sb.OrderBy("name")
-
-	sql, args := sb.Build()
-	rows, err := o.db.QueryContext(ctx, sql, args...)
-	if err != nil {
-		return nil, fmt.Errorf("failed to query active services: %w", err)
-	}
-	defer rows.Close()
-
-	services := []*Service{}
-	for rows.Next() {
-		var serviceRow ServiceRow
-		err := rows.Scan(
-			&serviceRow.ID,
-			&serviceRow.Name,
-			&serviceRow.Protocol,
-			&serviceRow.Interval,
-			&serviceRow.Timeout,
-			&serviceRow.Retries,
-			&serviceRow.Tags,
-			&serviceRow.Config,
-			&serviceRow.IsEnabled,
-		)
-		if err != nil {
-			return nil, fmt.Errorf("failed to scan service: %w", err)
+			return nil, fmt.Errorf("failed to convert service row: %w", err)
 		}
 
-		service, err := o.rowToService(&serviceRow)
-		if err != nil {
-			return nil, err
-		}
-		services = append(services, service)
+		services = append(services, svc)
 	}
 
 	if err := rows.Err(); err != nil {
@@ -566,105 +490,118 @@ func (o *ORMStorage) FindEnabledServices(ctx context.Context) ([]*Service, error
 }
 
 // CreateService creates a new service using ORM with retry logic
-func (o *ORMStorage) CreateService(ctx context.Context, service *Service) error {
-	return o.retryOnBusy(ctx, func() error {
-		ib := sqlbuilder.NewInsertBuilder()
-		ib.InsertInto("services")
-		ib.Cols("id", "name", "protocol", "interval", "timeout", "retries", "tags", "config", "is_enabled")
+func (o *ORMStorage) CreateService(ctx context.Context, service CreateUpdateServiceRequest) (*Service, error) {
+	ib := sqlbuilder.NewInsertBuilder()
+	ib.InsertInto("services")
+	ib.Cols("id", "name", "protocol", "interval", "timeout", "retries", "tags", "config", "is_enabled")
 
-		tagsJSON, err := json.Marshal(service.Tags)
-		if err != nil {
-			return fmt.Errorf("failed to marshal tags: %w", err)
-		}
+	tagsJSON, err := json.Marshal(service.Tags)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal tags: %w", err)
+	}
 
-		configJSON, err := json.Marshal(service.Config)
-		if err != nil {
-			return fmt.Errorf("failed to marshal config: %w", err)
-		}
+	configJSON, err := json.Marshal(service.Config)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal config: %w", err)
+	}
 
-		ib.Values(
-			service.ID,
-			service.Name,
-			service.Protocol,
-			service.Interval.String(),
-			service.Timeout.String(),
-			service.Retries,
-			string(tagsJSON),
-			string(configJSON),
-			service.IsEnabled,
-		)
+	id := GenerateULID()
 
-		sql, args := ib.Build()
+	ib.Values(
+		id,
+		service.Name,
+		service.Protocol,
+		service.Interval.String(),
+		service.Timeout.String(),
+		service.Retries,
+		string(tagsJSON),
+		string(configJSON),
+		service.IsEnabled,
+	)
 
-		_, err = o.db.ExecContext(ctx, sql, args...)
-		if err != nil {
-			return fmt.Errorf("failed to create service: %w", err)
-		}
+	tx, err := o.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback()
 
-		return nil
-	})
+	sql, args := ib.Build()
+	_, err = tx.ExecContext(ctx, sql, args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create service: %w", err)
+	}
+
+	nextCheck := time.Now().Add(service.Interval)
+	serviceState := &ServiceStateRecord{
+		ID:                 GenerateULID(),
+		ServiceID:          id,
+		Status:             StatusUnknown,
+		NextCheck:          &nextCheck,
+		ConsecutiveFails:   0,
+		ConsecutiveSuccess: 0,
+		TotalChecks:        0,
+	}
+
+	if err := o.CreateServiceState(ctx, tx, serviceState); err != nil {
+		return nil, fmt.Errorf("failed to create service state: %w", err)
+	}
+
+	// Commit transaction
+	if err := tx.Commit(); err != nil {
+		return nil, fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	return o.GetServiceByID(ctx, id)
 }
 
 // UpdateService updates an existing service using ORM with retry logic
-func (o *ORMStorage) UpdateService(ctx context.Context, service *Service) error {
-	return o.retryOnBusy(ctx, func() error {
-		ub := sqlbuilder.NewUpdateBuilder()
-		ub.Update("services")
+func (o *ORMStorage) UpdateService(ctx context.Context, id string, service CreateUpdateServiceRequest) (*Service, error) {
+	ub := sqlbuilder.NewUpdateBuilder()
+	ub.Update("services")
 
-		tagsJSON, err := json.Marshal(service.Tags)
-		if err != nil {
-			return fmt.Errorf("failed to marshal tags: %w", err)
-		}
-
-		configJSON, err := json.Marshal(service.Config)
-		if err != nil {
-			return fmt.Errorf("failed to marshal config: %w", err)
-		}
-
-		// Prepare all fields for update
-		assignments := []string{
-			ub.Assign("name", service.Name),
-			ub.Assign("protocol", service.Protocol),
-			ub.Assign("interval", service.Interval.String()),
-			ub.Assign("timeout", service.Timeout.String()),
-			ub.Assign("retries", service.Retries),
-			ub.Assign("tags", string(tagsJSON)),
-			ub.Assign("config", string(configJSON)),
-			ub.Assign("is_enabled", service.IsEnabled),
-		}
-
-		// Set all assignments at once
-		ub.Set(assignments...)
-		ub.Where(ub.Equal("id", service.ID))
-
-		sql, args := ub.Build()
-
-		result, err := o.db.ExecContext(ctx, sql, args...)
-		if err != nil {
-			return fmt.Errorf("failed to update service: %w", err)
-		}
-
-		rowsAffected, err := result.RowsAffected()
-		if err != nil {
-			return fmt.Errorf("failed to get rows affected: %w", err)
-		}
-
-		if rowsAffected == 0 {
-			return fmt.Errorf("service not found")
-		}
-
-		return nil
-	})
-}
-
-// DeleteIncidentsByService deletes all incidents for a service
-func (o *ORMStorage) DeleteIncidentsByService(ctx context.Context, serviceID string) error {
-	query := `DELETE FROM incidents WHERE service_id = ?`
-	_, err := o.db.ExecContext(ctx, query, serviceID)
+	tagsJSON, err := json.Marshal(service.Tags)
 	if err != nil {
-		return fmt.Errorf("failed to delete incidents: %w", err)
+		return nil, fmt.Errorf("failed to marshal tags: %w", err)
 	}
-	return nil
+
+	configJSON, err := json.Marshal(service.Config)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal config: %w", err)
+	}
+
+	// Prepare all fields for update
+	assignments := []string{
+		ub.Assign("name", service.Name),
+		ub.Assign("protocol", service.Protocol),
+		ub.Assign("interval", service.Interval.String()),
+		ub.Assign("timeout", service.Timeout.String()),
+		ub.Assign("retries", service.Retries),
+		ub.Assign("tags", string(tagsJSON)),
+		ub.Assign("config", string(configJSON)),
+		ub.Assign("is_enabled", service.IsEnabled),
+		ub.Assign("updated_at", time.Now()),
+	}
+
+	// Set all assignments at once
+	ub.Set(assignments...)
+	ub.Where(ub.Equal("id", id))
+
+	sql, args := ub.Build()
+	result, err := o.db.ExecContext(ctx, sql, args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update service: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get rows affected: %w", err)
+	}
+
+	if rowsAffected == 0 {
+		return nil, fmt.Errorf("service not found")
+	}
+
+	return o.GetServiceByID(ctx, id)
 }
 
 // DeleteService deletes a service by ID
@@ -674,7 +611,7 @@ func (o *ORMStorage) DeleteService(ctx context.Context, id string) error {
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction: %w", err)
 	}
-	defer tx.Rollback() // Will be ignored if tx.Commit() is called
+	defer tx.Rollback()
 
 	// Delete related incidents first
 	incidentsQuery := `DELETE FROM incidents WHERE service_id = ?`
@@ -728,13 +665,22 @@ func (o *ORMStorage) GetServiceState(ctx context.Context, serviceID string) (*Se
 
 	var state ServiceStateRecord
 	err := o.db.QueryRowContext(ctx, query, serviceID).Scan(
-		&state.ID, &state.ServiceID, &state.Status, &state.LastCheck, &state.NextCheck,
-		&state.LastError, &state.ConsecutiveFails, &state.ConsecutiveSuccess,
-		&state.TotalChecks, &state.ResponseTimeNS, &state.CreatedAt, &state.UpdatedAt,
+		&state.ID,
+		&state.ServiceID,
+		&state.Status,
+		&state.LastCheck,
+		&state.NextCheck,
+		&state.LastError,
+		&state.ConsecutiveFails,
+		&state.ConsecutiveSuccess,
+		&state.TotalChecks,
+		&state.ResponseTimeNS,
+		&state.CreatedAt,
+		&state.UpdatedAt,
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, nil // No state found
+			return nil, nil
 		}
 		return nil, fmt.Errorf("failed to get service state: %w", err)
 	}
@@ -742,38 +688,54 @@ func (o *ORMStorage) GetServiceState(ctx context.Context, serviceID string) (*Se
 	return &state, nil
 }
 
-// UpdateServiceState updates or creates service state
-func (o *ORMStorage) UpdateServiceState(ctx context.Context, state *ServiceStateRecord) error {
-	if state.ID == "" {
-		state.ID = GenerateULID()
-	}
-
+// CreateServiceState creates a new service state
+func (o *ORMStorage) CreateServiceState(ctx context.Context, tx *sql.Tx, state *ServiceStateRecord) error {
 	query := `
 		INSERT INTO service_states (
 			id, service_id, status, last_check, next_check, last_error,
-			consecutive_fails, consecutive_success, total_checks, response_time_ns,
-			created_at, updated_at
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-		ON CONFLICT(service_id) DO UPDATE SET
-			status = excluded.status,
-			last_check = excluded.last_check,
-			next_check = excluded.next_check,
-			last_error = excluded.last_error,
-			consecutive_fails = excluded.consecutive_fails,
-			consecutive_success = excluded.consecutive_success,
-			total_checks = excluded.total_checks,
-			response_time_ns = excluded.response_time_ns,
-			updated_at = excluded.updated_at
+			consecutive_fails, consecutive_success, total_checks, response_time_ns
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`
 
-	now := time.Now()
-	_, err := o.db.ExecContext(ctx, query,
-		state.ID, state.ServiceID, state.Status, state.LastCheck, state.NextCheck,
-		state.LastError, state.ConsecutiveFails, state.ConsecutiveSuccess,
-		state.TotalChecks, state.ResponseTimeNS, now, now,
+	_, err := tx.ExecContext(ctx, query,
+		state.ID,
+		state.ServiceID,
+		state.Status,
+		state.LastCheck,
+		state.NextCheck,
+		state.LastError,
+		state.ConsecutiveFails,
+		state.ConsecutiveSuccess,
+		state.TotalChecks,
+		state.ResponseTimeNS,
 	)
 	if err != nil {
-		return fmt.Errorf("failed to update service state: %w", err)
+		return fmt.Errorf("failed to create service state: %w", err)
+	}
+	return nil
+}
+
+// UpdateServiceState updates or creates service state
+func (o *ORMStorage) UpdateServiceState(ctx context.Context, params *ServiceStateRecord) error {
+	ub := sqlbuilder.NewUpdateBuilder()
+	ub.Update("service_states")
+	ub.Set(
+		ub.Assign("status", params.Status),
+		ub.Assign("last_check", params.LastCheck),
+		ub.Assign("next_check", params.NextCheck),
+		ub.Assign("last_error", params.LastError),
+		ub.Assign("consecutive_fails", params.ConsecutiveFails),
+		ub.Assign("consecutive_success", params.ConsecutiveSuccess),
+		ub.Assign("total_checks", params.TotalChecks),
+		ub.Assign("response_time_ns", params.ResponseTimeNS),
+		ub.Assign("updated_at", time.Now()),
+	)
+
+	ub.Where(ub.Equal("id", params.ID))
+
+	query, args := ub.Build()
+	if _, err := o.db.ExecContext(ctx, query, args...); err != nil {
+		return err
 	}
 
 	return nil
@@ -827,8 +789,7 @@ func (o *ORMStorage) DeleteServiceState(ctx context.Context, serviceID string) e
 }
 
 // rowToService converts a ServiceRow to Service
-func (o *ORMStorage) rowToService(row *ServiceRow) (*Service, error) {
-	// Parse duration strings
+func rowToService(row *serviceRow) (*Service, error) {
 	interval, err := time.ParseDuration(row.Interval)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse interval: %w", err)
@@ -850,15 +811,19 @@ func (o *ORMStorage) rowToService(row *ServiceRow) (*Service, error) {
 	}
 
 	return &Service{
-		ID:        row.ID,
-		Name:      row.Name,
-		Protocol:  ServiceProtocolType(row.Protocol),
-		Interval:  interval,
-		Timeout:   timeout,
-		Retries:   row.Retries,
-		Tags:      tags,
-		Config:    config,
-		IsEnabled: row.IsEnabled,
+		ID:              row.ID,
+		Name:            row.Name,
+		Protocol:        ServiceProtocolType(row.Protocol),
+		Interval:        interval,
+		Timeout:         timeout,
+		Retries:         row.Retries,
+		Tags:            tags,
+		Config:          config,
+		IsEnabled:       row.IsEnabled,
+		CreatedAt:       row.CreatedAt,
+		UpdatedAt:       row.UpdatedAt,
+		TotalIncidents:  row.TotalIncidents,
+		ActiveIncidents: row.ActiveIncidents,
 	}, nil
 }
 

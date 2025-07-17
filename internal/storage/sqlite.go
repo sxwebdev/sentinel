@@ -34,7 +34,7 @@ func NewSQLiteStorage(dbPath string) (*SQLiteStorage, error) {
 	}
 
 	// Set connection pool settings
-	db.SetMaxOpenConns(1) // SQLite doesn't handle multiple writers well
+	db.SetMaxOpenConns(1)
 	db.SetMaxIdleConns(1)
 	db.SetConnMaxLifetime(time.Hour)
 
@@ -73,11 +73,6 @@ func (s *SQLiteStorage) SaveIncident(ctx context.Context, incident *Incident) er
 	return s.orm.CreateIncident(ctx, incident)
 }
 
-// GetIncident retrieves an incident by ID
-func (s *SQLiteStorage) GetIncident(ctx context.Context, serviceID, incidentID string) (*Incident, error) {
-	return s.orm.FindIncidentByID(ctx, serviceID, incidentID)
-}
-
 // UpdateIncident updates an existing incident
 func (s *SQLiteStorage) UpdateIncident(ctx context.Context, incident *Incident) error {
 	return s.orm.UpdateIncident(ctx, incident)
@@ -108,38 +103,26 @@ func (s *SQLiteStorage) GetServiceStats(ctx context.Context, serviceID string, s
 	return s.orm.GetServiceStatsWithORM(ctx, serviceID, since)
 }
 
-// GetAllServicesIncidentStats retrieves incident statistics for all services
-func (s *SQLiteStorage) GetAllServicesIncidentStats(ctx context.Context) ([]*ServiceIncidentStats, error) {
-	return s.orm.GetAllServicesIncidentStats(ctx)
-}
-
 // Service methods
 
-// SaveService saves a new service to the database
-func (s *SQLiteStorage) SaveService(ctx context.Context, service *Service) error {
-	service.ID = GenerateULID()
-
+// CreateService saves a new service to the database
+func (s *SQLiteStorage) CreateService(ctx context.Context, service CreateUpdateServiceRequest) (*Service, error) {
 	return s.orm.CreateService(ctx, service)
 }
 
 // GetService retrieves a service by ID
-func (s *SQLiteStorage) GetService(ctx context.Context, id string) (*Service, error) {
-	return s.orm.FindServiceByID(ctx, id)
+func (s *SQLiteStorage) GetServiceByID(ctx context.Context, id string) (*Service, error) {
+	return s.orm.GetServiceByID(ctx, id)
 }
 
-// GetAllServices retrieves all services
-func (s *SQLiteStorage) GetAllServices(ctx context.Context) ([]*Service, error) {
-	return s.orm.FindAllServices(ctx)
-}
-
-// GetEnabledServices retrieves all enabled services
-func (s *SQLiteStorage) GetEnabledServices(ctx context.Context) ([]*Service, error) {
-	return s.orm.FindEnabledServices(ctx)
+// FindServices retrieves all services
+func (s *SQLiteStorage) FindServices(ctx context.Context, params FindServicesParams) ([]*Service, error) {
+	return s.orm.FindServices(ctx, params)
 }
 
 // UpdateService updates an existing service
-func (s *SQLiteStorage) UpdateService(ctx context.Context, service *Service) error {
-	return s.orm.UpdateService(ctx, service)
+func (s *SQLiteStorage) UpdateService(ctx context.Context, id string, service CreateUpdateServiceRequest) (*Service, error) {
+	return s.orm.UpdateService(ctx, id, service)
 }
 
 // DeleteService deletes a service by ID

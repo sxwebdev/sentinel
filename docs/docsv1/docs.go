@@ -106,6 +106,42 @@ const docTemplate = `{
                     "services"
                 ],
                 "summary": "Get all services",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Filter by service name",
+                        "name": "name",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Filter by service tags",
+                        "name": "tags",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Filter by enabled status",
+                        "name": "is_enabled",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by protocol",
+                        "name": "protocol",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Order by field",
+                        "name": "order_by",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "List of services with states",
@@ -770,10 +806,6 @@ const docTemplate = `{
             "properties": {
                 "config": {
                     "$ref": "#/definitions/monitors.Config"
-                },
-                "id": {
-                    "type": "string",
-                    "example": "service-1"
                 },
                 "interval": {
                     "type": "integer",

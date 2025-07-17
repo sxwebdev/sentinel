@@ -149,9 +149,6 @@ definitions:
     properties:
       config:
         $ref: '#/definitions/monitors.Config'
-      id:
-        example: service-1
-        type: string
       interval:
         example: 30000
         type: integer
@@ -394,6 +391,30 @@ paths:
       consumes:
       - application/json
       description: Returns a list of all services with their current states
+      parameters:
+      - description: Filter by service name
+        in: query
+        name: name
+        type: string
+      - collectionFormat: csv
+        description: Filter by service tags
+        in: query
+        items:
+          type: string
+        name: tags
+        type: array
+      - description: Filter by enabled status
+        in: query
+        name: is_enabled
+        type: boolean
+      - description: Filter by protocol
+        in: query
+        name: protocol
+        type: string
+      - description: Order by field
+        in: query
+        name: order_by
+        type: string
       produces:
       - application/json
       responses:
