@@ -166,13 +166,13 @@ export const useServiceTable = () => {
             <Badge
               className={cn(
                 "text-sm font-medium",
-                row.original.state.consecutive_fails > 0 &&
+                row.original.service?.active_incidents > 0 &&
                   "bg-red-light text-red",
-                !row.original.state.consecutive_fails &&
+                !row.original.service?.active_incidents &&
                   "bg-green-light text-green"
               )}
             >
-              {row.original.state.consecutive_fails ?? 0}
+              {row.original.service?.active_incidents ?? 0}
             </Badge>
             {" / "}
             <Badge variant="outline" className={cn("text-sm font-medium")}>

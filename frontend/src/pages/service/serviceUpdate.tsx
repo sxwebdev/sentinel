@@ -7,11 +7,11 @@ import {
   DialogDescription,
   DialogTitle,
 } from "@/shared/components/ui";
-import { useServiceApi } from "./hooks/useServiceApi";
+import {useServiceApi} from "./hooks/useServiceApi";
+import { cn } from "@/shared/lib/utils";
 
 interface ServiceUpdateProps {
   onRefreshDashboard?: () => void;
-
 }
 
 export const ServiceUpdate = ({onRefreshDashboard}: ServiceUpdateProps) => {
@@ -23,8 +23,6 @@ export const ServiceUpdate = ({onRefreshDashboard}: ServiceUpdateProps) => {
     updateServiceId,
     setUpdateServiceId,
   } = useServiceUpdate();
-  if (isLoading) return <Loader />;
-
   return (
     <Dialog
       open={!!updateServiceId}
@@ -33,27 +31,40 @@ export const ServiceUpdate = ({onRefreshDashboard}: ServiceUpdateProps) => {
       }}
     >
       <DialogDescription />
-      {serviceData ? (
-        <DialogContent className="overflow-y-auto max-h-[90vh]  sm:max-w-[90%] lg:max-w-[80%]">
-          <DialogTitle>Update Service</DialogTitle>
-          <hr />
-          <ServiceForm
-            type="update"
-            initialValues={serviceData}
-            onSubmit={async (values) => {
-              return await onUpdateService(values).then(() => {
-                onRefreshDashboard?.();
-                getAllServices?.();
-              });
-            }}
-          />
-        </DialogContent>
-      ) : (
-        <DialogContent>
-          <DialogTitle>Service not found</DialogTitle>
-          <DialogDescription>Service not found</DialogDescription>
-        </DialogContent>
-      )}
+
+      <DialogContent
+        className={cn(
+          "overflow-y-auto max-h-[90%]  sm:max-w-[90%] lg:max-w-[800px] h-full",
+          isLoading && "flex flex-col"
+        )}
+      >
+        <DialogTitle className="h-fit">Update Service</DialogTitle>
+        <hr className="h-fit" />
+        {isLoading ? (
+          <div className="flex items-center justify-center h-full w-full">
+            <Loader />
+          </div>
+        ) : (
+          <>
+            {serviceData ? (
+              <ServiceForm
+                type="update"
+                initialValues={serviceData}
+                onSubmit={async (values) => {
+                  return await onUpdateService(values).then(() => {
+                    onRefreshDashboard?.();
+                    getAllServices?.();
+                  });
+                }}
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <p>Service not found</p>
+              </div>
+            )}
+          </>
+        )}
+      </DialogContent>
     </Dialog>
   );
 };

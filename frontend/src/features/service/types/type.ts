@@ -41,6 +41,7 @@ export interface Service {
     };
     is_enabled: boolean;
     total_incidents: number;
+    active_incidents: number;
   };
   state: {
     id: string;
