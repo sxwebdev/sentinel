@@ -16,7 +16,7 @@ import (
 
 // GRPCConfig represents gRPC monitor configuration
 type GRPCConfig struct {
-	Endpoint    string `json:"endpoint" validate:"required"`
+	Endpoint    string `json:"endpoint" validate:"required,hostname_port"`
 	CheckType   string `json:"check_type" validate:"required,oneof=health reflection connectivity"`
 	ServiceName string `json:"service_name,omitempty"`
 	TLS         bool   `json:"tls,omitempty"`
