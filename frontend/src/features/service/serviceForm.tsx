@@ -493,8 +493,6 @@ export const ServiceForm = ({
             toast.error("Invalid headers format");
             delete endpoint.headers;
           }
-        } else {
-          delete endpoint.headers;
         }
       });
     }

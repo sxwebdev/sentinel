@@ -220,10 +220,8 @@ const ServiceDetail = () => {
                 <CardTitle className="text-red whitespace-nowrap">
                   Last Error:
                 </CardTitle>
-                <CardDescription>
-                  <p className="text-red">
-                    {serviceDetailData.state.last_error}
-                  </p>
+                  <CardDescription className="text-red">
+                    <div dangerouslySetInnerHTML={{__html: serviceDetailData.state.last_error}} />
                 </CardDescription>
               </Card>
             )}
@@ -283,9 +281,9 @@ const ServiceDetail = () => {
                     </Button>
                   </div>
                 </div>
-                <span className="text-destructive text-sm font-medium">
-                  {incident.error}
-                </span>
+                <div className="text-red text-sm font-medium">
+                  <div dangerouslySetInnerHTML={{__html: incident.error}} />
+                </div>
                 <div className="flex flex-col gap-2 incident-details">
                   <div className="flex items-center gap-2">
                     <strong>Start:</strong>{" "}

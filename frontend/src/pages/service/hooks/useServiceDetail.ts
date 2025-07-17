@@ -29,7 +29,7 @@ export const useServiceDetail = () => {
         getServiceStats();
       })
       .catch((err) => {
-        toast.error(err.data.error);
+        toast.error(err.response.data.error);
       });
   };
 
@@ -43,7 +43,7 @@ export const useServiceDetail = () => {
         toast.success("Incident deleted");
       })
       .catch((err) => {
-        toast.error(err.data.error);
+        toast.error(err.response.data.error);
       })
       .finally(() => {
         setDeleteIncident(null);
@@ -60,7 +60,7 @@ export const useServiceDetail = () => {
         toast.success("Incident resolved");
       })
       .catch((err) => {
-        toast.error(err.data.error);
+        toast.error(err.response.data.error);
       })
       .finally(() => {
         setResolveIncident(false);

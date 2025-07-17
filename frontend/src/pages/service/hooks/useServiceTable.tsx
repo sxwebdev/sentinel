@@ -55,7 +55,7 @@ export const useServiceTable = () => {
         toast.success("Service deleted");
       })
       .catch((err) => {
-        toast.error(err.data.error);
+        toast.error(err.response.data.error);
       })
       .finally(() => {
         setDeleteService(null);
