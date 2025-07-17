@@ -120,7 +120,7 @@ export const useServiceTable = () => {
                   "bg-orange-light text-orange"
               )}
             >
-              {row.original.state.status}
+              {row.original.state.status.toUpperCase()}
             </Badge>
           );
         },

@@ -52,6 +52,7 @@ export interface Service {
     consecutive_fails: number;
     consecutive_success: number;
     total_checks: number;
+    last_error?: string;
     response_time_ns: number;
     created_at: string;
     updated_at: string;

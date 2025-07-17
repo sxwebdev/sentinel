@@ -14,8 +14,9 @@ import {flexRender} from "@tanstack/react-table";
 import {useServiceTable} from "./hooks/useServiceTable";
 import {Loader} from "@/entities/loader/loader";
 import {PaginationBar} from "@/entities/paginationBar/paginationBar";
-import { ConfirmDialog } from "@/entities/confirmDialog/confirmDialog";
-import { ServiceUpdate } from "./serviceUpdate";
+import {ConfirmDialog} from "@/entities/confirmDialog/confirmDialog";
+import {ServiceUpdate} from "./serviceUpdate";
+import {cn} from "@/shared/lib/utils";
 
 interface ServiceTableProps {
   onRefreshDashboard?: () => void;
@@ -36,9 +37,7 @@ export const ServiceTable = ({onRefreshDashboard}: ServiceTableProps) => {
 
   return (
     <>
-      <ServiceUpdate
-        onRefreshDashboard={onRefreshDashboard}
-      />
+      <ServiceUpdate onRefreshDashboard={onRefreshDashboard} />
       <ConfirmDialog
         open={!!deleteService}
         setOpen={() => setDeleteService(null)}
@@ -71,9 +70,15 @@ export const ServiceTable = ({onRefreshDashboard}: ServiceTableProps) => {
               <TableHeader className="bg-gray-100 rounded-t-lg">
                 {table.getHeaderGroups().map((headerGroup) => (
                   <TableRow key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => {
+                    {headerGroup.headers.map((header, idx) => {
                       return (
-                        <TableHead key={header.id} className="text-center">
+                        <TableHead
+                          key={header.id}
+                          className={cn(
+                            "text-center",
+                            idx === 0 && "w-0 whitespace-nowrap"
+                          )}
+                        >
                           {header.isPlaceholder
                             ? null
                             : flexRender(

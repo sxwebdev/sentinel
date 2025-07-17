@@ -5,6 +5,7 @@ import {
   Button,
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/shared/components/ui";
@@ -213,6 +214,19 @@ const ServiceDetail = () => {
                 )}
               </span>
             </div>
+
+            {serviceDetailData.state?.last_error && (
+              <Card className="flex flex-row gap-2 p-4 border-red bg-red-light mt-2">
+                <CardTitle className="text-red whitespace-nowrap">
+                  Last Error:
+                </CardTitle>
+                <CardDescription>
+                  <p className="text-red">
+                    {serviceDetailData.state.last_error}
+                  </p>
+                </CardDescription>
+              </Card>
+            )}
           </CardContent>
         </Card>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
