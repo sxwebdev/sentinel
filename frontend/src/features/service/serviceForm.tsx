@@ -569,128 +569,132 @@ export const ServiceForm = ({
       {({isSubmitting, isValid, dirty, values, setFieldValue}) => {
         return (
           <Form className="flex flex-col gap-4">
-            <div className="flex flex-col gap-2">
-              <Label required>Service Name</Label>
-              <FastField name="name">
-                {({field}: FieldProps) => (
-                  <Input
-                    {...field}
-                    value={field.value ?? ""}
-                    placeholder="Name"
-                  />
-                )}
-              </FastField>
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label required>Protocol</Label>
-              <Field name="protocol">
-                {({field}: FieldProps) => (
-                  <Select
-                    value={field.value}
-                    onValueChange={(value) => setFieldValue("protocol", value)}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue
-                        className="w-full"
-                        placeholder="Select Protocol"
+            <Card className="p-6">
+              <div className="flex flex-col gap-2">
+                <Label required>Service Name</Label>
+                <FastField name="name">
+                  {({field}: FieldProps) => (
+                    <Input
+                      {...field}
+                      value={field.value ?? ""}
+                      placeholder="Name"
+                    />
+                  )}
+                </FastField>
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label required>Protocol</Label>
+                <Field name="protocol">
+                  {({field}: FieldProps) => (
+                    <Select
+                      value={field.value}
+                      onValueChange={(value) =>
+                        setFieldValue("protocol", value)
+                      }
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue
+                          className="w-full"
+                          placeholder="Select Protocol"
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="http">HTTP/HTTPS</SelectItem>
+                        <SelectItem value="tcp">TCP</SelectItem>
+                        <SelectItem value="grpc">gRPC</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                </Field>
+              </div>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="flex flex-col gap-2">
+                  <Label>Interval(milliseconds)</Label>
+                  <FastField name="interval">
+                    {({field}: FieldProps) => (
+                      <Input
+                        {...field}
+                        value={field.value ?? ""}
+                        placeholder="Interval"
+                        onChange={(e) => {
+                          if (!isNaN(Number(e.target.value))) {
+                            setFieldValue("interval", Number(e.target.value));
+                          }
+                        }}
                       />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="http">HTTP/HTTPS</SelectItem>
-                      <SelectItem value="tcp">TCP</SelectItem>
-                      <SelectItem value="grpc">gRPC</SelectItem>
-                    </SelectContent>
-                  </Select>
-                )}
-              </Field>
-            </div>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    )}
+                  </FastField>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label>Timeout(milliseconds)</Label>
+                  <FastField name="timeout">
+                    {({field}: FieldProps) => (
+                      <Input
+                        {...field}
+                        value={field.value ?? ""}
+                        placeholder="Timeout"
+                        onChange={(e) => {
+                          if (!isNaN(Number(e.target.value))) {
+                            setFieldValue("timeout", Number(e.target.value));
+                          }
+                        }}
+                      />
+                    )}
+                  </FastField>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label>Retries</Label>
+                  <FastField name="retries">
+                    {({field}: FieldProps) => (
+                      <Input
+                        {...field}
+                        value={field.value ?? ""}
+                        placeholder="Retries"
+                        onChange={(e) => {
+                          if (!isNaN(Number(e.target.value))) {
+                            setFieldValue("retries", Number(e.target.value));
+                          }
+                        }}
+                      />
+                    )}
+                  </FastField>
+                </div>
+              </div>
               <div className="flex flex-col gap-2">
-                <Label>Interval(milliseconds)</Label>
-                <FastField name="interval">
+                <Label>Tags (comma-separated)</Label>
+                <FastField name="tags">
                   {({field}: FieldProps) => (
-                    <Input
-                      {...field}
-                      value={field.value ?? ""}
-                      placeholder="Interval"
-                      onChange={(e) => {
-                        if (!isNaN(Number(e.target.value))) {
-                          setFieldValue("interval", Number(e.target.value));
-                        }
+                    <InputTag
+                      tags={field.value.map((tag: string, index: number) => ({
+                        id: index.toString(),
+                        text: tag,
+                      }))}
+                      setTags={(tags) => {
+                        setFieldValue(
+                          "tags",
+                          typeof tags === "object"
+                            ? tags.map((tag) => tag.text)
+                            : []
+                        );
                       }}
                     />
                   )}
                 </FastField>
               </div>
               <div className="flex flex-col gap-2">
-                <Label>Timeout(milliseconds)</Label>
-                <FastField name="timeout">
+                <Label>Enabled Service</Label>
+                <Field name="is_enabled">
                   {({field}: FieldProps) => (
-                    <Input
-                      {...field}
-                      value={field.value ?? ""}
-                      placeholder="Timeout"
-                      onChange={(e) => {
-                        if (!isNaN(Number(e.target.value))) {
-                          setFieldValue("timeout", Number(e.target.value));
-                        }
-                      }}
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={(checked) =>
+                        setFieldValue("is_enabled", checked)
+                      }
                     />
                   )}
-                </FastField>
+                </Field>
               </div>
-              <div className="flex flex-col gap-2">
-                <Label>Retries</Label>
-                <FastField name="retries">
-                  {({field}: FieldProps) => (
-                    <Input
-                      {...field}
-                      value={field.value ?? ""}
-                      placeholder="Retries"
-                      onChange={(e) => {
-                        if (!isNaN(Number(e.target.value))) {
-                          setFieldValue("retries", Number(e.target.value));
-                        }
-                      }}
-                    />
-                  )}
-                </FastField>
-              </div>
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label>Tags (comma-separated)</Label>
-              <FastField name="tags">
-                {({field}: FieldProps) => (
-                  <InputTag
-                    tags={field.value.map((tag: string, index: number) => ({
-                      id: index.toString(),
-                      text: tag,
-                    }))}
-                    setTags={(tags) => {
-                      setFieldValue(
-                        "tags",
-                        typeof tags === "object"
-                          ? tags.map((tag) => tag.text)
-                          : []
-                      );
-                    }}
-                  />
-                )}
-              </FastField>
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label>Enabled Service</Label>
-              <Field name="is_enabled">
-                {({field}: FieldProps) => (
-                  <Switch
-                    checked={field.value}
-                    onCheckedChange={(checked) =>
-                      setFieldValue("is_enabled", checked)
-                    }
-                  />
-                )}
-              </Field>
-            </div>
+            </Card>
             {/*  HTTP/HTTPS */}
             {values.protocol === "http" && (
               <HTTPForm values={values} setFieldValue={setFieldValue} />
