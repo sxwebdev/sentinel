@@ -198,6 +198,12 @@ func (s *Scheduler) performCheck(ctx context.Context, job *job) error {
 
 			log.Printf("Service %s check successful (attempt %d/%d) in %v\n", serviceName, attempt, job.Retries, attemptResponseTime)
 
+			// Publish update to receiver
+			s.receiver.TriggerService().Publish(*receiver.NewTriggerServiceData(
+				receiver.TriggerServiceEventTypeUpdatedState,
+				service,
+			))
+
 			return nil
 		}
 
@@ -217,6 +223,12 @@ func (s *Scheduler) performCheck(ctx context.Context, job *job) error {
 
 		log.Printf("Service %s check failed (attempt %d/%d): %s\n", serviceName, attempt, job.Retries, err)
 	}
+
+	// Publish update to receiver
+	s.receiver.TriggerService().Publish(*receiver.NewTriggerServiceData(
+		receiver.TriggerServiceEventTypeUpdatedState,
+		service,
+	))
 
 	// All attempts failed - record the time of the last attempt
 	if err := s.monitorSvc.RecordFailure(ctx, job.ServiceID, lastErr, lastAttemptResponseTime); err != nil {
@@ -296,8 +308,6 @@ func (s *Scheduler) subscribeEvents(ctx context.Context) error {
 					if err := s.removeJob(item.Svc.ID); err != nil {
 						log.Println("remove service error", err)
 					}
-				default:
-					log.Println("undefined trigger svc event type", item.EventType)
 				}
 
 			case <-ctx.Done():

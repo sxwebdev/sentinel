@@ -7,9 +7,14 @@ import (
 	"time"
 
 	"github.com/gofiber/contrib/websocket"
-	"github.com/gofiber/fiber/v2"
-	"github.com/sxwebdev/sentinel/internal/storage"
+	"github.com/sxwebdev/sentinel/internal/receiver"
 )
+
+type websocketEvent struct {
+	Type      string `json:"type"`
+	Timestamp int64  `json:"timestamp"`
+	Data      any    `json:"data"`
+}
 
 // handleWebSocket handles WebSocket connections
 func (s *Server) handleWebSocket(c *websocket.Conn) {
@@ -46,52 +51,21 @@ func (s *Server) handleWebSocket(c *websocket.Conn) {
 }
 
 // BroadcastServiceUpdate sends service updates to all connected WebSocket clients
-func (s *Server) broadcastServiceUpdate(ctx context.Context) {
+func (s *Server) broadcastServiceUpdate(ctx context.Context, data receiver.TriggerServiceData) {
 	if s.storage == nil {
 		return
 	}
 
-	services, err := s.monitorService.GetAllServices(ctx)
+	serviceWithState, err := s.getServiceWithState(ctx, data.Svc)
 	if err != nil {
-		fmt.Printf("WebSocket broadcast error: failed to get services: %v\n", err)
+		fmt.Printf("WebSocket broadcast error: failed to get state for service %s: %v\n", data.Svc.ID, err)
 		return
 	}
 
-	// Get incident statistics
-	incidentStats, err := s.monitorService.GetAllServicesIncidentStats(ctx)
-	if err != nil {
-		fmt.Printf("WebSocket broadcast error: failed to get incident stats: %v\n", err)
-		return
-	}
-
-	// Quick lookup map for incident stats by service ID
-	statsMap := make(map[string]*storage.ServiceIncidentStats)
-	for _, stats := range incidentStats {
-		statsMap[stats.ServiceID] = stats
-	}
-
-	// Get services with their states
-	servicesWithState := []*ServiceWithState{}
-	for _, service := range services {
-		serviceWithState, err := s.getServiceWithState(ctx, service)
-		if err != nil {
-			fmt.Printf("WebSocket broadcast error: failed to get state for service %s: %v\n", service.ID, err)
-			continue
-		}
-
-		// Add incident statistics to the service
-		if stats, exists := statsMap[service.ID]; exists {
-			serviceWithState.Service.ActiveIncidents = stats.ActiveIncidents
-			serviceWithState.Service.TotalIncidents = stats.TotalIncidents
-		}
-
-		servicesWithState = append(servicesWithState, serviceWithState)
-	}
-
-	update := fiber.Map{
-		"type":      "service_update",
-		"services":  servicesWithState,
-		"timestamp": time.Now().Unix(),
+	update := websocketEvent{
+		Type:      "service_" + data.EventType.String(),
+		Data:      serviceWithState,
+		Timestamp: time.Now().Unix(),
 	}
 
 	s.wsMutex.Lock()
@@ -126,10 +100,10 @@ func (s *Server) broadcastStatsUpdate(ctx context.Context) {
 		return
 	}
 
-	update := fiber.Map{
-		"type":      "stats_update",
-		"stats":     stats,
-		"timestamp": time.Now().Unix(),
+	update := websocketEvent{
+		Type:      "stats_update",
+		Data:      stats,
+		Timestamp: time.Now().Unix(),
 	}
 
 	s.wsMutex.Lock()
@@ -149,7 +123,7 @@ func (s *Server) broadcastStatsUpdate(ctx context.Context) {
 }
 
 func (s *Server) subscribeEvents(ctx context.Context) error {
-	broker := s.receiver.ServiceUpdated()
+	broker := s.receiver.TriggerService()
 	sub := broker.Subscribe()
 	defer broker.Unsubscribe(sub)
 
@@ -159,11 +133,14 @@ func (s *Server) subscribeEvents(ctx context.Context) error {
 
 	for ctx.Err() == nil {
 		select {
-		case <-sub:
-			if s.storage == nil {
+		case data := <-sub:
+			if s.storage == nil ||
+				data.EventType == receiver.TriggerServiceEventTypeCheck ||
+				data.EventType == receiver.TriggerServiceEventTypeUnknown {
 				continue
 			}
-			s.broadcastServiceUpdate(ctx)
+
+			s.broadcastServiceUpdate(ctx, data)
 			s.broadcastStatsUpdate(ctx)
 
 		case <-ctx.Done():

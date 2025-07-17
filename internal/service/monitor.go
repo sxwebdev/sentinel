@@ -245,9 +245,6 @@ func (m *MonitorService) RecordSuccess(ctx context.Context, serviceID string, re
 		return fmt.Errorf("failed to resolve incident: %w", err)
 	}
 
-	// Broadcast WebSocket update
-	m.broadcastWebSocketUpdate()
-
 	return nil
 }
 
@@ -300,9 +297,6 @@ func (m *MonitorService) RecordFailure(ctx context.Context, serviceID string, ch
 			return fmt.Errorf("failed to create incident: %w", err)
 		}
 	}
-
-	// Broadcast WebSocket update
-	m.broadcastWebSocketUpdate()
 
 	return nil
 }
@@ -403,9 +397,6 @@ func (m *MonitorService) DeleteIncident(ctx context.Context, serviceID, incident
 		return fmt.Errorf("failed to delete incident: %w", err)
 	}
 
-	// Broadcast WebSocket update
-	m.broadcastWebSocketUpdate()
-
 	return nil
 }
 
@@ -443,11 +434,6 @@ func (m *MonitorService) resolveAllActiveIncidents(ctx context.Context, serviceI
 // ForceResolveIncidents manually resolves all active incidents for a service
 func (m *MonitorService) ForceResolveIncidents(ctx context.Context, serviceID string) error {
 	return m.resolveAllActiveIncidents(ctx, serviceID)
-}
-
-// broadcastWebSocketUpdate sends WebSocket updates to all connected clients
-func (m *MonitorService) broadcastWebSocketUpdate() {
-	m.receiver.ServiceUpdated().Publish(struct{}{})
 }
 
 // CheckService performs a health check on a service
