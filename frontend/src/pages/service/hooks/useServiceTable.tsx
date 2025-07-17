@@ -16,7 +16,7 @@ import {
   useReactTable,
   type ColumnDef,
 } from "@tanstack/react-table";
-import {useEffect} from "react";
+import {useEffect, useMemo} from "react";
 import {useNavigate} from "react-router";
 import type {Service} from "@features/service/types/type";
 import $api from "@/shared/api/baseApi";
@@ -36,9 +36,11 @@ export const useServiceTable = () => {
     data,
     filters,
     deleteService,
+    isOpenDropdownIdAction,
     setData,
     setSearch,
     setPage,
+    setIsOpenDropdownIdAction,
     setDeleteService,
     setUpdateServiceId,
   } = useServiceTableStore();
@@ -61,163 +63,181 @@ export const useServiceTable = () => {
       });
   };
 
-  const columns: ColumnDef<Service>[] = [
-    {
-      header: "Enabled",
-      accessorKey: "enabled",
-      cell: ({row}) => {
-        return (
-          <div className="flex items-center justify-center">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger>
-                  <ActivityIndicatorSVG
-                    active={row.original.service.is_enabled}
-                    size={24}
-                  />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>
-                    {row.original.service.is_enabled ? "Enabled" : "Disabled"}
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-        );
-      },
-    },
-    {
-      header: "Service ",
-      accessorKey: "service",
-      cell: ({row}) => {
-        return (
-          <Button
-            onClick={() => navigate(`/service/${row.original.service.id}`)}
-            variant="link"
-            className="cursor-pointer font-bold text-sm"
-          >
-            {row.original.service.name}
-          </Button>
-        );
-      },
-    },
-    {
-      header: "Status",
-      accessorKey: "status",
-      cell: ({row}) => {
-        return (
-          <Badge
-            className={cn(
-              "text-sm font-medium",
-              row.original.state.status === "up" && "bg-green-light text-green",
-              row.original.state.status === "down" && "bg-red-light text-red",
-              row.original.state.status === "unknown" &&
-                "bg-orange-light text-orange"
-            )}
-          >
-            {row.original.state.status}
-          </Badge>
-        );
-      },
-    },
-    {
-      header: "Tags",
-      accessorKey: "tags",
-      cell: ({ row }) => {
-        if (row.original.service.tags.length === 0) {
+  const columns: ColumnDef<Service>[] = useMemo(
+    () => [
+      {
+        header: "Enabled",
+        accessorKey: "enabled",
+        cell: ({row}) => {
           return (
             <div className="flex items-center justify-center">
-              <div className="h-[3px] w-4 bg-gray-300 rounded-full" />
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <ActivityIndicatorSVG
+                      active={row.original.service.is_enabled}
+                      size={24}
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>
+                      {row.original.service.is_enabled ? "Enabled" : "Disabled"}
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
           );
-        }
-        return (
-          <div className="flex items-center justify-center flex-wrap gap-2">
-            {row.original.service.tags.map((tag) => (
-              <Badge key={tag} variant="outline" className="text-sm font-medium">
-                {tag}
-              </Badge>
-            ))}
-          </div>
-        );
+        },
       },
-    },
-    {
-      header: "Last Check",
-      accessorKey: "last_check",
-      cell: ({row}) => {
-        return new Date(row.original?.state?.last_check).toLocaleString("ru", {
-          year: "numeric",
-          month: "numeric",
-          day: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-        });
+      {
+        header: "Service ",
+        accessorKey: "service",
+        cell: ({row}) => {
+          return (
+            <Button
+              onClick={() => navigate(`/service/${row.original.service.id}`)}
+              variant="link"
+              className="cursor-pointer font-bold text-sm"
+            >
+              {row.original.service.name}
+            </Button>
+          );
+        },
       },
-    },
-    {
-      header: "Incidents",
-      accessorKey: "incidents",
-      cell: ({row}) => {
-        return (
-          <>
+      {
+        header: "Status",
+        accessorKey: "status",
+        cell: ({row}) => {
+          return (
             <Badge
               className={cn(
                 "text-sm font-medium",
-                row.original.service?.active_incidents > 0 &&
-                  "bg-red-light text-red",
-                !row.original.service?.active_incidents &&
-                  "bg-green-light text-green"
+                row.original.state.status === "up" &&
+                  "bg-green-light text-green",
+                row.original.state.status === "down" && "bg-red-light text-red",
+                row.original.state.status === "unknown" &&
+                  "bg-orange-light text-orange"
               )}
             >
-              {row.original.service?.active_incidents ?? 0}
+              {row.original.state.status}
             </Badge>
-            {" / "}
-            <Badge variant="outline" className={cn("text-sm font-medium")}>
-              {row.original.service.total_incidents ?? 0}
-            </Badge>
-          </>
-        );
+          );
+        },
       },
-    },
-    {
-      header: "Actions",
-      accessorKey: "actions",
-      cell: ({row}) => {
-        return (
-          <div className="flex justify-center">
-            <DropdownMenu>
-              <DropdownMenuTrigger className="cursor-pointer p-1">
-                <EllipsisVerticalIcon className="w-4 h-4" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem
-                  onClick={() => onCheckService(row.original.service.id)}
+      {
+        header: "Tags",
+        accessorKey: "tags",
+        cell: ({row}) => {
+          if (row.original.service.tags.length === 0) {
+            return (
+              <div className="flex items-center justify-center">
+                <div className="h-[3px] w-4 bg-gray-300 rounded-full" />
+              </div>
+            );
+          }
+          return (
+            <div className="flex items-center justify-center flex-wrap gap-2">
+              {row.original.service.tags.map((tag) => (
+                <Badge
+                  key={tag}
+                  variant="outline"
+                  className="text-sm font-medium"
                 >
-                  <RefreshCcwIcon className="w-4 h-4" />
-                  <span>Check</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => setUpdateServiceId(row.original.service.id)}
-                >
-                  <PencilIcon /> <span>Edit</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="group focus:bg-destructive focus:text-white"
-                  onClick={() => setDeleteService(row.original)}
-                >
-                  <TrashIcon className="text-muted-foreground group-hover:text-white" />
-                  <span>Delete</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        );
+                  {tag}
+                </Badge>
+              ))}
+            </div>
+          );
+        },
       },
-    },
-  ];
+      {
+        header: "Last Check",
+        accessorKey: "last_check",
+        cell: ({row}) => {
+          return new Date(row.original?.state?.last_check).toLocaleString(
+            "ru",
+            {
+              year: "numeric",
+              month: "numeric",
+              day: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+              second: "2-digit",
+            }
+          );
+        },
+      },
+      {
+        header: "Incidents",
+        accessorKey: "incidents",
+        cell: ({row}) => {
+          return (
+            <>
+              <Badge
+                className={cn(
+                  "text-sm font-medium",
+                  row.original.service?.active_incidents > 0 &&
+                    "bg-red-light text-red",
+                  !row.original.service?.active_incidents &&
+                    "bg-green-light text-green"
+                )}
+              >
+                {row.original.service?.active_incidents ?? 0}
+              </Badge>
+              {" / "}
+              <Badge variant="outline" className={cn("text-sm font-medium")}>
+                {row.original.service.total_incidents ?? 0}
+              </Badge>
+            </>
+          );
+        },
+      },
+      {
+        header: "Actions",
+        accessorKey: "actions",
+        cell: ({row}) => {
+          return (
+            <div className="flex justify-center">
+              <DropdownMenu
+                open={isOpenDropdownIdAction === row.original.service.id}
+                onOpenChange={(open) =>
+                  open
+                    ? setIsOpenDropdownIdAction(row.original.service.id)
+                    : setIsOpenDropdownIdAction(null)
+                }
+              >
+                <DropdownMenuTrigger className="cursor-pointer p-1">
+                  <EllipsisVerticalIcon className="w-4 h-4" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem
+                    onClick={() => onCheckService(row.original.service.id)}
+                  >
+                    <RefreshCcwIcon className="w-4 h-4" />
+                    <span>Check</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => setUpdateServiceId(row.original.service.id)}
+                  >
+                    <PencilIcon /> <span>Edit</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="group focus:bg-destructive focus:text-white"
+                    onClick={() => setDeleteService(row.original)}
+                  >
+                    <TrashIcon className="text-muted-foreground group-hover:text-white" />
+                    <span>Delete</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          );
+        },
+      },
+    ],
+    [isOpenDropdownIdAction]
+  );
 
   const table = useReactTable({
     data: data ?? [],
@@ -225,8 +245,7 @@ export const useServiceTable = () => {
     getCoreRowModel: getCoreRowModel(),
   });
 
-  useEffect(() => {
-  }, [filters]);
+  useEffect(() => {}, [filters]);
 
   return {
     onDeleteService,
