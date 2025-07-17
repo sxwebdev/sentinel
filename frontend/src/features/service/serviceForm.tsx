@@ -491,7 +491,7 @@ export const ServiceForm = ({
             endpoint.headers = JSON.parse(endpoint.headers);
           } catch {
             toast.error("Invalid headers format");
-            delete endpoint.headers;
+            endpoint.headers = JSON.parse("{}");
           }
         }
       });

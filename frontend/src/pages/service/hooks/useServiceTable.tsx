@@ -37,10 +37,12 @@ export const useServiceTable = () => {
     filters,
     deleteService,
     isOpenDropdownIdAction,
+    isLoadingAllServices,
     setData,
     setSearch,
     setPage,
     setIsOpenDropdownIdAction,
+    setIsLoadingAllServices,
     setDeleteService,
     setUpdateServiceId,
   } = useServiceTableStore();
@@ -62,6 +64,7 @@ export const useServiceTable = () => {
         getAllServices();
       });
   };
+
 
   const columns: ColumnDef<Service>[] = useMemo(
     () => [
@@ -239,15 +242,21 @@ export const useServiceTable = () => {
     [isOpenDropdownIdAction]
   );
 
+  useEffect(() => {
+    setIsLoadingAllServices(true);
+    getAllServices().finally(() => {
+      setIsLoadingAllServices(false);
+    });
+  }, []);
+
   const table = useReactTable({
     data: data ?? [],
     columns,
     getCoreRowModel: getCoreRowModel(),
   });
 
-  useEffect(() => {}, [filters]);
-
   return {
+    isLoadingAllServices,
     onDeleteService,
     table,
     filters,

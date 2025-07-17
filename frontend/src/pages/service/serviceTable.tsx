@@ -31,9 +31,8 @@ export const ServiceTable = ({onRefreshDashboard}: ServiceTableProps) => {
     deleteService,
     setDeleteService,
     onDeleteService,
+    isLoadingAllServices,
   } = useServiceTable();
-
-  if (!data) return <Loader loaderPage />;
 
   return (
     <>
@@ -92,31 +91,41 @@ export const ServiceTable = ({onRefreshDashboard}: ServiceTableProps) => {
                 ))}
               </TableHeader>
               <TableBody>
-                {table.getRowModel().rows?.length ? (
-                  table.getRowModel().rows.map((row) => (
-                    <TableRow
-                      key={row.original.service.id}
-                      data-state={row.getIsSelected() && "selected"}
-                    >
-                      {row.getVisibleCells().map((cell) => (
-                        <TableCell key={cell.id} className="text-center">
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext()
-                          )}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))
-                ) : (
+                {isLoadingAllServices ? (
                   <TableRow>
-                    <TableCell
-                      colSpan={table.getAllColumns().length}
-                      className="h-24 text-center"
-                    >
-                      No services found.
+                    <TableCell colSpan={table.getAllColumns().length} className="text-center mt-4">
+                      <Loader />
                     </TableCell>
                   </TableRow>
+                ) : (
+                  <>
+                    {table.getRowModel().rows?.length ? (
+                      table.getRowModel().rows.map((row) => (
+                        <TableRow
+                          key={row.original.service.id}
+                          data-state={row.getIsSelected() && "selected"}
+                        >
+                          {row.getVisibleCells().map((cell) => (
+                            <TableCell key={cell.id} className="text-center">
+                              {flexRender(
+                                cell.column.columnDef.cell,
+                                cell.getContext()
+                              )}
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell
+                          colSpan={table.getAllColumns().length}
+                          className="h-24 text-center"
+                        >
+                          No services found.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </>
                 )}
               </TableBody>
             </Table>
@@ -125,7 +134,7 @@ export const ServiceTable = ({onRefreshDashboard}: ServiceTableProps) => {
         <PaginationBar
           page={filters.page}
           setPage={setPage}
-          total={data.length}
+          total={data?.length ?? 0}
           pageSize={10}
           siblingCount={2}
         />
