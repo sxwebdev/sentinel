@@ -4,9 +4,14 @@ import {Loader2} from "lucide-react";
 interface LoaderProps {
   className?: string;
   loaderPage?: boolean;
+  size?: number;
 }
 
-export const Loader = ({className, loaderPage = false}: LoaderProps) => {
+export const Loader = ({
+  className,
+  loaderPage = false,
+  size = 10,
+}: LoaderProps) => {
   return (
     <div
       className={cn(
@@ -15,7 +20,7 @@ export const Loader = ({className, loaderPage = false}: LoaderProps) => {
       )}
     >
       <div className={cn("animate-spin rounded-full", className)}>
-        <Loader2 className={cn("text-muted-foreground size-10")} />
+        <Loader2 className={cn("text-muted-foreground", `size-${size}`)} />
       </div>
     </div>
   );

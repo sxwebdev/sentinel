@@ -15,6 +15,7 @@ interface ServiceTableStore {
   setSearch: (search: string) => void;
   setPage: (page: number) => void;
   setIsLoadingAllServices: (isLoadingAllServices: boolean) => void;
+
   setDeleteService: (deleteService: Service | null) => void;
   setUpdateServiceId: (updateServiceId: string | null) => void;
   setIsOpenDropdownIdAction: (isOpenDropdownIdAction: string | null) => void;
@@ -42,5 +43,6 @@ export const useServiceTableStore = create<ServiceTableStore>((set) => ({
   setSearch: (search) => set({filters: {...initialState.filters, search}}),
   setPage: (page) => set({filters: {...initialState.filters, page}}),
   setIsLoadingAllServices: (isLoadingAllServices) =>
-    set({isLoadingAllServices}),
+    set({ isLoadingAllServices }),
+
 }));

@@ -93,8 +93,11 @@ export const ServiceTable = ({onRefreshDashboard}: ServiceTableProps) => {
               <TableBody>
                 {isLoadingAllServices ? (
                   <TableRow>
-                    <TableCell colSpan={table.getAllColumns().length} className="text-center mt-4">
-                      <Loader />
+                    <TableCell
+                      colSpan={table.getAllColumns().length}
+                      className="h-32 text-center"
+                    >
+                      <Loader size={6} />
                     </TableCell>
                   </TableRow>
                 ) : (
