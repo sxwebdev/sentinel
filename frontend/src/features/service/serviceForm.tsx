@@ -19,7 +19,6 @@ import {
 } from "@/shared/components/ui";
 import {PlusIcon, TrashIcon} from "lucide-react";
 import type {ServiceForm as ServiceFormType} from "./types/type";
-import {toast} from "sonner";
 import * as Yup from "yup";
 import InputTag from "@/shared/components/ui/inputTag";
 interface ServiceFormProps {
