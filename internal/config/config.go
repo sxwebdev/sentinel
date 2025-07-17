@@ -11,6 +11,15 @@ import (
 
 // Load reads and parses the configuration file
 func Load(path string) (*Config, error) {
+	// Check if file exists
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		var cfg Config
+		if err := cfg.setDefaults(); err != nil {
+			return nil, fmt.Errorf("failed to set defaults: %w", err)
+		}
+		return &cfg, nil
+	}
+
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read config file: %w", err)
@@ -74,7 +83,7 @@ func (c *Config) setDefaults() error {
 
 	// Database defaults
 	if c.Database.Path == "" {
-		c.Database.Path = "./data/incidents.db"
+		c.Database.Path = "./data/db.sqlite"
 	}
 
 	// Timezone defaults

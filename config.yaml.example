@@ -11,13 +11,13 @@ monitoring:
 timezone: UTC
 
 database:
-  path: "./data/db.sqlite3"
+  path: "./data/db.sqlite"
 
 notifications:
   enabled: true
   urls:
     # Telegram
-    - "telegram://token@telegram?chats=@channel-1[,chat-id-1,...]"
+    - "telegram://token@telegram?chats=@channel-1[,chat-id-1,...]&preview=false"
     # Discord
     - "discord://token@id"
     # Slack
