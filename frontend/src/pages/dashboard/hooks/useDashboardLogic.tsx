@@ -71,6 +71,7 @@ export const useDashboardLogic = () => {
         setDashboardInfo(data.data);
         break;
       case "service_deleted":
+        console.log("service_deleted", data.data);
         deleteServiceInData(data.data.service_id);
         break;
       case "service_updated":

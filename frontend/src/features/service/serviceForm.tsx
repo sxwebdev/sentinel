@@ -486,12 +486,19 @@ export const ServiceForm = ({
   const headersModificate = (values: ServiceFormType) => {
     if (values.config?.http?.endpoints) {
       values.config.http.endpoints.forEach((endpoint) => {
-        if (endpoint.headers) {
+        if (
+          !endpoint.headers ||
+          (typeof endpoint.headers === "string" &&
+            endpoint.headers.trim() === "")
+        ) {
+          endpoint.headers = {};
+        } else {
           try {
-            endpoint.headers = JSON.parse(endpoint.headers);
+            if (typeof endpoint.headers === "string") {
+              endpoint.headers = JSON.parse(endpoint.headers);
+            }
           } catch {
-            toast.error("Invalid headers format");
-            endpoint.headers = JSON.parse("{}");
+            endpoint.headers = {};
           }
         }
       });

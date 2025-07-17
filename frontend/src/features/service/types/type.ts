@@ -62,7 +62,7 @@ export interface Service {
 export interface HTTPEndpoint {
   body?: string;
   expected_status: number; // max 599 min 100
-  headers?: string;
+  headers?: string | object;
   json_path?: string;
   method: "GET" | "POST" | "PUT" | "DELETE" | "HEAD" | "OPTIONS";
   name: string;
