@@ -80,6 +80,8 @@ definitions:
       timeout:
         example: 30000
         type: integer
+    required:
+    - endpoints
     type: object
   monitors.TCPConfig:
     properties:
@@ -143,6 +145,40 @@ definitions:
     - StatusUp
     - StatusDown
     - StatusMaintenance
+  web.CreateUpdateServiceRequest:
+    properties:
+      config:
+        $ref: '#/definitions/monitors.Config'
+      id:
+        example: service-1
+        type: string
+      interval:
+        example: 30000
+        type: integer
+      is_enabled:
+        example: true
+        type: boolean
+      name:
+        example: Web Server
+        type: string
+      protocol:
+        allOf:
+        - $ref: '#/definitions/storage.ServiceProtocolType'
+        example: http
+      retries:
+        example: 3
+        type: integer
+      tags:
+        example:
+        - web
+        - production
+        items:
+          type: string
+        type: array
+      timeout:
+        example: 5000
+        type: integer
+    type: object
   web.DashboardStats:
     description: Dashboard statistics
     properties:
@@ -384,7 +420,7 @@ paths:
         name: service
         required: true
         schema:
-          $ref: '#/definitions/web.ServiceDTO'
+          $ref: '#/definitions/web.CreateUpdateServiceRequest'
       produces:
       - application/json
       responses:
@@ -473,7 +509,7 @@ paths:
         name: service
         required: true
         schema:
-          $ref: '#/definitions/web.ServiceDTO'
+          $ref: '#/definitions/web.CreateUpdateServiceRequest'
       produces:
       - application/json
       responses:

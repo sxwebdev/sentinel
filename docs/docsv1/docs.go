@@ -143,7 +143,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/web.ServiceDTO"
+                            "$ref": "#/definitions/web.CreateUpdateServiceRequest"
                         }
                     }
                 ],
@@ -238,7 +238,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/web.ServiceDTO"
+                            "$ref": "#/definitions/web.CreateUpdateServiceRequest"
                         }
                     }
                 ],
@@ -655,6 +655,9 @@ const docTemplate = `{
         },
         "monitors.HTTPConfig": {
             "type": "object",
+            "required": [
+                "endpoints"
+            ],
             "properties": {
                 "condition": {
                     "type": "string"
@@ -761,6 +764,56 @@ const docTemplate = `{
                 "StatusDown",
                 "StatusMaintenance"
             ]
+        },
+        "web.CreateUpdateServiceRequest": {
+            "type": "object",
+            "properties": {
+                "config": {
+                    "$ref": "#/definitions/monitors.Config"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "service-1"
+                },
+                "interval": {
+                    "type": "integer",
+                    "example": 30000
+                },
+                "is_enabled": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Web Server"
+                },
+                "protocol": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/storage.ServiceProtocolType"
+                        }
+                    ],
+                    "example": "http"
+                },
+                "retries": {
+                    "type": "integer",
+                    "example": 3
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "web",
+                        "production"
+                    ]
+                },
+                "timeout": {
+                    "type": "integer",
+                    "example": 5000
+                }
+            }
         },
         "web.DashboardStats": {
             "description": "Dashboard statistics",
