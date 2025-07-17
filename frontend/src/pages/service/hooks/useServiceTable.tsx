@@ -64,7 +64,6 @@ export const useServiceTable = () => {
       });
   };
 
-
   const columns: ColumnDef<Service>[] = useMemo(
     () => [
       {

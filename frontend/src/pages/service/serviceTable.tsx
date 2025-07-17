@@ -18,11 +18,8 @@ import {ConfirmDialog} from "@/entities/confirmDialog/confirmDialog";
 import {ServiceUpdate} from "./serviceUpdate";
 import {cn} from "@/shared/lib/utils";
 
-interface ServiceTableProps {
-  onRefreshDashboard?: () => void;
-}
 
-export const ServiceTable = ({onRefreshDashboard}: ServiceTableProps) => {
+export const ServiceTable = () => {
   const {
     table,
     filters,
@@ -40,11 +37,7 @@ export const ServiceTable = ({onRefreshDashboard}: ServiceTableProps) => {
       <ConfirmDialog
         open={!!deleteServiceId}
         setOpen={() => setDeleteServiceId(null)}
-        onSubmit={() => {
-          onDeleteService().then(() => {
-            onRefreshDashboard?.();
-          });
-        }}
+        onSubmit={onDeleteService}
         title="Delete Service"
         description="Are you sure you want to delete this service?"
         type="delete"

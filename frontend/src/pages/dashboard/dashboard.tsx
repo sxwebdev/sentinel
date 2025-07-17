@@ -141,7 +141,7 @@ const Dashboard = () => {
           </Accordion>
         </div>
         <div>
-          <ServiceTable onRefreshDashboard={onRefreshDashboard} />
+          <ServiceTable />
         </div>
       </div>
     </ContentWrapper>

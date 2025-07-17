@@ -80,6 +80,7 @@ export const useServiceTableStore = create<ServiceTableStore>((set) => ({
       const exists = state.data?.some(
         (ser) => ser.service.id === deleteServiceId
       );
+      
       return {
         data: exists
           ? state.data?.filter((ser) => ser.service.id !== deleteServiceId)
