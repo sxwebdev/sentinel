@@ -51,15 +51,23 @@ func (s *Server) handleWebSocket(c *websocket.Conn) {
 }
 
 // BroadcastServiceUpdate sends service updates to all connected WebSocket clients
-func (s *Server) broadcastServiceUpdate(ctx context.Context, data receiver.TriggerServiceData) {
+func (s *Server) broadcastServiceTriggered(ctx context.Context, data receiver.TriggerServiceData) error {
 	if s.storage == nil {
-		return
+		return nil
 	}
 
-	serviceWithState, err := s.getServiceWithState(ctx, data.Svc)
-	if err != nil {
-		fmt.Printf("WebSocket broadcast error: failed to get state for service %s: %v\n", data.Svc.ID, err)
-		return
+	serviceWithState := &ServiceWithState{
+		Service: ServiceDTO{
+			ID: data.Svc.ID,
+		},
+	}
+
+	var err error
+	if data.EventType != receiver.TriggerServiceEventTypeDeleted {
+		serviceWithState, err = s.getServiceWithState(ctx, data.Svc)
+		if err != nil {
+			return fmt.Errorf("failed to get service state: %w", err)
+		}
 	}
 
 	update := websocketEvent{
@@ -86,18 +94,19 @@ func (s *Server) broadcastServiceUpdate(ctx context.Context, data receiver.Trigg
 	// if activeConnections > 0 {
 	// 	fmt.Printf("WebSocket broadcast: sent update to %d connections\n", activeConnections)
 	// }
+
+	return nil
 }
 
 // broadcastStatsUpdate sends dashboard statistics updates to all connected WebSocket clients
-func (s *Server) broadcastStatsUpdate(ctx context.Context) {
+func (s *Server) broadcastStatsUpdate(ctx context.Context) error {
 	if s.storage == nil {
-		return
+		return nil
 	}
 
 	stats, err := s.getDashboardStats(ctx)
 	if err != nil {
-		fmt.Printf("WebSocket broadcast error: failed to get dashboard stats: %v\n", err)
-		return
+		return fmt.Errorf("failed to get dashboard stats: %w", err)
 	}
 
 	update := websocketEvent{
@@ -120,6 +129,8 @@ func (s *Server) broadcastStatsUpdate(ctx context.Context) {
 			activeConnections++
 		}
 	}
+
+	return nil
 }
 
 func (s *Server) subscribeEvents(ctx context.Context) error {
@@ -140,8 +151,15 @@ func (s *Server) subscribeEvents(ctx context.Context) error {
 				continue
 			}
 
-			s.broadcastServiceUpdate(ctx, data)
-			s.broadcastStatsUpdate(ctx)
+			// Broadcast service triggered event
+			if err := s.broadcastServiceTriggered(ctx, data); err != nil {
+				fmt.Printf("WebSocket broadcast error: %v\n", err)
+			}
+
+			// Broadcast stats update
+			if err := s.broadcastStatsUpdate(ctx); err != nil {
+				fmt.Printf("WebSocket broadcast error: %v\n", err)
+			}
 
 		case <-ctx.Done():
 			return nil
