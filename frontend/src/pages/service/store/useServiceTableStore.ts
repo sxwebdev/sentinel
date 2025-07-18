@@ -1,11 +1,11 @@
-import { create } from "zustand";
-import type { Service } from "../../../features/service/types/type";
+import {create} from "zustand";
+import type {Service} from "../../../features/service/types/type";
 
 interface ServiceTableStore {
   data: Service[] | null;
   deleteServiceId: string | null;
   updateServiceId: string | null;
-  servicesCount: number | null,
+  servicesCount: number | null;
   isOpenDropdownIdAction: string | null;
   isLoadingAllServices: boolean;
   filters: {
@@ -43,48 +43,47 @@ const initialState = {
 
 export const useServiceTableStore = create<ServiceTableStore>((set) => ({
   ...initialState,
-  setData: (data) => set({ data }),
+  setData: (data) => set({data}),
   setIsOpenDropdownIdAction: (isOpenDropdownIdAction) =>
-    set({ isOpenDropdownIdAction }),
-  setDeleteServiceId: (deleteServiceId) => set({ deleteServiceId }),
-  setFilters: (value) => set({ filters: { ...initialState.filters, ...value } }),
-  setUpdateServiceId: (updateServiceId) => set({ updateServiceId }),
-  setPage: (page) => set({ filters: { ...initialState.filters, page } }),
-  setServicesCount: (servicesCount) => set({ servicesCount }),
+    set({isOpenDropdownIdAction}),
+  setDeleteServiceId: (deleteServiceId) => set({deleteServiceId}),
+  setFilters: (value) => set({filters: {...initialState.filters, ...value}}),
+  setUpdateServiceId: (updateServiceId) => set({updateServiceId}),
+  setPage: (page) => set({filters: {...initialState.filters, page}}),
+  setServicesCount: (servicesCount) => set({servicesCount}),
   setUpdateService: (updateService) =>
     set((state) => {
-      if (!updateService) return { data: state.data };
+      if (!updateService) return {data: state.data};
       const exists = state.data?.some(
-        (ser) => ser.service.id === updateService.service.id,
+        (ser) => ser.service.id === updateService.service.id
       );
       return {
         data: exists
           ? state.data?.map((ser) =>
-              ser.service.id === updateService.service.id ? updateService : ser,
+              ser.service.id === updateService.service.id ? updateService : ser
             )
           : [...(state.data ?? []), updateService],
       };
     }),
   setIsLoadingAllServices: (isLoadingAllServices) =>
-    set({ isLoadingAllServices }),
+    set({isLoadingAllServices}),
   setUpdateAllServices: (updateService) =>
     set((state) => {
-      if (!updateService) return { data: state.data };
+      if (!updateService) return {data: state.data};
       const exists = state.data?.some(
-        (ser) => ser.service.id === updateService.service.id,
+        (ser) => ser.service.id === updateService.service.id
       );
+      if (!exists) return {data: [...(state.data ?? [])]};
       return {
-        data: exists
-          ? state.data?.map((ser) =>
-              ser.service.id === updateService.service.id ? updateService : ser,
-            )
-          : [...(state.data ?? []), updateService],
+        data: state.data?.map((ser) =>
+          ser.service.id === updateService.service.id ? updateService : ser
+        ),
       };
     }),
   deleteServiceInData: (deleteServiceId) =>
     set((state) => {
       const exists = state.data?.some(
-        (ser) => ser.service.id === deleteServiceId,
+        (ser) => ser.service.id === deleteServiceId
       );
 
       return {
@@ -95,6 +94,6 @@ export const useServiceTableStore = create<ServiceTableStore>((set) => ({
     }),
   addServiceInData: (service) =>
     set((state) => {
-      return { data: [...(state.data ?? []), service] };
+      return {data: [...(state.data ?? []), service]};
     }),
 }));

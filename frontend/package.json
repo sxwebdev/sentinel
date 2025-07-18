@@ -25,6 +25,7 @@
     "axios": "^1.10.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "cmdk": "^1.1.1",
     "emblor": "^1.4.8",
     "formik": "^2.4.6",
     "lucide-react": "^0.525.0",

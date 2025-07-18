@@ -10,14 +10,13 @@ import {
   TableBody,
   TableCell,
 } from "@/shared/components/ui";
-import { flexRender } from "@tanstack/react-table";
-import { useServiceTable } from "./hooks/useServiceTable";
-import { Loader } from "@/entities/loader/loader";
-import { ConfirmDialog } from "@/entities/confirmDialog/confirmDialog";
-import { ServiceUpdate } from "./serviceUpdate";
-import { cn } from "@/shared/lib/utils";
-import { Search } from "@/entities/search/search";
-import { useState } from "react";
+import {flexRender} from "@tanstack/react-table";
+import {useServiceTable} from "./hooks/useServiceTable";
+import {Loader} from "@/entities/loader/loader";
+import {ConfirmDialog} from "@/entities/confirmDialog/confirmDialog";
+import {ServiceUpdate} from "./serviceUpdate";
+import {cn} from "@/shared/lib/utils";
+import {Search} from "@/entities/search/search";
 import PaginationTable from "@/shared/components/paginationTable";
 
 export const ServiceTable = () => {
@@ -55,9 +54,10 @@ export const ServiceTable = () => {
               className="w-full"
               placeholder="Search"
               value={filters.search}
-              onChange={(value) => setFilters({ search: value ?? undefined })}
+              onChange={(value) => setFilters({search: value ?? undefined})}
               clear
             />
+
           </div>
           <div className="rounded-xl overflow-hidden border border-border">
             <Table>
@@ -133,9 +133,9 @@ export const ServiceTable = () => {
           <div className="w-fit">
             <PaginationTable
               selectedRows={filters.pageSize}
-              setSelectedRows={(value) => setFilters({ pageSize: value })}
+              setSelectedRows={(value) => setFilters({pageSize: value})}
               selectedPage={filters.page}
-              setSelectedPage={(value) => setFilters({ page: value })}
+              setSelectedPage={(value) => setFilters({page: value})}
               totalPages={Math.ceil((servicesCount ?? 0) / filters.pageSize)}
             />
           </div>
