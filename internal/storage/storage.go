@@ -27,6 +27,10 @@ type Storage interface {
 	UpdateServiceState(ctx context.Context, state *ServiceStateRecord) error
 	GetAllServiceStates(ctx context.Context) ([]*ServiceStateRecord, error)
 
+	// Tags
+	GetAllTags(ctx context.Context) ([]string, error)
+	GetAllTagsWithCount(ctx context.Context) (map[string]int, error)
+
 	// Statistics
 	GetServiceStats(ctx context.Context, serviceID string, since time.Time) (*ServiceStats, error)
 

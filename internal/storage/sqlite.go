@@ -146,3 +146,13 @@ func (s *SQLiteStorage) UpdateServiceState(ctx context.Context, state *ServiceSt
 func (s *SQLiteStorage) GetAllServiceStates(ctx context.Context) ([]*ServiceStateRecord, error) {
 	return s.orm.GetAllServiceStates(ctx)
 }
+
+// GetAllTags retrieves all unique tags across services
+func (s *SQLiteStorage) GetAllTags(ctx context.Context) ([]string, error) {
+	return s.orm.GetAllTags(ctx)
+}
+
+// GetAllTagsWithCount retrieves all unique tags with their usage count
+func (s *SQLiteStorage) GetAllTagsWithCount(ctx context.Context) (map[string]int, error) {
+	return s.orm.GetAllTagsWithCount(ctx)
+}

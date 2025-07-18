@@ -715,4 +715,46 @@ paths:
       summary: Get service statistics
       tags:
       - statistics
+  /tags:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves all unique tags used across services
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of unique tags
+          schema:
+            items:
+              type: string
+            type: array
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+      summary: Get all tags
+      tags:
+      - tags
+  /tags/count:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves all unique tags along with their usage count across services
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Map of tags with their usage count
+          schema:
+            additionalProperties:
+              type: integer
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+      summary: Get all tags with usage count
+      tags:
+      - tags
 swagger: "2.0"

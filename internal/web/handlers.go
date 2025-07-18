@@ -200,6 +200,10 @@ func (s *Server) setupRoutes() {
 	api.Get("/services/:id/incidents", s.handleAPIServiceIncidents)
 	api.Delete("/services/:id/incidents/:incidentId", s.handleAPIDeleteIncident)
 
+	// Tags API
+	api.Get("/tags", s.handleGetAllTags)
+	api.Get("/tags/count", s.handleGetAllTagsWithCount)
+
 	// WebSocket endpoint
 	s.app.Use("/ws", func(c *fiber.Ctx) error {
 		if websocket.IsWebSocketUpgrade(c) {
