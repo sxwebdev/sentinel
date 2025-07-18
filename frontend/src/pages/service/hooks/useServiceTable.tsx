@@ -185,14 +185,20 @@ export const useServiceTable = () => {
         header: "Last Check",
         accessorKey: "last_check",
         cell: ({row}) => {
-          return new Date(row.original?.last_check ?? "").toLocaleString("ru", {
-            year: "numeric",
-            month: "numeric",
-            day: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-            second: "2-digit",
-          });
+          return row.original?.last_check ? (
+            new Date(row.original.last_check).toLocaleString("ru", {
+              year: "numeric",
+              month: "numeric",
+              day: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+              second: "2-digit",
+            })
+          ) : (
+            <div className="flex items-center justify-center">
+              <div className="h-[3px] w-4 bg-gray-300 rounded-full" />
+            </div>
+          );
         },
       },
       {

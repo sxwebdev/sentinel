@@ -3,7 +3,6 @@ import {XIcon} from "lucide-react";
 import {
   Select,
   SelectContent,
-  SelectItem,
   SelectTrigger,
   SelectValue,
 } from "./select";
