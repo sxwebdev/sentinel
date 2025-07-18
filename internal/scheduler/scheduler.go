@@ -212,6 +212,11 @@ func (s *Scheduler) performCheck(ctx context.Context, job *job) error {
 
 			log.Printf("Service %s check successful (attempt %d/%d) in %v\n", serviceName, attempt, job.Retries, attemptResponseTime)
 
+			service, err := s.monitorSvc.GetServiceByID(ctx, job.ServiceID)
+			if err != nil {
+				return fmt.Errorf("failed to get service config for %s: %w", serviceName, err)
+			}
+
 			// Publish update to receiver
 			s.receiver.TriggerService().Publish(*receiver.NewTriggerServiceData(
 				receiver.TriggerServiceEventTypeUpdatedState,
@@ -238,16 +243,21 @@ func (s *Scheduler) performCheck(ctx context.Context, job *job) error {
 		log.Printf("Service %s check failed (attempt %d/%d): %s\n", serviceName, attempt, job.Retries, err)
 	}
 
+	// All attempts failed - record the time of the last attempt
+	if err := s.monitorSvc.RecordFailure(ctx, job.ServiceID, lastErr, lastAttemptResponseTime); err != nil {
+		return fmt.Errorf("failed to record failure for %s: %w", serviceName, err)
+	}
+
+	service, err = s.monitorSvc.GetServiceByID(ctx, job.ServiceID)
+	if err != nil {
+		return fmt.Errorf("failed to get service config for %s: %w", serviceName, err)
+	}
+
 	// Publish update to receiver
 	s.receiver.TriggerService().Publish(*receiver.NewTriggerServiceData(
 		receiver.TriggerServiceEventTypeUpdatedState,
 		service,
 	))
-
-	// All attempts failed - record the time of the last attempt
-	if err := s.monitorSvc.RecordFailure(ctx, job.ServiceID, lastErr, lastAttemptResponseTime); err != nil {
-		return fmt.Errorf("failed to record failure for %s: %w", serviceName, err)
-	}
 
 	return nil
 }

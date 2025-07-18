@@ -113,7 +113,7 @@ func (m *MonitorService) RecordSuccess(ctx context.Context, serviceID string, re
 	now := time.Now()
 	serviceState.Status = storage.StatusUp
 	serviceState.LastCheck = &now
-	serviceState.ResponseTimeNS = &[]int64{responseTime.Nanoseconds()}[0]
+	serviceState.ResponseTimeNS = utils.Pointer(responseTime.Nanoseconds())
 	serviceState.ConsecutiveFails = 0
 	serviceState.ConsecutiveSuccess++
 	serviceState.TotalChecks++
@@ -125,8 +125,8 @@ func (m *MonitorService) RecordSuccess(ctx context.Context, serviceID string, re
 	}
 
 	// Resolve any active incidents
-	if err := m.resolveActiveIncident(ctx, serviceID); err != nil {
-		return fmt.Errorf("failed to resolve incident: %w", err)
+	if err := m.resolveActiveIncidents(ctx, serviceID); err != nil {
+		return err
 	}
 
 	return nil
@@ -200,8 +200,8 @@ func (m *MonitorService) createIncident(ctx context.Context, svc *storage.Servic
 	return nil
 }
 
-// resolveActiveIncident resolves the active incident when a service recovers
-func (m *MonitorService) resolveActiveIncident(ctx context.Context, serviceID string) error {
+// resolveActiveIncidents resolves the active incident when a service recovers
+func (m *MonitorService) resolveActiveIncidents(ctx context.Context, serviceID string) error {
 	// Get service
 	svc, err := m.storage.GetServiceByID(ctx, serviceID)
 	if err != nil {
@@ -266,7 +266,7 @@ func (m *MonitorService) TriggerCheck(ctx context.Context, serviceID string) err
 
 // resolveAllActiveIncidents resolves all active incidents for a service
 func (m *MonitorService) resolveAllActiveIncidents(ctx context.Context, serviceID string) error {
-	return m.resolveActiveIncident(ctx, serviceID)
+	return m.resolveActiveIncidents(ctx, serviceID)
 }
 
 // ForceResolveIncidents manually resolves all active incidents for a service
@@ -312,7 +312,7 @@ func (m *MonitorService) CheckService(ctx context.Context, service *storage.Serv
 
 	// Resolve incident if service was down before
 	if wasDown {
-		if err := m.resolveActiveIncident(ctx, service.ID); err != nil {
+		if err := m.resolveActiveIncidents(ctx, service.ID); err != nil {
 			return fmt.Errorf("failed to resolve incident: %w", err)
 		}
 	}

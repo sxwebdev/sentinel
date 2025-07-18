@@ -51,7 +51,7 @@ func (s *Server) handleWebSocket(c *websocket.Conn) {
 }
 
 // BroadcastServiceUpdate sends service updates to all connected WebSocket clients
-func (s *Server) broadcastServiceTriggered(ctx context.Context, data receiver.TriggerServiceData) error {
+func (s *Server) broadcastServiceTriggered(data receiver.TriggerServiceData) error {
 	if s.storage == nil {
 		return nil
 	}
@@ -150,7 +150,7 @@ func (s *Server) subscribeEvents(ctx context.Context) error {
 			}
 
 			// Broadcast service triggered event
-			if err := s.broadcastServiceTriggered(ctx, data); err != nil {
+			if err := s.broadcastServiceTriggered(data); err != nil {
 				fmt.Printf("WebSocket broadcast error: %v\n", err)
 			}
 
