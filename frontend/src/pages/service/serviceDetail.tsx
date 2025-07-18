@@ -18,17 +18,21 @@ import { Loader } from "@/entities/loader/loader";
 import { ConfirmDialog } from "@/entities/confirmDialog/confirmDialog";
 import { ActivityIndicatorSVG } from "@/entities/ActivityIndicatorSVG/ActivityIndicatorSVG";
 import { Link } from "react-router";
+import PaginationTable from "@/shared/components/paginationTable";
 
 const ServiceDetail = () => {
   const {
-    serviceDetailData,
+    filters,
     incidentsData,
-    serviceStatsData,
-    onCheckService,
+    incidentsCount,
     deleteIncident,
+    resolveIncident,
+    serviceDetailData,
+    serviceStatsData,
+    setFilters,
+    onCheckService,
     setDeleteIncident,
     onDeleteIncident,
-    resolveIncident,
     setResolveIncident,
     onResolveIncident,
   } = useServiceDetail();
@@ -77,14 +81,14 @@ const ServiceDetail = () => {
         <header
           className={cn(
             "flex items-center gap-2 justify-between py-2",
-            isMobile && "flex-col gap-2",
+            isMobile && "flex-col gap-2"
           )}
         >
           <Link
             to="/"
             className={cn(
               "text-lg hover:underline flex items-center gap-2",
-              isMobile && "w-full text-base",
+              isMobile && "w-full text-base"
             )}
           >
             <ArrowLeftIcon />
@@ -96,7 +100,7 @@ const ServiceDetail = () => {
           <div
             className={cn(
               "flex items-center gap-2",
-              isMobile && "w-full flex-col",
+              isMobile && "w-full flex-col"
             )}
           >
             <Button
@@ -143,7 +147,7 @@ const ServiceDetail = () => {
                     serviceDetailData?.status === "down" &&
                       "text-red bg-red-light",
                     serviceDetailData?.status === "unknown" &&
-                      "text-orange bg-orange-light",
+                      "text-orange bg-orange-light"
                   )}
                 >
                   {serviceDetailData?.status}
@@ -165,9 +169,7 @@ const ServiceDetail = () => {
               <span className="text-muted-foreground text-sm font-medium">
                 Protocol:
               </span>
-              <span className="font-medium">
-                {serviceDetailData?.protocol}
-              </span>
+              <span className="font-medium">{serviceDetailData?.protocol}</span>
             </div>
             <div className="flex items-center gap-2 justify-between">
               <span className="text-muted-foreground text-sm font-medium">
@@ -207,7 +209,7 @@ const ServiceDetail = () => {
                     hour: "2-digit",
                     minute: "2-digit",
                     second: "2-digit",
-                  },
+                  }
                 )}
               </span>
             </div>
@@ -267,7 +269,7 @@ const ServiceDetail = () => {
                       className={cn(
                         "text-muted-foreground text-sm font-medium",
                         incident.resolved && "text-green",
-                        !incident.resolved && "text-red",
+                        !incident.resolved && "text-red"
                       )}
                     >
                       {incident.resolved ? "Resolved" : "Active"}
@@ -283,7 +285,7 @@ const ServiceDetail = () => {
                   </div>
                 </div>
                 <div className="text-red text-sm font-medium">
-                  <div dangerouslySetInnerHTML={{ __html: incident.error }} />
+                  <div dangerouslySetInnerHTML={{__html: incident.error}} />
                 </div>
                 <div className="flex flex-col gap-2 incident-details">
                   <div className="flex items-center gap-2">
@@ -318,7 +320,17 @@ const ServiceDetail = () => {
                     ""
                   )}
                 </div>
-                <hr className="mt-4" />
+                <hr className="my-4" />
+                <PaginationTable
+                  className="px-0"
+                  selectedRows={filters.pageSize}
+                  setSelectedRows={(value) => setFilters({pageSize: value})}
+                  selectedPage={filters.page}
+                  setSelectedPage={(value) => setFilters({page: value})}
+                  totalPages={Math.ceil(
+                    (incidentsCount ?? 0) / filters.pageSize
+                  )}
+                />
               </div>
             ))}
           </CardContent>

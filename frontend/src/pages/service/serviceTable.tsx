@@ -32,6 +32,7 @@ export const ServiceTable = ({protocols}: ServiceTableProps) => {
     filters,
     servicesCount,
     allTags,
+    countAllTags,
     setFilters,
     deleteServiceId,
     setDeleteServiceId,
@@ -68,7 +69,7 @@ export const ServiceTable = ({protocols}: ServiceTableProps) => {
             <MultiSelect
               options={
                 allTags?.map((tag) => ({
-                  label: tag,
+                  label: `${tag} (${countAllTags?.[tag] ?? 0})`,
                   value: tag,
                 })) ?? []
               }
@@ -185,17 +186,13 @@ export const ServiceTable = ({protocols}: ServiceTableProps) => {
             </Table>
           </div>
         </CardContent>
-        <div className="flex justify-end px-6">
-          <div className="w-fit">
-            <PaginationTable
-              selectedRows={filters.pageSize}
-              setSelectedRows={(value) => setFilters({pageSize: value})}
-              selectedPage={filters.page}
-              setSelectedPage={(value) => setFilters({page: value})}
-              totalPages={Math.ceil((servicesCount ?? 0) / filters.pageSize)}
-            />
-          </div>
-        </div>
+        <PaginationTable
+          selectedRows={filters.pageSize}
+          setSelectedRows={(value) => setFilters({pageSize: value})}
+          selectedPage={filters.page}
+          setSelectedPage={(value) => setFilters({page: value})}
+          totalPages={Math.ceil((servicesCount ?? 0) / filters.pageSize)}
+        />
       </Card>
     </>
   );

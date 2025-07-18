@@ -9,8 +9,15 @@ interface ServiceDetailStore {
   deleteIncident: Incident | null;
   serviceDetailData: Service | null;
   resolveIncident: boolean;
+  incidentsCount: number | null;
   incidentsData: Incident[] | null;
+  filters: {
+    page: number;
+    pageSize: number;
+  };
   serviceStatsData: ServiceStats | null;
+  setFilters: (value: Partial<ServiceDetailStore["filters"]>) => void;
+  setIncidentsCount: (incidentsCount: number) => void;
   setDeleteIncident: (deleteIncident: Incident | null) => void;
   setResolveIncident: (resolveIncident: boolean) => void;
   setServiceDetailData: (serviceDetailData: Service | null) => void;
@@ -24,12 +31,19 @@ const initialState = {
   serviceDetailData: null,
   resolveIncident: false,
   incidentsData: null,
+  incidentsCount: null,
+  filters: {
+    page: 1,
+    pageSize: 10,
+  },
   serviceStatsData: null,
 };
 
 export const useServiceDetailStore = create<ServiceDetailStore>((set) => ({
   ...initialState,
   setDeleteIncident: (deleteIncident) => set({ deleteIncident }),
+  setIncidentsCount: (incidentsCount) => set({ incidentsCount }),
+  setFilters: (filters) => set((state) => ({filters: {...state.filters, ...filters}})),
   setResolveIncident: (resolveIncident) => set({ resolveIncident }),
   setServiceDetailData: (serviceDetailData) => set({ serviceDetailData }),
   setIncidentsData: (incidentsData) => set({ incidentsData }),

@@ -13,10 +13,14 @@ export const useServiceDetail = () => {
     incidentsData,
     serviceStatsData,
     resolveIncident,
+    incidentsCount,
+    filters,
     setDeleteIncident,
     setServiceDetailData,
     setIncidentsData,
+    setIncidentsCount,
     setServiceStatsData,
+    setFilters,
     setUpdateServiceStatsData,
     setResolveIncident,
   } = useServiceDetailStore();
@@ -91,8 +95,14 @@ export const useServiceDetail = () => {
   };
 
   const getIncidents = async () => {
-    const res = await $api.get(`/services/${id}/incidents`);
+    const res = await $api.get(`/services/${id}/incidents`, {
+      params: {
+        page: filters.page,
+        pageSize: filters.pageSize,
+      },
+    });
     setIncidentsData(res.data.items);
+    setIncidentsCount(res.data.count);
   };
 
   const getServiceStats = async () => {
@@ -116,10 +126,13 @@ export const useServiceDetail = () => {
     serviceDetailData,
     incidentsData,
     serviceStatsData,
+    incidentsCount,
     resolveIncident,
+    filters,
     onCheckService,
     onDeleteIncident,
     onResolveIncident,
+    setFilters,
     setDeleteIncident,
     setResolveIncident,
   };

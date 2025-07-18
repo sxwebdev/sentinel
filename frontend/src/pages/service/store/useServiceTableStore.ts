@@ -9,10 +9,7 @@ interface ServiceTableStore {
   isOpenDropdownIdAction: string | null;
   isLoadingAllServices: boolean;
   allTags: string[] | null;
-  countAllTags: {
-    count: number;
-    tag: string;
-  } | null;
+  countAllTags: Record<string, number> | null;
   filters: {
     search: string | undefined;
     page: number;
@@ -27,7 +24,7 @@ interface ServiceTableStore {
   setUpdateService: (updateService: Service | null) => void;
   setPage: (page: number) => void;
   setAllTags: (allTags: string[]) => void;
-  setCountAllTags: (countAllTags: {count: number; tag: string}) => void;
+  setCountAllTags: (countAllTags: Record<string, number>) => void;
   setUpdateAllServices: (updateService: Service | null) => void;
   setIsLoadingAllServices: (isLoadingAllServices: boolean) => void;
   setDeleteServiceId: (deleteServiceId: string | null) => void;
