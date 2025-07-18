@@ -149,6 +149,7 @@ func (s *Scheduler) monitorService(ctx context.Context, job *job) {
 
 	// Perform initial check
 	if err := s.performCheck(ctx, job); err != nil {
+		log.Printf("Error performing initial check for service %s: %v", job.ServiceName, err)
 		return
 	}
 

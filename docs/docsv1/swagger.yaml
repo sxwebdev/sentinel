@@ -9,13 +9,13 @@ definitions:
           $ref: '#/definitions/web.Incident'
         type: array
     type: object
-  dbutils.FindResponseWithCount-web_ServiceWithState:
+  dbutils.FindResponseWithCount-web_ServiceDTO:
     properties:
       count:
         type: integer
       items:
         items:
-          $ref: '#/definitions/web.ServiceWithState'
+          $ref: '#/definitions/web.ServiceDTO'
         type: array
     type: object
   monitors.Config:
@@ -122,35 +122,6 @@ definitions:
     - ServiceProtocolTypeHTTP
     - ServiceProtocolTypeTCP
     - ServiceProtocolTypeGRPC
-  storage.ServiceStateRecord:
-    properties:
-      consecutive_fails:
-        type: integer
-      consecutive_success:
-        type: integer
-      created_at:
-        type: string
-      id:
-        type: string
-      last_check:
-        type: string
-      last_error:
-        type: string
-      next_check:
-        type: string
-      response_time_ns:
-        type: integer
-      service_id:
-        type: string
-      status:
-        allOf:
-        - $ref: '#/definitions/storage.ServiceStatus'
-        description: '"up", "down", "unknown"'
-      total_checks:
-        type: integer
-      updated_at:
-        type: string
-    type: object
   storage.ServiceStatus:
     enum:
     - unknown
@@ -274,6 +245,12 @@ definitions:
         type: integer
       config:
         $ref: '#/definitions/monitors.Config'
+      consecutive_fails:
+        example: 1
+        type: integer
+      consecutive_success:
+        example: 5
+        type: integer
       id:
         example: service-1
         type: string
@@ -283,16 +260,32 @@ definitions:
       is_enabled:
         example: true
         type: boolean
+      last_check:
+        example: "2023-10-01T12:00:00Z"
+        type: string
+      last_error:
+        example: Connection timeout
+        type: string
       name:
         example: Web Server
+        type: string
+      next_check:
+        example: "2023-10-01T12:05:00Z"
         type: string
       protocol:
         allOf:
         - $ref: '#/definitions/storage.ServiceProtocolType'
         example: http
+      response_time:
+        example: 150000000
+        type: integer
       retries:
         example: 3
         type: integer
+      status:
+        allOf:
+        - $ref: '#/definitions/storage.ServiceStatus'
+        example: up / down / unknown
       tags:
         example:
         - web
@@ -302,6 +295,9 @@ definitions:
         type: array
       timeout:
         example: 5000
+        type: integer
+      total_checks:
+        example: 100
         type: integer
       total_incidents:
         example: 10
@@ -328,13 +324,6 @@ definitions:
       uptime_percentage:
         example: 95
         type: number
-    type: object
-  web.ServiceWithState:
-    properties:
-      service:
-        $ref: '#/definitions/web.ServiceDTO'
-      state:
-        $ref: '#/definitions/storage.ServiceStateRecord'
     type: object
   web.SuccessResponse:
     description: Successful response
@@ -461,7 +450,7 @@ paths:
           description: List of services with states
           schema:
             items:
-              $ref: '#/definitions/dbutils.FindResponseWithCount-web_ServiceWithState'
+              $ref: '#/definitions/dbutils.FindResponseWithCount-web_ServiceDTO'
             type: array
         "500":
           description: Internal server error
@@ -542,7 +531,7 @@ paths:
         "200":
           description: Service details with state
           schema:
-            $ref: '#/definitions/web.ServiceWithState'
+            $ref: '#/definitions/web.ServiceDTO'
         "400":
           description: Bad request
           schema:

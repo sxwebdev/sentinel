@@ -35,6 +35,7 @@ import (
 	"github.com/sxwebdev/sentinel/internal/receiver"
 	"github.com/sxwebdev/sentinel/internal/service"
 	"github.com/sxwebdev/sentinel/internal/storage"
+	"github.com/sxwebdev/sentinel/internal/utils"
 	"github.com/sxwebdev/sentinel/pkg/dbutils"
 	_ "github.com/sxwebdev/sentinel/pkg/dbutils"
 )
@@ -273,16 +274,16 @@ func (s *Server) handleServiceDetail(c *fiber.Ctx) error {
 //	@Tags			services
 //	@Accept			json
 //	@Produce		json
-//	@Param			name		query		string											false	"Filter by service name"
-//	@Param			tags		query		[]string										false	"Filter by service tags"
-//	@Param			status		query		string											false	"Filter by service status"	ENUM("up", "down")
-//	@Param			is_enabled	query		bool											false	"Filter by enabled status"
-//	@Param			protocol	query		string											false	"Filter by protocol"	ENUM("http", "tcp", "grpc")
-//	@Param			order_by	query		string											false	"Order by field"		ENUM("name", "created_at")
-//	@Param			page		query		uint32											false	"Page number (for pagination)"
-//	@Param			page_size	query		uint32											false	"Number of items per page (default 20)"
-//	@Success		200			{array}		dbutils.FindResponseWithCount[ServiceWithState]	"List of services with states"
-//	@Failure		500			{object}	ErrorResponse									"Internal server error"
+//	@Param			name		query		string										false	"Filter by service name"
+//	@Param			tags		query		[]string									false	"Filter by service tags"
+//	@Param			status		query		string										false	"Filter by service status"	ENUM("up", "down")
+//	@Param			is_enabled	query		bool										false	"Filter by enabled status"
+//	@Param			protocol	query		string										false	"Filter by protocol"	ENUM("http", "tcp", "grpc")
+//	@Param			order_by	query		string										false	"Order by field"		ENUM("name", "created_at")
+//	@Param			page		query		uint32										false	"Page number (for pagination)"
+//	@Param			page_size	query		uint32										false	"Number of items per page (default 20)"
+//	@Success		200			{array}		dbutils.FindResponseWithCount[ServiceDTO]	"List of services with states"
+//	@Failure		500			{object}	ErrorResponse								"Internal server error"
 //	@Router			/services [get]
 func (s *Server) handleFindServices(c *fiber.Ctx) error {
 	ctx := c.Context()
@@ -327,19 +328,19 @@ func (s *Server) handleFindServices(c *fiber.Ctx) error {
 		})
 	}
 
-	result := dbutils.FindResponseWithCount[*ServiceWithState]{
-		Items: make([]*ServiceWithState, 0, len(services.Items)),
+	result := dbutils.FindResponseWithCount[ServiceDTO]{
+		Items: make([]ServiceDTO, 0, len(services.Items)),
 		Count: services.Count,
 	}
 
 	// Get services with their states
 	for _, service := range services.Items {
-		serviceWithState, err := s.getServiceWithState(ctx, service)
+		svc, err := convertServiceToDTO(service)
 		if err != nil {
 			return err
 		}
 
-		result.Items = append(result.Items, serviceWithState)
+		result.Items = append(result.Items, svc)
 	}
 
 	return c.JSON(result)
@@ -352,10 +353,10 @@ func (s *Server) handleFindServices(c *fiber.Ctx) error {
 //	@Tags			services
 //	@Accept			json
 //	@Produce		json
-//	@Param			id	path		string				true	"Service ID"
-//	@Success		200	{object}	ServiceWithState	"Service details with state"
-//	@Failure		400	{object}	ErrorResponse		"Bad request"
-//	@Failure		404	{object}	ErrorResponse		"Service not found"
+//	@Param			id	path		string			true	"Service ID"
+//	@Success		200	{object}	ServiceDTO		"Service details with state"
+//	@Failure		400	{object}	ErrorResponse	"Bad request"
+//	@Failure		404	{object}	ErrorResponse	"Service not found"
 //	@Router			/services/{id} [get]
 func (s *Server) handleAPIServiceDetail(c *fiber.Ctx) error {
 	serviceID := c.Params("id")
@@ -373,18 +374,16 @@ func (s *Server) handleAPIServiceDetail(c *fiber.Ctx) error {
 	}
 
 	// Get service with state
-	serviceWithState, err := s.getServiceWithState(c.Context(), targetService)
+	svcDTO, err := convertServiceToDTO(targetService)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(ErrorResponse{
-			Error: err.Error(),
-		})
+		return err
 	}
 
-	if serviceWithState.State != nil && serviceWithState.State.LastError != "" {
-		serviceWithState.State.LastError = goHTML.EscapeString(serviceWithState.State.LastError)
+	if svcDTO.LastError != nil && *svcDTO.LastError != "" {
+		svcDTO.LastError = utils.Pointer(goHTML.EscapeString(*svcDTO.LastError))
 	}
 
-	return c.JSON(serviceWithState)
+	return c.JSON(svcDTO)
 }
 
 // handleAPIServiceIncidents returns service incidents

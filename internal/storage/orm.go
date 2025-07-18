@@ -464,9 +464,18 @@ func (o *ORMStorage) GetServiceByID(ctx context.Context, id string) (*Service, e
 		"s.updated_at",
 		"count(incidents.id) as total_incidents",
 		"sum(case when incidents.resolved = 0 then 1 else 0 end) as active_incidents",
+		"ss.status",
+		"ss.last_check",
+		"ss.next_check",
+		"ss.last_error",
+		"ss.consecutive_fails",
+		"ss.consecutive_success",
+		"ss.total_checks",
+		"ss.response_time_ns",
 	)
 	sb.From("services s")
 	sb.JoinWithOption(sqlbuilder.LeftJoin, "incidents", "s.id = incidents.service_id")
+	sb.JoinWithOption(sqlbuilder.LeftJoin, "service_states ss", "s.id = ss.service_id")
 	sb.Where(sb.Equal("s.id", id))
 
 	query, args := sb.Build()
@@ -487,6 +496,14 @@ func (o *ORMStorage) GetServiceByID(ctx context.Context, id string) (*Service, e
 		&item.UpdatedAt,
 		&item.TotalIncidents,
 		&item.ActiveIncidents,
+		&item.Status,
+		&item.LastCheck,
+		&item.NextCheck,
+		&item.LastError,
+		&item.ConsecutiveFails,
+		&item.ConsecutiveSuccess,
+		&item.TotalChecks,
+		&item.ResponseTime,
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -573,6 +590,14 @@ func (o *ORMStorage) FindServices(ctx context.Context, params FindServicesParams
 		"s.updated_at",
 		"count(incidents.id) as total_incidents",
 		"sum(case when incidents.resolved = 0 then 1 else 0 end) as active_incidents",
+		"ss.status",
+		"ss.last_check",
+		"ss.next_check",
+		"ss.last_error",
+		"ss.consecutive_fails",
+		"ss.consecutive_success",
+		"ss.total_checks",
+		"ss.response_time_ns",
 	)
 	sb.JoinWithOption(sqlbuilder.LeftJoin, "incidents", "s.id = incidents.service_id")
 	sb.JoinWithOption(sqlbuilder.LeftJoin, "service_states ss", "s.id = ss.service_id")
@@ -616,6 +641,14 @@ func (o *ORMStorage) FindServices(ctx context.Context, params FindServicesParams
 			&item.UpdatedAt,
 			&item.TotalIncidents,
 			&item.ActiveIncidents,
+			&item.Status,
+			&item.LastCheck,
+			&item.NextCheck,
+			&item.LastError,
+			&item.ConsecutiveFails,
+			&item.ConsecutiveSuccess,
+			&item.TotalChecks,
+			&item.ResponseTime,
 		)
 		if err != nil {
 			return res, fmt.Errorf("failed to scan service: %w", err)
@@ -1029,19 +1062,27 @@ func rowToService(row *serviceRow) (*Service, error) {
 	}
 
 	return &Service{
-		ID:              row.ID,
-		Name:            row.Name,
-		Protocol:        ServiceProtocolType(row.Protocol),
-		Interval:        interval,
-		Timeout:         timeout,
-		Retries:         row.Retries,
-		Tags:            tags,
-		Config:          config,
-		IsEnabled:       row.IsEnabled,
-		CreatedAt:       row.CreatedAt,
-		UpdatedAt:       row.UpdatedAt,
-		TotalIncidents:  row.TotalIncidents,
-		ActiveIncidents: row.ActiveIncidents,
+		ID:                 row.ID,
+		Name:               row.Name,
+		Protocol:           ServiceProtocolType(row.Protocol),
+		Interval:           interval,
+		Timeout:            timeout,
+		Retries:            row.Retries,
+		Tags:               tags,
+		Config:             config,
+		IsEnabled:          row.IsEnabled,
+		CreatedAt:          row.CreatedAt,
+		UpdatedAt:          row.UpdatedAt,
+		TotalIncidents:     row.TotalIncidents,
+		ActiveIncidents:    row.ActiveIncidents,
+		Status:             row.Status,
+		LastCheck:          row.LastCheck,
+		NextCheck:          row.NextCheck,
+		LastError:          row.LastError,
+		ConsecutiveFails:   row.ConsecutiveFails,
+		ConsecutiveSuccess: row.ConsecutiveSuccess,
+		TotalChecks:        row.TotalChecks,
+		ResponseTime:       row.ResponseTime,
 	}, nil
 }
 
