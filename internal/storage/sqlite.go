@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/sxwebdev/sentinel/pkg/dbutils"
 	_ "modernc.org/sqlite"
 )
 
@@ -116,7 +117,7 @@ func (s *SQLiteStorage) GetServiceByID(ctx context.Context, id string) (*Service
 }
 
 // FindServices retrieves all services
-func (s *SQLiteStorage) FindServices(ctx context.Context, params FindServicesParams) ([]*Service, error) {
+func (s *SQLiteStorage) FindServices(ctx context.Context, params FindServicesParams) (dbutils.FindResponseWithCount[*Service], error) {
 	return s.orm.FindServices(ctx, params)
 }
 

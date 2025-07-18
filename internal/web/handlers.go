@@ -35,6 +35,8 @@ import (
 	"github.com/sxwebdev/sentinel/internal/receiver"
 	"github.com/sxwebdev/sentinel/internal/service"
 	"github.com/sxwebdev/sentinel/internal/storage"
+	"github.com/sxwebdev/sentinel/pkg/dbutils"
+	_ "github.com/sxwebdev/sentinel/pkg/dbutils"
 )
 
 //go:embed views/*
@@ -271,15 +273,15 @@ func (s *Server) handleServiceDetail(c *fiber.Ctx) error {
 //	@Tags			services
 //	@Accept			json
 //	@Produce		json
-//	@Param			name		query		string				false	"Filter by service name"
-//	@Param			tags		query		[]string			false	"Filter by service tags"
-//	@Param			is_enabled	query		bool				false	"Filter by enabled status"
-//	@Param			protocol	query		string				false	"Filter by protocol"	ENUM("http", "tcp", "grpc")
-//	@Param			order_by	query		string				false	"Order by field"		ENUM("name", "created_at")
-//	@Param			page		query		uint32				false	"Page number (for pagination)"
-//	@Param			page_size	query		uint32				false	"Number of items per page (default 20)"
-//	@Success		200			{array}		ServiceWithState	"List of services with states"
-//	@Failure		500			{object}	ErrorResponse		"Internal server error"
+//	@Param			name		query		string											false	"Filter by service name"
+//	@Param			tags		query		[]string										false	"Filter by service tags"
+//	@Param			is_enabled	query		bool											false	"Filter by enabled status"
+//	@Param			protocol	query		string											false	"Filter by protocol"	ENUM("http", "tcp", "grpc")
+//	@Param			order_by	query		string											false	"Order by field"		ENUM("name", "created_at")
+//	@Param			page		query		uint32											false	"Page number (for pagination)"
+//	@Param			page_size	query		uint32											false	"Number of items per page (default 20)"
+//	@Success		200			{array}		dbutils.FindResponseWithCount[ServiceWithState]	"List of services with states"
+//	@Failure		500			{object}	ErrorResponse									"Internal server error"
 //	@Router			/services [get]
 func (s *Server) handleFindServices(c *fiber.Ctx) error {
 	ctx := c.Context()
@@ -322,18 +324,22 @@ func (s *Server) handleFindServices(c *fiber.Ctx) error {
 		})
 	}
 
+	result := dbutils.FindResponseWithCount[*ServiceWithState]{
+		Items: make([]*ServiceWithState, 0, len(services.Items)),
+		Count: services.Count,
+	}
+
 	// Get services with their states
-	servicesWithState := make([]*ServiceWithState, 0, len(services))
-	for _, service := range services {
+	for _, service := range services.Items {
 		serviceWithState, err := s.getServiceWithState(ctx, service)
 		if err != nil {
 			return err
 		}
 
-		servicesWithState = append(servicesWithState, serviceWithState)
+		result.Items = append(result.Items, serviceWithState)
 	}
 
-	return c.JSON(servicesWithState)
+	return c.JSON(result)
 }
 
 // handleAPIServiceDetail returns service details

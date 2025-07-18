@@ -160,7 +160,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/web.ServiceWithState"
+                                "$ref": "#/definitions/dbutils.FindResponseWithCount-web_ServiceWithState"
                             }
                         }
                     },
@@ -668,6 +668,20 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "dbutils.FindResponseWithCount-web_ServiceWithState": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/web.ServiceWithState"
+                    }
+                }
+            }
+        },
         "monitors.Config": {
             "type": "object",
             "properties": {

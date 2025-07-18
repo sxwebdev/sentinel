@@ -1,5 +1,14 @@
 basePath: /api/v1
 definitions:
+  dbutils.FindResponseWithCount-web_ServiceWithState:
+    properties:
+      count:
+        type: integer
+      items:
+        items:
+          $ref: '#/definitions/web.ServiceWithState'
+        type: array
+    type: object
   monitors.Config:
     properties:
       grpc:
@@ -430,7 +439,7 @@ paths:
           description: List of services with states
           schema:
             items:
-              $ref: '#/definitions/web.ServiceWithState'
+              $ref: '#/definitions/dbutils.FindResponseWithCount-web_ServiceWithState'
             type: array
         "500":
           description: Internal server error

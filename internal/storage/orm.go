@@ -395,37 +395,10 @@ func (o *ORMStorage) GetServiceByID(ctx context.Context, id string) (*Service, e
 	return svc, nil
 }
 
-type FindServicesParams struct {
-	Name      string
-	IsEnabled *bool
-	Protocol  string
-	Tags      []string
-	OrderBy   string
-	Page      *uint32
-	PageSize  *uint32
-}
-
-// GetAllServices finds all services using ORM
-func (o *ORMStorage) FindServices(ctx context.Context, params FindServicesParams) ([]*Service, error) {
+func findServicesBuilder(params FindServicesParams, col ...string) *sqlbuilder.SelectBuilder {
 	sb := sqlbuilder.NewSelectBuilder()
-	sb.Select(
-		"s.id",
-		"s.name",
-		"s.protocol",
-		"s.interval",
-		"s.timeout",
-		"s.retries",
-		"s.tags",
-		"s.config",
-		"s.is_enabled",
-		"s.created_at",
-		"s.updated_at",
-		"count(incidents.id) as total_incidents",
-		"sum(case when incidents.resolved = 0 then 1 else 0 end) as active_incidents",
-	)
+	sb.Select(col...)
 	sb.From("services s")
-	sb.Join("incidents", "s.id = incidents.service_id")
-	sb.GroupBy("s.id")
 
 	if params.Name != "" {
 		sb.Where(sb.Like("s.name", "%"+params.Name+"%"))
@@ -452,22 +425,58 @@ func (o *ORMStorage) FindServices(ctx context.Context, params FindServicesParams
 		}
 	}
 
+	return sb
+}
+
+type FindServicesParams struct {
+	Name      string
+	IsEnabled *bool
+	Protocol  string
+	Tags      []string
+	OrderBy   string
+	Page      *uint32
+	PageSize  *uint32
+}
+
+// GetAllServices finds all services using ORM
+func (o *ORMStorage) FindServices(ctx context.Context, params FindServicesParams) (dbutils.FindResponseWithCount[*Service], error) {
+	sb := findServicesBuilder(
+		params,
+		"s.id",
+		"s.name",
+		"s.protocol",
+		"s.interval",
+		"s.timeout",
+		"s.retries",
+		"s.tags",
+		"s.config",
+		"s.is_enabled",
+		"s.created_at",
+		"s.updated_at",
+		"count(incidents.id) as total_incidents",
+		"sum(case when incidents.resolved = 0 then 1 else 0 end) as active_incidents",
+	)
+	sb.Join("incidents", "s.id = incidents.service_id")
+	sb.GroupBy("s.id")
+
 	if params.OrderBy != "" {
 		sb.OrderBy(params.OrderBy)
 	} else {
 		sb.OrderBy("name")
 	}
 
+	res := dbutils.FindResponseWithCount[*Service]{}
+
 	limit, offset, err := dbutils.Pagination(params.Page, params.PageSize)
 	if err != nil {
-		return nil, err
+		return res, err
 	}
 	sb.Limit(int(limit)).Offset(int(offset))
 
 	sql, args := sb.Build()
 	rows, err := o.db.QueryContext(ctx, sql, args...)
 	if err != nil {
-		return nil, fmt.Errorf("failed to query services: %w", err)
+		return res, fmt.Errorf("failed to query services: %w", err)
 	}
 	defer rows.Close()
 
@@ -490,22 +499,35 @@ func (o *ORMStorage) FindServices(ctx context.Context, params FindServicesParams
 			&item.ActiveIncidents,
 		)
 		if err != nil {
-			return nil, fmt.Errorf("failed to scan service: %w", err)
+			return res, fmt.Errorf("failed to scan service: %w", err)
 		}
 
 		svc, err := rowToService(&item)
 		if err != nil {
-			return nil, fmt.Errorf("failed to convert service row: %w", err)
+			return res, fmt.Errorf("failed to convert service row: %w", err)
 		}
 
 		services = append(services, svc)
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("error iterating rows: %w", err)
+		return res, fmt.Errorf("error iterating rows: %w", err)
 	}
 
-	return services, nil
+	// Get total count of services
+	countQuery := findServicesBuilder(params, "count(*)")
+
+	countSQL, countArgs := countQuery.Build()
+
+	var totalCount int
+	if err := o.db.QueryRowContext(ctx, countSQL, countArgs...).Scan(&totalCount); err != nil {
+		return res, fmt.Errorf("failed to count services: %w", err)
+	}
+
+	res.Count = uint32(totalCount)
+	res.Items = services
+
+	return res, nil
 }
 
 // CreateService creates a new service using ORM with retry logic

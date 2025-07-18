@@ -64,7 +64,7 @@ func (s *Scheduler) Start(ctx context.Context) error {
 	}
 
 	// Get all services under read lock
-	for _, svc := range services {
+	for _, svc := range services.Items {
 		s.addService(ctx, svc)
 	}
 
