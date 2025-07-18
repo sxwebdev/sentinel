@@ -68,9 +68,27 @@ const docTemplate = `{
                 "summary": "Get recent incidents",
                 "parameters": [
                     {
+                        "type": "string",
+                        "description": "Filter by service ID or incident ID",
+                        "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Filter by resolved status",
+                        "name": "resolved",
+                        "in": "query"
+                    },
+                    {
                         "type": "integer",
-                        "description": "Number of incidents (default 50)",
-                        "name": "limit",
+                        "description": "Page number (default 1)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of items per page (default 100)",
+                        "name": "page_size",
                         "in": "query"
                     }
                 ],
@@ -80,7 +98,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/web.Incident"
+                                "$ref": "#/definitions/dbutils.FindResponseWithCount-web_Incident"
                             }
                         }
                     },
@@ -121,6 +139,12 @@ const docTemplate = `{
                         "collectionFormat": "csv",
                         "description": "Filter by service tags",
                         "name": "tags",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by service status",
+                        "name": "status",
                         "in": "query"
                     },
                     {
@@ -427,6 +451,30 @@ const docTemplate = `{
                         "name": "id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by incident ID",
+                        "name": "incident_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Filter by resolved status",
+                        "name": "resolved",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page number (for pagination)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of items per page (default 20)",
+                        "name": "page_size",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -435,7 +483,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/web.Incident"
+                                "$ref": "#/definitions/dbutils.FindResponseWithCount-web_Incident"
                             }
                         }
                     },
@@ -668,6 +716,20 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "dbutils.FindResponseWithCount-web_Incident": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/web.Incident"
+                    }
+                }
+            }
+        },
         "dbutils.FindResponseWithCount-web_ServiceWithState": {
             "type": "object",
             "properties": {
@@ -961,10 +1023,6 @@ const docTemplate = `{
                     "additionalProperties": {
                         "type": "integer"
                     }
-                },
-                "recent_incidents": {
-                    "type": "integer",
-                    "example": 5
                 },
                 "services_down": {
                     "type": "integer",

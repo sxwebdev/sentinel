@@ -10,6 +10,7 @@ import (
 	"github.com/sxwebdev/sentinel/internal/notifier"
 	"github.com/sxwebdev/sentinel/internal/receiver"
 	"github.com/sxwebdev/sentinel/internal/storage"
+	"github.com/sxwebdev/sentinel/internal/utils"
 	"github.com/sxwebdev/sentinel/pkg/dbutils"
 )
 
@@ -201,58 +202,30 @@ func (m *MonitorService) createIncident(ctx context.Context, svc *storage.Servic
 
 // resolveActiveIncident resolves the active incident when a service recovers
 func (m *MonitorService) resolveActiveIncident(ctx context.Context, serviceID string) error {
-	// Get active incidents for the service
-	incidents, err := m.storage.GetActiveIncidents(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to get active incidents: %w", err)
-	}
-
+	// Get service
 	svc, err := m.storage.GetServiceByID(ctx, serviceID)
 	if err != nil {
 		return fmt.Errorf("failed to get service: %w", err)
 	}
 
-	// Find and resolve all active incidents for this service
-	resolvedCount := 0
+	// Resolve all active incidents for this service
+	incidents, err := m.storage.ResolveAllIncidents(ctx, serviceID)
+	if err != nil {
+		return fmt.Errorf("failed to resolve incidents: %w", err)
+	}
+
 	for _, incident := range incidents {
-		if incident.ServiceID == serviceID && !incident.Resolved {
-			// Resolve the incident
-			now := time.Now()
-			duration := now.Sub(incident.StartTime)
-
-			incident.EndTime = &now
-			incident.Duration = &duration
-			incident.Resolved = true
-
-			// Update incident in storage
-			if err := m.storage.UpdateIncident(ctx, incident); err != nil {
-				return fmt.Errorf("failed to update incident: %w", err)
+		// Send recovery notification
+		if m.notifier != nil {
+			if err := m.notifier.SendRecovery(svc, incident); err != nil {
+				err := fmt.Errorf("failed to send recovery notification for %s: %w", svc.Name, err)
+				log.Println(err)
+				return nil
 			}
-
-			// Send recovery notification
-			if m.notifier != nil {
-				if err := m.notifier.SendRecovery(svc, incident); err != nil {
-					err := fmt.Errorf("failed to send recovery notification for %s: %w", svc.Name, err)
-					log.Println(err)
-					return nil
-				}
-			}
-
-			resolvedCount++
 		}
 	}
 
 	return nil
-}
-
-// GetServiceIncidents gets incidents for a specific service
-func (m *MonitorService) GetServiceIncidents(ctx context.Context, serviceID string) ([]*storage.Incident, error) {
-	return m.storage.GetIncidentsByService(ctx, serviceID)
-}
-
-// GetRecentIncidents gets recent incidents across all services
-func (m *MonitorService) GetRecentIncidents(ctx context.Context, limit int) ([]*storage.Incident, error) {
-	return m.storage.GetRecentIncidents(ctx, limit)
 }
 
 // DeleteIncident deletes a specific incident
@@ -267,7 +240,12 @@ func (m *MonitorService) DeleteIncident(ctx context.Context, serviceID, incident
 
 // GetServiceStats gets statistics for a service
 func (m *MonitorService) GetServiceStats(ctx context.Context, serviceID string, since time.Time) (*storage.ServiceStats, error) {
-	return m.storage.GetServiceStats(ctx, serviceID, since)
+	params := storage.FindIncidentsParams{
+		ServiceID: serviceID,
+		StartTime: utils.Pointer(since),
+	}
+
+	return m.storage.GetServiceStats(ctx, params)
 }
 
 // TriggerCheck triggers a manual check for a service

@@ -27,7 +27,6 @@ type DashboardStats struct {
 	ServicesDown     int                                 `json:"services_down" example:"1"`
 	ServicesUnknown  int                                 `json:"services_unknown" example:"1"`
 	Protocols        map[storage.ServiceProtocolType]int `json:"protocols"`
-	RecentIncidents  int                                 `json:"recent_incidents" example:"5"`
 	ActiveIncidents  int                                 `json:"active_incidents" example:"2"`
 	AvgResponseTime  int64                               `json:"avg_response_time" example:"150"`
 	TotalChecks      int                                 `json:"total_checks" example:"1000"`

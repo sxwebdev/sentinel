@@ -198,7 +198,7 @@ func (s *Server) setupRoutes() {
 	api.Get("/services/:id/stats", s.handleAPIServiceStats)
 
 	// Incident management API
-	api.Get("/incidents", s.handleAPIRecentIncidents)
+	api.Get("/incidents", s.handleFindIncidents)
 	api.Get("/services/:id/incidents", s.handleAPIServiceIncidents)
 	api.Delete("/services/:id/incidents/:incidentId", s.handleAPIDeleteIncident)
 
@@ -275,6 +275,7 @@ func (s *Server) handleServiceDetail(c *fiber.Ctx) error {
 //	@Produce		json
 //	@Param			name		query		string											false	"Filter by service name"
 //	@Param			tags		query		[]string										false	"Filter by service tags"
+//	@Param			status		query		string											false	"Filter by service status"	ENUM("up", "down")
 //	@Param			is_enabled	query		bool											false	"Filter by enabled status"
 //	@Param			protocol	query		string											false	"Filter by protocol"	ENUM("http", "tcp", "grpc")
 //	@Param			order_by	query		string											false	"Order by field"		ENUM("name", "created_at")
@@ -290,6 +291,7 @@ func (s *Server) handleFindServices(c *fiber.Ctx) error {
 	params := struct {
 		Name      string   `json:"name" query:"name"`
 		Tags      []string `json:"tags" query:"tags"`
+		Status    string   `json:"status" query:"status" validate:"omitempty,oneof=up down"`
 		IsEnabled *bool    `json:"is_enabled" query:"is_enabled"`
 		Protocol  string   `json:"protocol" query:"protocol" validate:"omitempty,oneof=http tcp grpc"`
 		OrderBy   string   `json:"order_by" query:"order_by" validate:"omitempty,oneof=name created_at"`
@@ -312,6 +314,7 @@ func (s *Server) handleFindServices(c *fiber.Ctx) error {
 	services, err := s.monitorService.FindServices(ctx, storage.FindServicesParams{
 		Name:      params.Name,
 		Tags:      params.Tags,
+		Status:    params.Status,
 		IsEnabled: params.IsEnabled,
 		Protocol:  params.Protocol,
 		OrderBy:   params.OrderBy,
@@ -391,10 +394,16 @@ func (s *Server) handleAPIServiceDetail(c *fiber.Ctx) error {
 //	@Tags			incidents
 //	@Accept			json
 //	@Produce		json
-//	@Param			id	path		string			true	"Service ID"
-//	@Success		200	{array}		Incident		"List of incidents"
-//	@Failure		400	{object}	ErrorResponse	"Bad request"
-//	@Failure		500	{object}	ErrorResponse	"Internal server error"
+//	@Param			id			path		string									true	"Service ID"
+//	@Param			incident_id	query		string									false	"Filter by incident ID"
+//	@Param			resolved	query		bool									false	"Filter by resolved status"
+//	@Param			start_time	query		time.Time								false	"Filter by start time (RFC3339 format)"
+//	@Param			end_time	query		time.Time								false	"Filter by end time (RFC3339 format)"
+//	@Param			page		query		uint32									false	"Page number (for pagination)"
+//	@Param			page_size	query		uint32									false	"Number of items per page (default 20)"
+//	@Success		200			{array}		dbutils.FindResponseWithCount[Incident]	"List of incidents"
+//	@Failure		400			{object}	ErrorResponse							"Bad request"
+//	@Failure		500			{object}	ErrorResponse							"Internal server error"
 //	@Router			/services/{id}/incidents [get]
 func (s *Server) handleAPIServiceIncidents(c *fiber.Ctx) error {
 	serviceID := c.Params("id")
@@ -404,14 +413,44 @@ func (s *Server) handleAPIServiceIncidents(c *fiber.Ctx) error {
 		})
 	}
 
-	incidents, err := s.monitorService.GetServiceIncidents(c.Context(), serviceID)
+	params := struct {
+		IncidentID string     `query:"incident_id"`
+		Resolved   *bool      `query:"resolved"`
+		StartTime  *time.Time `query:"start_time"`
+		EndTime    *time.Time `query:"end_time"`
+		Page       *uint32    `query:"page" validate:"omitempty,gte=1"`
+		PageSize   *uint32    `query:"page_size" validate:"omitempty,gte=1,lte=100"`
+	}{}
+
+	if err := c.QueryParser(&params); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
+			Error: "Invalid query parameters",
+		})
+	}
+
+	// Validate query parameters
+	if err := s.validator.Struct(params); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
+			Error: "Invalid query parameters",
+		})
+	}
+
+	incidents, err := s.storage.FindIncidents(c.Context(), storage.FindIncidentsParams{
+		ID:        params.IncidentID,
+		ServiceID: serviceID,
+		Resolved:  params.Resolved,
+		StartTime: params.StartTime,
+		EndTime:   params.EndTime,
+		Page:      params.Page,
+		PageSize:  params.PageSize,
+	})
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(ErrorResponse{
 			Error: err.Error(),
 		})
 	}
 
-	for _, incident := range incidents {
+	for _, incident := range incidents.Items {
 		incident.Error = goHTML.EscapeString(incident.Error)
 	}
 
@@ -529,32 +568,60 @@ func (s *Server) handleAPIServiceResolve(c *fiber.Ctx) error {
 	})
 }
 
-// handleAPIRecentIncidents returns recent incidents
+// handleFindIncidents returns recent incidents
 //
 //	@Summary		Get recent incidents
 //	@Description	Returns a list of recent incidents across all services
 //	@Tags			incidents
 //	@Accept			json
 //	@Produce		json
-//	@Param			limit	query		int				false	"Number of incidents (default 50)"
-//	@Success		200		{array}		Incident		"List of incidents"
-//	@Failure		500		{object}	ErrorResponse	"Internal server error"
+//	@Param			search		query		string									false	"Filter by service ID or incident ID"
+//	@Param			resolved	query		bool									false	"Filter by resolved status"
+//	@Param			start_time	query		time.Time								false	"Start time for filtering (RFC3339 format)"
+//	@Param			end_time	query		time.Time								false	"End time for filtering (RFC3339 format)"
+//	@Param			page		query		uint32									false	"Page number (default 1)"
+//	@Param			page_size	query		uint32									false	"Number of items per page (default 100)"
+//	@Success		200			{array}		dbutils.FindResponseWithCount[Incident]	"List of incidents"
+//	@Failure		500			{object}	ErrorResponse							"Internal server error"
 //	@Router			/incidents [get]
-func (s *Server) handleAPIRecentIncidents(c *fiber.Ctx) error {
-	limitStr := c.Query("limit", "50")
-	limit, err := strconv.Atoi(limitStr)
-	if err != nil || limit <= 0 {
-		limit = 50
+func (s *Server) handleFindIncidents(c *fiber.Ctx) error {
+	params := struct {
+		Search    string     `query:"search"`
+		Resolved  *bool      `query:"resolved"`
+		StartTime *time.Time `query:"start_time"`
+		EndTime   *time.Time `query:"end_time"`
+		Page      *uint32    `query:"page" validate:"omitempty,gte=1"`
+		PageSize  *uint32    `query:"page_size" validate:"omitempty,gte=1,lte=100"`
+	}{}
+
+	if err := c.QueryParser(&params); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
+			Error: "Invalid query parameters",
+		})
 	}
 
-	incidents, err := s.monitorService.GetRecentIncidents(c.Context(), limit)
+	// Validate query parameters
+	if err := s.validator.Struct(params); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
+			Error: "Invalid query parameters",
+		})
+	}
+
+	incidents, err := s.storage.FindIncidents(c.Context(), storage.FindIncidentsParams{
+		Search:    params.Search,
+		Resolved:  params.Resolved,
+		StartTime: params.StartTime,
+		EndTime:   params.EndTime,
+		Page:      params.Page,
+		PageSize:  params.PageSize,
+	})
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(ErrorResponse{
 			Error: err.Error(),
 		})
 	}
 
-	for _, incident := range incidents {
+	for _, incident := range incidents.Items {
 		incident.Error = goHTML.EscapeString(incident.Error)
 	}
 

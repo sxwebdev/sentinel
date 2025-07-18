@@ -1,5 +1,14 @@
 basePath: /api/v1
 definitions:
+  dbutils.FindResponseWithCount-web_Incident:
+    properties:
+      count:
+        type: integer
+      items:
+        items:
+          $ref: '#/definitions/web.Incident'
+        type: array
+    type: object
   dbutils.FindResponseWithCount-web_ServiceWithState:
     properties:
       count:
@@ -203,9 +212,6 @@ definitions:
         additionalProperties:
           type: integer
         type: object
-      recent_incidents:
-        example: 5
-        type: integer
       services_down:
         example: 1
         type: integer
@@ -375,9 +381,21 @@ paths:
       - application/json
       description: Returns a list of recent incidents across all services
       parameters:
-      - description: Number of incidents (default 50)
+      - description: Filter by service ID or incident ID
         in: query
-        name: limit
+        name: search
+        type: string
+      - description: Filter by resolved status
+        in: query
+        name: resolved
+        type: boolean
+      - description: Page number (default 1)
+        in: query
+        name: page
+        type: integer
+      - description: Number of items per page (default 100)
+        in: query
+        name: page_size
         type: integer
       produces:
       - application/json
@@ -386,7 +404,7 @@ paths:
           description: List of incidents
           schema:
             items:
-              $ref: '#/definitions/web.Incident'
+              $ref: '#/definitions/dbutils.FindResponseWithCount-web_Incident'
             type: array
         "500":
           description: Internal server error
@@ -412,6 +430,10 @@ paths:
           type: string
         name: tags
         type: array
+      - description: Filter by service status
+        in: query
+        name: status
+        type: string
       - description: Filter by enabled status
         in: query
         name: is_enabled
@@ -614,6 +636,22 @@ paths:
         name: id
         required: true
         type: string
+      - description: Filter by incident ID
+        in: query
+        name: incident_id
+        type: string
+      - description: Filter by resolved status
+        in: query
+        name: resolved
+        type: boolean
+      - description: Page number (for pagination)
+        in: query
+        name: page
+        type: integer
+      - description: Number of items per page (default 20)
+        in: query
+        name: page_size
+        type: integer
       produces:
       - application/json
       responses:
@@ -621,7 +659,7 @@ paths:
           description: List of incidents
           schema:
             items:
-              $ref: '#/definitions/web.Incident'
+              $ref: '#/definitions/dbutils.FindResponseWithCount-web_Incident'
             type: array
         "400":
           description: Bad request

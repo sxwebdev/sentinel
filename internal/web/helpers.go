@@ -7,6 +7,7 @@ import (
 
 	"github.com/sxwebdev/sentinel/internal/monitors"
 	"github.com/sxwebdev/sentinel/internal/storage"
+	"github.com/sxwebdev/sentinel/internal/utils"
 )
 
 // getServiceWithState gets a service with its current state
@@ -63,7 +64,9 @@ func (s *Server) getDashboardStats(ctx context.Context) (*DashboardStats, error)
 	}
 
 	// Get recent incidents
-	recentIncidents, err := s.monitorService.GetRecentIncidents(ctx, 100)
+	activeIncidentsCount, err := s.storage.IncidentsCount(ctx, storage.FindIncidentsParams{
+		Resolved: utils.Pointer(false),
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -151,13 +154,7 @@ func (s *Server) getDashboardStats(ctx context.Context) (*DashboardStats, error)
 	stats.TotalChecks = totalChecks
 
 	// Count active incidents
-	activeIncidents := 0
-	for _, incident := range recentIncidents {
-		if !incident.Resolved {
-			activeIncidents++
-		}
-	}
-	stats.ActiveIncidents = activeIncidents
+	stats.ActiveIncidents = int(activeIncidentsCount)
 
 	// Set last check time
 	stats.LastCheckTime = lastCheckTime
