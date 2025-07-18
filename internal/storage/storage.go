@@ -2,7 +2,6 @@ package storage
 
 import (
 	"context"
-	"time"
 
 	"github.com/sxwebdev/sentinel/pkg/dbutils"
 )
@@ -10,12 +9,13 @@ import (
 // Storage defines the interface for incident storage
 type Storage interface {
 	// Incident management
+	GetIncidentByID(ctx context.Context, id string) (*Incident, error)
 	SaveIncident(ctx context.Context, incident *Incident) error
 	UpdateIncident(ctx context.Context, incident *Incident) error
 	DeleteIncident(ctx context.Context, incidentID string) error
-	GetIncidentsByService(ctx context.Context, serviceID string) ([]*Incident, error)
-	GetRecentIncidents(ctx context.Context, limit int) ([]*Incident, error)
-	GetActiveIncidents(ctx context.Context) ([]*Incident, error)
+	FindIncidents(ctx context.Context, params FindIncidentsParams) (dbutils.FindResponseWithCount[*Incident], error)
+	IncidentsCount(ctx context.Context, params FindIncidentsParams) (uint32, error)
+	ResolveAllIncidents(ctx context.Context, serviceID string) ([]*Incident, error)
 
 	// Service management
 	CreateService(ctx context.Context, request CreateUpdateServiceRequest) (*Service, error)
@@ -34,7 +34,7 @@ type Storage interface {
 	GetAllTagsWithCount(ctx context.Context) (map[string]int, error)
 
 	// Statistics
-	GetServiceStats(ctx context.Context, serviceID string, since time.Time) (*ServiceStats, error)
+	GetServiceStats(ctx context.Context, params FindIncidentsParams) (*ServiceStats, error)
 
 	// Cleanup
 	Close() error

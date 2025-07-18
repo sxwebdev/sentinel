@@ -74,6 +74,11 @@ func (s *SQLiteStorage) SaveIncident(ctx context.Context, incident *Incident) er
 	return s.orm.CreateIncident(ctx, incident)
 }
 
+// GetIncidentByID retrieves an incident by ID
+func (s *SQLiteStorage) GetIncidentByID(ctx context.Context, id string) (*Incident, error) {
+	return s.orm.GetIncidentByID(ctx, id)
+}
+
 // UpdateIncident updates an existing incident
 func (s *SQLiteStorage) UpdateIncident(ctx context.Context, incident *Incident) error {
 	return s.orm.UpdateIncident(ctx, incident)
@@ -84,24 +89,24 @@ func (s *SQLiteStorage) DeleteIncident(ctx context.Context, incidentID string) e
 	return s.orm.DeleteIncident(ctx, incidentID)
 }
 
-// GetIncidentsByService retrieves all incidents for a specific service
-func (s *SQLiteStorage) GetIncidentsByService(ctx context.Context, serviceID string) ([]*Incident, error) {
-	return s.orm.FindIncidentsByService(ctx, serviceID)
+// FindIncidents retrieves all incidents
+func (s *SQLiteStorage) FindIncidents(ctx context.Context, params FindIncidentsParams) (dbutils.FindResponseWithCount[*Incident], error) {
+	return s.orm.FindIncidents(ctx, params)
 }
 
-// GetRecentIncidents retrieves recent incidents across all services
-func (s *SQLiteStorage) GetRecentIncidents(ctx context.Context, limit int) ([]*Incident, error) {
-	return s.orm.FindRecentIncidents(ctx, limit)
-}
-
-// GetActiveIncidents retrieves all currently active (unresolved) incidents
-func (s *SQLiteStorage) GetActiveIncidents(ctx context.Context) ([]*Incident, error) {
-	return s.orm.FindActiveIncidents(ctx)
+// IncidentsCount retrieves the total count of incidents
+func (s *SQLiteStorage) IncidentsCount(ctx context.Context, params FindIncidentsParams) (uint32, error) {
+	return s.orm.IncidentsCount(ctx, params)
 }
 
 // GetServiceStats calculates statistics for a service
-func (s *SQLiteStorage) GetServiceStats(ctx context.Context, serviceID string, since time.Time) (*ServiceStats, error) {
-	return s.orm.GetServiceStatsWithORM(ctx, serviceID, since)
+func (s *SQLiteStorage) GetServiceStats(ctx context.Context, params FindIncidentsParams) (*ServiceStats, error) {
+	return s.orm.GetServiceStatsWithORM(ctx, params)
+}
+
+// ResolveAllIncidents resolves all incidents for a service
+func (s *SQLiteStorage) ResolveAllIncidents(ctx context.Context, serviceID string) ([]*Incident, error) {
+	return s.orm.ResolveAllIncidents(ctx, serviceID)
 }
 
 // Service methods
