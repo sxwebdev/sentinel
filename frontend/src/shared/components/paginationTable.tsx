@@ -41,8 +41,8 @@ export default function PaginationTable({
 }: PaginationProps) {
   const id = useId()
   return (
-    <div className={cn("flex justify-end px-6", className)}>
-      <div className="flex items-center justify-between gap-8">
+    <div className={cn("flex w-full px-6", className)}>
+      <div className="flex items-center justify-between gap-8 w-full">
         <div className="flex items-center gap-3">
           <Label htmlFor={id}>Rows per page</Label>
           <Select
