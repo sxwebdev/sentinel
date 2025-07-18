@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/puzpuzpuz/xsync/v3"
@@ -35,6 +36,8 @@ type job struct {
 	Retries     int
 	Ticker      *time.Ticker
 	StopChan    chan struct{}
+
+	inProgress atomic.Bool
 }
 
 // New creates a new scheduler
@@ -51,14 +54,17 @@ func New(
 
 // Start begins monitoring all configured services
 func (s *Scheduler) Start(ctx context.Context) error {
-	// Load services from database
-	services, err := s.monitorSvc.LoadServicesFromStorage(ctx)
+	// Load enabled services from storage
+	isEnabled := true
+	services, err := s.monitorSvc.FindServices(ctx, storage.FindServicesParams{
+		IsEnabled: &isEnabled,
+	})
 	if err != nil {
 		return fmt.Errorf("failed to load services: %w", err)
 	}
 
 	// Get all services under read lock
-	for _, svc := range services {
+	for _, svc := range services.Items {
 		s.addService(ctx, svc)
 	}
 
@@ -154,6 +160,7 @@ func (s *Scheduler) monitorService(ctx context.Context, job *job) {
 			return
 		case <-job.Ticker.C:
 			if err := s.performCheck(ctx, job); err != nil {
+				log.Printf("Error performing check for service %s: %v", job.ServiceName, err)
 				continue
 			}
 		}
@@ -162,6 +169,12 @@ func (s *Scheduler) monitorService(ctx context.Context, job *job) {
 
 // performCheck executes a health check for a service
 func (s *Scheduler) performCheck(ctx context.Context, job *job) error {
+	if !job.inProgress.CompareAndSwap(false, true) {
+		// Another check is already in progress
+		return nil
+	}
+	defer job.inProgress.Store(false)
+
 	serviceName := job.ServiceName
 
 	// Get current service configuration from database

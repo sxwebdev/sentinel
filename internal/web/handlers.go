@@ -35,6 +35,8 @@ import (
 	"github.com/sxwebdev/sentinel/internal/receiver"
 	"github.com/sxwebdev/sentinel/internal/service"
 	"github.com/sxwebdev/sentinel/internal/storage"
+	"github.com/sxwebdev/sentinel/pkg/dbutils"
+	_ "github.com/sxwebdev/sentinel/pkg/dbutils"
 )
 
 //go:embed views/*
@@ -184,7 +186,7 @@ func (s *Server) setupRoutes() {
 	api.Get("/dashboard/stats", s.handleAPIDashboardStats)
 
 	// Service management API
-	api.Get("/services", s.handleAPIGetServices)
+	api.Get("/services", s.handleFindServices)
 	api.Post("/services", s.handleAPICreateService)
 	api.Put("/services/:id", s.handleAPIUpdateService)
 	api.Delete("/services/:id", s.handleAPIDeleteService)
@@ -199,6 +201,10 @@ func (s *Server) setupRoutes() {
 	api.Get("/incidents", s.handleAPIRecentIncidents)
 	api.Get("/services/:id/incidents", s.handleAPIServiceIncidents)
 	api.Delete("/services/:id/incidents/:incidentId", s.handleAPIDeleteIncident)
+
+	// Tags API
+	api.Get("/tags", s.handleGetAllTags)
+	api.Get("/tags/count", s.handleGetAllTagsWithCount)
 
 	// WebSocket endpoint
 	s.app.Use("/ws", func(c *fiber.Ctx) error {
@@ -260,60 +266,80 @@ func (s *Server) handleServiceDetail(c *fiber.Ctx) error {
 	})
 }
 
-// handleAPIGetServices handles GET /api/v1/services
+// handleFindServices handles GET /api/v1/services
 //
 //	@Summary		Get all services
 //	@Description	Returns a list of all services with their current states
 //	@Tags			services
 //	@Accept			json
 //	@Produce		json
-//	@Success		200	{array}		ServiceWithState	"List of services with states"
-//	@Failure		500	{object}	ErrorResponse		"Internal server error"
+//	@Param			name		query		string											false	"Filter by service name"
+//	@Param			tags		query		[]string										false	"Filter by service tags"
+//	@Param			is_enabled	query		bool											false	"Filter by enabled status"
+//	@Param			protocol	query		string											false	"Filter by protocol"	ENUM("http", "tcp", "grpc")
+//	@Param			order_by	query		string											false	"Order by field"		ENUM("name", "created_at")
+//	@Param			page		query		uint32											false	"Page number (for pagination)"
+//	@Param			page_size	query		uint32											false	"Number of items per page (default 20)"
+//	@Success		200			{array}		dbutils.FindResponseWithCount[ServiceWithState]	"List of services with states"
+//	@Failure		500			{object}	ErrorResponse									"Internal server error"
 //	@Router			/services [get]
-func (s *Server) handleAPIGetServices(c *fiber.Ctx) error {
+func (s *Server) handleFindServices(c *fiber.Ctx) error {
 	ctx := c.Context()
 
-	services, err := s.monitorService.GetAllServices(ctx)
+	// Parse query parameters
+	params := struct {
+		Name      string   `json:"name" query:"name"`
+		Tags      []string `json:"tags" query:"tags"`
+		IsEnabled *bool    `json:"is_enabled" query:"is_enabled"`
+		Protocol  string   `json:"protocol" query:"protocol" validate:"omitempty,oneof=http tcp grpc"`
+		OrderBy   string   `json:"order_by" query:"order_by" validate:"omitempty,oneof=name created_at"`
+		Page      *uint32  `json:"page" query:"page"`
+		PageSize  *uint32  `json:"page_size" query:"page_size"`
+	}{}
+	if err := c.QueryParser(&params); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
+			Error: "Invalid query parameters",
+		})
+	}
+
+	// Validate query parameters
+	if err := s.validator.Struct(params); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
+			Error: "Invalid query parameters",
+		})
+	}
+
+	services, err := s.monitorService.FindServices(ctx, storage.FindServicesParams{
+		Name:      params.Name,
+		Tags:      params.Tags,
+		IsEnabled: params.IsEnabled,
+		Protocol:  params.Protocol,
+		OrderBy:   params.OrderBy,
+		Page:      params.Page,
+		PageSize:  params.PageSize,
+	})
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(ErrorResponse{
 			Error: err.Error(),
 		})
 	}
 
-	// Get incident statistics
-	incidentStats, err := s.monitorService.GetAllServicesIncidentStats(ctx)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(ErrorResponse{
-			Error: err.Error(),
-		})
-	}
-
-	// Quick lookup map for incident stats by service ID
-	statsMap := make(map[string]*storage.ServiceIncidentStats)
-	for _, stats := range incidentStats {
-		statsMap[stats.ServiceID] = stats
+	result := dbutils.FindResponseWithCount[*ServiceWithState]{
+		Items: make([]*ServiceWithState, 0, len(services.Items)),
+		Count: services.Count,
 	}
 
 	// Get services with their states
-	var servicesWithState []*ServiceWithState
-	for _, service := range services {
+	for _, service := range services.Items {
 		serviceWithState, err := s.getServiceWithState(ctx, service)
 		if err != nil {
-			// Log error but continue with other services
-			continue
+			return err
 		}
 
-		// Add incident statistics to the service
-		if stats, exists := statsMap[service.ID]; exists {
-			// Add incident stats to the service object
-			serviceWithState.Service.ActiveIncidents = stats.ActiveIncidents
-			serviceWithState.Service.TotalIncidents = stats.TotalIncidents
-		}
-
-		servicesWithState = append(servicesWithState, serviceWithState)
+		result.Items = append(result.Items, serviceWithState)
 	}
 
-	return c.JSON(servicesWithState)
+	return c.JSON(result)
 }
 
 // handleAPIServiceDetail returns service details
@@ -338,8 +364,8 @@ func (s *Server) handleAPIServiceDetail(c *fiber.Ctx) error {
 
 	targetService, err := s.monitorService.GetServiceByID(c.Context(), serviceID)
 	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON(ErrorResponse{
-			Error: "service not found: " + serviceID,
+		return c.Status(fiber.StatusInternalServerError).JSON(ErrorResponse{
+			Error: err.Error(),
 		})
 	}
 
@@ -353,23 +379,6 @@ func (s *Server) handleAPIServiceDetail(c *fiber.Ctx) error {
 
 	if serviceWithState.State != nil && serviceWithState.State.LastError != "" {
 		serviceWithState.State.LastError = goHTML.EscapeString(serviceWithState.State.LastError)
-	}
-
-	// Get incident statistics for this service
-	incidentStats, err := s.monitorService.GetAllServicesIncidentStats(c.Context())
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(ErrorResponse{
-			Error: err.Error(),
-		})
-	}
-
-	// Find statistics for this service
-	for _, stats := range incidentStats {
-		if stats.ServiceID == serviceID {
-			serviceWithState.Service.ActiveIncidents = stats.ActiveIncidents
-			serviceWithState.Service.TotalIncidents = stats.TotalIncidents
-			break
-		}
 	}
 
 	return c.JSON(serviceWithState)
@@ -634,8 +643,7 @@ func (s *Server) handleAPICreateService(c *fiber.Ctx) error {
 	}
 
 	// Convert to storage.Service
-	service := storage.Service{
-		ID:        serviceDTO.ID,
+	createParams := storage.CreateUpdateServiceRequest{
 		Name:      serviceDTO.Name,
 		Protocol:  serviceDTO.Protocol,
 		Interval:  time.Millisecond * time.Duration(serviceDTO.Interval),
@@ -646,14 +654,14 @@ func (s *Server) handleAPICreateService(c *fiber.Ctx) error {
 	}
 
 	// Set default values
-	if service.Interval == 0 {
-		service.Interval = s.config.Monitoring.Global.DefaultInterval
+	if createParams.Interval == 0 {
+		createParams.Interval = s.config.Monitoring.Global.DefaultInterval
 	}
-	if service.Timeout == 0 {
-		service.Timeout = s.config.Monitoring.Global.DefaultTimeout
+	if createParams.Timeout == 0 {
+		createParams.Timeout = s.config.Monitoring.Global.DefaultTimeout
 	}
-	if service.Retries == 0 {
-		service.Retries = s.config.Monitoring.Global.DefaultRetries
+	if createParams.Retries == 0 {
+		createParams.Retries = s.config.Monitoring.Global.DefaultRetries
 	}
 
 	// Convert flat config to proper MonitorConfig structure
@@ -663,16 +671,17 @@ func (s *Server) handleAPICreateService(c *fiber.Ctx) error {
 		})
 	}
 
-	service.Config = serviceDTO.Config.ConvertToMap()
+	createParams.Config = serviceDTO.Config.ConvertToMap()
 
 	// Add service
-	if err := s.monitorService.AddService(c.Context(), &service); err != nil {
+	svc, err := s.monitorService.CreateService(c.Context(), createParams)
+	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(ErrorResponse{
 			Error: err.Error(),
 		})
 	}
 
-	res, err := convertServiceToDTO(&service)
+	res, err := convertServiceToDTO(svc)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(ErrorResponse{
 			Error: err.Error(),
@@ -715,8 +724,7 @@ func (s *Server) handleAPIUpdateService(c *fiber.Ctx) error {
 	fmt.Printf("Update service request: %+v\n", serviceDTO)
 
 	// Convert to storage.Service
-	service := storage.Service{
-		ID:        id,
+	updateParams := storage.CreateUpdateServiceRequest{
 		Name:      serviceDTO.Name,
 		Protocol:  serviceDTO.Protocol,
 		Interval:  time.Millisecond * time.Duration(serviceDTO.Interval),
@@ -733,39 +741,40 @@ func (s *Server) handleAPIUpdateService(c *fiber.Ctx) error {
 		})
 	}
 
-	service.Config = serviceDTO.Config.ConvertToMap()
+	updateParams.Config = serviceDTO.Config.ConvertToMap()
 
 	// Validate required fields
-	if service.Name == "" {
+	if updateParams.Name == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
 			Error: "Service name is required",
 		})
 	}
-	if service.Protocol == "" {
+	if updateParams.Protocol == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
 			Error: "Protocol is required",
 		})
 	}
 
 	// Set default values if not provided
-	if service.Interval == 0 {
-		service.Interval = s.config.Monitoring.Global.DefaultInterval
+	if updateParams.Interval == 0 {
+		updateParams.Interval = s.config.Monitoring.Global.DefaultInterval
 	}
-	if service.Timeout == 0 {
-		service.Timeout = s.config.Monitoring.Global.DefaultTimeout
+	if updateParams.Timeout == 0 {
+		updateParams.Timeout = s.config.Monitoring.Global.DefaultTimeout
 	}
-	if service.Retries == 0 {
-		service.Retries = s.config.Monitoring.Global.DefaultRetries
+	if updateParams.Retries == 0 {
+		updateParams.Retries = s.config.Monitoring.Global.DefaultRetries
 	}
 
 	// Update service
-	if err := s.monitorService.UpdateService(c.Context(), &service); err != nil {
+	svc, err := s.monitorService.UpdateService(c.Context(), id, updateParams)
+	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(ErrorResponse{
 			Error: err.Error(),
 		})
 	}
 
-	res, err := convertServiceToDTO(&service)
+	res, err := convertServiceToDTO(svc)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(ErrorResponse{
 			Error: err.Error(),

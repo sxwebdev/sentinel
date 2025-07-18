@@ -1,5 +1,14 @@
 basePath: /api/v1
 definitions:
+  dbutils.FindResponseWithCount-web_ServiceWithState:
+    properties:
+      count:
+        type: integer
+      items:
+        items:
+          $ref: '#/definitions/web.ServiceWithState'
+        type: array
+    type: object
   monitors.Config:
     properties:
       grpc:
@@ -149,9 +158,6 @@ definitions:
     properties:
       config:
         $ref: '#/definitions/monitors.Config'
-      id:
-        example: service-1
-        type: string
       interval:
         example: 30000
         type: integer
@@ -394,6 +400,38 @@ paths:
       consumes:
       - application/json
       description: Returns a list of all services with their current states
+      parameters:
+      - description: Filter by service name
+        in: query
+        name: name
+        type: string
+      - collectionFormat: csv
+        description: Filter by service tags
+        in: query
+        items:
+          type: string
+        name: tags
+        type: array
+      - description: Filter by enabled status
+        in: query
+        name: is_enabled
+        type: boolean
+      - description: Filter by protocol
+        in: query
+        name: protocol
+        type: string
+      - description: Order by field
+        in: query
+        name: order_by
+        type: string
+      - description: Page number (for pagination)
+        in: query
+        name: page
+        type: integer
+      - description: Number of items per page (default 20)
+        in: query
+        name: page_size
+        type: integer
       produces:
       - application/json
       responses:
@@ -401,7 +439,7 @@ paths:
           description: List of services with states
           schema:
             items:
-              $ref: '#/definitions/web.ServiceWithState'
+              $ref: '#/definitions/dbutils.FindResponseWithCount-web_ServiceWithState'
             type: array
         "500":
           description: Internal server error
@@ -694,4 +732,46 @@ paths:
       summary: Get service statistics
       tags:
       - statistics
+  /tags:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves all unique tags used across services
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of unique tags
+          schema:
+            items:
+              type: string
+            type: array
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+      summary: Get all tags
+      tags:
+      - tags
+  /tags/count:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves all unique tags along with their usage count across services
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Map of tags with their usage count
+          schema:
+            additionalProperties:
+              type: integer
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+      summary: Get all tags with usage count
+      tags:
+      - tags
 swagger: "2.0"

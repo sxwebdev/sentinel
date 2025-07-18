@@ -63,7 +63,6 @@ type ServiceStats struct {
 
 // CreateUpdateServiceRequest represents a request to create or update a service
 type CreateUpdateServiceRequest struct {
-	ID        string                      `json:"id" example:"service-1"`
 	Name      string                      `json:"name" example:"Web Server"`
 	Protocol  storage.ServiceProtocolType `json:"protocol" example:"http"`
 	Interval  uint32                      `json:"interval" swaggertype:"primitive,integer" example:"30000"`

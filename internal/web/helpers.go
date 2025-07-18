@@ -57,7 +57,7 @@ func convertServiceToDTO(service *storage.Service) (ServiceDTO, error) {
 // getDashboardStats calculates dashboard statistics
 func (s *Server) getDashboardStats(ctx context.Context) (*DashboardStats, error) {
 	// Get all services with their states
-	services, err := s.monitorService.GetAllServices(ctx)
+	services, err := s.monitorService.FindServices(ctx, storage.FindServicesParams{})
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +82,7 @@ func (s *Server) getDashboardStats(ctx context.Context) (*DashboardStats, error)
 
 	// Initialize stats
 	stats := DashboardStats{
-		TotalServices:    len(services),
+		TotalServices:    int(services.Count),
 		ServicesUp:       0,
 		ServicesDown:     0,
 		ServicesUnknown:  0,
@@ -102,7 +102,7 @@ func (s *Server) getDashboardStats(ctx context.Context) (*DashboardStats, error)
 	var totalResponseTimeMs int64
 	var responseTimeCount int64
 
-	for _, service := range services {
+	for _, service := range services.Items {
 		// Get service state
 		serviceState := stateMap[service.ID]
 
@@ -143,7 +143,7 @@ func (s *Server) getDashboardStats(ctx context.Context) (*DashboardStats, error)
 
 	// Calculate averages
 	if upServices > 0 {
-		stats.UptimePercentage = float64(upServices) / float64(len(services)) * 100
+		stats.UptimePercentage = float64(upServices) / float64(len(services.Items)) * 100
 	}
 	if responseTimeCount > 0 {
 		stats.AvgResponseTime = totalResponseTimeMs / responseTimeCount
@@ -164,7 +164,7 @@ func (s *Server) getDashboardStats(ctx context.Context) (*DashboardStats, error)
 
 	// Calculate checks per minute (estimate based on intervals)
 	checksPerMinute := 0
-	for _, service := range services {
+	for _, service := range services.Items {
 		if service.Interval > 0 {
 			checksPerMinute += int(time.Minute / service.Interval)
 		}

@@ -10,6 +10,7 @@ import (
 	"github.com/sxwebdev/sentinel/internal/notifier"
 	"github.com/sxwebdev/sentinel/internal/receiver"
 	"github.com/sxwebdev/sentinel/internal/storage"
+	"github.com/sxwebdev/sentinel/pkg/dbutils"
 )
 
 // MonitorService handles service monitoring
@@ -30,46 +31,17 @@ func NewMonitorService(storage storage.Storage, config *config.Config, notifier 
 	}
 }
 
-// LoadServicesFromStorage loads all enabled services from storage and initializes monitoring
-func (m *MonitorService) LoadServicesFromStorage(ctx context.Context) ([]*storage.Service, error) {
-	services, err := m.storage.GetEnabledServices(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to load enabled services from storage: %w", err)
-	}
-
-	for _, svc := range services {
-		// Initialize service state if it doesn't exist
-		serviceState, err := m.storage.GetServiceState(ctx, svc.ID)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get service state for %s: %w", svc.Name, err)
-		}
-		if serviceState == nil {
-			if err := m.InitializeService(ctx, *svc); err != nil {
-				return nil, fmt.Errorf("failed to initialize service %s: %w", svc.Name, err)
-			}
-		}
-	}
-
-	return services, nil
+// FindServices loads all enabled services from storage and initializes monitoring
+func (m *MonitorService) FindServices(ctx context.Context, params storage.FindServicesParams) (dbutils.FindResponseWithCount[*storage.Service], error) {
+	return m.storage.FindServices(ctx, params)
 }
 
-// AddService adds a new service and starts monitoring it
-func (m *MonitorService) AddService(ctx context.Context, service *storage.Service) error {
-	service.ID = storage.GenerateULID()
-
+// CreateService adds a new service and starts monitoring it
+func (m *MonitorService) CreateService(ctx context.Context, service storage.CreateUpdateServiceRequest) (*storage.Service, error) {
 	// Save to storage
-	if err := m.storage.SaveService(ctx, service); err != nil {
-		return fmt.Errorf("failed to save service: %w", err)
-	}
-
-	// Initialize service state
-	if err := m.InitializeService(ctx, *service); err != nil {
-		return fmt.Errorf("failed to initialize service: %w", err)
-	}
-
-	svc, err := m.storage.GetService(ctx, service.ID)
+	svc, err := m.storage.CreateService(ctx, service)
 	if err != nil {
-		return err
+		return nil, fmt.Errorf("failed to create service: %w", err)
 	}
 
 	m.receiver.TriggerService().Publish(*receiver.NewTriggerServiceData(
@@ -77,20 +49,15 @@ func (m *MonitorService) AddService(ctx context.Context, service *storage.Servic
 		svc,
 	))
 
-	return nil
+	return svc, nil
 }
 
 // UpdateService updates an existing service
-func (m *MonitorService) UpdateService(ctx context.Context, svc *storage.Service) error {
+func (m *MonitorService) UpdateService(ctx context.Context, id string, params storage.CreateUpdateServiceRequest) (*storage.Service, error) {
 	// Update in storage
-	if err := m.storage.UpdateService(ctx, svc); err != nil {
-		return fmt.Errorf("failed to update service: %w", err)
-	}
-
-	// Get service to find name for scheduler cleanup
-	svc, err := m.storage.GetService(ctx, svc.ID)
+	svc, err := m.storage.UpdateService(ctx, id, params)
 	if err != nil {
-		return fmt.Errorf("failed to get service: %w", err)
+		return nil, fmt.Errorf("failed to update service: %w", err)
 	}
 
 	m.receiver.TriggerService().Publish(*receiver.NewTriggerServiceData(
@@ -98,13 +65,13 @@ func (m *MonitorService) UpdateService(ctx context.Context, svc *storage.Service
 		svc,
 	))
 
-	return nil
+	return svc, nil
 }
 
 // DeleteService removes a service and stops monitoring it
 func (m *MonitorService) DeleteService(ctx context.Context, id string) error {
 	// Get service to find name for scheduler cleanup
-	svc, err := m.storage.GetService(ctx, id)
+	svc, err := m.storage.GetServiceByID(ctx, id)
 	if err != nil {
 		return fmt.Errorf("failed to get service: %w", err)
 	}
@@ -124,85 +91,13 @@ func (m *MonitorService) DeleteService(ctx context.Context, id string) error {
 
 // GetServiceByID gets a service by ID
 func (m *MonitorService) GetServiceByID(ctx context.Context, id string) (*storage.Service, error) {
-	return m.storage.GetService(ctx, id)
-}
-
-// GetAllServices gets all service configurations (including inactive)
-func (m *MonitorService) GetAllServices(ctx context.Context) ([]*storage.Service, error) {
-	return m.storage.GetAllServices(ctx)
-}
-
-// GetEnabledServiceConfigs gets only enabled service configurations
-func (m *MonitorService) GetEnabledServiceConfigs(ctx context.Context) ([]*storage.Service, error) {
-	return m.storage.GetEnabledServices(ctx)
-}
-
-// InitializeService initializes monitoring state for a service
-func (m *MonitorService) InitializeService(ctx context.Context, cfg storage.Service) error {
-	// Initialize state in service_states table
-	nextCheck := time.Now().Add(cfg.Interval)
-	serviceState := &storage.ServiceStateRecord{
-		ID:                 storage.GenerateULID(),
-		ServiceID:          cfg.ID,
-		Status:             storage.StatusUnknown,
-		NextCheck:          &nextCheck,
-		ConsecutiveFails:   0,
-		ConsecutiveSuccess: 0,
-		TotalChecks:        0,
-	}
-
-	// Save service state
-	if err := m.storage.UpdateServiceState(ctx, serviceState); err != nil {
-		return fmt.Errorf("failed to update service state for %s: %w", cfg.Name, err)
-	}
-	return nil
-}
-
-// InitializeWithActiveIncidents initializes the service and checks for active incidents
-func (m *MonitorService) InitializeWithActiveIncidents(ctx context.Context, cfg storage.Service) error {
-	// First initialize the service normally
-	if err := m.InitializeService(ctx, cfg); err != nil {
-		return fmt.Errorf("failed to initialize service: %w", err)
-	}
-
-	// Check for active incidents for this service
-	activeIncidents, err := m.storage.GetActiveIncidents(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to get active incidents during initialization for %s: %w", cfg.Name, err)
-	}
-
-	// Check if there's an active incident for this service
-	hasActiveIncident := false
-	for _, incident := range activeIncidents {
-		if incident.ServiceID == cfg.ID && !incident.Resolved {
-			hasActiveIncident = true
-			break
-		}
-	}
-
-	// If there's an active incident, set status to down initially
-	if hasActiveIncident {
-		serviceState := &storage.ServiceStateRecord{
-			ID:                 storage.GenerateULID(),
-			ServiceID:          cfg.ID,
-			Status:             storage.StatusDown,
-			ConsecutiveFails:   0,
-			ConsecutiveSuccess: 0,
-			TotalChecks:        0,
-		}
-
-		if err := m.storage.UpdateServiceState(ctx, serviceState); err != nil {
-			return fmt.Errorf("failed to update service state for %s: %w", cfg.Name, err)
-		}
-	}
-
-	return nil
+	return m.storage.GetServiceByID(ctx, id)
 }
 
 // RecordSuccess records a successful check for a service
 func (m *MonitorService) RecordSuccess(ctx context.Context, serviceID string, responseTime time.Duration) error {
 	// Get current service from database
-	service, err := m.storage.GetService(ctx, serviceID)
+	service, err := m.storage.GetServiceByID(ctx, serviceID)
 	if err != nil {
 		return fmt.Errorf("service %s not found in database: %w", serviceID, err)
 	}
@@ -211,18 +106,6 @@ func (m *MonitorService) RecordSuccess(ctx context.Context, serviceID string, re
 	serviceState, err := m.storage.GetServiceState(ctx, serviceID)
 	if err != nil {
 		return fmt.Errorf("failed to get service state: %w", err)
-	}
-
-	// Initialize state if not exists
-	if serviceState == nil {
-		serviceState = &storage.ServiceStateRecord{
-			ID:                 storage.GenerateULID(),
-			ServiceID:          serviceID,
-			Status:             storage.StatusUnknown,
-			ConsecutiveFails:   0,
-			ConsecutiveSuccess: 0,
-			TotalChecks:        0,
-		}
 	}
 
 	// Update state
@@ -251,7 +134,7 @@ func (m *MonitorService) RecordSuccess(ctx context.Context, serviceID string, re
 // RecordFailure records a failed check for a service
 func (m *MonitorService) RecordFailure(ctx context.Context, serviceID string, checkErr error, responseTime time.Duration) error {
 	// Get current service from database
-	service, err := m.storage.GetService(ctx, serviceID)
+	service, err := m.storage.GetServiceByID(ctx, serviceID)
 	if err != nil {
 		return fmt.Errorf("service %s not found in database: %w", serviceID, err)
 	}
@@ -260,18 +143,6 @@ func (m *MonitorService) RecordFailure(ctx context.Context, serviceID string, ch
 	serviceState, err := m.storage.GetServiceState(ctx, serviceID)
 	if err != nil {
 		return fmt.Errorf("failed to get service state: %w", err)
-	}
-
-	// Initialize state if not exists
-	if serviceState == nil {
-		serviceState = &storage.ServiceStateRecord{
-			ID:                 storage.GenerateULID(),
-			ServiceID:          serviceID,
-			Status:             storage.StatusUnknown,
-			ConsecutiveFails:   0,
-			ConsecutiveSuccess: 0,
-			TotalChecks:        0,
-		}
 	}
 
 	// Update state
@@ -336,7 +207,7 @@ func (m *MonitorService) resolveActiveIncident(ctx context.Context, serviceID st
 		return fmt.Errorf("failed to get active incidents: %w", err)
 	}
 
-	svc, err := m.storage.GetService(ctx, serviceID)
+	svc, err := m.storage.GetServiceByID(ctx, serviceID)
 	if err != nil {
 		return fmt.Errorf("failed to get service: %w", err)
 	}
@@ -386,12 +257,6 @@ func (m *MonitorService) GetRecentIncidents(ctx context.Context, limit int) ([]*
 
 // DeleteIncident deletes a specific incident
 func (m *MonitorService) DeleteIncident(ctx context.Context, serviceID, incidentID string) error {
-	// First check if the incident exists and belongs to the service
-	_, err := m.storage.GetIncident(ctx, serviceID, incidentID)
-	if err != nil {
-		return fmt.Errorf("incident not found: %w", err)
-	}
-
 	// Delete the incident
 	if err := m.storage.DeleteIncident(ctx, incidentID); err != nil {
 		return fmt.Errorf("failed to delete incident: %w", err)
@@ -403,11 +268,6 @@ func (m *MonitorService) DeleteIncident(ctx context.Context, serviceID, incident
 // GetServiceStats gets statistics for a service
 func (m *MonitorService) GetServiceStats(ctx context.Context, serviceID string, since time.Time) (*storage.ServiceStats, error) {
 	return m.storage.GetServiceStats(ctx, serviceID, since)
-}
-
-// GetAllServicesIncidentStats gets incident statistics for all services
-func (m *MonitorService) GetAllServicesIncidentStats(ctx context.Context) ([]*storage.ServiceIncidentStats, error) {
-	return m.storage.GetAllServicesIncidentStats(ctx)
 }
 
 // TriggerCheck triggers a manual check for a service
