@@ -38,7 +38,7 @@ export function SelectWithClear({
   return (
     <div className="relative">
       <Select value={value} onValueChange={onValueChange}>
-        <SelectTrigger className={cn("pr-8", className)}>
+        <SelectTrigger className={cn(className, value && "pr-8")}>
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent>{children}</SelectContent>
