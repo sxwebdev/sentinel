@@ -141,7 +141,7 @@ const Dashboard = () => {
           </Accordion>
         </div>
         <div>
-          <ServiceTable />
+          <ServiceTable protocols={dashboardInfo.protocols} />
         </div>
       </div>
     </ContentWrapper>

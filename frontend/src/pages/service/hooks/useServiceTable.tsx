@@ -37,6 +37,8 @@ export const useServiceTable = () => {
     servicesCount,
     deleteServiceId,
     isOpenDropdownIdAction,
+    allTags,
+    countAllTags,
     isLoadingAllServices,
     setData,
     setPage,
@@ -44,18 +46,32 @@ export const useServiceTable = () => {
     setServicesCount,
     setIsOpenDropdownIdAction,
     setIsLoadingAllServices,
+    setAllTags,
+    setCountAllTags,
     setDeleteServiceId,
     setUpdateServiceId,
   } = useServiceTableStore();
 
-  const {onCheckService} = useServiceApi();
+  const { onCheckService } = useServiceApi();
+  
+  const getAllTags = async () => {
+    const res = await $api.get("/tags");
+    setAllTags(res.data);
+  };
+
+  const getCountAllTags = async () => {
+    const res = await $api.get("/tags/count");
+    setCountAllTags(res.data);
+  };
 
   const getAllServices = async () => {
     const res = await $api.get("/services", {
       params: {
-        search: filters.search,
+        name: filters.search,
         page: filters.page,
         page_size: filters.pageSize,
+        tags: filters.tags,
+        protocol: filters.protocol,
       },
     });
     if (res.data === null) {
@@ -262,6 +278,11 @@ export const useServiceTable = () => {
     });
   }, [filters]);
 
+  useEffect(() => {
+    getAllTags();
+    getCountAllTags();
+  }, []);
+
   const table = useReactTable({
     data: data ?? [],
     columns,
@@ -273,6 +294,8 @@ export const useServiceTable = () => {
     table,
     filters,
     servicesCount,
+    allTags,
+    countAllTags,
     deleteServiceId,
     isLoadingAllServices,
     setPage,

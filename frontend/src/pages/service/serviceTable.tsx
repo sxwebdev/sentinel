@@ -9,6 +9,11 @@ import {
   TableHead,
   TableBody,
   TableCell,
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
 } from "@/shared/components/ui";
 import {flexRender} from "@tanstack/react-table";
 import {useServiceTable} from "./hooks/useServiceTable";
@@ -18,12 +23,19 @@ import {ServiceUpdate} from "./serviceUpdate";
 import {cn} from "@/shared/lib/utils";
 import {Search} from "@/entities/search/search";
 import PaginationTable from "@/shared/components/paginationTable";
+import MultiSelect from "@/shared/components/multiSelect";
 
-export const ServiceTable = () => {
+interface ServiceTableProps {
+  protocols: Record<string, number>;
+}
+
+export const ServiceTable = ({protocols}: ServiceTableProps) => {
   const {
     table,
     filters,
     servicesCount,
+    allTags,
+    countAllTags,
     setFilters,
     deleteServiceId,
     setDeleteServiceId,
@@ -50,14 +62,69 @@ export const ServiceTable = () => {
         </CardHeader>
         <CardContent className="flex flex-col gap-6">
           <div className="flex justify-between items-center w-full gap-3">
-            <Search
-              className="w-full"
-              placeholder="Search"
-              value={filters.search}
-              onChange={(value) => setFilters({search: value ?? undefined})}
-              clear
-            />
-
+            {allTags !== null &&
+              countAllTags !== null &&
+              protocols !== null && (
+                <>
+                  <Search
+                    className="w-full"
+                    placeholder="Search"
+                    value={filters.search}
+                    onChange={(value) =>
+                      setFilters({search: value ?? undefined})
+                    }
+                    clear
+                  />
+                  <MultiSelect
+                    options={
+                      allTags?.map((tag) => ({
+                        label: tag,
+                        value: tag,
+                      })) ?? []
+                    }
+                    value={
+                      filters.tags?.map((tag) => ({
+                        label: tag,
+                        value: tag,
+                      })) ?? []
+                    }
+                    onChange={(value) => {
+                      console.log(value);
+                      setFilters({tags: value.map((v) => v.value)});
+                    }}
+                    placeholder="Select tags"
+                  />
+                  <Select
+                    value={filters.protocol}
+                    onValueChange={(value) => {
+                      console.log(value);
+                      setFilters({protocol: value});
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select protocol" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.keys(protocols).map((protocol) => {
+                        return (
+                          <SelectItem key={protocol} value={protocol}>
+                            {protocol}
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                  <Select onValueChange={(value)=>{setFilters({status:value})}}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="up">Up</SelectItem>
+                      <SelectItem value="down">Down</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </>
+              )}
           </div>
           <div className="rounded-xl overflow-hidden border border-border">
             <Table>
@@ -90,7 +157,7 @@ export const ServiceTable = () => {
                   <TableRow>
                     <TableCell
                       colSpan={table.getAllColumns().length}
-                      className="h-32 text-center"
+                      className="h-24 text-center"
                     >
                       <Loader size={6} />
                     </TableCell>
