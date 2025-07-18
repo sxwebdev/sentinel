@@ -1,9 +1,9 @@
-import $api, {socketUrl} from "@/shared/api/baseApi";
-import {useEffect, useMemo} from "react";
+import $api, { socketUrl } from "@/shared/api/baseApi";
+import { useEffect, useMemo } from "react";
 import useWebSocket from "react-use-websocket";
-import {useShallow} from "zustand/react/shallow";
-import {useServiceTableStore} from "@/pages/service/store/useServiceTableStore";
-import {useDashboardStore} from "../store/useDashboardStore";
+import { useShallow } from "zustand/react/shallow";
+import { useServiceTableStore } from "@/pages/service/store/useServiceTableStore";
+import { useDashboardStore } from "../store/useDashboardStore";
 
 export interface DashboardInfo {
   total_services: number;
@@ -32,14 +32,14 @@ export const useDashboardLogic = () => {
       setUpdateService: s.setUpdateService,
       setUpdateAllServices: s.setUpdateAllServices,
       addServiceInData: s.addServiceInData,
-    }))
+    })),
   );
 
-  const {dashboardInfo, setDashboardInfo} = useDashboardStore(
+  const { dashboardInfo, setDashboardInfo } = useDashboardStore(
     useShallow((s) => ({
       dashboardInfo: s.dashboardInfo,
       setDashboardInfo: s.setDashboardInfo,
-    }))
+    })),
   );
 
   const getDashboardInfo = async () => {
@@ -59,7 +59,7 @@ export const useDashboardLogic = () => {
     };
   }, []);
 
-  const {lastMessage} = useWebSocket(socketUrl, {
+  const { lastMessage } = useWebSocket(socketUrl, {
     shouldReconnect: () => true,
   });
 
@@ -87,16 +87,16 @@ export const useDashboardLogic = () => {
 
   const infoKeysDashboard = useMemo(
     () => [
-      {key: "total_services", label: "Total Services"},
-      {key: "services_up", label: "Services Up"},
-      {key: "services_down", label: "Services Down"},
-      {key: "active_incidents", label: "Active Incidents"},
-      {key: "avg_response_time", label: "Average Response Time (ms)"},
-      {key: "total_checks", label: "Total Checks"},
-      {key: "uptime_percentage", label: "Uptime Percentage"},
-      {key: "checks_per_minute", label: "Checks Per Minute"},
+      { key: "total_services", label: "Total Services" },
+      { key: "services_up", label: "Services Up" },
+      { key: "services_down", label: "Services Down" },
+      { key: "active_incidents", label: "Active Incidents" },
+      { key: "avg_response_time", label: "Average Response Time (ms)" },
+      { key: "total_checks", label: "Total Checks" },
+      { key: "uptime_percentage", label: "Uptime Percentage" },
+      { key: "checks_per_minute", label: "Checks Per Minute" },
     ],
-    []
+    [],
   );
 
   return {

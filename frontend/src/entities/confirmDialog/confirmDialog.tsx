@@ -44,11 +44,7 @@ export const ConfirmDialog = ({
               Delete
             </Button>
           )}
-          {type === "default" && (
-            <Button onClick={onSubmit}>
-              Submit
-            </Button>
-          )}
+          {type === "default" && <Button onClick={onSubmit}>Submit</Button>}
         </DialogFooter>
       </DialogContent>
     </Dialog>

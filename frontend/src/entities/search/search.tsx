@@ -1,6 +1,6 @@
-import {Button} from "@/shared/components/ui/button";
-import {Input} from "@/shared/components/ui/input";
-import {Search as SearchIcon, XIcon} from "lucide-react";
+import { Button } from "@/shared/components/ui/button";
+import { Input } from "@/shared/components/ui/input";
+import { Search as SearchIcon, XIcon } from "lucide-react";
 
 interface SearchProps {
   placeholder?: string;

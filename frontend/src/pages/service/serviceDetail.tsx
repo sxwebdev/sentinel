@@ -1,5 +1,5 @@
 import ContentWrapper from "@/widgets/wrappers/contentWrapper";
-import {useServiceDetail} from "./hooks/useServiceDetail";
+import { useServiceDetail } from "./hooks/useServiceDetail";
 import {
   Badge,
   Button,
@@ -9,15 +9,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/shared/components/ui";
-import {ArrowLeftIcon, CheckIcon, PlayIcon, TrashIcon} from "lucide-react";
-import {useIsMobile} from "@/shared/hooks/useIsMobile";
-import {cn} from "@/shared/lib/utils";
-import {InfoCardStats} from "@/entities/infoStatsCard/infoCardStats";
-import type {Incident} from "../../features/service/types/type";
-import {Loader} from "@/entities/loader/loader";
-import {ConfirmDialog} from "@/entities/confirmDialog/confirmDialog";
-import {ActivityIndicatorSVG} from "@/entities/ActivityIndicatorSVG/ActivityIndicatorSVG";
-import {Link} from "react-router";
+import { ArrowLeftIcon, CheckIcon, PlayIcon, TrashIcon } from "lucide-react";
+import { useIsMobile } from "@/shared/hooks/useIsMobile";
+import { cn } from "@/shared/lib/utils";
+import { InfoCardStats } from "@/entities/infoStatsCard/infoCardStats";
+import type { Incident } from "../../features/service/types/type";
+import { Loader } from "@/entities/loader/loader";
+import { ConfirmDialog } from "@/entities/confirmDialog/confirmDialog";
+import { ActivityIndicatorSVG } from "@/entities/ActivityIndicatorSVG/ActivityIndicatorSVG";
+import { Link } from "react-router";
 
 const ServiceDetail = () => {
   const {
@@ -77,14 +77,14 @@ const ServiceDetail = () => {
         <header
           className={cn(
             "flex items-center gap-2 justify-between py-2",
-            isMobile && "flex-col gap-2"
+            isMobile && "flex-col gap-2",
           )}
         >
           <Link
             to="/"
             className={cn(
               "text-lg hover:underline flex items-center gap-2",
-              isMobile && "w-full text-base"
+              isMobile && "w-full text-base",
             )}
           >
             <ArrowLeftIcon />
@@ -96,7 +96,7 @@ const ServiceDetail = () => {
           <div
             className={cn(
               "flex items-center gap-2",
-              isMobile && "w-full flex-col"
+              isMobile && "w-full flex-col",
             )}
           >
             <Button
@@ -143,7 +143,7 @@ const ServiceDetail = () => {
                     serviceDetailData?.state.status === "down" &&
                       "text-red bg-red-light",
                     serviceDetailData?.state.status === "unknown" &&
-                      "text-orange bg-orange-light"
+                      "text-orange bg-orange-light",
                   )}
                 >
                   {serviceDetailData?.state.status}
@@ -207,7 +207,7 @@ const ServiceDetail = () => {
                     hour: "2-digit",
                     minute: "2-digit",
                     second: "2-digit",
-                  }
+                  },
                 )}
               </span>
             </div>
@@ -267,7 +267,7 @@ const ServiceDetail = () => {
                       className={cn(
                         "text-muted-foreground text-sm font-medium",
                         incident.resolved && "text-green",
-                        !incident.resolved && "text-red"
+                        !incident.resolved && "text-red",
                       )}
                     >
                       {incident.resolved ? "Resolved" : "Active"}
@@ -283,7 +283,7 @@ const ServiceDetail = () => {
                   </div>
                 </div>
                 <div className="text-red text-sm font-medium">
-                  <div dangerouslySetInnerHTML={{__html: incident.error}} />
+                  <div dangerouslySetInnerHTML={{ __html: incident.error }} />
                 </div>
                 <div className="flex flex-col gap-2 incident-details">
                   <div className="flex items-center gap-2">

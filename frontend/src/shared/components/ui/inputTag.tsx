@@ -1,12 +1,12 @@
-import {useId, useState, type Dispatch, type SetStateAction} from "react";
-import {type Tag, TagInput} from "emblor";
+import { useId, useState, type Dispatch, type SetStateAction } from "react";
+import { type Tag, TagInput } from "emblor";
 
 interface InputTagProps {
   tags: Tag[];
-  setTags: Dispatch<SetStateAction<Tag[]>> 
+  setTags: Dispatch<SetStateAction<Tag[]>>;
 }
 
-export default function InputTag({tags, setTags}: InputTagProps) {
+export default function InputTag({ tags, setTags }: InputTagProps) {
   const id = useId();
   const [activeTagIndex, setActiveTagIndex] = useState<number | null>(null);
 
@@ -20,8 +20,7 @@ export default function InputTag({tags, setTags}: InputTagProps) {
         styleClasses={{
           inlineTagsContainer:
             "border-input rounded-md bg-white shadow-xs transition-[color,box-shadow] focus-within:border-ring outline-none focus-within:ring-[3px] focus-within:ring-ring/50 p-1 gap-1",
-          input:
-            "w-full min-w-[80px] shadow-none px-2 h-7 outline-none",
+          input: "w-full min-w-[80px] shadow-none px-2 h-7 outline-none",
           tag: {
             body: "h-7 relative bg-background border border-input hover:bg-background rounded-md font-medium text-xs ps-2 pe-7",
             closeButton:

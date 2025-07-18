@@ -7,18 +7,21 @@ import {
   Card,
   Progress,
 } from "@/shared/components/ui";
-import {useIsMobile} from "@/shared/hooks/useIsMobile";
-import {cn} from "@/shared/lib/utils";
+import { useIsMobile } from "@/shared/hooks/useIsMobile";
+import { cn } from "@/shared/lib/utils";
 import ContentWrapper from "@/widgets/wrappers/contentWrapper";
-import {RefreshCcwIcon} from "lucide-react";
-import {useDashboardLogic, type DashboardInfo} from "./hooks/useDashboardLogic";
-import {InfoCardStats} from "@/entities/infoStatsCard/infoCardStats";
+import { RefreshCcwIcon } from "lucide-react";
+import {
+  useDashboardLogic,
+  type DashboardInfo,
+} from "./hooks/useDashboardLogic";
+import { InfoCardStats } from "@/entities/infoStatsCard/infoCardStats";
 import ServiceCreate from "../service/serviceCreate";
-import {ServiceTable} from "../service/serviceTable";
-import {Loader} from "@/entities/loader/loader";
+import { ServiceTable } from "../service/serviceTable";
+import { Loader } from "@/entities/loader/loader";
 
 const Dashboard = () => {
-  const {infoKeysDashboard, dashboardInfo, onRefreshDashboard} =
+  const { infoKeysDashboard, dashboardInfo, onRefreshDashboard } =
     useDashboardLogic();
 
   const isMobile = useIsMobile();
@@ -34,42 +37,39 @@ const Dashboard = () => {
         return "gRPC";
     }
   };
-  if(!dashboardInfo) return <Loader loaderPage />;
+  if (!dashboardInfo) return <Loader loaderPage />;
 
   return (
     <ContentWrapper>
       <div className="flex flex-col gap-6">
-
-          <header
-            className={cn(
-              "flex justify-between items-center py-2",
-              isMobile && "flex-col gap-2"
-            )}
-          >
-            <h1 className={cn("text-2xl font-bold", isMobile && "text-lg")}>
-              Sentinel Dashboard
-            </h1>
-            <div
-              className={cn("flex ", isMobile && "flex-col w-full")}
+        <header
+          className={cn(
+            "flex justify-between items-center py-2",
+            isMobile && "flex-col gap-2",
+          )}
+        >
+          <h1 className={cn("text-2xl font-bold", isMobile && "text-lg")}>
+            Sentinel Dashboard
+          </h1>
+          <div className={cn("flex ", isMobile && "flex-col w-full")}>
+            <Button
+              size="sm"
+              className={cn("mr-3", isMobile && "w-full mb-3 mr-0")}
+              onClick={onRefreshDashboard}
             >
-              <Button
-                size="sm"
-                className={cn("mr-3",isMobile && "w-full mb-3 mr-0")}
-                onClick={onRefreshDashboard}
-              >
-                <RefreshCcwIcon />
-                Refresh
-              </Button>
-              <ServiceCreate />
-            </div>
-          </header>
+              <RefreshCcwIcon />
+              Refresh
+            </Button>
+            <ServiceCreate />
+          </div>
+        </header>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {infoKeysDashboard.map((item) => {
             const value =
               item.key === "uptime_percentage"
                 ? Number(
-                    dashboardInfo[item.key as keyof DashboardInfo]
+                    dashboardInfo[item.key as keyof DashboardInfo],
                   ).toFixed(1) + "%"
                 : item.key === "avg_response_time"
                   ? dashboardInfo[item.key as keyof DashboardInfo]?.toString() +
@@ -98,7 +98,7 @@ const Dashboard = () => {
                         (count /
                           Object.values(dashboardInfo.protocols).reduce(
                             (a, b) => a + b,
-                            0
+                            0,
                           )) *
                         100
                       ).toFixed(1);
@@ -108,7 +108,7 @@ const Dashboard = () => {
                           key={protocol}
                           className={cn(
                             "p-4 flex flex-row justify-between items-center",
-                            isMobile && "flex-col gap-2"
+                            isMobile && "flex-col gap-2",
                           )}
                         >
                           <h3 className="text-lg font-bold">
@@ -129,7 +129,7 @@ const Dashboard = () => {
                           </div>
                         </Card>
                       );
-                    }
+                    },
                   )
                 ) : (
                   <p className="text-muted-foreground text-center">

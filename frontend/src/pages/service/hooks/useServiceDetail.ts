@@ -1,9 +1,9 @@
-import $api, {socketUrl} from "@/shared/api/baseApi";
-import {useEffect} from "react";
-import {useParams} from "react-router";
-import {useServiceApi} from "./useServiceApi";
-import {toast} from "sonner";
-import {useServiceDetailStore} from "../store/useServiceDeteilStore";
+import $api, { socketUrl } from "@/shared/api/baseApi";
+import { useEffect } from "react";
+import { useParams } from "react-router";
+import { useServiceApi } from "./useServiceApi";
+import { toast } from "sonner";
+import { useServiceDetailStore } from "../store/useServiceDeteilStore";
 import useWebSocket from "react-use-websocket";
 
 export const useServiceDetail = () => {
@@ -20,8 +20,8 @@ export const useServiceDetail = () => {
     setUpdateServiceStatsData,
     setResolveIncident,
   } = useServiceDetailStore();
-  const {id} = useParams();
-  const {onCheckService: onCheckServiceApi} = useServiceApi();
+  const { id } = useParams();
+  const { onCheckService: onCheckServiceApi } = useServiceApi();
 
   const onCheckService = async (id: string) => {
     await onCheckServiceApi(id)
@@ -35,7 +35,7 @@ export const useServiceDetail = () => {
       });
   };
 
-  const {lastMessage} = useWebSocket(socketUrl, {
+  const { lastMessage } = useWebSocket(socketUrl, {
     shouldReconnect: () => true,
   });
 

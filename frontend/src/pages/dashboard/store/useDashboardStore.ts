@@ -1,5 +1,5 @@
-import {create} from "zustand";
-import type {DashboardInfo} from "../hooks/useDashboardLogic";
+import { create } from "zustand";
+import type { DashboardInfo } from "../hooks/useDashboardLogic";
 
 interface DashboardStore {
   dashboardInfo: DashboardInfo | null;
@@ -8,5 +8,5 @@ interface DashboardStore {
 
 export const useDashboardStore = create<DashboardStore>((set) => ({
   dashboardInfo: null,
-  setDashboardInfo: (dashboardInfo) => set({dashboardInfo}),
+  setDashboardInfo: (dashboardInfo) => set({ dashboardInfo }),
 }));

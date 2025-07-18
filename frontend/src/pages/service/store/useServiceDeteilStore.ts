@@ -1,4 +1,4 @@
-import {create} from "zustand";
+import { create } from "zustand";
 import type {
   Incident,
   Service,
@@ -29,11 +29,11 @@ const initialState = {
 
 export const useServiceDetailStore = create<ServiceDetailStore>((set) => ({
   ...initialState,
-  setDeleteIncident: (deleteIncident) => set({deleteIncident}),
-  setResolveIncident: (resolveIncident) => set({resolveIncident}),
-  setServiceDetailData: (serviceDetailData) => set({serviceDetailData}),
-  setIncidentsData: (incidentsData) => set({incidentsData}),
-  setServiceStatsData: (serviceStatsData) => set({serviceStatsData}),
+  setDeleteIncident: (deleteIncident) => set({ deleteIncident }),
+  setResolveIncident: (resolveIncident) => set({ resolveIncident }),
+  setServiceDetailData: (serviceDetailData) => set({ serviceDetailData }),
+  setIncidentsData: (incidentsData) => set({ incidentsData }),
+  setServiceStatsData: (serviceStatsData) => set({ serviceStatsData }),
   setUpdateServiceStatsData: (serviceStatsData) =>
     set((store) => {
       if (!serviceStatsData) return store;

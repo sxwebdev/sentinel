@@ -1,6 +1,6 @@
 import { Loader } from "@/entities/loader/loader";
-import {lazy, Suspense} from "react";
-import {BrowserRouter, Route, Routes} from "react-router";
+import { lazy, Suspense } from "react";
+import { BrowserRouter, Route, Routes } from "react-router";
 import { Toaster } from "sonner";
 
 function App() {

@@ -10,14 +10,13 @@ import {
   TableBody,
   TableCell,
 } from "@/shared/components/ui";
-import {flexRender} from "@tanstack/react-table";
-import {useServiceTable} from "./hooks/useServiceTable";
-import {Loader} from "@/entities/loader/loader";
-import {PaginationBar} from "@/entities/paginationBar/paginationBar";
-import {ConfirmDialog} from "@/entities/confirmDialog/confirmDialog";
-import {ServiceUpdate} from "./serviceUpdate";
-import {cn} from "@/shared/lib/utils";
-
+import { flexRender } from "@tanstack/react-table";
+import { useServiceTable } from "./hooks/useServiceTable";
+import { Loader } from "@/entities/loader/loader";
+import { PaginationBar } from "@/entities/paginationBar/paginationBar";
+import { ConfirmDialog } from "@/entities/confirmDialog/confirmDialog";
+import { ServiceUpdate } from "./serviceUpdate";
+import { cn } from "@/shared/lib/utils";
 
 export const ServiceTable = () => {
   const {
@@ -68,14 +67,14 @@ export const ServiceTable = () => {
                           key={header.id}
                           className={cn(
                             "text-center",
-                            idx === 0 && "w-0 whitespace-nowrap"
+                            idx === 0 && "w-0 whitespace-nowrap",
                           )}
                         >
                           {header.isPlaceholder
                             ? null
                             : flexRender(
                                 header.column.columnDef.header,
-                                header.getContext()
+                                header.getContext(),
                               )}
                         </TableHead>
                       );
@@ -105,7 +104,7 @@ export const ServiceTable = () => {
                             <TableCell key={cell.id} className="text-center">
                               {flexRender(
                                 cell.column.columnDef.cell,
-                                cell.getContext()
+                                cell.getContext(),
                               )}
                             </TableCell>
                           ))}

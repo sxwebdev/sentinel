@@ -1,5 +1,5 @@
-import {cn} from "@/shared/lib/utils";
-import {Loader2} from "lucide-react";
+import { cn } from "@/shared/lib/utils";
+import { Loader2 } from "lucide-react";
 
 interface LoaderProps {
   className?: string;
@@ -16,7 +16,7 @@ export const Loader = ({
     <div
       className={cn(
         "flex justify-center items-center",
-        loaderPage && "h-screen"
+        loaderPage && "h-screen",
       )}
     >
       <div className={cn("animate-spin rounded-full", className)}>

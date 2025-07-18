@@ -1,7 +1,7 @@
-import type {ServiceForm} from "@/features/service/types/type";
+import type { ServiceForm } from "@/features/service/types/type";
 import $api from "@/shared/api/baseApi";
 import { useState } from "react";
-import {toast} from "sonner";
+import { toast } from "sonner";
 
 export const useServiceCreate = () => {
   const [isOpenModal, setIsOpenModal] = useState(false);

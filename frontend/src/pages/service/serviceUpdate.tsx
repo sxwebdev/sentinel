@@ -1,6 +1,6 @@
-import {ServiceForm} from "@/features/service/serviceForm";
-import {useServiceUpdate} from "./hooks/useServiceUpdate";
-import {Loader} from "@/entities/loader/loader";
+import { ServiceForm } from "@/features/service/serviceForm";
+import { useServiceUpdate } from "./hooks/useServiceUpdate";
+import { Loader } from "@/entities/loader/loader";
 import {
   Dialog,
   DialogContent,
@@ -29,7 +29,7 @@ export const ServiceUpdate = () => {
       <DialogContent
         className={cn(
           "overflow-y-auto max-h-[90%]  sm:max-w-[90%] lg:max-w-[800px] h-full",
-          isLoading && "flex flex-col"
+          (isLoading || !serviceData) && "flex flex-col",
         )}
       >
         <DialogTitle className="h-fit">Update Service</DialogTitle>
@@ -47,7 +47,7 @@ export const ServiceUpdate = () => {
                 onSubmit={onUpdateService}
               />
             ) : (
-              <div className="flex items-center justify-center h-full">
+              <div className="flex items-center justify-center h-full w-full">
                 <p>Service not found</p>
               </div>
             )}

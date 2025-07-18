@@ -91,7 +91,6 @@ export interface GRPC {
   insecure_tls?: boolean;
 }
 
-
 export interface ServiceForm {
   name: string;
   protocol: string;
