@@ -17,7 +17,7 @@ import (
 // HTTPConfig represents configuration for HTTP monitoring
 type HTTPConfig struct {
 	Timeout   uint64           `json:"timeout" swaggertype:"primitive,integer" example:"30000"`
-	Endpoints []EndpointConfig `json:"endpoints" validate:"required,dive"`
+	Endpoints []EndpointConfig `json:"endpoints" validate:"required,min=1,dive"`
 	Condition string           `json:"condition"`
 }
 

@@ -54,6 +54,10 @@ deps: ## Download dependencies
 test: ## Run tests
 	go test -v ./...
 
+test-api:
+	@echo "Running Sentinel API Integration Tests..."
+	go run ./cmd/testapi test
+
 test-coverage: ## Run tests with coverage
 	go test -v -coverprofile=coverage.out ./...
 	go tool cover -html=coverage.out -o coverage.html

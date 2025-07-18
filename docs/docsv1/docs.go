@@ -852,6 +852,7 @@ const docTemplate = `{
                 },
                 "endpoints": {
                     "type": "array",
+                    "minItems": 1,
                     "items": {
                         "$ref": "#/definitions/monitors.EndpointConfig"
                     }

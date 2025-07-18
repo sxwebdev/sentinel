@@ -477,6 +477,7 @@ func (o *ORMStorage) GetServiceByID(ctx context.Context, id string) (*Service, e
 	sb.JoinWithOption(sqlbuilder.LeftJoin, "incidents", "s.id = incidents.service_id")
 	sb.JoinWithOption(sqlbuilder.LeftJoin, "service_states ss", "s.id = ss.service_id")
 	sb.Where(sb.Equal("s.id", id))
+	sb.GroupBy("s.id")
 
 	query, args := sb.Build()
 	row := o.db.QueryRowContext(ctx, query, args...)
@@ -604,9 +605,25 @@ func (o *ORMStorage) FindServices(ctx context.Context, params FindServicesParams
 	sb.GroupBy("s.id")
 
 	if params.OrderBy != "" {
-		sb.OrderBy(params.OrderBy)
+		// Add table prefix for common column names to avoid ambiguity
+		orderBy := params.OrderBy
+		switch orderBy {
+		case "created_at":
+			orderBy = "s.created_at"
+		case "updated_at":
+			orderBy = "s.updated_at"
+		case "name":
+			orderBy = "s.name"
+		case "protocol":
+			orderBy = "s.protocol"
+		case "status":
+			orderBy = "ss.status"
+		case "last_check":
+			orderBy = "ss.last_check"
+		}
+		sb.OrderBy(orderBy)
 	} else {
-		sb.OrderBy("name")
+		sb.OrderBy("s.name")
 	}
 
 	res := dbutils.FindResponseWithCount[*Service]{}

@@ -30,7 +30,10 @@ func Pagination(page, pageSize *uint32, opts ...PaginationOption) (limit, offset
 		limit = *pageSize
 	}
 
-	if page != nil && *page != 0 {
+	if page != nil {
+		if *page == 0 {
+			return 0, 0, fmt.Errorf("pagination error: page cannot be 0, must be >= 1")
+		}
 		offset = (*page - 1) * limit
 	}
 

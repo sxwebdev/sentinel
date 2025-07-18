@@ -21,7 +21,7 @@ func convertServiceToDTO(service *storage.Service) (ServiceDTO, error) {
 		}
 	}
 
-	return ServiceDTO{
+	dto := ServiceDTO{
 		ID:                 service.ID,
 		Name:               service.Name,
 		Protocol:           service.Protocol,
@@ -40,8 +40,13 @@ func convertServiceToDTO(service *storage.Service) (ServiceDTO, error) {
 		ConsecutiveFails:   service.ConsecutiveFails,
 		ConsecutiveSuccess: service.ConsecutiveSuccess,
 		TotalChecks:        service.TotalChecks,
-		ResponseTime:       uint32(service.ResponseTime.Milliseconds()),
-	}, nil
+	}
+
+	if service.ResponseTime != nil {
+		dto.ResponseTime = uint32(service.ResponseTime.Milliseconds())
+	}
+
+	return dto, nil
 }
 
 // getDashboardStats calculates dashboard statistics
