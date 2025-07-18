@@ -290,14 +290,14 @@ func (s *Server) handleFindServices(c *fiber.Ctx) error {
 
 	// Parse query parameters
 	params := struct {
-		Name      string   `json:"name" query:"name"`
-		Tags      []string `json:"tags" query:"tags"`
-		Status    string   `json:"status" query:"status" validate:"omitempty,oneof=up down"`
-		IsEnabled *bool    `json:"is_enabled" query:"is_enabled"`
-		Protocol  string   `json:"protocol" query:"protocol" validate:"omitempty,oneof=http tcp grpc"`
-		OrderBy   string   `json:"order_by" query:"order_by" validate:"omitempty,oneof=name created_at"`
-		Page      *uint32  `json:"page" query:"page"`
-		PageSize  *uint32  `json:"page_size" query:"page_size"`
+		Name      string   `query:"name"`
+		Tags      []string `query:"tags"`
+		Status    string   `query:"status" validate:"omitempty,oneof=up down"`
+		IsEnabled *bool    `query:"is_enabled"`
+		Protocol  string   `query:"protocol" validate:"omitempty,oneof=http tcp grpc"`
+		OrderBy   string   `query:"order_by" validate:"omitempty,oneof=name created_at"`
+		Page      *uint32  `query:"page" validate:"omitempty,gte=1"`
+		PageSize  *uint32  `query:"page_size" validate:"omitempty,gte=1,lte=100"`
 	}{}
 	if err := c.QueryParser(&params); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
@@ -434,6 +434,14 @@ func (s *Server) handleAPIServiceIncidents(c *fiber.Ctx) error {
 		})
 	}
 
+	// First check if service exists
+	_, err := s.monitorService.GetServiceByID(c.Context(), serviceID)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
+			Error: "service not found: " + serviceID,
+		})
+	}
+
 	incidents, err := s.storage.FindIncidents(c.Context(), storage.FindIncidentsParams{
 		ID:        params.IncidentID,
 		ServiceID: serviceID,
@@ -481,6 +489,14 @@ func (s *Server) handleAPIServiceStats(c *fiber.Ctx) error {
 	days, err := strconv.Atoi(daysStr)
 	if err != nil {
 		days = 30
+	}
+
+	// First check if service exists
+	_, err = s.monitorService.GetServiceByID(c.Context(), serviceID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(ErrorResponse{
+			Error: err.Error(),
+		})
 	}
 
 	since := time.Now().AddDate(0, 0, -days)

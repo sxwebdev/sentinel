@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"encoding/json"
 	"time"
 
 	"github.com/oklog/ulid/v2"
@@ -37,7 +36,7 @@ type serviceRow struct {
 	ConsecutiveFails   int
 	ConsecutiveSuccess int
 	TotalChecks        int
-	ResponseTime       time.Duration
+	ResponseTime       *time.Duration
 }
 
 // Service represents a monitored service
@@ -62,34 +61,7 @@ type Service struct {
 	ConsecutiveFails   int                 `json:"consecutive_fails"`
 	ConsecutiveSuccess int                 `json:"consecutive_success"`
 	TotalChecks        int                 `json:"total_checks"`
-	ResponseTime       time.Duration       `json:"response_time" swaggertype:"primitive,integer"`
-}
-
-// ServiceState represents the current state of a monitored service
-type ServiceState struct {
-	Status             ServiceStatus `json:"status"`
-	LastCheck          *time.Time    `json:"last_check,omitempty"`
-	NextCheck          *time.Time    `json:"next_check,omitempty"`
-	LastError          *string       `json:"last_error,omitempty"`
-	ConsecutiveFails   int           `json:"consecutive_fails"`
-	ConsecutiveSuccess int           `json:"consecutive_success"`
-	TotalChecks        int           `json:"total_checks"`
-	ResponseTime       time.Duration `json:"response_time" swaggertype:"primitive,integer"`
-}
-
-// MarshalJSON кастомно сериализует LastCheck и NextCheck, чтобы если они нулевые — не попадали в json
-func (s ServiceState) MarshalJSON() ([]byte, error) {
-	type Alias ServiceState
-	type outStruct struct {
-		Alias
-		LastCheck *time.Time `json:"last_check,omitempty"`
-		NextCheck *time.Time `json:"next_check,omitempty"`
-	}
-	return json.Marshal(&outStruct{
-		Alias:     (Alias)(s),
-		LastCheck: s.LastCheck,
-		NextCheck: s.NextCheck,
-	})
+	ResponseTime       *time.Duration      `json:"response_time" swaggertype:"primitive,integer"`
 }
 
 // ServiceStatus represents the current status of a service
