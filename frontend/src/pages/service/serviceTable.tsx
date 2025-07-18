@@ -167,7 +167,7 @@ export const ServiceTable = ({protocols}: ServiceTableProps) => {
                     {table.getRowModel().rows?.length ? (
                       table.getRowModel().rows.map((row) => (
                         <TableRow
-                          key={row.original.service.id}
+                          key={row.original?.service?.id}
                           data-state={row.getIsSelected() && "selected"}
                         >
                           {row.getVisibleCells().map((cell) => (

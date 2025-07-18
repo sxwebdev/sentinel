@@ -19,7 +19,7 @@ interface ServiceTableStore {
     pageSize: number;
     tags: string[] | undefined;
     protocol: string | undefined;
-    status: string | undefined
+    status: string | undefined;
   };
   setData: (data: Service[] | null) => void;
   setFilters: (value: Partial<ServiceTableStore["filters"]>) => void;
@@ -52,7 +52,7 @@ const initialState = {
     pageSize: 10,
     tags: undefined,
     protocol: undefined,
-    status: undefined
+    status: undefined,
   },
 };
 
@@ -72,12 +72,14 @@ export const useServiceTableStore = create<ServiceTableStore>((set) => ({
     set((state) => {
       if (!updateService) return {data: state.data};
       const exists = state.data?.some(
-        (ser) => ser.service.id === updateService.service.id
+        (ser) => ser?.service?.id === updateService?.service?.id
       );
       return {
         data: exists
           ? state.data?.map((ser) =>
-              ser.service.id === updateService.service.id ? updateService : ser
+              ser.service?.id === updateService.service?.id
+                ? updateService
+                : ser
             )
           : [...(state.data ?? []), updateService],
       };
@@ -88,19 +90,19 @@ export const useServiceTableStore = create<ServiceTableStore>((set) => ({
     set((state) => {
       if (!updateService) return {data: state.data};
       const exists = state.data?.some(
-        (ser) => ser.service.id === updateService.service.id
+        (ser) => ser?.service?.id === updateService?.service?.id
       );
       if (!exists) return {data: [...(state.data ?? [])]};
       return {
         data: state.data?.map((ser) =>
-          ser.service.id === updateService.service.id ? updateService : ser
+          ser.service?.id === updateService.service?.id ? updateService : ser
         ),
       };
     }),
   deleteServiceInData: (deleteServiceId) =>
     set((state) => {
       const exists = state.data?.some(
-        (ser) => ser.service.id === deleteServiceId
+        (ser) => ser.service?.id === deleteServiceId
       );
 
       return {
