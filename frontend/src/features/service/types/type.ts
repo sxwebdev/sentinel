@@ -18,45 +18,29 @@ export interface ServiceStats {
 }
 
 export interface Service {
-  service: {
-    id: string;
-    name: string;
-    protocol: string;
-    interval: number;
-    timeout: number;
-    retries: number;
-    tags: string[];
-    config: {
-      grpc: GRPC | null;
-      http: {
-        condition: string;
-        endpoints: {
-          expected_status: number;
-          method: string;
-          name: string;
-          url: string;
-        }[];
-      } | null;
-      tcp: object | null;
-    };
-    is_enabled: boolean;
-    total_incidents: number;
-    active_incidents: number;
-  };
-  state: {
-    id: string;
-    service_id: string;
-    status: string;
-    last_check: string;
-    next_check: string;
-    consecutive_fails: number;
-    consecutive_success: number;
-    total_checks: number;
-    last_error?: string;
-    response_time_ns: number;
-    created_at: string;
-    updated_at: string;
-  };
+        active_incidents: number,
+        config: {
+          grpc: GRPC | null,
+          http: HTTP | null,
+          tcp: TCP | null,
+        },
+        consecutive_fails: number,
+        consecutive_success: number,
+        id: string,
+        interval: number,
+        is_enabled: boolean,
+        last_check: string,
+        last_error: string,
+        name: string,
+        next_check: string,
+        protocol: string,
+        response_time: number,
+        retries: number,
+        status: "up" | "down" | "unknown",
+        tags: string[],
+        timeout: number,
+        total_checks: number,
+        total_incidents: number
 }
 
 export interface HTTPEndpoint {

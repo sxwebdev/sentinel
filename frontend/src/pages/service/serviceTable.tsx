@@ -9,11 +9,8 @@ import {
   TableHead,
   TableBody,
   TableCell,
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
   SelectItem,
+  SelectWithClear,
 } from "@/shared/components/ui";
 import {flexRender} from "@tanstack/react-table";
 import {useServiceTable} from "./hooks/useServiceTable";
@@ -35,7 +32,6 @@ export const ServiceTable = ({protocols}: ServiceTableProps) => {
     filters,
     servicesCount,
     allTags,
-    countAllTags,
     setFilters,
     deleteServiceId,
     setDeleteServiceId,
@@ -61,70 +57,61 @@ export const ServiceTable = ({protocols}: ServiceTableProps) => {
           </CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-6">
-          <div className="flex justify-between items-center w-full gap-3">
-            {allTags !== null &&
-              countAllTags !== null &&
-              protocols !== null && (
-                <>
-                  <Search
-                    className="w-full"
-                    placeholder="Search"
-                    value={filters.search}
-                    onChange={(value) =>
-                      setFilters({search: value ?? undefined})
-                    }
-                    clear
-                  />
-                  <MultiSelect
-                    options={
-                      allTags?.map((tag) => ({
-                        label: tag,
-                        value: tag,
-                      })) ?? []
-                    }
-                    value={
-                      filters.tags?.map((tag) => ({
-                        label: tag,
-                        value: tag,
-                      })) ?? []
-                    }
-                    onChange={(value) => {
-                      console.log(value);
-                      setFilters({tags: value.map((v) => v.value)});
-                    }}
-                    placeholder="Select tags"
-                  />
-                  <Select
-                    value={filters.protocol}
-                    onValueChange={(value) => {
-                      console.log(value);
-                      setFilters({protocol: value});
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select protocol" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.keys(protocols).map((protocol) => {
-                        return (
-                          <SelectItem key={protocol} value={protocol}>
-                            {protocol}
-                          </SelectItem>
-                        );
-                      })}
-                    </SelectContent>
-                  </Select>
-                  <Select onValueChange={(value)=>{setFilters({status:value})}}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="up">Up</SelectItem>
-                      <SelectItem value="down">Down</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </>
-              )}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 justify-between items-center w-full gap-3 ">
+            <Search
+              className="w-full"
+              placeholder="Search"
+              value={filters.search}
+              onChange={(value) => setFilters({search: value ?? undefined})}
+              clear
+            />
+            <MultiSelect
+              options={
+                allTags?.map((tag) => ({
+                  label: tag,
+                  value: tag,
+                })) ?? []
+              }
+              value={
+                filters.tags?.map((tag) => ({
+                  label: tag,
+                  value: tag,
+                })) ?? []
+              }
+              onChange={(value) => {
+                setFilters({tags: value.map((v) => v.value)});
+              }}
+              placeholder="Select tags"
+            />
+            <SelectWithClear
+              className="w-full"
+              value={filters.protocol || ""}
+              onValueChange={(value) => {
+                setFilters({protocol: value || undefined});
+              }}
+              onClear={() => setFilters({protocol: undefined})}
+              placeholder="Select protocol"
+            >
+              {Object.keys(protocols).map((protocol) => {
+                return (
+                  <SelectItem key={protocol} value={protocol}>
+                    {protocol}
+                  </SelectItem>
+                );
+              })}
+            </SelectWithClear>
+            <SelectWithClear
+              className="w-full"
+              value={filters.status || ""}
+              onValueChange={(value) => {
+                setFilters({status: value || undefined});
+              }}
+              onClear={() => setFilters({status: undefined})}
+              placeholder="Select status"
+            >
+              <SelectItem value="up">Up</SelectItem>
+              <SelectItem value="down">Down</SelectItem>
+            </SelectWithClear>
           </div>
           <div className="rounded-xl overflow-hidden border border-border">
             <Table>
@@ -165,21 +152,23 @@ export const ServiceTable = ({protocols}: ServiceTableProps) => {
                 ) : (
                   <>
                     {table.getRowModel().rows?.length ? (
-                      table.getRowModel().rows.map((row) => (
-                        <TableRow
-                          key={row.original?.service?.id}
-                          data-state={row.getIsSelected() && "selected"}
-                        >
-                          {row.getVisibleCells().map((cell) => (
-                            <TableCell key={cell.id} className="text-center">
-                              {flexRender(
-                                cell.column.columnDef.cell,
-                                cell.getContext()
-                              )}
-                            </TableCell>
-                          ))}
-                        </TableRow>
-                      ))
+                      table.getRowModel().rows.map((row) => {
+                        return (
+                          <TableRow
+                            key={row.original?.id}
+                            data-state={row.getIsSelected() && "selected"}
+                          >
+                            {row.getVisibleCells().map((cell) => (
+                              <TableCell key={cell.id} className="text-center">
+                                {flexRender(
+                                  cell.column.columnDef.cell,
+                                  cell.getContext()
+                                )}
+                              </TableCell>
+                            ))}
+                          </TableRow>
+                        );
+                      })
                     ) : (
                       <TableRow>
                         <TableCell

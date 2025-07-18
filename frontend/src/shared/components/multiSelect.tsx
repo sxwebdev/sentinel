@@ -22,8 +22,7 @@ export default function MultiSelect({
           label: placeholder,
         }}
         value={value}
-
-        defaultOptions={options}
+        options={options}
         placeholder={placeholder}
         className={className}
         onChange={onChange}

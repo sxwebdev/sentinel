@@ -64,7 +64,7 @@ export const useServiceTableStore = create<ServiceTableStore>((set) => ({
   setAllTags: (allTags) => set({allTags}),
   setCountAllTags: (countAllTags) => set({countAllTags}),
   setDeleteServiceId: (deleteServiceId) => set({deleteServiceId}),
-  setFilters: (value) => set({filters: {...initialState.filters, ...value}}),
+  setFilters: (value) => set((state) => ({filters: {...state.filters, ...value}})),
   setUpdateServiceId: (updateServiceId) => set({updateServiceId}),
   setPage: (page) => set({filters: {...initialState.filters, page}}),
   setServicesCount: (servicesCount) => set({servicesCount}),
@@ -72,12 +72,12 @@ export const useServiceTableStore = create<ServiceTableStore>((set) => ({
     set((state) => {
       if (!updateService) return {data: state.data};
       const exists = state.data?.some(
-        (ser) => ser?.service?.id === updateService?.service?.id
+        (ser) => ser?.id === updateService?.id
       );
       return {
         data: exists
           ? state.data?.map((ser) =>
-              ser.service?.id === updateService.service?.id
+              ser.id === updateService.id
                 ? updateService
                 : ser
             )
@@ -90,24 +90,24 @@ export const useServiceTableStore = create<ServiceTableStore>((set) => ({
     set((state) => {
       if (!updateService) return {data: state.data};
       const exists = state.data?.some(
-        (ser) => ser?.service?.id === updateService?.service?.id
+        (ser) => ser?.id === updateService?.id
       );
       if (!exists) return {data: [...(state.data ?? [])]};
       return {
         data: state.data?.map((ser) =>
-          ser.service?.id === updateService.service?.id ? updateService : ser
+          ser.id === updateService.id ? updateService : ser
         ),
       };
     }),
   deleteServiceInData: (deleteServiceId) =>
     set((state) => {
       const exists = state.data?.some(
-        (ser) => ser.service?.id === deleteServiceId
+        (ser) => ser.id === deleteServiceId
       );
 
       return {
         data: exists
-          ? state.data?.filter((ser) => ser.service.id !== deleteServiceId)
+          ? state.data?.filter((ser) => ser.id !== deleteServiceId)
           : state.data,
       };
     }),

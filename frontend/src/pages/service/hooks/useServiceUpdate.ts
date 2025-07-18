@@ -20,7 +20,7 @@ export const useServiceUpdate = () => {
     await $api
       .get(`/services/${updateServiceId}`)
       .then((res) => {
-        setServiceData(res.data.service);
+        setServiceData(res.data);
       })
       .finally(() => {
         setIsLoading(false);

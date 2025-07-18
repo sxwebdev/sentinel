@@ -39,7 +39,7 @@ const ServiceDetail = () => {
 
   const cardStats = [
     {
-      value: serviceDetailData?.service.total_incidents,
+      value: serviceDetailData?.total_incidents,
       key: "total_incidents",
       description: "Total Incidents",
     },
@@ -91,7 +91,7 @@ const ServiceDetail = () => {
             Back
           </Link>
           <h1 className={cn("text-2xl font-bold", isMobile && "text-lg")}>
-            Service: {serviceDetailData?.service.name}
+            Service: {serviceDetailData?.name}
           </h1>
           <div
             className={cn(
@@ -102,7 +102,7 @@ const ServiceDetail = () => {
             <Button
               size="sm"
               className={cn(isMobile && "w-full")}
-              onClick={() => onCheckService(serviceDetailData?.service.id)}
+              onClick={() => onCheckService(serviceDetailData?.id)}
             >
               <PlayIcon />
               Trigger Check
@@ -138,15 +138,15 @@ const ServiceDetail = () => {
                 <Badge
                   className={cn(
                     "text-sm font-medium",
-                    serviceDetailData?.state.status === "up" &&
+                    serviceDetailData?.status === "up" &&
                       "text-green bg-green-light",
-                    serviceDetailData?.state.status === "down" &&
+                    serviceDetailData?.status === "down" &&
                       "text-red bg-red-light",
-                    serviceDetailData?.state.status === "unknown" &&
+                    serviceDetailData?.status === "unknown" &&
                       "text-orange bg-orange-light",
                   )}
                 >
-                  {serviceDetailData?.state.status}
+                  {serviceDetailData?.status}
                 </Badge>
               </span>
             </div>
@@ -156,7 +156,7 @@ const ServiceDetail = () => {
               </span>
               <span>
                 <ActivityIndicatorSVG
-                  active={serviceDetailData?.service.is_enabled}
+                  active={serviceDetailData?.is_enabled}
                   size={24}
                 />
               </span>
@@ -166,7 +166,7 @@ const ServiceDetail = () => {
                 Protocol:
               </span>
               <span className="font-medium">
-                {serviceDetailData?.service.protocol}
+                {serviceDetailData?.protocol}
               </span>
             </div>
             <div className="flex items-center gap-2 justify-between">
@@ -174,7 +174,7 @@ const ServiceDetail = () => {
                 Total Checks:
               </span>
               <span className="font-medium">
-                {serviceDetailData?.state.total_checks}
+                {serviceDetailData?.total_checks}
               </span>
             </div>
             <div className="flex items-center gap-2 justify-between">
@@ -182,7 +182,7 @@ const ServiceDetail = () => {
                 Consecutive Success:
               </span>
               <span className="font-medium">
-                {serviceDetailData?.state.consecutive_success}
+                {serviceDetailData?.consecutive_success}
               </span>
             </div>
             <div className="flex items-center gap-2 justify-between">
@@ -190,7 +190,7 @@ const ServiceDetail = () => {
                 Consecutive Fails:
               </span>
               <span className="font-medium">
-                {serviceDetailData?.state.consecutive_fails}
+                {serviceDetailData?.consecutive_fails}
               </span>
             </div>
             <div className="flex items-center gap-2 justify-between">
@@ -198,7 +198,7 @@ const ServiceDetail = () => {
                 Last Check:
               </span>
               <span className="font-medium">
-                {new Date(serviceDetailData?.state.last_check).toLocaleString(
+                {new Date(serviceDetailData?.last_check).toLocaleString(
                   "ru-RU",
                   {
                     year: "numeric",
@@ -212,7 +212,7 @@ const ServiceDetail = () => {
               </span>
             </div>
 
-            {serviceDetailData.state?.last_error && (
+            {serviceDetailData.last_error && (
               <Card className="flex flex-row gap-2 p-4 border-red bg-red-light mt-2">
                 <CardTitle className="text-red whitespace-nowrap">
                   Last Error:
@@ -220,7 +220,7 @@ const ServiceDetail = () => {
                 <CardDescription className="text-red">
                   <div
                     dangerouslySetInnerHTML={{
-                      __html: serviceDetailData.state.last_error,
+                      __html: serviceDetailData.last_error,
                     }}
                   />
                 </CardDescription>

@@ -44,7 +44,7 @@ export const useServiceDetail = () => {
     const data = JSON.parse(lastMessage.data);
     switch (data.type) {
       case "service_updated_state":
-        if (data.data.service.id === id) {
+        if (data.data.id === id) {
           setUpdateServiceStatsData(data.data);
         }
         break;
@@ -92,7 +92,7 @@ export const useServiceDetail = () => {
 
   const getIncidents = async () => {
     const res = await $api.get(`/services/${id}/incidents`);
-    setIncidentsData(res.data);
+    setIncidentsData(res.data.items);
   };
 
   const getServiceStats = async () => {

@@ -40,8 +40,7 @@ export const useServiceDetailStore = create<ServiceDetailStore>((set) => ({
 
       return {
         serviceDetailData: {
-          service: serviceStatsData.service,
-          state: serviceStatsData.state,
+          ...serviceStatsData,
         },
       };
     }),
