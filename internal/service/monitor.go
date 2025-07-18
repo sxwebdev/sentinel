@@ -117,7 +117,7 @@ func (m *MonitorService) RecordSuccess(ctx context.Context, serviceID string, re
 	serviceState.ConsecutiveFails = 0
 	serviceState.ConsecutiveSuccess++
 	serviceState.TotalChecks++
-	serviceState.LastError = ""
+	serviceState.LastError = nil
 
 	// Save to database
 	if err := m.storage.UpdateServiceState(ctx, serviceState); err != nil {
@@ -156,7 +156,7 @@ func (m *MonitorService) RecordFailure(ctx context.Context, serviceID string, ch
 	serviceState.ConsecutiveFails++
 	serviceState.ConsecutiveSuccess = 0
 	serviceState.TotalChecks++
-	serviceState.LastError = checkErr.Error()
+	serviceState.LastError = utils.Pointer(checkErr.Error())
 
 	// Save to database
 	if err := m.storage.UpdateServiceState(ctx, serviceState); err != nil {
@@ -308,7 +308,7 @@ func (m *MonitorService) CheckService(ctx context.Context, service *storage.Serv
 	serviceState.ConsecutiveFails = 0
 	serviceState.ConsecutiveSuccess++
 	serviceState.TotalChecks++
-	serviceState.LastError = ""
+	serviceState.LastError = nil
 
 	// Resolve incident if service was down before
 	if wasDown {

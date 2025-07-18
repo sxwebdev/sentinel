@@ -184,7 +184,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/dbutils.FindResponseWithCount-web_ServiceWithState"
+                                "$ref": "#/definitions/dbutils.FindResponseWithCount-web_ServiceDTO"
                             }
                         }
                     },
@@ -267,7 +267,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Service details with state",
                         "schema": {
-                            "$ref": "#/definitions/web.ServiceWithState"
+                            "$ref": "#/definitions/web.ServiceDTO"
                         }
                     },
                     "400": {
@@ -730,7 +730,7 @@ const docTemplate = `{
                 }
             }
         },
-        "dbutils.FindResponseWithCount-web_ServiceWithState": {
+        "dbutils.FindResponseWithCount-web_ServiceDTO": {
             "type": "object",
             "properties": {
                 "count": {
@@ -739,7 +739,7 @@ const docTemplate = `{
                 "items": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/web.ServiceWithState"
+                        "$ref": "#/definitions/web.ServiceDTO"
                     }
                 }
             }
@@ -891,52 +891,6 @@ const docTemplate = `{
                 "ServiceProtocolTypeTCP",
                 "ServiceProtocolTypeGRPC"
             ]
-        },
-        "storage.ServiceStateRecord": {
-            "type": "object",
-            "properties": {
-                "consecutive_fails": {
-                    "type": "integer"
-                },
-                "consecutive_success": {
-                    "type": "integer"
-                },
-                "created_at": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "last_check": {
-                    "type": "string"
-                },
-                "last_error": {
-                    "type": "string"
-                },
-                "next_check": {
-                    "type": "string"
-                },
-                "response_time_ns": {
-                    "type": "integer"
-                },
-                "service_id": {
-                    "type": "string"
-                },
-                "status": {
-                    "description": "\"up\", \"down\", \"unknown\"",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/storage.ServiceStatus"
-                        }
-                    ]
-                },
-                "total_checks": {
-                    "type": "integer"
-                },
-                "updated_at": {
-                    "type": "string"
-                }
-            }
         },
         "storage.ServiceStatus": {
             "type": "string",
@@ -1110,6 +1064,14 @@ const docTemplate = `{
                 "config": {
                     "$ref": "#/definitions/monitors.Config"
                 },
+                "consecutive_fails": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "consecutive_success": {
+                    "type": "integer",
+                    "example": 5
+                },
                 "id": {
                     "type": "string",
                     "example": "service-1"
@@ -1122,9 +1084,21 @@ const docTemplate = `{
                     "type": "boolean",
                     "example": true
                 },
+                "last_check": {
+                    "type": "string",
+                    "example": "2023-10-01T12:00:00Z"
+                },
+                "last_error": {
+                    "type": "string",
+                    "example": "Connection timeout"
+                },
                 "name": {
                     "type": "string",
                     "example": "Web Server"
+                },
+                "next_check": {
+                    "type": "string",
+                    "example": "2023-10-01T12:05:00Z"
                 },
                 "protocol": {
                     "allOf": [
@@ -1134,9 +1108,21 @@ const docTemplate = `{
                     ],
                     "example": "http"
                 },
+                "response_time": {
+                    "type": "integer",
+                    "example": 150000000
+                },
                 "retries": {
                     "type": "integer",
                     "example": 3
+                },
+                "status": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/storage.ServiceStatus"
+                        }
+                    ],
+                    "example": "up / down / unknown"
                 },
                 "tags": {
                     "type": "array",
@@ -1151,6 +1137,10 @@ const docTemplate = `{
                 "timeout": {
                     "type": "integer",
                     "example": 5000
+                },
+                "total_checks": {
+                    "type": "integer",
+                    "example": 100
                 },
                 "total_incidents": {
                     "type": "integer",
@@ -1185,17 +1175,6 @@ const docTemplate = `{
                 "uptime_percentage": {
                     "type": "number",
                     "example": 95
-                }
-            }
-        },
-        "web.ServiceWithState": {
-            "type": "object",
-            "properties": {
-                "service": {
-                    "$ref": "#/definitions/web.ServiceDTO"
-                },
-                "state": {
-                    "$ref": "#/definitions/storage.ServiceStateRecord"
                 }
             }
         },

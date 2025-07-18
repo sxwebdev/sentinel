@@ -56,23 +56,21 @@ func (s *Server) broadcastServiceTriggered(ctx context.Context, data receiver.Tr
 		return nil
 	}
 
-	serviceWithState := &ServiceWithState{
-		Service: ServiceDTO{
-			ID: data.Svc.ID,
-		},
+	svc := ServiceDTO{
+		ID: data.Svc.ID,
 	}
 
 	var err error
 	if data.EventType != receiver.TriggerServiceEventTypeDeleted {
-		serviceWithState, err = s.getServiceWithState(ctx, data.Svc)
+		svc, err = convertServiceToDTO(data.Svc)
 		if err != nil {
-			return fmt.Errorf("failed to get service state: %w", err)
+			return fmt.Errorf("failed to convert service to DTO: %w", err)
 		}
 	}
 
 	update := websocketEvent{
 		Type:      "service_" + data.EventType.String(),
-		Data:      serviceWithState,
+		Data:      svc,
 		Timestamp: time.Now().Unix(),
 	}
 

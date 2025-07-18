@@ -74,21 +74,23 @@ type CreateUpdateServiceRequest struct {
 
 // ServiceDTO represents a service for API responses
 type ServiceDTO struct {
-	ID              string                      `json:"id" example:"service-1"`
-	Name            string                      `json:"name" example:"Web Server"`
-	Protocol        storage.ServiceProtocolType `json:"protocol" example:"http"`
-	Interval        uint32                      `json:"interval" swaggertype:"primitive,integer" example:"30000"`
-	Timeout         uint32                      `json:"timeout" swaggertype:"primitive,integer" example:"5000"`
-	Retries         int                         `json:"retries" example:"3"`
-	Tags            []string                    `json:"tags" example:"web,production"`
-	Config          monitors.Config             `json:"config"`
-	IsEnabled       bool                        `json:"is_enabled" example:"true"`
-	ActiveIncidents int                         `json:"active_incidents" example:"2"`
-	TotalIncidents  int                         `json:"total_incidents" example:"10"`
-}
-
-// ServiceWithState represents a service with its current state
-type ServiceWithState struct {
-	Service ServiceDTO                  `json:"service"`
-	State   *storage.ServiceStateRecord `json:"state"`
+	ID                 string                      `json:"id" example:"service-1"`
+	Name               string                      `json:"name" example:"Web Server"`
+	Protocol           storage.ServiceProtocolType `json:"protocol" example:"http"`
+	Interval           uint32                      `json:"interval" swaggertype:"primitive,integer" example:"30000"`
+	Timeout            uint32                      `json:"timeout" swaggertype:"primitive,integer" example:"5000"`
+	Retries            int                         `json:"retries" example:"3"`
+	Tags               []string                    `json:"tags" example:"web,production"`
+	Config             monitors.Config             `json:"config"`
+	IsEnabled          bool                        `json:"is_enabled" example:"true"`
+	ActiveIncidents    int                         `json:"active_incidents" example:"2"`
+	TotalIncidents     int                         `json:"total_incidents" example:"10"`
+	Status             storage.ServiceStatus       `json:"status" example:"up / down / unknown"`
+	LastCheck          *time.Time                  `json:"last_check,omitempty" example:"2023-10-01T12:00:00Z"`
+	NextCheck          *time.Time                  `json:"next_check,omitempty" example:"2023-10-01T12:05:00Z"`
+	LastError          *string                     `json:"last_error,omitempty" example:"Connection timeout"`
+	ConsecutiveFails   int                         `json:"consecutive_fails" example:"1"`
+	ConsecutiveSuccess int                         `json:"consecutive_success" example:"5"`
+	TotalChecks        int                         `json:"total_checks" example:"100"`
+	ResponseTime       uint32                      `json:"response_time" swaggertype:"primitive,integer" example:"150000000"`
 }

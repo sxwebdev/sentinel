@@ -10,25 +10,6 @@ import (
 	"github.com/sxwebdev/sentinel/internal/utils"
 )
 
-// getServiceWithState gets a service with its current state
-func (s *Server) getServiceWithState(ctx context.Context, service *storage.Service) (*ServiceWithState, error) {
-	// Get service state
-	serviceState, err := s.storage.GetServiceState(ctx, service.ID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get service state: %w", err)
-	}
-
-	res, err := convertServiceToDTO(service)
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert service to DTO: %w", err)
-	}
-
-	return &ServiceWithState{
-		Service: res,
-		State:   serviceState,
-	}, nil
-}
-
 // convertServiceToDTO converts a storage.Service to ServiceDTO
 func convertServiceToDTO(service *storage.Service) (ServiceDTO, error) {
 	config := monitors.Config{}
@@ -41,17 +22,25 @@ func convertServiceToDTO(service *storage.Service) (ServiceDTO, error) {
 	}
 
 	return ServiceDTO{
-		ID:              service.ID,
-		Name:            service.Name,
-		Protocol:        service.Protocol,
-		Interval:        uint32(service.Interval.Milliseconds()),
-		Timeout:         uint32(service.Timeout.Milliseconds()),
-		Retries:         service.Retries,
-		Tags:            service.Tags,
-		Config:          config,
-		IsEnabled:       service.IsEnabled,
-		ActiveIncidents: service.ActiveIncidents,
-		TotalIncidents:  service.TotalIncidents,
+		ID:                 service.ID,
+		Name:               service.Name,
+		Protocol:           service.Protocol,
+		Interval:           uint32(service.Interval.Milliseconds()),
+		Timeout:            uint32(service.Timeout.Milliseconds()),
+		Retries:            service.Retries,
+		Tags:               service.Tags,
+		Config:             config,
+		IsEnabled:          service.IsEnabled,
+		ActiveIncidents:    service.ActiveIncidents,
+		TotalIncidents:     service.TotalIncidents,
+		Status:             service.Status,
+		LastCheck:          service.LastCheck,
+		NextCheck:          service.NextCheck,
+		LastError:          service.LastError,
+		ConsecutiveFails:   service.ConsecutiveFails,
+		ConsecutiveSuccess: service.ConsecutiveSuccess,
+		TotalChecks:        service.TotalChecks,
+		ResponseTime:       uint32(service.ResponseTime.Milliseconds()),
 	}, nil
 }
 
