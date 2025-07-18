@@ -13,23 +13,23 @@ import {
 import { flexRender } from "@tanstack/react-table";
 import { useServiceTable } from "./hooks/useServiceTable";
 import { Loader } from "@/entities/loader/loader";
-import { PaginationBar } from "@/entities/paginationBar/paginationBar";
 import { ConfirmDialog } from "@/entities/confirmDialog/confirmDialog";
 import { ServiceUpdate } from "./serviceUpdate";
 import { cn } from "@/shared/lib/utils";
 import { Search } from "@/entities/search/search";
+import { useState } from "react";
+import PaginationTable from "@/shared/components/paginationTable";
 
 export const ServiceTable = () => {
   const {
     table,
     filters,
-    setPage,
-    data,
+    servicesCount,
+    setFilters,
     deleteServiceId,
     setDeleteServiceId,
     onDeleteService,
     isLoadingAllServices,
-    setSearch,
   } = useServiceTable();
 
   return (
@@ -50,11 +50,12 @@ export const ServiceTable = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-6">
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center w-full gap-3">
             <Search
+              className="w-full"
               placeholder="Search"
               value={filters.search}
-              onChange={setSearch}
+              onChange={(value) => setFilters({ search: value ?? undefined })}
               clear
             />
           </div>
@@ -69,14 +70,14 @@ export const ServiceTable = () => {
                           key={header.id}
                           className={cn(
                             "text-center",
-                            idx === 0 && "w-0 whitespace-nowrap",
+                            idx === 0 && "w-0 whitespace-nowrap"
                           )}
                         >
                           {header.isPlaceholder
                             ? null
                             : flexRender(
                                 header.column.columnDef.header,
-                                header.getContext(),
+                                header.getContext()
                               )}
                         </TableHead>
                       );
@@ -106,7 +107,7 @@ export const ServiceTable = () => {
                             <TableCell key={cell.id} className="text-center">
                               {flexRender(
                                 cell.column.columnDef.cell,
-                                cell.getContext(),
+                                cell.getContext()
                               )}
                             </TableCell>
                           ))}
@@ -128,13 +129,17 @@ export const ServiceTable = () => {
             </Table>
           </div>
         </CardContent>
-        <PaginationBar
-          page={filters.page}
-          setPage={setPage}
-          total={data?.length ?? 0}
-          pageSize={10}
-          siblingCount={2}
-        />
+        <div className="flex justify-end px-6">
+          <div className="w-fit">
+            <PaginationTable
+              selectedRows={filters.pageSize}
+              setSelectedRows={(value) => setFilters({ pageSize: value })}
+              selectedPage={filters.page}
+              setSelectedPage={(value) => setFilters({ page: value })}
+              totalPages={Math.ceil((servicesCount ?? 0) / filters.pageSize)}
+            />
+          </div>
+        </div>
       </Card>
     </>
   );
