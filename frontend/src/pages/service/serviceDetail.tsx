@@ -10,7 +10,6 @@ import {
   CardTitle,
 } from "@/shared/components/ui";
 import {ArrowLeftIcon, CheckIcon, PlayIcon, TrashIcon} from "lucide-react";
-import {useNavigate} from "react-router";
 import {useIsMobile} from "@/shared/hooks/useIsMobile";
 import {cn} from "@/shared/lib/utils";
 import {InfoCardStats} from "@/entities/infoStatsCard/infoCardStats";
@@ -18,9 +17,9 @@ import type {Incident} from "../../features/service/types/type";
 import {Loader} from "@/entities/loader/loader";
 import {ConfirmDialog} from "@/entities/confirmDialog/confirmDialog";
 import {ActivityIndicatorSVG} from "@/entities/ActivityIndicatorSVG/ActivityIndicatorSVG";
+import {Link} from "react-router";
 
 const ServiceDetail = () => {
-  const navigate = useNavigate();
   const {
     serviceDetailData,
     incidentsData,
@@ -81,18 +80,16 @@ const ServiceDetail = () => {
             isMobile && "flex-col gap-2"
           )}
         >
-          <Button
-            size={"sm"}
-            variant="link"
+          <Link
+            to="/"
             className={cn(
-              "cursor-pointer  text-lg",
+              "text-lg hover:underline flex items-center gap-2",
               isMobile && "w-full text-base"
             )}
-            onClick={() => navigate("/")}
           >
             <ArrowLeftIcon />
             Back
-          </Button>
+          </Link>
           <h1 className={cn("text-2xl font-bold", isMobile && "text-lg")}>
             Service: {serviceDetailData?.service.name}
           </h1>
@@ -220,8 +217,12 @@ const ServiceDetail = () => {
                 <CardTitle className="text-red whitespace-nowrap">
                   Last Error:
                 </CardTitle>
-                  <CardDescription className="text-red">
-                    <div dangerouslySetInnerHTML={{__html: serviceDetailData.state.last_error}} />
+                <CardDescription className="text-red">
+                  <div
+                    dangerouslySetInnerHTML={{
+                      __html: serviceDetailData.state.last_error,
+                    }}
+                  />
                 </CardDescription>
               </Card>
             )}

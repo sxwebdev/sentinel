@@ -1,6 +1,5 @@
 import {
   Badge,
-  Button,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -17,7 +16,7 @@ import {
   type ColumnDef,
 } from "@tanstack/react-table";
 import {useEffect, useMemo} from "react";
-import {useNavigate} from "react-router";
+import {Link} from "react-router";
 import type {Service} from "@features/service/types/type";
 import $api from "@/shared/api/baseApi";
 import {
@@ -47,7 +46,6 @@ export const useServiceTable = () => {
     setUpdateServiceId,
   } = useServiceTableStore();
 
-  const navigate = useNavigate();
   const {onCheckService, getAllServices} = useServiceApi();
 
   const onDeleteService = async () => {
@@ -96,13 +94,12 @@ export const useServiceTable = () => {
         accessorKey: "service",
         cell: ({row}) => {
           return (
-            <Button
-              onClick={() => navigate(`/service/${row.original.service.id}`)}
-              variant="link"
-              className="cursor-pointer font-bold text-sm"
+            <Link
+              to={`/service/${row.original.service.id}`}
+              className="cursor-pointer font-bold text-sm hover:underline"
             >
               {row.original.service.name}
-            </Button>
+            </Link>
           );
         },
       },
