@@ -46,7 +46,22 @@ export const useServiceTable = () => {
     setUpdateServiceId,
   } = useServiceTableStore();
 
-  const { onCheckService, getAllServices } = useServiceApi();
+  const { onCheckService } = useServiceApi();
+
+    const getAllServices = async () => {
+      const res = await $api.get("/services", {
+        params: {
+          filters: {
+            search: filters.search,
+          },
+        },
+      });
+      if (res.data === null) {
+        setData([]);
+      } else {
+        setData(res.data);
+      }
+    };
 
   const onDeleteService = async () => {
     await $api
@@ -242,7 +257,7 @@ export const useServiceTable = () => {
     getAllServices().finally(() => {
       setIsLoadingAllServices(false);
     });
-  }, []);
+  }, [filters.search]);
 
   const table = useReactTable({
     data: data ?? [],

@@ -17,6 +17,7 @@ import { PaginationBar } from "@/entities/paginationBar/paginationBar";
 import { ConfirmDialog } from "@/entities/confirmDialog/confirmDialog";
 import { ServiceUpdate } from "./serviceUpdate";
 import { cn } from "@/shared/lib/utils";
+import { Search } from "@/entities/search/search";
 
 export const ServiceTable = () => {
   const {
@@ -28,6 +29,7 @@ export const ServiceTable = () => {
     setDeleteServiceId,
     onDeleteService,
     isLoadingAllServices,
+    setSearch,
   } = useServiceTable();
 
   return (
@@ -48,14 +50,14 @@ export const ServiceTable = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-6">
-          {/* <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center">
             <Search
               placeholder="Search"
               value={filters.search}
               onChange={setSearch}
               clear
             />
-          </div> */}
+          </div>
           <div className="rounded-xl overflow-hidden border border-border">
             <Table>
               <TableHeader className="bg-gray-100 rounded-t-lg">
