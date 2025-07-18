@@ -415,6 +415,14 @@ paths:
         in: query
         name: order_by
         type: string
+      - description: Page number (for pagination)
+        in: query
+        name: page
+        type: integer
+      - description: Number of items per page (default 20)
+        in: query
+        name: page_size
+        type: integer
       produces:
       - application/json
       responses:

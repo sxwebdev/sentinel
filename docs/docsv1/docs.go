@@ -140,6 +140,18 @@ const docTemplate = `{
                         "description": "Order by field",
                         "name": "order_by",
                         "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page number (for pagination)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of items per page (default 20)",
+                        "name": "page_size",
+                        "in": "query"
                     }
                 ],
                 "responses": {

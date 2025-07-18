@@ -276,6 +276,8 @@ func (s *Server) handleServiceDetail(c *fiber.Ctx) error {
 //	@Param			is_enabled	query		bool				false	"Filter by enabled status"
 //	@Param			protocol	query		string				false	"Filter by protocol"	ENUM("http", "tcp", "grpc")
 //	@Param			order_by	query		string				false	"Order by field"		ENUM("name", "created_at")
+//	@Param			page		query		uint32				false	"Page number (for pagination)"
+//	@Param			page_size	query		uint32				false	"Number of items per page (default 20)"
 //	@Success		200			{array}		ServiceWithState	"List of services with states"
 //	@Failure		500			{object}	ErrorResponse		"Internal server error"
 //	@Router			/services [get]
@@ -289,6 +291,8 @@ func (s *Server) handleFindServices(c *fiber.Ctx) error {
 		IsEnabled *bool    `json:"is_enabled" query:"is_enabled"`
 		Protocol  string   `json:"protocol" query:"protocol" validate:"omitempty,oneof=http tcp grpc"`
 		OrderBy   string   `json:"order_by" query:"order_by" validate:"omitempty,oneof=name created_at"`
+		Page      *uint32  `json:"page" query:"page"`
+		PageSize  *uint32  `json:"page_size" query:"page_size"`
 	}{}
 	if err := c.QueryParser(&params); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
@@ -309,6 +313,8 @@ func (s *Server) handleFindServices(c *fiber.Ctx) error {
 		IsEnabled: params.IsEnabled,
 		Protocol:  params.Protocol,
 		OrderBy:   params.OrderBy,
+		Page:      params.Page,
+		PageSize:  params.PageSize,
 	})
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(ErrorResponse{

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/huandu/go-sqlbuilder"
+	"github.com/sxwebdev/sentinel/pkg/dbutils"
 )
 
 // ORMStorage provides ORM-like functionality using go-sqlbuilder
@@ -400,6 +401,8 @@ type FindServicesParams struct {
 	Protocol  string
 	Tags      []string
 	OrderBy   string
+	Page      *uint32
+	PageSize  *uint32
 }
 
 // GetAllServices finds all services using ORM
@@ -454,6 +457,12 @@ func (o *ORMStorage) FindServices(ctx context.Context, params FindServicesParams
 	} else {
 		sb.OrderBy("name")
 	}
+
+	limit, offset, err := dbutils.Pagination(params.Page, params.PageSize)
+	if err != nil {
+		return nil, err
+	}
+	sb.Limit(int(limit)).Offset(int(offset))
 
 	sql, args := sb.Build()
 	rows, err := o.db.QueryContext(ctx, sql, args...)
