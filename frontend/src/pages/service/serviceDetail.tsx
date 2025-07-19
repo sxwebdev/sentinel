@@ -321,18 +321,18 @@ const ServiceDetail = () => {
                   )}
                 </div>
                 <hr className="my-4" />
-                <PaginationTable
-                  className="px-0"
-                  selectedRows={filters.pageSize}
-                  setSelectedRows={(value) => setFilters({pageSize: value})}
-                  selectedPage={filters.page}
-                  setSelectedPage={(value) => setFilters({page: value})}
-                  totalPages={Math.ceil(
-                    (incidentsCount ?? 0) / filters.pageSize
-                  )}
-                />
               </div>
             ))}
+            <PaginationTable
+              className="px-0"
+              selectedRows={filters.pageSize}
+              setSelectedRows={(value) => setFilters({pageSize: value})}
+              selectedPage={filters.page}
+              setSelectedPage={(value) => setFilters({page: value})}
+              totalPages={Math.ceil(
+                (incidentsCount ?? 0) / filters.pageSize
+              )}
+            />
           </CardContent>
         </Card>
       </div>
