@@ -271,7 +271,9 @@ export const useServiceTable = () => {
   );
 
   useEffect(() => {
-    setIsLoadingAllServices(true);
+    if (!data) {
+      setIsLoadingAllServices(true);
+    }
     getAllServices().finally(() => {
       setIsLoadingAllServices(false);
     });
