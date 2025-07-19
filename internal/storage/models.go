@@ -36,7 +36,7 @@ type serviceRow struct {
 	ConsecutiveFails   int
 	ConsecutiveSuccess int
 	TotalChecks        int
-	ResponseTime       *time.Duration
+	ResponseTimeNS     *int64
 }
 
 // Service represents a monitored service

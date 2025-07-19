@@ -100,6 +100,10 @@ func (s *Server) getDashboardStats(ctx context.Context) (*DashboardStats, error)
 	var responseTimeCount int64
 
 	for _, service := range services.Items {
+		if !service.IsEnabled {
+			continue
+		}
+
 		// Get service state
 		serviceState := stateMap[service.ID]
 
@@ -156,6 +160,10 @@ func (s *Server) getDashboardStats(ctx context.Context) (*DashboardStats, error)
 	// Calculate checks per minute (estimate based on intervals)
 	checksPerMinute := 0
 	for _, service := range services.Items {
+		if !service.IsEnabled {
+			continue
+		}
+
 		if service.Interval > 0 {
 			checksPerMinute += int(time.Minute / service.Interval)
 		}

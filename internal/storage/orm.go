@@ -44,7 +44,17 @@ func (o *ORMStorage) GetIncidentByID(ctx context.Context, id string) (*Incident,
 	}
 
 	sb := sqlbuilder.NewSelectBuilder()
-	sb.Select("i.id", "i.service_id", "i.start_time", "i.end_time", "i.error", "i.duration_ns", "i.resolved", "i.created_at", "i.updated_at")
+	sb.Select(
+		"i.id",
+		"i.service_id",
+		"i.start_time",
+		"i.end_time",
+		"i.error",
+		"i.duration_ns",
+		"i.resolved",
+		"i.created_at",
+		"i.updated_at",
+	)
 	sb.From("incidents i")
 	sb.Where(sb.Equal("i.id", id))
 
@@ -131,6 +141,8 @@ func (o *ORMStorage) FindIncidents(ctx context.Context, params FindIncidentsPara
 		"i.error",
 		"i.duration_ns",
 		"i.resolved",
+		"i.created_at",
+		"i.updated_at",
 	)
 	sb.OrderBy("i.start_time").Desc()
 
@@ -161,6 +173,8 @@ func (o *ORMStorage) FindIncidents(ctx context.Context, params FindIncidentsPara
 			&incidentRow.Error,
 			&incidentRow.DurationNS,
 			&incidentRow.Resolved,
+			&incidentRow.CreatedAt,
+			&incidentRow.UpdatedAt,
 		)
 		if err != nil {
 			return res, fmt.Errorf("failed to scan incident: %w", err)
@@ -224,7 +238,6 @@ func (o *ORMStorage) ResolveAllIncidents(ctx context.Context, serviceID string) 
 	}
 	defer tx.Rollback()
 
-	resolvedIncidents := []*Incident{}
 	for _, item := range items.Items {
 		now := time.Now()
 
@@ -244,18 +257,21 @@ func (o *ORMStorage) ResolveAllIncidents(ctx context.Context, serviceID string) 
 		if _, err := tx.ExecContext(ctx, sql, args...); err != nil {
 			return nil, fmt.Errorf("failed to resolve incidents: %w", err)
 		}
+	}
 
+	// Commit transaction
+	if err := tx.Commit(); err != nil {
+		return nil, fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	resolvedIncidents := []*Incident{}
+	for _, item := range items.Items {
 		incident, err := o.GetIncidentByID(ctx, item.ID)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get incident by ID: %w", err)
 		}
 
 		resolvedIncidents = append(resolvedIncidents, incident)
-	}
-
-	// Commit transaction
-	if err := tx.Commit(); err != nil {
-		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
 	return resolvedIncidents, nil
@@ -504,7 +520,7 @@ func (o *ORMStorage) GetServiceByID(ctx context.Context, id string) (*Service, e
 		&item.ConsecutiveFails,
 		&item.ConsecutiveSuccess,
 		&item.TotalChecks,
-		&item.ResponseTime,
+		&item.ResponseTimeNS,
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -665,7 +681,7 @@ func (o *ORMStorage) FindServices(ctx context.Context, params FindServicesParams
 			&item.ConsecutiveFails,
 			&item.ConsecutiveSuccess,
 			&item.TotalChecks,
-			&item.ResponseTime,
+			&item.ResponseTimeNS,
 		)
 		if err != nil {
 			return res, fmt.Errorf("failed to scan service: %w", err)
@@ -1078,7 +1094,7 @@ func rowToService(row *serviceRow) (*Service, error) {
 		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
 	}
 
-	return &Service{
+	svc := &Service{
 		ID:                 row.ID,
 		Name:               row.Name,
 		Protocol:           ServiceProtocolType(row.Protocol),
@@ -1099,8 +1115,13 @@ func rowToService(row *serviceRow) (*Service, error) {
 		ConsecutiveFails:   row.ConsecutiveFails,
 		ConsecutiveSuccess: row.ConsecutiveSuccess,
 		TotalChecks:        row.TotalChecks,
-		ResponseTime:       row.ResponseTime,
-	}, nil
+	}
+
+	if row.ResponseTimeNS != nil {
+		svc.ResponseTime = utils.Pointer(time.Duration(*row.ResponseTimeNS))
+	}
+
+	return svc, nil
 }
 
 // durationToNS converts a duration pointer to nanoseconds
