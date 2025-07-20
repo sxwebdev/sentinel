@@ -34,7 +34,7 @@ func (s *Server) handleWebSocket(c *websocket.Conn) {
 		if r := recover(); r != nil {
 			fmt.Printf("WebSocket: panic recovered: %v\n", r)
 		}
-		
+
 		s.wsMutex.Lock()
 		delete(s.wsConnections, c)
 		remainingConnections := len(s.wsConnections)
@@ -45,7 +45,7 @@ func (s *Server) handleWebSocket(c *websocket.Conn) {
 
 	// Set read timeout to prevent goroutine from hanging forever
 	c.SetReadDeadline(time.Now().Add(60 * time.Second))
-	
+
 	// Set pong handler to handle ping/pong for keepalive
 	c.SetPongHandler(func(appData string) error {
 		c.SetReadDeadline(time.Now().Add(60 * time.Second))
@@ -56,17 +56,17 @@ func (s *Server) handleWebSocket(c *websocket.Conn) {
 	for {
 		// Set read deadline for each message to prevent hanging
 		c.SetReadDeadline(time.Now().Add(60 * time.Second))
-		
+
 		_, _, err := c.ReadMessage()
 		if err != nil {
-			if !strings.Contains(err.Error(), "close 1001") && 
-			   !strings.Contains(err.Error(), "timeout") &&
-			   !websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+			if !strings.Contains(err.Error(), "close 1001") &&
+				!strings.Contains(err.Error(), "timeout") &&
+				!websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 				fmt.Printf("WebSocket: read error: %v\n", err)
 			}
 			break
 		}
-		
+
 		// Reset read deadline after successful read
 		c.SetReadDeadline(time.Now().Add(60 * time.Second))
 	}
@@ -102,11 +102,11 @@ func (s *Server) broadcastServiceTriggered(data receiver.TriggerServiceData) err
 	// Send to all connections and handle errors
 	activeConnections := 0
 	var connectionsToRemove []*websocket.Conn
-	
+
 	for conn := range s.wsConnections {
 		// Set write deadline to prevent hanging
 		conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
-		
+
 		if err := conn.WriteJSON(update); err != nil {
 			fmt.Printf("WebSocket broadcast error: failed to send to connection: %v\n", err)
 			connectionsToRemove = append(connectionsToRemove, conn)
@@ -114,7 +114,7 @@ func (s *Server) broadcastServiceTriggered(data receiver.TriggerServiceData) err
 			activeConnections++
 		}
 	}
-	
+
 	// Remove failed connections outside the range loop to avoid map modification during iteration
 	for _, conn := range connectionsToRemove {
 		delete(s.wsConnections, conn)
@@ -151,11 +151,11 @@ func (s *Server) broadcastStatsUpdate(ctx context.Context) error {
 	// Send to all connections and handle errors
 	activeConnections := 0
 	var connectionsToRemove []*websocket.Conn
-	
+
 	for conn := range s.wsConnections {
 		// Set write deadline to prevent hanging
 		conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
-		
+
 		if err := conn.WriteJSON(update); err != nil {
 			fmt.Printf("WebSocket broadcast error: failed to send stats update: %v\n", err)
 			connectionsToRemove = append(connectionsToRemove, conn)
@@ -163,7 +163,7 @@ func (s *Server) broadcastStatsUpdate(ctx context.Context) error {
 			activeConnections++
 		}
 	}
-	
+
 	// Remove failed connections outside the range loop to avoid map modification during iteration
 	for _, conn := range connectionsToRemove {
 		delete(s.wsConnections, conn)
@@ -176,11 +176,11 @@ func (s *Server) broadcastStatsUpdate(ctx context.Context) error {
 func (s *Server) subscribeEvents(ctx context.Context) error {
 	broker := s.receiver.TriggerService()
 	sub := broker.Subscribe()
-	
+
 	if sub == nil {
 		return fmt.Errorf("failed to subscribe to service updates broker")
 	}
-	
+
 	// Ensure unsubscription happens even if panic occurs
 	defer func() {
 		if r := recover(); r != nil {
@@ -200,7 +200,10 @@ func (s *Server) subscribeEvents(ctx context.Context) error {
 				// Channel closed, exit gracefully
 				return nil
 			}
-			
+
+			// reset ticker
+			ticker.Reset(30 * time.Second)
+
 			if s.storage == nil ||
 				data.EventType == receiver.TriggerServiceEventTypeCheck ||
 				data.EventType == receiver.TriggerServiceEventTypeUnknown {

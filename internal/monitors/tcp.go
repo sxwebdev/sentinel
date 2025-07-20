@@ -90,3 +90,8 @@ func (t *TCPMonitor) Check(ctx context.Context) error {
 
 	return nil
 }
+
+// Close implements io.Closer for TCP monitor (no-op since TCP doesn't maintain persistent connections)
+func (t *TCPMonitor) Close() error {
+	return nil
+}

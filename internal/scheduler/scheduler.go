@@ -200,6 +200,15 @@ func (s *Scheduler) performCheck(ctx context.Context, job *job) error {
 		return fmt.Errorf("failed to create monitor for %s: %w", serviceName, err)
 	}
 
+	// Ensure monitor resources are cleaned up
+	defer func() {
+		if closer, ok := monitor.(interface{ Close() error }); ok {
+			if err := closer.Close(); err != nil {
+				log.Printf("Error closing monitor for %s: %v", serviceName, err)
+			}
+		}
+	}()
+
 	// Perform the check with retries
 	var lastErr error
 	var lastAttemptResponseTime time.Duration

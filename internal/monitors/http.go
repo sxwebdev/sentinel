@@ -73,6 +73,11 @@ func (h *HTTPMonitor) Check(ctx context.Context) error {
 	return h.checkEndpoints(ctx)
 }
 
+// Close implements io.Closer for HTTP monitor (no-op since HTTP doesn't maintain persistent connections)
+func (h *HTTPMonitor) Close() error {
+	return nil
+}
+
 // checkEndpoints performs health checks on multiple endpoints and evaluates conditions
 func (h *HTTPMonitor) checkEndpoints(ctx context.Context) error {
 	config := h.conf.Endpoints
@@ -86,10 +91,15 @@ func (h *HTTPMonitor) checkEndpoints(ctx context.Context) error {
 
 	resultChan := make(chan endpointResult, len(config))
 
+	// Start all endpoint checks
 	for i, endpoint := range config {
 		go func(ep EndpointConfig, idx int) {
 			result := h.checkEndpoint(ctx, ep)
-			resultChan <- endpointResult{result: result, index: idx}
+			select {
+			case resultChan <- endpointResult{result: result, index: idx}:
+			case <-ctx.Done():
+				// Context cancelled, don't block on channel send
+			}
 		}(endpoint, i)
 	}
 

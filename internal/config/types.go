@@ -15,9 +15,9 @@ type Config struct {
 
 // ServerConfig holds web server configuration
 type ServerConfig struct {
-	Port     int           `yaml:"port"`
-	Host     string        `yaml:"host"`
-	BaseHost string        `yaml:"base_host"`
+	Port     int            `yaml:"port"`
+	Host     string         `yaml:"host"`
+	BaseHost string         `yaml:"base_host"`
 	Frontend FrontendConfig `yaml:"frontend"`
 }
 

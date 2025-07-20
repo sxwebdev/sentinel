@@ -3,12 +3,15 @@ package monitors
 import (
 	"context"
 	"fmt"
+	"io"
 
 	"github.com/sxwebdev/sentinel/internal/storage"
 )
 
 // ServiceMonitor defines the interface for all service monitors
 type ServiceMonitor interface {
+	io.Closer
+
 	Name() string
 	Protocol() storage.ServiceProtocolType
 	Check(ctx context.Context) error

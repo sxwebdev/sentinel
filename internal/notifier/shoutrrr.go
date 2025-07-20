@@ -1,6 +1,7 @@
 package notifier
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"sync"
@@ -62,8 +63,16 @@ func (s *NotifierImpl) sendMessage(message string) error {
 			}
 
 			// Send message with timeout
+			timeoutCtx, timeoutCancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer timeoutCancel()
+
 			done := make(chan []error, 1)
 			go func() {
+				defer func() {
+					if r := recover(); r != nil {
+						errors <- fmt.Errorf("provider %d: panic during send: %v", index, r)
+					}
+				}()
 				done <- sender.Send(message, nil)
 			}()
 
@@ -81,8 +90,10 @@ func (s *NotifierImpl) sendMessage(message string) error {
 				if hasErrors {
 					errors <- fmt.Errorf("provider %d: failed to send: %v", index, errs)
 				}
-			case <-time.After(30 * time.Second):
+			case <-timeoutCtx.Done():
 				errors <- fmt.Errorf("provider %d: timeout", index)
+				// Note: The goroutine with sender.Send() might still be running,
+				// but we can't force-kill it. This is a limitation of the shoutrrr library.
 			}
 		}(i, url)
 	}

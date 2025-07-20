@@ -26,7 +26,10 @@ func main() {
 }
 
 func run() error {
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
+	addr := fmt.Sprintf("localhost:%d", *port)
+	log.Printf("Starting gRPC server on %s\n", addr)
+
+	lis, err := net.Listen("tcp", addr)
 	if err != nil {
 		return fmt.Errorf("failed to listen: %w", err)
 	}
