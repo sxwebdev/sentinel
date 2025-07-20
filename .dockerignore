@@ -1,0 +1,14 @@
+.cache
+node_modules
+npm-debug.log
+dist
+.git
+.gitignore
+README.md
+go.work
+go.work.sum
+.vscode
+build
+.env
+.env.example
+data

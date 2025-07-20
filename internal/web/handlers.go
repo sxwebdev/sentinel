@@ -14,11 +14,8 @@ package web
 
 import (
 	"context"
-	"embed"
 	"fmt"
 	goHTML "html"
-	"net/http"
-	"net/url"
 	"strconv"
 	"strings"
 	"sync"
@@ -28,9 +25,9 @@ import (
 	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
-	"github.com/gofiber/template/html/v2"
 	swagger "github.com/swaggo/fiber-swagger"
 	"github.com/sxwebdev/sentinel/docs/docsv1"
+	"github.com/sxwebdev/sentinel/frontend"
 	"github.com/sxwebdev/sentinel/internal/config"
 	"github.com/sxwebdev/sentinel/internal/receiver"
 	"github.com/sxwebdev/sentinel/internal/service"
@@ -39,9 +36,6 @@ import (
 	"github.com/sxwebdev/sentinel/pkg/dbutils"
 	_ "github.com/sxwebdev/sentinel/pkg/dbutils"
 )
-
-//go:embed views/*
-var viewsFS embed.FS
 
 // Server represents the web server
 type Server struct {
@@ -62,62 +56,13 @@ func NewServer(
 	storage storage.Storage,
 	receiver *receiver.Receiver,
 ) (*Server, error) {
-	// Create template engine with embedded templates
-	templateEngine := html.NewFileSystem(http.FS(viewsFS), ".html")
-
-	// Add template functions
-	templateEngine.
-		AddFunc("lower", strings.ToLower).
-		AddFunc("statusToString", func(status string) string {
-			return string(status)
-		}).
-		AddFunc("statusToLower", func(status string) string {
-			return strings.ToLower(status)
-		}).
-		AddFunc("formatDateTime", func(t time.Time) string {
-			return t.Format("2006-01-02 15:04:05")
-		}).
-		AddFunc("formatDateTimePtr", func(t *time.Time) string {
-			if t == nil {
-				return "Never"
-			}
-			return t.Format("2006-01-02 15:04:05")
-		}).
-		AddFunc("urlquery", url.QueryEscape)
-
-	if err := templateEngine.Load(); err != nil {
-		return nil, err
-	}
-
 	// Create Fiber app
 	app := fiber.New(fiber.Config{
-		Views:   templateEngine,
-		AppName: "Sentinel",
+		AppName:               "Sentinel",
+		DisableStartupMessage: true,
 	})
 
 	app.Use(cors.New())
-
-	// Serve static files from embed
-	app.Get("/static/*", func(c *fiber.Ctx) error {
-		filePath := c.Params("*")
-		if filePath == "" {
-			return c.Status(404).SendString("File not found")
-		}
-
-		content, err := viewsFS.ReadFile("views/static/" + filePath)
-		if err != nil {
-			return c.Status(404).SendString("File not found")
-		}
-
-		// Set content type based on file extension
-		if strings.HasSuffix(filePath, ".css") {
-			c.Set("Content-Type", "text/css")
-		} else if strings.HasSuffix(filePath, ".js") {
-			c.Set("Content-Type", "application/javascript")
-		}
-
-		return c.Send(content)
-	})
 
 	server := &Server{
 		monitorService: monitorService,
@@ -174,11 +119,7 @@ func (s *Server) Stop(_ context.Context) error {
 
 // setupRoutes configures all routes
 func (s *Server) setupRoutes() {
-	// Web UI routes
-	s.app.Get("/", s.handleDashboard)
-	s.app.Get("/service/:id", s.handleServiceDetail)
-
-	// API routes
+	// API routes first (higher priority)
 	api := s.app.Group("/api/v1")
 	// Swagger UI
 	api.Get("/swagger/*", swagger.WrapHandler)
@@ -216,6 +157,13 @@ func (s *Server) setupRoutes() {
 		return fiber.ErrUpgradeRequired
 	})
 	s.app.Get("/ws", websocket.New(s.handleWebSocket))
+
+	// Serve static assets from React build
+	s.app.Get("/assets/*", s.handleStaticFiles)
+	s.app.Get("/vite.svg", s.handleStaticFiles)
+
+	// SPA fallback - serve index.html for all other routes
+	s.app.Get("/*", s.handleSPA)
 }
 
 // App returns the Fiber app instance
@@ -223,48 +171,69 @@ func (s *Server) App() *fiber.App {
 	return s.app
 }
 
-// handleDashboard renders the main dashboard
-func (s *Server) handleDashboard(c *fiber.Ctx) error {
-	return c.Render("views/dashboard", fiber.Map{
-		"Title": "Sentinel Dashboard",
-		"Actions": []fiber.Map{
-			{
-				"Text":  "Refresh",
-				"Class": "btn-secondary",
-			},
-		},
-	})
+// handleStaticFiles serves static assets from React build
+func (s *Server) handleStaticFiles(c *fiber.Ctx) error {
+	// Get the requested file path
+	filePath := c.Params("*")
+	if filePath == "" {
+		// For routes like /vite.svg, get the full path
+		filePath = strings.TrimPrefix(c.Path(), "/")
+	} else {
+		// For routes like /assets/*, we need to reconstruct the full path
+		// because the route captures only the part after /assets/
+		if strings.HasPrefix(c.Path(), "/assets/") {
+			filePath = "assets/" + filePath
+		}
+	}
+
+	// Read file from embedded filesystem
+	content, err := frontend.StaticFS.ReadFile("dist/" + filePath)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).SendString("File not found")
+	}
+
+	// Set appropriate content type based on file extension
+	if strings.HasSuffix(filePath, ".js") {
+		c.Set("Content-Type", "application/javascript")
+	} else if strings.HasSuffix(filePath, ".css") {
+		c.Set("Content-Type", "text/css")
+	} else if strings.HasSuffix(filePath, ".svg") {
+		c.Set("Content-Type", "image/svg+xml")
+	} else if strings.HasSuffix(filePath, ".png") {
+		c.Set("Content-Type", "image/png")
+	} else if strings.HasSuffix(filePath, ".jpg") || strings.HasSuffix(filePath, ".jpeg") {
+		c.Set("Content-Type", "image/jpeg")
+	} else if strings.HasSuffix(filePath, ".ico") {
+		c.Set("Content-Type", "image/x-icon")
+	} else if strings.HasSuffix(filePath, ".woff") || strings.HasSuffix(filePath, ".woff2") {
+		c.Set("Content-Type", "font/woff2")
+	}
+
+	return c.Send(content)
 }
 
-// handleServiceDetail renders service detail page
-func (s *Server) handleServiceDetail(c *fiber.Ctx) error {
-	serviceID := c.Params("id")
-	if serviceID == "" {
-		return c.Status(fiber.StatusBadRequest).SendString("service ID is required")
-	}
-
-	// Get service by ID
-	targetService, err := s.monitorService.GetServiceByID(c.Context(), serviceID)
+// handleSPA serves the React app's index.html for all non-API routes
+func (s *Server) handleSPA(c *fiber.Ctx) error {
+	// Serve index.html for SPA routing
+	content, err := frontend.StaticFS.ReadFile("dist/index.html")
 	if err != nil {
-		return c.Status(fiber.StatusNotFound).SendString("service not found: " + serviceID)
+		return c.Status(fiber.StatusInternalServerError).SendString("Could not load application")
 	}
 
-	return c.Render("views/service_detail", fiber.Map{
-		"Service":      targetService,
-		"Title":        "Service: " + targetService.Name,
-		"BackLink":     "/",
-		"BackLinkText": "Back to Dashboard",
-		"Actions": []fiber.Map{
-			{
-				"Text":  "Trigger Check",
-				"Class": "",
-			},
-			{
-				"Text":  "Resolve Incidents",
-				"Class": "btn-secondary",
-			},
-		},
-	})
+	// Inject configuration into HTML
+	configScript := fmt.Sprintf(`<script>
+		window.__SENTINEL_CONFIG__ = {
+			baseUrl: "%s",
+			socketUrl: "%s"
+		};
+	</script>`, s.config.Server.Frontend.BaseURL, s.config.Server.Frontend.SocketURL)
+
+	// Insert config script before closing head tag
+	htmlContent := string(content)
+	htmlContent = strings.Replace(htmlContent, "</head>", configScript+"\n</head>", 1)
+
+	c.Set("Content-Type", "text/html")
+	return c.SendString(htmlContent)
 }
 
 // handleFindServices handles GET /api/v1/services

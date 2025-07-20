@@ -9,15 +9,15 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/shared/components/ui";
-import {cn} from "@/shared/lib/utils";
+import { cn } from "@/shared/lib/utils";
 import {
   getCoreRowModel,
   useReactTable,
   type ColumnDef,
 } from "@tanstack/react-table";
-import {useEffect, useMemo} from "react";
-import {Link} from "react-router";
-import type {Service} from "@features/service/types/type";
+import { useEffect, useMemo } from "react";
+import { Link } from "react-router";
+import type { Service } from "@features/service/types/type";
 import $api from "@/shared/api/baseApi";
 import {
   EllipsisVerticalIcon,
@@ -25,10 +25,10 @@ import {
   RefreshCcwIcon,
   TrashIcon,
 } from "lucide-react";
-import {toast} from "sonner";
-import {useServiceTableStore} from "../store/useServiceTableStore";
-import {useServiceApi} from "./useServiceApi";
-import {ActivityIndicatorSVG} from "@/entities/ActivityIndicatorSVG/ActivityIndicatorSVG";
+import { toast } from "sonner";
+import { useServiceTableStore } from "../store/useServiceTableStore";
+import { useServiceApi } from "./useServiceApi";
+import { ActivityIndicatorSVG } from "@/entities/ActivityIndicatorSVG/ActivityIndicatorSVG";
 
 export const useServiceTable = () => {
   const {
@@ -52,7 +52,7 @@ export const useServiceTable = () => {
     setUpdateServiceId,
   } = useServiceTableStore();
 
-  const {onCheckService} = useServiceApi();
+  const { onCheckService } = useServiceApi();
 
   const getAllTags = async () => {
     const res = await $api.get("/tags");
@@ -102,7 +102,7 @@ export const useServiceTable = () => {
       {
         header: "Enabled",
         accessorKey: "enabled",
-        cell: ({row}) => {
+        cell: ({ row }) => {
           return (
             <div className="flex items-center justify-center">
               <TooltipProvider>
@@ -125,7 +125,7 @@ export const useServiceTable = () => {
       {
         header: "Service ",
         accessorKey: "service",
-        cell: ({row}) => {
+        cell: ({ row }) => {
           return (
             <Link
               to={`/service/${row.original?.id}`}
@@ -139,7 +139,7 @@ export const useServiceTable = () => {
       {
         header: "Status",
         accessorKey: "status",
-        cell: ({row}) => {
+        cell: ({ row }) => {
           return (
             <Badge
               className={cn(
@@ -158,7 +158,7 @@ export const useServiceTable = () => {
       {
         header: "Tags",
         accessorKey: "tags",
-        cell: ({row}) => {
+        cell: ({ row }) => {
           if (row.original?.tags?.length === 0) {
             return (
               <div className="flex items-center justify-center">
@@ -184,7 +184,7 @@ export const useServiceTable = () => {
       {
         header: "Last Check",
         accessorKey: "last_check",
-        cell: ({row}) => {
+        cell: ({ row }) => {
           return row.original?.last_check ? (
             new Date(row.original.last_check).toLocaleString("ru", {
               year: "numeric",
@@ -204,7 +204,7 @@ export const useServiceTable = () => {
       {
         header: "Incidents",
         accessorKey: "incidents",
-        cell: ({row}) => {
+        cell: ({ row }) => {
           return (
             <>
               <Badge
@@ -227,7 +227,7 @@ export const useServiceTable = () => {
       {
         header: "Actions",
         accessorKey: "actions",
-        cell: ({row}) => {
+        cell: ({ row }) => {
           return (
             <div className="flex justify-center">
               <DropdownMenu

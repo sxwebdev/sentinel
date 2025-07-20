@@ -70,6 +70,26 @@ func (c *Config) setDefaults() error {
 		c.Server.BaseHost = "localhost:8080"
 	}
 
+	// Frontend defaults
+	if c.Server.Frontend.BaseURL == "" {
+		// Auto-detect protocol based on BaseHost or use HTTP as default
+		protocol := "http"
+		if c.Server.BaseHost != "localhost:8080" && c.Server.BaseHost != "127.0.0.1:8080" {
+			// For production domains, assume HTTPS
+			protocol = "https"
+		}
+		c.Server.Frontend.BaseURL = fmt.Sprintf("%s://%s/api/v1", protocol, c.Server.BaseHost)
+	}
+	if c.Server.Frontend.SocketURL == "" {
+		// Auto-detect protocol based on BaseHost or use WS as default
+		protocol := "ws"
+		if c.Server.BaseHost != "localhost:8080" && c.Server.BaseHost != "127.0.0.1:8080" {
+			// For production domains, assume WSS
+			protocol = "wss"
+		}
+		c.Server.Frontend.SocketURL = fmt.Sprintf("%s://%s/ws", protocol, c.Server.BaseHost)
+	}
+
 	// Monitoring defaults
 	if c.Monitoring.Global.DefaultInterval == 0 {
 		c.Monitoring.Global.DefaultInterval = 30 * time.Second

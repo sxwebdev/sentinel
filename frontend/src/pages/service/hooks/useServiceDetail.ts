@@ -101,7 +101,7 @@ export const useServiceDetail = () => {
         pageSize: filters.pageSize,
       },
     });
-    setIncidentsData([...res.data.items, ...res.data.items, ...res.data.items]);
+    setIncidentsData(res.data.items);
     setIncidentsCount(res.data.count);
   };
 

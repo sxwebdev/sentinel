@@ -1,6 +1,14 @@
 server:
   port: 8080
   host: "0.0.0.0"
+  base_host: "localhost:8080"  # For production use your domain, e.g., "monitoring.example.com"
+  frontend:
+    # URLs for frontend API and WebSocket connections
+    # If not specified, will be auto-generated based on base_host
+    # For localhost: http://localhost:8080/api/v1 and ws://localhost:8080/ws
+    # For production: https://your-domain.com/api/v1 and wss://your-domain.com/ws
+    base_url: ""     # Optional: Override API base URL (e.g., "https://api.example.com/api/v1")
+    socket_url: ""   # Optional: Override WebSocket URL (e.g., "wss://api.example.com/ws")
 
 monitoring:
   global:
