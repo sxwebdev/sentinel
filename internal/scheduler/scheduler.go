@@ -91,7 +91,12 @@ func (s *Scheduler) Stop(ctx context.Context) error {
 // stopAll stops monitoring for all services
 func (s *Scheduler) stopAll() {
 	s.jobs.Range(func(key string, value *job) bool {
-		close(value.StopChan)
+		select {
+		case <-value.StopChan:
+			// Channel already closed
+		default:
+			close(value.StopChan)
+		}
 		if value.Ticker != nil {
 			value.Ticker.Stop()
 		}
@@ -124,8 +129,13 @@ func (s *Scheduler) addService(ctx context.Context, svc *storage.Service) {
 func (s *Scheduler) addJob(ctx context.Context, job *job) {
 	// Check if job already exists
 	if existingJob, exists := s.jobs.Load(job.ServiceID); exists {
-		// Stop existing job
-		close(existingJob.StopChan)
+		// Stop existing job gracefully
+		select {
+		case <-existingJob.StopChan:
+			// Channel already closed
+		default:
+			close(existingJob.StopChan)
+		}
 		if existingJob.Ticker != nil {
 			existingJob.Ticker.Stop()
 		}
@@ -196,13 +206,15 @@ func (s *Scheduler) performCheck(ctx context.Context, job *job) error {
 	for attempt := 1; attempt <= job.Retries; attempt++ {
 		// Create context with timeout for this specific check
 		checkCtx, cancel := context.WithTimeout(ctx, job.Timeout)
-		defer cancel()
 
 		// Measure time for this specific attempt
 		attemptStartTime := time.Now()
 		err := monitor.Check(checkCtx)
 		attemptResponseTime := time.Since(attemptStartTime)
 		lastAttemptResponseTime = attemptResponseTime
+
+		// Cancel context immediately after use to avoid memory leak
+		cancel()
 
 		if err == nil {
 			// Success - record the time of this successful attempt
@@ -279,8 +291,13 @@ func (s *Scheduler) removeJob(serviceID string) error {
 		return ErrServiceNotFound
 	}
 
-	// Stop the monitoring
-	close(job.StopChan)
+	// Stop the monitoring gracefully
+	select {
+	case <-job.StopChan:
+		// Channel already closed
+	default:
+		close(job.StopChan)
+	}
 	if job.Ticker != nil {
 		job.Ticker.Stop()
 	}
@@ -303,47 +320,38 @@ func (s *Scheduler) subscribeEvents(ctx context.Context) error {
 	sub := broker.Subscribe()
 	defer broker.Unsubscribe(sub)
 
-	errChan := make(chan error, 1)
-	go func() {
-		for ctx.Err() == nil {
-			select {
-			case item := <-sub:
-				switch item.EventType {
-				case receiver.TriggerServiceEventTypeCheck:
-					if err := s.checkService(ctx, item.Svc.ID); err != nil {
-						log.Println("check service error", err)
-					}
-				case receiver.TriggerServiceEventTypeCreated:
-					s.addService(ctx, item.Svc)
-				case receiver.TriggerServiceEventTypeUpdated:
-					// Check if service was disabled
-					if !item.Svc.IsEnabled {
-						// Remove from monitoring if service is now disabled
-						if err := s.removeJob(item.Svc.ID); err != nil {
-							log.Println("remove disabled service error", err)
-						}
-					} else {
-						// Update or add to monitoring if service is enabled
-						if err := s.updateJob(ctx, item.Svc); err != nil {
-							log.Println("update service error", err)
-						}
-					}
-				case receiver.TriggerServiceEventTypeDeleted:
+	for ctx.Err() == nil {
+		select {
+		case item := <-sub:
+			switch item.EventType {
+			case receiver.TriggerServiceEventTypeCheck:
+				if err := s.checkService(ctx, item.Svc.ID); err != nil {
+					log.Println("check service error", err)
+				}
+			case receiver.TriggerServiceEventTypeCreated:
+				s.addService(ctx, item.Svc)
+			case receiver.TriggerServiceEventTypeUpdated:
+				// Check if service was disabled
+				if !item.Svc.IsEnabled {
+					// Remove from monitoring if service is now disabled
 					if err := s.removeJob(item.Svc.ID); err != nil {
-						log.Println("remove service error", err)
+						log.Println("remove disabled service error", err)
+					}
+				} else {
+					// Update or add to monitoring if service is enabled
+					if err := s.updateJob(ctx, item.Svc); err != nil {
+						log.Println("update service error", err)
 					}
 				}
-
-			case <-ctx.Done():
-				return
+			case receiver.TriggerServiceEventTypeDeleted:
+				if err := s.removeJob(item.Svc.ID); err != nil {
+					log.Println("remove service error", err)
+				}
 			}
-		}
-	}()
 
-	select {
-	case <-ctx.Done():
-	case err := <-errChan:
-		return err
+		case <-ctx.Done():
+			return nil
+		}
 	}
 
 	return nil

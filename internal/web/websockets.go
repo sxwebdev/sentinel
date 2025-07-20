@@ -30,6 +30,11 @@ func (s *Server) handleWebSocket(c *websocket.Conn) {
 
 	// Remove connection when it closes
 	defer func() {
+		// Recover from potential panic to ensure cleanup
+		if r := recover(); r != nil {
+			fmt.Printf("WebSocket: panic recovered: %v\n", r)
+		}
+		
 		s.wsMutex.Lock()
 		delete(s.wsConnections, c)
 		remainingConnections := len(s.wsConnections)
@@ -38,15 +43,32 @@ func (s *Server) handleWebSocket(c *websocket.Conn) {
 		fmt.Printf("WebSocket: connection closed, remaining connections: %d\n", remainingConnections)
 	}()
 
+	// Set read timeout to prevent goroutine from hanging forever
+	c.SetReadDeadline(time.Now().Add(60 * time.Second))
+	
+	// Set pong handler to handle ping/pong for keepalive
+	c.SetPongHandler(func(appData string) error {
+		c.SetReadDeadline(time.Now().Add(60 * time.Second))
+		return nil
+	})
+
 	// Keep connection alive and handle messages
 	for {
+		// Set read deadline for each message to prevent hanging
+		c.SetReadDeadline(time.Now().Add(60 * time.Second))
+		
 		_, _, err := c.ReadMessage()
 		if err != nil {
-			if !strings.Contains(err.Error(), "close 1001") {
+			if !strings.Contains(err.Error(), "close 1001") && 
+			   !strings.Contains(err.Error(), "timeout") &&
+			   !websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 				fmt.Printf("WebSocket: read error: %v\n", err)
 			}
 			break
 		}
+		
+		// Reset read deadline after successful read
+		c.SetReadDeadline(time.Now().Add(60 * time.Second))
 	}
 }
 
@@ -79,14 +101,24 @@ func (s *Server) broadcastServiceTriggered(data receiver.TriggerServiceData) err
 
 	// Send to all connections and handle errors
 	activeConnections := 0
+	var connectionsToRemove []*websocket.Conn
+	
 	for conn := range s.wsConnections {
+		// Set write deadline to prevent hanging
+		conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
+		
 		if err := conn.WriteJSON(update); err != nil {
 			fmt.Printf("WebSocket broadcast error: failed to send to connection: %v\n", err)
-			delete(s.wsConnections, conn)
-			conn.Close()
+			connectionsToRemove = append(connectionsToRemove, conn)
 		} else {
 			activeConnections++
 		}
+	}
+	
+	// Remove failed connections outside the range loop to avoid map modification during iteration
+	for _, conn := range connectionsToRemove {
+		delete(s.wsConnections, conn)
+		conn.Close()
 	}
 
 	// if activeConnections > 0 {
@@ -118,14 +150,24 @@ func (s *Server) broadcastStatsUpdate(ctx context.Context) error {
 
 	// Send to all connections and handle errors
 	activeConnections := 0
+	var connectionsToRemove []*websocket.Conn
+	
 	for conn := range s.wsConnections {
+		// Set write deadline to prevent hanging
+		conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
+		
 		if err := conn.WriteJSON(update); err != nil {
 			fmt.Printf("WebSocket broadcast error: failed to send stats update: %v\n", err)
-			delete(s.wsConnections, conn)
-			conn.Close()
+			connectionsToRemove = append(connectionsToRemove, conn)
 		} else {
 			activeConnections++
 		}
+	}
+	
+	// Remove failed connections outside the range loop to avoid map modification during iteration
+	for _, conn := range connectionsToRemove {
+		delete(s.wsConnections, conn)
+		conn.Close()
 	}
 
 	return nil
@@ -134,15 +176,31 @@ func (s *Server) broadcastStatsUpdate(ctx context.Context) error {
 func (s *Server) subscribeEvents(ctx context.Context) error {
 	broker := s.receiver.TriggerService()
 	sub := broker.Subscribe()
-	defer broker.Unsubscribe(sub)
-
+	
 	if sub == nil {
 		return fmt.Errorf("failed to subscribe to service updates broker")
 	}
+	
+	// Ensure unsubscription happens even if panic occurs
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Printf("WebSocket subscribeEvents panic recovered: %v\n", r)
+		}
+		broker.Unsubscribe(sub)
+	}()
 
-	for ctx.Err() == nil {
+	// Use a ticker for periodic cleanup and health checks
+	ticker := time.NewTicker(30 * time.Second)
+	defer ticker.Stop()
+
+	for {
 		select {
-		case data := <-sub:
+		case data, ok := <-sub:
+			if !ok {
+				// Channel closed, exit gracefully
+				return nil
+			}
+			
 			if s.storage == nil ||
 				data.EventType == receiver.TriggerServiceEventTypeCheck ||
 				data.EventType == receiver.TriggerServiceEventTypeUnknown {
@@ -159,10 +217,12 @@ func (s *Server) subscribeEvents(ctx context.Context) error {
 				fmt.Printf("WebSocket broadcast error: %v\n", err)
 			}
 
+		case <-ticker.C:
+			// Periodic cleanup of dead connections (commented out for now)
+			// Can be implemented if needed for additional cleanup logic
+
 		case <-ctx.Done():
 			return nil
 		}
 	}
-
-	return nil
 }
