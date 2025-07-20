@@ -32,14 +32,14 @@ export const useDashboardLogic = () => {
       setUpdateService: s.setUpdateService,
       setUpdateAllServices: s.setUpdateAllServices,
       addServiceInData: s.addServiceInData,
-    })),
+    }))
   );
 
   const { dashboardInfo, setDashboardInfo } = useDashboardStore(
     useShallow((s) => ({
       dashboardInfo: s.dashboardInfo,
       setDashboardInfo: s.setDashboardInfo,
-    })),
+    }))
   );
 
   const getDashboardInfo = async () => {
@@ -87,16 +87,16 @@ export const useDashboardLogic = () => {
 
   const infoKeysDashboard = useMemo(
     () => [
-      { key: "total_services", label: "Total Services" },
-      { key: "services_up", label: "Services Up" },
-      { key: "services_down", label: "Services Down" },
-      { key: "active_incidents", label: "Active Incidents" },
-      { key: "avg_response_time", label: "Average Response Time (ms)" },
-      { key: "total_checks", label: "Total Checks" },
-      { key: "uptime_percentage", label: "Uptime Percentage" },
-      { key: "checks_per_minute", label: "Checks Per Minute" },
+      { key: "total_services", label: "Total services" },
+      { key: "services_up", label: "Services up" },
+      { key: "services_down", label: "Services down" },
+      { key: "active_incidents", label: "Active incidents" },
+      { key: "avg_response_time", label: "Average response time (ms)" },
+      { key: "total_checks", label: "Total checks" },
+      { key: "uptime_percentage", label: "Uptime" },
+      { key: "checks_per_minute", label: "Checks per minute" },
     ],
-    [],
+    []
   );
 
   return {

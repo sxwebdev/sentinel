@@ -1,13 +1,13 @@
 module github.com/sxwebdev/sentinel
 
-go 1.24.4
+go 1.24.5
 
 require (
 	github.com/containrrr/shoutrrr v0.8.0
 	github.com/dop251/goja v0.0.0-20250630131328-58d95d85e994
 	github.com/go-playground/validator/v10 v10.27.0
 	github.com/gofiber/contrib/websocket v1.3.4
-	github.com/gofiber/fiber/v2 v2.52.8
+	github.com/gofiber/fiber/v2 v2.52.9
 	github.com/huandu/go-sqlbuilder v1.35.1
 	github.com/oklog/ulid/v2 v2.1.1
 	github.com/puzpuzpuz/xsync/v3 v3.5.1

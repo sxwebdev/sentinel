@@ -285,7 +285,7 @@ const ServiceDetail = () => {
                   </div>
                 </div>
                 <div className="text-red text-sm font-medium">
-                  <div dangerouslySetInnerHTML={{__html: incident.error}} />
+                  <div dangerouslySetInnerHTML={{ __html: incident.error }} />
                 </div>
                 <div className="flex flex-col gap-2 incident-details">
                   <div className="flex items-center gap-2">
@@ -326,12 +326,10 @@ const ServiceDetail = () => {
             <PaginationTable
               className="px-0"
               selectedRows={filters.pageSize}
-              setSelectedRows={(value) => setFilters({pageSize: value})}
+              setSelectedRows={(value) => setFilters({ pageSize: value })}
               selectedPage={filters.page}
-              setSelectedPage={(value) => setFilters({page: value})}
-              totalPages={Math.ceil(
-                (incidentsCount ?? 0) / filters.pageSize
-              )}
+              setSelectedPage={(value) => setFilters({ page: value })}
+              totalPages={Math.ceil((incidentsCount ?? 0) / filters.pageSize)}
             />
           </CardContent>
         </Card>

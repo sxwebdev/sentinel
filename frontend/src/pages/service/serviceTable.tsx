@@ -1,8 +1,6 @@
 import {
   Card,
   CardContent,
-  CardTitle,
-  CardHeader,
   Table,
   TableHeader,
   TableRow,
@@ -12,13 +10,13 @@ import {
   SelectItem,
   SelectWithClear,
 } from "@/shared/components/ui";
-import {flexRender} from "@tanstack/react-table";
-import {useServiceTable} from "./hooks/useServiceTable";
-import {Loader} from "@/entities/loader/loader";
-import {ConfirmDialog} from "@/entities/confirmDialog/confirmDialog";
-import {ServiceUpdate} from "./serviceUpdate";
-import {cn} from "@/shared/lib/utils";
-import {Search} from "@/entities/search/search";
+import { flexRender } from "@tanstack/react-table";
+import { useServiceTable } from "./hooks/useServiceTable";
+import { Loader } from "@/entities/loader/loader";
+import { ConfirmDialog } from "@/entities/confirmDialog/confirmDialog";
+import { ServiceUpdate } from "./serviceUpdate";
+import { cn } from "@/shared/lib/utils";
+import { Search } from "@/entities/search/search";
 import PaginationTable from "@/shared/components/paginationTable";
 import MultiSelect from "@/shared/components/multiSelect";
 
@@ -26,7 +24,7 @@ interface ServiceTableProps {
   protocols: Record<string, number>;
 }
 
-export const ServiceTable = ({protocols}: ServiceTableProps) => {
+export const ServiceTable = ({ protocols }: ServiceTableProps) => {
   const {
     table,
     filters,
@@ -52,18 +50,13 @@ export const ServiceTable = ({protocols}: ServiceTableProps) => {
         type="delete"
       />
       <Card>
-        <CardHeader>
-          <CardTitle>
-            <h2 className="text-2xl font-bold">Services Overview</h2>
-          </CardTitle>
-        </CardHeader>
         <CardContent className="flex flex-col gap-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 justify-between items-center w-full gap-3 ">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 justify-between items-center w-full gap-3">
             <Search
-              className="w-full"
+              className="w-full lg:col-span-3"
               placeholder="Search"
               value={filters.search}
-              onChange={(value) => setFilters({search: value ?? undefined})}
+              onChange={(value) => setFilters({ search: value ?? undefined })}
               clear
             />
             <MultiSelect
@@ -80,7 +73,7 @@ export const ServiceTable = ({protocols}: ServiceTableProps) => {
                 })) ?? []
               }
               onChange={(value) => {
-                setFilters({tags: value.map((v) => v.value)});
+                setFilters({ tags: value.map((v) => v.value) });
               }}
               placeholder="Select tags"
             />
@@ -88,9 +81,9 @@ export const ServiceTable = ({protocols}: ServiceTableProps) => {
               className="w-full"
               value={filters.protocol || ""}
               onValueChange={(value) => {
-                setFilters({protocol: value || undefined});
+                setFilters({ protocol: value || undefined });
               }}
-              onClear={() => setFilters({protocol: undefined})}
+              onClear={() => setFilters({ protocol: undefined })}
               placeholder="Select protocol"
             >
               {Object.keys(protocols).map((protocol) => {
@@ -105,9 +98,9 @@ export const ServiceTable = ({protocols}: ServiceTableProps) => {
               className="w-full"
               value={filters.status || ""}
               onValueChange={(value) => {
-                setFilters({status: value || undefined});
+                setFilters({ status: value || undefined });
               }}
-              onClear={() => setFilters({status: undefined})}
+              onClear={() => setFilters({ status: undefined })}
               placeholder="Select status"
             >
               <SelectItem value="up">Up</SelectItem>
@@ -123,10 +116,7 @@ export const ServiceTable = ({protocols}: ServiceTableProps) => {
                       return (
                         <TableHead
                           key={header.id}
-                          className={cn(
-                            "text-center",
-                            idx === 0 && "w-0 whitespace-nowrap"
-                          )}
+                          className={cn(idx === 0 && "w-0 whitespace-nowrap")}
                         >
                           {header.isPlaceholder
                             ? null
@@ -145,7 +135,7 @@ export const ServiceTable = ({protocols}: ServiceTableProps) => {
                   <TableRow>
                     <TableCell
                       colSpan={table.getAllColumns().length}
-                      className="h-24 text-center"
+                      className="h-24"
                     >
                       <Loader size={6} />
                     </TableCell>
@@ -160,7 +150,7 @@ export const ServiceTable = ({protocols}: ServiceTableProps) => {
                             data-state={row.getIsSelected() && "selected"}
                           >
                             {row.getVisibleCells().map((cell) => (
-                              <TableCell key={cell.id} className="text-center">
+                              <TableCell key={cell.id}>
                                 {flexRender(
                                   cell.column.columnDef.cell,
                                   cell.getContext()
@@ -188,9 +178,9 @@ export const ServiceTable = ({protocols}: ServiceTableProps) => {
         </CardContent>
         <PaginationTable
           selectedRows={filters.pageSize}
-          setSelectedRows={(value) => setFilters({pageSize: value})}
+          setSelectedRows={(value) => setFilters({ pageSize: value })}
           selectedPage={filters.page}
-          setSelectedPage={(value) => setFilters({page: value})}
+          setSelectedPage={(value) => setFilters({ page: value })}
           totalPages={Math.ceil((servicesCount ?? 0) / filters.pageSize)}
         />
       </Card>

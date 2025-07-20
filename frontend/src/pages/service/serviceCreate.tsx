@@ -6,24 +6,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/shared/components/ui";
-import { useIsMobile } from "@/shared/hooks/useIsMobile";
-import { cn } from "@/shared/lib/utils";
 import { PlusIcon } from "lucide-react";
 import { useServiceCreate } from "./hooks/useServiceCreate";
 import { DialogDescription } from "@radix-ui/react-dialog";
 
 const ServiceCreate = () => {
-  const isMobile = useIsMobile();
   const { initialValues, onCreateService, isOpenModal, setIsOpenModal } =
     useServiceCreate();
   return (
     <Dialog open={isOpenModal} onOpenChange={setIsOpenModal}>
       <DialogTrigger asChild>
-        <Button
-          size="sm"
-          className={cn(isMobile && "w-full")}
-          variant="outline"
-        >
+        <Button size="sm" className="cursor-pointer" variant="outline">
           <PlusIcon />
           Add Service
         </Button>

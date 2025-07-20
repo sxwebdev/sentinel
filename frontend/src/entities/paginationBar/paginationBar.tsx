@@ -83,7 +83,7 @@ export const PaginationBar: React.FC<PaginationBarProps> = ({
                 <PaginationItem key={`ellipsis-${idx}`}>
                   <PaginationEllipsis />
                 </PaginationItem>
-              ),
+              )
             )}
             <PaginationItem>
               <PaginationNext

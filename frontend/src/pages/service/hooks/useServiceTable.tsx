@@ -4,10 +4,12 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
+  Button,
 } from "@/shared/components/ui";
 import { cn } from "@/shared/lib/utils";
 import {
@@ -20,7 +22,7 @@ import { Link } from "react-router";
 import type { Service } from "@features/service/types/type";
 import $api from "@/shared/api/baseApi";
 import {
-  EllipsisVerticalIcon,
+  EllipsisIcon,
   PencilIcon,
   RefreshCcwIcon,
   TrashIcon,
@@ -102,6 +104,7 @@ export const useServiceTable = () => {
       {
         header: "Enabled",
         accessorKey: "enabled",
+        size: 60,
         cell: ({ row }) => {
           return (
             <div className="flex items-center justify-center">
@@ -167,7 +170,7 @@ export const useServiceTable = () => {
             );
           }
           return (
-            <div className="flex items-center justify-center flex-wrap gap-2">
+            <div className="flex items-center justify-left flex-wrap gap-2">
               {row.original?.tags?.map((tag) => (
                 <Badge
                   key={tag}
@@ -225,11 +228,11 @@ export const useServiceTable = () => {
         },
       },
       {
-        header: "Actions",
+        header: () => <span className="sr-only">Actions</span>,
         accessorKey: "actions",
         cell: ({ row }) => {
           return (
-            <div className="flex justify-center">
+            <div>
               <DropdownMenu
                 open={isOpenDropdownIdAction === row.original?.id}
                 onOpenChange={(open) =>
@@ -238,10 +241,19 @@ export const useServiceTable = () => {
                     : setIsOpenDropdownIdAction(null)
                 }
               >
-                <DropdownMenuTrigger className="cursor-pointer p-1">
-                  <EllipsisVerticalIcon className="w-4 h-4" />
+                <DropdownMenuTrigger asChild>
+                  <div className="flex justify-end">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="shadow-none cursor-pointer"
+                      aria-label="Edit item"
+                    >
+                      <EllipsisIcon size={16} aria-hidden="true" />
+                    </Button>
+                  </div>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent>
+                <DropdownMenuContent align="end">
                   <DropdownMenuItem
                     onClick={() => onCheckService(row.original?.id)}
                   >
@@ -253,11 +265,12 @@ export const useServiceTable = () => {
                   >
                     <PencilIcon /> <span>Edit</span>
                   </DropdownMenuItem>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem
-                    className="group focus:bg-destructive focus:text-white"
+                    className="text-destructive focus:text-destructive"
                     onClick={() => setDeleteServiceId(row.original?.id)}
                   >
-                    <TrashIcon className="text-muted-foreground group-hover:text-white" />
+                    <TrashIcon className="group-hover:text-white" />
                     <span>Delete</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>

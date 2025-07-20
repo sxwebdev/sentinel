@@ -34,7 +34,7 @@ const initialState = {
   incidentsCount: null,
   filters: {
     page: 1,
-    pageSize: 10,
+    pageSize: 25,
   },
   serviceStatsData: null,
 };
@@ -43,7 +43,8 @@ export const useServiceDetailStore = create<ServiceDetailStore>((set) => ({
   ...initialState,
   setDeleteIncident: (deleteIncident) => set({ deleteIncident }),
   setIncidentsCount: (incidentsCount) => set({ incidentsCount }),
-  setFilters: (filters) => set((state) => ({filters: {...state.filters, ...filters}})),
+  setFilters: (filters) =>
+    set((state) => ({ filters: { ...state.filters, ...filters } })),
   setResolveIncident: (resolveIncident) => set({ resolveIncident }),
   setServiceDetailData: (serviceDetailData) => set({ serviceDetailData }),
   setIncidentsData: (incidentsData) => set({ incidentsData }),

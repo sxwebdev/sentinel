@@ -1,35 +1,34 @@
-import { useId } from "react"
+import { useId } from "react";
 import {
   ChevronFirstIcon,
   ChevronLastIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-} from "lucide-react"
+} from "lucide-react";
 
-import { Label } from "@shared/components/ui/label"
 import {
   Pagination,
   PaginationContent,
   PaginationItem,
   PaginationLink,
-} from "@shared/components/ui/pagination"
+} from "@shared/components/ui/pagination";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@shared/components/ui/select"
-import { cn } from "../lib/utils"
+} from "@shared/components/ui/select";
+import { cn } from "../lib/utils";
 
 type PaginationProps = {
-  totalPages: number
-  selectedRows: number
-  setSelectedRows: (rows: number) => void
-  selectedPage: number
-  setSelectedPage: (page: number) => void
-  className?: string
-}
+  totalPages: number;
+  selectedRows: number;
+  setSelectedRows: (rows: number) => void;
+  selectedPage: number;
+  setSelectedPage: (page: number) => void;
+  className?: string;
+};
 
 export default function PaginationTable({
   totalPages,
@@ -39,12 +38,11 @@ export default function PaginationTable({
   setSelectedPage,
   className,
 }: PaginationProps) {
-  const id = useId()
+  const id = useId();
   return (
-    <div className={cn("flex w-full px-6", className)}>
-      <div className="flex items-center justify-between gap-8 w-full">
+    <div className={cn("w-full px-6", className)}>
+      <div className="flex flex-col md:flex-row items-center justify-between gap-4 md:gap-8 w-full">
         <div className="flex items-center gap-3">
-          <Label htmlFor={id}>Rows per page</Label>
           <Select
             value={selectedRows.toString()}
             onValueChange={(value) => setSelectedRows(Number(value))}
