@@ -9,6 +9,11 @@ server:
     # For production: https://your-domain.com/api/v1 and wss://your-domain.com/ws
     base_url: ""     # Optional: Override API base URL (e.g., "https://api.example.com/api/v1")
     socket_url: ""   # Optional: Override WebSocket URL (e.g., "wss://api.example.com/ws")
+  auth:
+    enabled: false  # Set to true to enable basic authentication
+    users:
+      - username: "admin"
+        password: "changeme"
 
 monitoring:
   global:

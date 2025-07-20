@@ -19,6 +19,19 @@ type ServerConfig struct {
 	Host     string         `yaml:"host"`
 	BaseHost string         `yaml:"base_host"`
 	Frontend FrontendConfig `yaml:"frontend"`
+	Auth     AuthConfig     `yaml:"auth"`
+}
+
+// AuthConfig holds authentication settings
+type AuthConfig struct {
+	Enabled bool       `yaml:"enabled"`
+	Users   []UserAuth `yaml:"users"`
+}
+
+// UserAuth represents a user with basic auth credentials
+type UserAuth struct {
+	Username string `yaml:"username"`
+	Password string `yaml:"password"`
 }
 
 // FrontendConfig holds frontend-specific configuration

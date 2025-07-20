@@ -71,6 +71,11 @@ Create a `config.yaml` file:
 server:
   port: 8080
   host: "0.0.0.0"
+  auth:
+    enabled: false # Set to true to enable basic authentication
+    users:
+      - username: "admin"
+        password: "changeme"
 
 monitoring:
   global:
@@ -95,6 +100,40 @@ notifications:
 ```
 
 **Note**: Services are now managed through the web interface or API, not through static configuration in `config.yaml`.
+
+### Security
+
+Sentinel supports HTTP Basic Authentication to protect your monitoring dashboard and API endpoints.
+
+#### Enabling Authentication
+
+Set `auth.enabled: true` in your `config.yaml` and configure users:
+
+```yaml
+server:
+  auth:
+    enabled: true
+    users:
+      - username: "admin"
+        password: "secure_password_123"
+      - username: "viewer"
+        password: "readonly_pass_456"
+```
+
+#### Security Features
+
+- **HTTP Basic Auth**: Industry-standard authentication method
+- **WebSocket Bypass**: WebSocket connections bypass auth for real-time updates
+- **API Protection**: All REST API endpoints require authentication when enabled
+- **Swagger Integration**: API documentation includes authentication requirements
+
+#### Security Best Practices
+
+- Use strong, unique passwords for each user
+- Consider using environment variables for passwords in production
+- Enable authentication in production environments
+- Regularly rotate passwords
+- Use HTTPS in production (configure reverse proxy)
 
 ## Web Interface
 
