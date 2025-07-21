@@ -73,17 +73,12 @@ format: ## Format code
 	go fmt ./...
 	goimports -w .
 
-docker-build-linux: ## Build Docker image for Linux
-	docker buildx build --platform linux/amd64 \
+docker-push: ## Build and push Docker image
+	docker buildx build --platform linux/amd64 --push \
 		--build-arg VERSION=`git describe --tags --abbrev=0 || echo "0.0.0"` \
 		--build-arg COMMIT=`git rev-parse --short HEAD` \
 		--build-arg DATE=`date -u +'%Y-%m-%dT%H:%M:%SZ'` \
 		-t sxwebdev/sentinel:latest .
-
-# Docker
-docker-push: docker-build-linux ## Build and push Docker image
-	docker tag sxwebdev/sentinel:latest sxwebdev/sentinel:latest
-	docker push sxwebdev/sentinel:latest
 
 docker-run: ## Run Docker container
 	docker run -d \
