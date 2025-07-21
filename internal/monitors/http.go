@@ -200,18 +200,6 @@ func (h *HTTPMonitor) checkEndpoint(ctx context.Context, endpoint EndpointConfig
 		}
 	}
 
-	// Check if status code indicates success
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return EndpointResult{
-			Name:     endpoint.Name,
-			URL:      endpoint.URL,
-			Success:  false,
-			Error:    fmt.Sprintf("HTTP %d: %s", resp.StatusCode, string(body)),
-			Response: string(body),
-			Duration: duration,
-		}
-	}
-
 	if endpoint.ExpectedStatus != 0 && resp.StatusCode != endpoint.ExpectedStatus {
 		return EndpointResult{
 			Name:     endpoint.Name,
