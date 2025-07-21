@@ -4,6 +4,8 @@ Sentinel is a lightweight, multi-protocol service monitoring system written in G
 
 ![Preview](https://github.com/sxwebdev/sentinel/blob/master/screenshots/dashboard.png?raw=true)
 
+![Preview](https://github.com/sxwebdev/sentinel/blob/master/screenshots/service_detail.png?raw=true)
+
 ## Features
 
 - **Multi-Protocol Support**: HTTP/HTTPS, TCP, gRPC
@@ -182,6 +184,24 @@ server:
 - **Incident Management**: View and resolve incidents
 - **Service Details**: Detailed view with incident history and statistics
 
+### HTTP Monitor Features
+
+![Preview](https://github.com/sxwebdev/sentinel/blob/master/screenshots/create_http_service.png?raw=true)
+
+The HTTP monitor provides advanced capabilities for complex monitoring scenarios:
+
+- **Multi-Endpoint Monitoring**: Monitor multiple endpoints within a single service and compare their responses
+- **JSON Path Extraction**: Extract specific values from JSON responses using JSONPath syntax
+- **JavaScript Conditions**: Set custom alert conditions using JavaScript to analyze responses from multiple endpoints
+- **Basic Authentication**: Support for HTTP Basic Auth on per-endpoint basis
+- **Custom Headers**: Configure custom HTTP headers for each endpoint
+
+### TCP Monitor Features
+
+- **Simple Connectivity**: Basic TCP port connectivity checks
+- **Send/Expect Protocol**: Send specific data and validate expected responses
+- **Custom Protocol Support**: Monitor any TCP-based protocol (Redis, MySQL, custom protocols)
+
 ### gRPC Check Types
 
 The gRPC monitor supports three types of checks:
@@ -198,9 +218,7 @@ The gRPC monitor supports three types of checks:
 
 ## Notification Setup
 
-Sentinel uses [Shoutrrr](https://github.com/containrrr/shoutrrr) for notifications, which supports multiple providers:
-
-### Multiple Providers
+Sentinel uses [Shoutrrr](https://github.com/containrrr/shoutrrr) for notifications, which supports multiple providers
 
 You can configure multiple notification providers simultaneously. If one provider fails, notifications will still be sent to the others:
 
@@ -296,8 +314,6 @@ The Swagger UI provides:
 3. **State Changes**: Status changes trigger incident creation/resolution
 4. **Notifications**: Alerts sent only on status changes (UP ↔ DOWN)
 5. **Real-time Updates**: WebSocket broadcasts for instant UI updates
-6. **Concurrent Access**: Improved SQLite handling for concurrent operations
-7. **Clean Logging**: Minimal logging focused on check results and notifications
 
 ## Development
 
