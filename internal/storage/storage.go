@@ -38,4 +38,7 @@ type Storage interface {
 
 	// Statistics
 	GetServiceStats(ctx context.Context, params FindIncidentsParams) (*ServiceStats, error)
+
+	// SQLite specific methods
+	GetSQLiteVersion(ctx context.Context) (string, error)
 }

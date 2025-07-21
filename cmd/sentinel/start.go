@@ -92,6 +92,17 @@ func startCMD() *cli.Command {
 				service.New(service.WithService(webServer)),
 			)
 
+			ln.AddAfterStartHooks(func() error {
+				// Print SQLite version if using SQLite storage
+				sqliteVersion, err := store.GetSQLiteVersion(ctx)
+				if err != nil {
+					return fmt.Errorf("failed to get SQLite version: %w", err)
+				}
+				l.Infof("SQLite version: %s", sqliteVersion)
+
+				return nil
+			})
+
 			return ln.Run()
 		},
 	}

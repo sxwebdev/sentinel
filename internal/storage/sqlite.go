@@ -178,3 +178,13 @@ func (s *SQLiteStorage) GetAllTags(ctx context.Context) ([]string, error) {
 func (s *SQLiteStorage) GetAllTagsWithCount(ctx context.Context) (map[string]int, error) {
 	return s.orm.GetAllTagsWithCount(ctx)
 }
+
+// GetSQLiteVersion returns the SQLite version
+func (s *SQLiteStorage) GetSQLiteVersion(ctx context.Context) (string, error) {
+	var version string
+	err := s.db.QueryRowContext(ctx, "SELECT sqlite_version()").Scan(&version)
+	if err != nil {
+		return "", fmt.Errorf("failed to get SQLite version: %w", err)
+	}
+	return version, nil
+}
