@@ -91,6 +91,9 @@ func NewServer(
 	return server, nil
 }
 
+// Name returns the name of the server
+func (s *Server) Name() string { return "webserver" }
+
 // Start starts the web server
 func (s *Server) Start(ctx context.Context) error {
 	errChan := make(chan error, 1)

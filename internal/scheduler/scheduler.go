@@ -57,6 +57,9 @@ func New(
 	}
 }
 
+// Name returns the name of the scheduler
+func (s *Scheduler) Name() string { return "scheduler" }
+
 // Start begins monitoring all configured services
 func (s *Scheduler) Start(ctx context.Context) error {
 	// Load enabled services from storage
@@ -176,7 +179,7 @@ func (s *Scheduler) monitorService(ctx context.Context, job *job) {
 			return
 		case <-job.Ticker.C:
 			if err := s.performCheck(ctx, job); err != nil && !errors.Is(err, context.Canceled) {
-				s.logger.Errorf("Error performing check for service %s: %v", job.ServiceName, err)
+				s.logger.Errorf("error performing check for service %s: %v", job.ServiceName, err)
 				continue
 			}
 		}
