@@ -7,6 +7,10 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
 } from "@/shared/components/ui";
 import {
   ArrowLeftIcon,
@@ -58,14 +62,29 @@ const ServiceDetail = () => {
       description: "Total Incidents",
     },
     {
-      value: `${serviceStatsData?.uptime_percentage.toFixed(1)}%`,
-      key: "uptime",
-      description: "Uptime",
+      value: serviceDetailData?.total_checks,
+      key: "total_checks",
+      description: "Total Checks",
     },
     {
       value: `${(serviceStatsData?.avg_response_time / 1000000).toFixed(1)} ms`,
       key: "avg_response_time",
       description: "Avg Response Time",
+    },
+    {
+      value: `${serviceStatsData?.uptime_percentage.toFixed(1)}%`,
+      key: "uptime",
+      description: "Uptime",
+    },
+    {
+      value: serviceDetailData?.consecutive_success,
+      key: "consecutive_success",
+      description: "Consecutive Success",
+    },
+    {
+      value: serviceDetailData?.consecutive_fails,
+      key: "consecutive_fails",
+      description: "Consecutive Fails",
     },
   ];
 
@@ -95,7 +114,7 @@ const ServiceDetail = () => {
           )}
         >
           <Link to={"/"}>
-            <Button className="group cursor-pointer" variant="ghost">
+            <Button className="group" variant="ghost">
               <ArrowLeftIcon
                 className="-ms-1 opacity-60 transition-transform group-hover:-translate-x-0.5"
                 size={16}
@@ -131,104 +150,83 @@ const ServiceDetail = () => {
         </header>
 
         <Card>
-          <CardHeader className="border-b">
-            <CardTitle className="flex items-center gap-3">
-              <ActivityIndicatorSVG
-                active={serviceDetailData?.is_enabled}
-                size={24}
-              />
-              <h3 className="text-base md:text-lg font-bold">
-                Service: {serviceDetailData?.name}
-              </h3>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-3.5 md:gap-4">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <ActivityIndicatorSVG
+                      active={serviceDetailData?.is_enabled}
+                      size={24}
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>
+                      {serviceDetailData?.is_enabled
+                        ? "Service enabled"
+                        : "Service disabled"}
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <div>
+                <h3 className="text-base md:text-lg font-bold">
+                  {serviceDetailData?.name}
+                </h3>
+                <div className="mt-2">
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <Badge variant={"secondary"} className="text-sm">
+                          {serviceDetailData?.protocol}
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent>Protocol</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <Badge variant={"secondary"} className="ml-3 text-sm">
+                          {new Date(
+                            serviceDetailData?.last_check
+                          ).toLocaleString()}
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent>Last Check</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+              </div>
+              <Badge
+                className={cn(
+                  "text-xs md:text-sm font-semibold ml-auto",
+                  serviceDetailData?.status === "up" &&
+                    "bg-emerald-100 text-emerald-600",
+                  serviceDetailData?.status === "down" &&
+                    "bg-rose-100 text-rose-600",
+                  serviceDetailData?.status === "unknown" &&
+                    "bg-yellow-100 text-yellow-600"
+                )}
+              >
+                {serviceDetailData?.status.toLocaleUpperCase()}
+              </Badge>
             </CardTitle>
           </CardHeader>
-          <CardContent
-            className={cn("flex flex-col gap-2 px-6", isMobile && "px-4")}
-          >
-            <div className="flex items-center gap-2 justify-between">
-              <span className="text-muted-foreground text-sm font-medium">
-                Status:
-              </span>
-              <span>
-                <Badge
-                  className={cn(
-                    "text-sm font-medium",
-                    serviceDetailData?.status === "up" &&
-                      "bg-emerald-100 text-emerald-600",
-                    serviceDetailData?.status === "down" &&
-                      "bg-rose-100 text-rose-600",
-                    serviceDetailData?.status === "unknown" &&
-                      "bg-yellow-100 text-yellow-600"
-                  )}
-                >
-                  {serviceDetailData?.status.toLocaleUpperCase()}
-                </Badge>
-              </span>
-            </div>
-            <div className="flex items-center gap-2 justify-between">
-              <span className="text-muted-foreground text-sm font-medium">
-                Protocol:
-              </span>
-              <span className="font-medium">{serviceDetailData?.protocol}</span>
-            </div>
-            <div className="flex items-center gap-2 justify-between">
-              <span className="text-muted-foreground text-sm font-medium">
-                Total Checks:
-              </span>
-              <span className="font-medium">
-                {serviceDetailData?.total_checks}
-              </span>
-            </div>
-            <div className="flex items-center gap-2 justify-between">
-              <span className="text-muted-foreground text-sm font-medium">
-                Consecutive Success:
-              </span>
-              <span className="font-medium">
-                {serviceDetailData?.consecutive_success}
-              </span>
-            </div>
-            <div className="flex items-center gap-2 justify-between">
-              <span className="text-muted-foreground text-sm font-medium">
-                Consecutive Fails:
-              </span>
-              <span className="font-medium">
-                {serviceDetailData?.consecutive_fails}
-              </span>
-            </div>
-            <div className="flex items-center gap-2 justify-between">
-              <span className="text-muted-foreground text-sm font-medium">
-                Last Check:
-              </span>
-              <span className="font-medium">
-                {new Date(serviceDetailData?.last_check).toLocaleString(
-                  "ru-RU",
-                  {
-                    year: "numeric",
-                    month: "numeric",
-                    day: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    second: "2-digit",
-                  }
-                )}
-              </span>
-            </div>
-
-            {serviceDetailData.last_error && (
-              <Alert variant="destructive" className="mt-3">
-                <CircleAlertIcon />
-                <AlertTitle className="font-medium">Last Error</AlertTitle>
-                <AlertDescription>
-                  <div
-                    dangerouslySetInnerHTML={{
-                      __html: serviceDetailData.last_error,
-                    }}
-                  />
-                </AlertDescription>
-              </Alert>
-            )}
-          </CardContent>
         </Card>
+        {serviceDetailData.last_error && (
+          <Alert variant="destructive">
+            <CircleAlertIcon />
+            <AlertTitle className="font-semibold">Last Error</AlertTitle>
+            <AlertDescription>
+              <div
+                dangerouslySetInnerHTML={{
+                  __html: serviceDetailData.last_error,
+                }}
+              />
+            </AlertDescription>
+          </Alert>
+        )}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {cardStats.map((stat) => (
             <InfoCardStats
@@ -252,7 +250,7 @@ const ServiceDetail = () => {
             )}
             {incidentsData?.map((incident: Incident) => (
               <div key={incident.id}>
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between flex-col md:flex-row">
                   <span className="text-muted-foreground">#{incident.id}</span>
                   <div className="flex items-center gap-2">
                     <span

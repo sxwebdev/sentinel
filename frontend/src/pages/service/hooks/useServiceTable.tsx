@@ -117,7 +117,11 @@ export const useServiceTable = () => {
                     />
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>{row.original?.is_enabled ? "Enabled" : "Disabled"}</p>
+                    <p>
+                      {row.original?.is_enabled
+                        ? "Service enabled"
+                        : "Service disabled"}
+                    </p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -255,7 +259,7 @@ export const useServiceTable = () => {
                     <Button
                       size="icon"
                       variant="ghost"
-                      className="shadow-none cursor-pointer"
+                      className="shadow-none"
                       aria-label="Edit item"
                     >
                       <EllipsisIcon size={16} aria-hidden="true" />

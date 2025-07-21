@@ -45,7 +45,7 @@ const Dashboard = () => {
           <div className="flex flex-col md:flex-row">
             <Button
               size="sm"
-              className="mb-3 cursor-pointer md:mb-0 md:mr-3"
+              className="mb-3 md:mb-0 md:mr-3"
               onClick={onRefreshDashboard}
             >
               <RefreshCcwIcon />
