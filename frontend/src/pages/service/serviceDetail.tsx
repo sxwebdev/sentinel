@@ -304,7 +304,7 @@ const ServiceDetail = () => {
                 <hr className="my-4" />
               </div>
             ))}
-            {incidentsCount && incidentsCount > filters.pageSize && (
+            {incidentsCount != null && incidentsCount > filters.pageSize && (
               <PaginationTable
                 className="px-0"
                 selectedRows={filters.pageSize}
