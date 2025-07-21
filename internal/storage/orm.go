@@ -251,7 +251,9 @@ func (o *ORMStorage) ResolveAllIncidents(ctx context.Context, serviceID string) 
 				ub.Assign("duration_ns", now.Sub(item.StartTime)),
 				ub.Assign("updated_at", now),
 			).
-			Where(ub.Equal("service_id", serviceID))
+			Where(
+				ub.Equal("id", item.ID),
+			)
 
 		sql, args := ub.Build()
 		if _, err := tx.ExecContext(ctx, sql, args...); err != nil {
