@@ -34,7 +34,7 @@ const initialState = {
   incidentsCount: null,
   filters: {
     page: 1,
-    pageSize: 25,
+    pageSize: 10,
   },
   serviceStatsData: null,
 };
