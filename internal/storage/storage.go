@@ -4,10 +4,13 @@ import (
 	"context"
 
 	"github.com/sxwebdev/sentinel/pkg/dbutils"
+	"github.com/tkcrm/mx/service"
 )
 
 // Storage defines the interface for incident storage
 type Storage interface {
+	service.IService
+
 	// Incident management
 	GetIncidentByID(ctx context.Context, id string) (*Incident, error)
 	SaveIncident(ctx context.Context, incident *Incident) error
@@ -35,7 +38,4 @@ type Storage interface {
 
 	// Statistics
 	GetServiceStats(ctx context.Context, params FindIncidentsParams) (*ServiceStats, error)
-
-	// Cleanup
-	Close() error
 }

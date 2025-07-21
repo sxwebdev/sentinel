@@ -15,10 +15,10 @@ import (
 	"time"
 
 	"github.com/sxwebdev/sentinel/internal/config"
+	"github.com/sxwebdev/sentinel/internal/monitor"
 	"github.com/sxwebdev/sentinel/internal/monitors"
 	"github.com/sxwebdev/sentinel/internal/notifier"
 	"github.com/sxwebdev/sentinel/internal/receiver"
-	"github.com/sxwebdev/sentinel/internal/service"
 	"github.com/sxwebdev/sentinel/internal/storage"
 	"github.com/sxwebdev/sentinel/internal/web"
 	"github.com/sxwebdev/sentinel/pkg/dbutils"
@@ -236,7 +236,7 @@ func setupTestSuite() (*TestSuite, error) {
 	}
 
 	// Create monitor service
-	monitorService := service.NewMonitorService(stor, cfg, notif, rc)
+	monitorService := monitor.NewMonitorService(stor, cfg, notif, rc)
 
 	// Create web server
 	webServer, err := web.NewServer(cfg, monitorService, stor, rc)
@@ -270,7 +270,7 @@ func setupTestSuite() (*TestSuite, error) {
 
 func (s *TestSuite) cleanup() {
 	if s.stor != nil {
-		s.stor.Close()
+		s.stor.Stop(context.Background())
 	}
 }
 

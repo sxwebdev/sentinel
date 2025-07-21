@@ -30,8 +30,8 @@ import (
 	"github.com/sxwebdev/sentinel/docs/docsv1"
 	"github.com/sxwebdev/sentinel/frontend"
 	"github.com/sxwebdev/sentinel/internal/config"
+	"github.com/sxwebdev/sentinel/internal/monitor"
 	"github.com/sxwebdev/sentinel/internal/receiver"
-	"github.com/sxwebdev/sentinel/internal/service"
 	"github.com/sxwebdev/sentinel/internal/storage"
 	"github.com/sxwebdev/sentinel/internal/utils"
 	"github.com/sxwebdev/sentinel/pkg/dbutils"
@@ -40,7 +40,7 @@ import (
 
 // Server represents the web server
 type Server struct {
-	monitorService *service.MonitorService
+	monitorService *monitor.MonitorService
 	storage        storage.Storage
 	receiver       *receiver.Receiver
 	config         *config.Config
@@ -53,7 +53,7 @@ type Server struct {
 // NewServer creates a new web server
 func NewServer(
 	cfg *config.Config,
-	monitorService *service.MonitorService,
+	monitorService *monitor.MonitorService,
 	storage storage.Storage,
 	receiver *receiver.Receiver,
 ) (*Server, error) {
@@ -91,9 +91,20 @@ func NewServer(
 	return server, nil
 }
 
+// Name returns the name of the server
+func (s *Server) Name() string { return "webserver" }
+
 // Start starts the web server
 func (s *Server) Start(ctx context.Context) error {
 	errChan := make(chan error, 1)
+
+	go func() {
+		addr := fmt.Sprintf("%s:%d", s.config.Server.Host, s.config.Server.Port)
+		if err := s.App().Listen(addr); err != nil {
+			errChan <- fmt.Errorf("failed to start Fiber server: %w", err)
+		}
+	}()
+
 	go func() {
 		errChan <- s.subscribeEvents(ctx)
 	}()
@@ -107,19 +118,19 @@ func (s *Server) Start(ctx context.Context) error {
 	return nil
 }
 
-func (s *Server) Stop(_ context.Context) error {
-	fmt.Println("Web server: stopping, closing all WebSocket connections")
-
+func (s *Server) Stop(ctx context.Context) error {
 	s.wsMutex.Lock()
-	// Закрываем все WebSocket соединения
 	for conn := range s.wsConnections {
 		conn.Close()
 	}
-	// Очищаем map
+
 	s.wsConnections = make(map[*websocket.Conn]bool)
 	s.wsMutex.Unlock()
 
-	fmt.Println("Web server: stopped")
+	if err := s.App().ShutdownWithContext(ctx); err != nil {
+		return fmt.Errorf("failed to shutdown Fiber server: %w", err)
+	}
+
 	return nil
 }
 

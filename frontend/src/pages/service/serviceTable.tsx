@@ -93,6 +93,11 @@ export const ServiceTable = ({ protocols }: ServiceTableProps) => {
                   </SelectItem>
                 );
               })}
+              {Object.keys(protocols).length === 0 && (
+                <SelectItem value="none" disabled>
+                  No protocols available
+                </SelectItem>
+              )}
             </SelectWithClear>
             <SelectWithClear
               className="w-full"
@@ -176,7 +181,7 @@ export const ServiceTable = ({ protocols }: ServiceTableProps) => {
             </Table>
           </div>
         </CardContent>
-        {servicesCount && servicesCount > filters.pageSize && (
+        {servicesCount != null && servicesCount > filters.pageSize && (
           <PaginationTable
             selectedRows={filters.pageSize}
             setSelectedRows={(value) => setFilters({ pageSize: value })}

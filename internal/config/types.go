@@ -2,10 +2,15 @@ package config
 
 import (
 	"time"
+
+	"github.com/tkcrm/mx/logger"
+	"github.com/tkcrm/mx/ops"
 )
 
 // Config represents the main configuration structure
 type Config struct {
+	Log           logger.Config
+	Ops           ops.Config
 	Server        ServerConfig        `yaml:"server"`
 	Monitoring    MonitoringConfig    `yaml:"monitoring"`
 	Database      DatabaseConfig      `yaml:"database"`

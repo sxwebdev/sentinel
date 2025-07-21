@@ -57,10 +57,26 @@ func NewSQLiteStorage(dbPath string) (*SQLiteStorage, error) {
 	return storage, nil
 }
 
-// Close closes the database connection
-func (s *SQLiteStorage) Close() error {
+// Name returns the storage type
+func (s *SQLiteStorage) Name() string {
+	return "SQLite"
+}
+
+// Start initializes the storage
+func (s *SQLiteStorage) Start(_ context.Context) error {
+	if s.db == nil {
+		return fmt.Errorf("storage not initialized")
+	}
+	return nil
+}
+
+// Stop closes the database connection
+func (s *SQLiteStorage) Stop(_ context.Context) error {
 	if s.db != nil {
-		return s.db.Close()
+		if err := s.db.Close(); err != nil {
+			return fmt.Errorf("failed to close database: %w", err)
+		}
+		s.db = nil
 	}
 	return nil
 }

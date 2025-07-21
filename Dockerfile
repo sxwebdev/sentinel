@@ -49,4 +49,4 @@ WORKDIR /root/
 COPY --from=backend-builder /app/sentinel .
 
 # Run the binary
-CMD ["./sentinel"]
+CMD ["./sentinel", "start"]
