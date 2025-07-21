@@ -29,6 +29,7 @@ curl -L https://raw.githubusercontent.com/sxwebdev/sentinel/master/scripts/insta
 curl -L https://raw.githubusercontent.com/sxwebdev/sentinel/master/scripts/install.sh | sudo bash -s -- \
     --install-dir /opt/sentinel/bin \
     --config-dir /etc/sentinel \
+    --data-dir /var/lib/sentinel \
     --service-name sentinel-monitor \
     --user sentinel
 
@@ -308,10 +309,10 @@ Sentinel includes an upgrade script that automatically downloads and installs th
 # Download and run the upgrade script
 curl -L -o ./upgrade.sh https://raw.githubusercontent.com/sxwebdev/sentinel/master/scripts/upgrade.sh
 chmod +x ./upgrade.sh
-sudo ./upgrade.sh sentinel ./
+sudo ./upgrade.sh sentinel /usr/local/bin/sentinel
 
 # Or if you have the repository cloned
-sudo ./scripts/upgrade.sh sentinel ./
+sudo ./scripts/upgrade.sh sentinel /usr/local/bin/sentinel
 ```
 
 ### Upgrade Features
