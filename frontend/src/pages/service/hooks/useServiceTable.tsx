@@ -146,11 +146,12 @@ export const useServiceTable = () => {
           return (
             <Badge
               className={cn(
-                "text-sm font-medium",
-                row.original?.status === "up" && "bg-green-light text-green",
-                row.original?.status === "down" && "bg-red-light text-red",
+                "text-xs font-semibold",
+                row.original?.status === "up" &&
+                  "bg-emerald-100 text-emerald-600",
+                row.original?.status === "down" && "bg-rose-100 text-rose-600",
                 row.original?.status === "unknown" &&
-                  "bg-orange-light text-orange"
+                  "bg-yellow-100 text-yellow-600"
               )}
             >
               {row.original?.status?.toUpperCase()}
@@ -210,19 +211,27 @@ export const useServiceTable = () => {
         cell: ({ row }) => {
           return (
             <>
-              <Badge
-                className={cn(
-                  "text-sm font-medium",
-                  row.original?.active_incidents > 0 && "bg-red-light text-red",
-                  !row.original?.active_incidents && "bg-green-light text-green"
-                )}
-              >
-                {row.original?.active_incidents ?? 0}
-              </Badge>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <Badge variant="outline" className="text-xs font-medium">
+                      {row.original?.active_incidents ?? 0}
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent>Active incidents</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
               {" / "}
-              <Badge variant="outline" className={cn("text-sm font-medium")}>
-                {row.original?.total_incidents ?? 0}
-              </Badge>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <Badge variant="outline" className="text-xs font-medium">
+                      {row.original?.total_incidents ?? 0}
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent>Total incidents</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </>
           );
         },

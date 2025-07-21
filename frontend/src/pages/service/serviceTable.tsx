@@ -176,13 +176,15 @@ export const ServiceTable = ({ protocols }: ServiceTableProps) => {
             </Table>
           </div>
         </CardContent>
-        <PaginationTable
-          selectedRows={filters.pageSize}
-          setSelectedRows={(value) => setFilters({ pageSize: value })}
-          selectedPage={filters.page}
-          setSelectedPage={(value) => setFilters({ page: value })}
-          totalPages={Math.ceil((servicesCount ?? 0) / filters.pageSize)}
-        />
+        {servicesCount && servicesCount > filters.pageSize && (
+          <PaginationTable
+            selectedRows={filters.pageSize}
+            setSelectedRows={(value) => setFilters({ pageSize: value })}
+            selectedPage={filters.page}
+            setSelectedPage={(value) => setFilters({ page: value })}
+            totalPages={Math.ceil((servicesCount ?? 0) / filters.pageSize)}
+          />
+        )}
       </Card>
     </>
   );

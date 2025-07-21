@@ -29,6 +29,9 @@ runtcpserver:
 rungrpcserver:
 	go run ./cmd/grpcserver
 
+front:
+	cd frontend && pnpm dev
+
 # Build targets
 build: deps ## Build the application
 	@mkdir -p $(BUILD_DIR)
@@ -73,7 +76,7 @@ format: ## Format code
 # Docker
 docker-push: ## Push Docker image
 	docker buildx build \
-		--platform linux/amd64,linux/arm64 \
+		--platform linux/amd64 \
 		--push \
 		-t sxwebdev/sentinel:latest .
 

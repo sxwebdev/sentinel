@@ -5,11 +5,16 @@ import {
   Button,
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/shared/components/ui";
-import { ArrowLeftIcon, CheckIcon, PlayIcon, TrashIcon } from "lucide-react";
+import {
+  ArrowLeftIcon,
+  CheckIcon,
+  CircleAlertIcon,
+  PlayIcon,
+  TrashIcon,
+} from "lucide-react";
 import { useIsMobile } from "@/shared/hooks/useIsMobile";
 import { cn } from "@/shared/lib/utils";
 import { InfoCardStats } from "@/entities/infoStatsCard/infoCardStats";
@@ -19,6 +24,11 @@ import { ConfirmDialog } from "@/entities/confirmDialog/confirmDialog";
 import { ActivityIndicatorSVG } from "@/entities/ActivityIndicatorSVG/ActivityIndicatorSVG";
 import { Link } from "react-router";
 import PaginationTable from "@/shared/components/paginationTable";
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@/shared/components/ui/alert";
 
 const ServiceDetail = () => {
   const {
@@ -84,19 +94,16 @@ const ServiceDetail = () => {
             isMobile && "flex-col gap-2"
           )}
         >
-          <Link
-            to="/"
-            className={cn(
-              "text-lg hover:underline flex items-center gap-2",
-              isMobile && "w-full text-base"
-            )}
-          >
-            <ArrowLeftIcon />
-            Back
+          <Link to={"/"}>
+            <Button className="group cursor-pointer" variant="ghost">
+              <ArrowLeftIcon
+                className="-ms-1 opacity-60 transition-transform group-hover:-translate-x-0.5"
+                size={16}
+                aria-hidden="true"
+              />
+              Back
+            </Button>
           </Link>
-          <h1 className={cn("text-2xl font-bold", isMobile && "text-lg")}>
-            Service: {serviceDetailData?.name}
-          </h1>
           <div
             className={cn(
               "flex items-center gap-2",
@@ -125,10 +132,14 @@ const ServiceDetail = () => {
 
         <Card>
           <CardHeader className="border-b">
-            <CardTitle
-              className={cn("text-lg font-bold", isMobile && "text-base px-4")}
-            >
-              Service Information
+            <CardTitle className="flex items-center gap-3">
+              <ActivityIndicatorSVG
+                active={serviceDetailData?.is_enabled}
+                size={24}
+              />
+              <h3 className="text-base md:text-lg font-bold">
+                Service: {serviceDetailData?.name}
+              </h3>
             </CardTitle>
           </CardHeader>
           <CardContent
@@ -143,26 +154,15 @@ const ServiceDetail = () => {
                   className={cn(
                     "text-sm font-medium",
                     serviceDetailData?.status === "up" &&
-                      "text-green bg-green-light",
+                      "bg-emerald-100 text-emerald-600",
                     serviceDetailData?.status === "down" &&
-                      "text-red bg-red-light",
+                      "bg-rose-100 text-rose-600",
                     serviceDetailData?.status === "unknown" &&
-                      "text-orange bg-orange-light"
+                      "bg-yellow-100 text-yellow-600"
                   )}
                 >
-                  {serviceDetailData?.status}
+                  {serviceDetailData?.status.toLocaleUpperCase()}
                 </Badge>
-              </span>
-            </div>
-            <div className="flex items-center gap-2 justify-between">
-              <span className="text-muted-foreground text-sm font-medium">
-                Enabled:
-              </span>
-              <span>
-                <ActivityIndicatorSVG
-                  active={serviceDetailData?.is_enabled}
-                  size={24}
-                />
               </span>
             </div>
             <div className="flex items-center gap-2 justify-between">
@@ -215,18 +215,17 @@ const ServiceDetail = () => {
             </div>
 
             {serviceDetailData.last_error && (
-              <Card className="flex flex-row gap-2 p-4 border-red bg-red-light mt-2">
-                <CardTitle className="text-red whitespace-nowrap">
-                  Last Error:
-                </CardTitle>
-                <CardDescription className="text-red">
+              <Alert variant="destructive" className="mt-3">
+                <CircleAlertIcon />
+                <AlertTitle className="font-medium">Last Error</AlertTitle>
+                <AlertDescription>
                   <div
                     dangerouslySetInnerHTML={{
                       __html: serviceDetailData.last_error,
                     }}
                   />
-                </CardDescription>
-              </Card>
+                </AlertDescription>
+              </Alert>
             )}
           </CardContent>
         </Card>
@@ -254,22 +253,13 @@ const ServiceDetail = () => {
             {incidentsData?.map((incident: Incident) => (
               <div key={incident.id}>
                 <div className="flex items-center justify-between">
-                  <span>
-                    {new Date(incident.start_time).toLocaleString("ru-RU", {
-                      year: "numeric",
-                      month: "numeric",
-                      day: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      second: "2-digit",
-                    })}
-                  </span>
+                  <span className="text-muted-foreground">#{incident.id}</span>
                   <div className="flex items-center gap-2">
                     <span
                       className={cn(
                         "text-muted-foreground text-sm font-medium",
-                        incident.resolved && "text-green",
-                        !incident.resolved && "text-red"
+                        incident.resolved && "text-emerald-500",
+                        !incident.resolved && "text-rose-500"
                       )}
                     >
                       {incident.resolved ? "Resolved" : "Active"}
@@ -284,31 +274,22 @@ const ServiceDetail = () => {
                     </Button>
                   </div>
                 </div>
-                <div className="text-red text-sm font-medium">
-                  <div dangerouslySetInnerHTML={{ __html: incident.error }} />
-                </div>
+                <Alert variant="destructive" className="mt-3">
+                  <CircleAlertIcon />
+                  <AlertDescription>
+                    <div dangerouslySetInnerHTML={{ __html: incident.error }} />
+                  </AlertDescription>
+                </Alert>
                 <div className="flex flex-col gap-2 incident-details">
                   <div className="flex items-center gap-2">
                     <strong>Start:</strong>{" "}
-                    {new Date(incident.start_time).toLocaleString("ru-RU", {
-                      year: "numeric",
-                      month: "numeric",
-                      day: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      second: "2-digit",
-                    })}
+                    {new Date(incident.start_time).toLocaleString()}
                   </div>
                   <div className="flex items-center gap-2">
                     <strong>End:</strong>{" "}
-                    {new Date(incident.end_time).toLocaleString("ru-RU", {
-                      year: "numeric",
-                      month: "numeric",
-                      day: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      second: "2-digit",
-                    })}
+                    {incident.end_time
+                      ? new Date(incident.end_time).toLocaleString()
+                      : "Still Active"}
                   </div>
 
                   {incident.duration ? (
@@ -323,14 +304,16 @@ const ServiceDetail = () => {
                 <hr className="my-4" />
               </div>
             ))}
-            <PaginationTable
-              className="px-0"
-              selectedRows={filters.pageSize}
-              setSelectedRows={(value) => setFilters({ pageSize: value })}
-              selectedPage={filters.page}
-              setSelectedPage={(value) => setFilters({ page: value })}
-              totalPages={Math.ceil((incidentsCount ?? 0) / filters.pageSize)}
-            />
+            {incidentsCount && incidentsCount > filters.pageSize && (
+              <PaginationTable
+                className="px-0"
+                selectedRows={filters.pageSize}
+                setSelectedRows={(value) => setFilters({ pageSize: value })}
+                selectedPage={filters.page}
+                setSelectedPage={(value) => setFilters({ page: value })}
+                totalPages={Math.ceil((incidentsCount ?? 0) / filters.pageSize)}
+              />
+            )}
           </CardContent>
         </Card>
       </div>

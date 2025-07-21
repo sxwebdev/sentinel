@@ -121,7 +121,7 @@ const GRPCForm = React.memo(
         </CardContent>
       </Card>
     );
-  },
+  }
 );
 
 const TCPForm = React.memo(() => {
@@ -183,17 +183,17 @@ const HTTPForm = React.memo(
         endpoints[index] = { ...endpoints[index], [field]: value };
         setFieldValue("config.http.endpoints", endpoints);
       },
-      [setFieldValue, values.config?.http?.endpoints],
+      [setFieldValue, values.config?.http?.endpoints]
     );
 
     const handleRemoveEndpoint = useCallback(
       (index: number) => {
         setFieldValue(
           "config.http.endpoints",
-          (values.config?.http?.endpoints || []).filter((_, i) => i !== index),
+          (values.config?.http?.endpoints || []).filter((_, i) => i !== index)
         );
       },
-      [setFieldValue, values.config?.http?.endpoints],
+      [setFieldValue, values.config?.http?.endpoints]
     );
 
     const handleAddEndpoint = useCallback(() => {
@@ -255,7 +255,7 @@ const HTTPForm = React.memo(
                     if (!isNaN(Number(e.target.value))) {
                       setFieldValue(
                         "config.http.timeout",
-                        Number(e.target.value),
+                        Number(e.target.value)
                       );
                     }
                   }}
@@ -345,7 +345,7 @@ const HTTPForm = React.memo(
                             if (!isNaN(Number(e.target.value))) {
                               setFieldValue(
                                 `config.http.endpoints.${index}.expected_status`,
-                                Number(e.target.value),
+                                Number(e.target.value)
                               );
                             }
                           }}
@@ -412,11 +412,11 @@ const HTTPForm = React.memo(
                               : ""
                         }
                         onChange={(
-                          e: React.ChangeEvent<HTMLTextAreaElement>,
+                          e: React.ChangeEvent<HTMLTextAreaElement>
                         ) => {
                           setFieldValue(
                             `config.http.endpoints.${index}.headers`,
-                            e.target.value,
+                            e.target.value
                           );
                         }}
                         placeholder={'{"Content-Type": "application/json"}'}
@@ -450,7 +450,7 @@ const HTTPForm = React.memo(
         </CardContent>
       </Card>
     );
-  },
+  }
 );
 
 export const ServiceForm = ({
@@ -467,7 +467,7 @@ export const ServiceForm = ({
       Yup.object({
         name: Yup.string().required("Endpoint name is required"),
         url: Yup.string().required("URL is required"),
-      }),
+      })
     ),
   });
 
@@ -665,7 +665,7 @@ export const ServiceForm = ({
                 </div>
               </div>
               <div className="flex flex-col gap-2">
-                <Label>Tags (comma-separated)</Label>
+                <Label>Tags</Label>
                 <FastField name="tags">
                   {({ field }: FieldProps) => (
                     <InputTag
@@ -678,7 +678,7 @@ export const ServiceForm = ({
                           "tags",
                           typeof tags === "object"
                             ? tags.map((tag) => tag.text)
-                            : [],
+                            : []
                         );
                       }}
                     />
