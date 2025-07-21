@@ -18,6 +18,5 @@ builds:
       - -X main.buildDate={{.Date}}
 
 archives:
-  - name_template: "sentinel_{{.Version}}_{{.Os}}_{{.Arch}}"
-    formats:
+  - formats:
       - tar.gz

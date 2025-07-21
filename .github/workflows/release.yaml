@@ -65,7 +65,7 @@ jobs:
 
       - name: Install gcx
         run: |
-          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/sxwebdev/gcx/refs/heads/master/scripts/install.sh)"
+          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/sxwebdev/gcx/refs/tags/v0.0.8-rc.1/scripts/install.sh)"
 
       - name: Build release binaries
         run: gcx build --config gcx.yaml
