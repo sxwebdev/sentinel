@@ -2,17 +2,18 @@ package scheduler
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"log"
 	"sync"
 	"sync/atomic"
 	"time"
 
 	"github.com/puzpuzpuz/xsync/v3"
+	"github.com/sxwebdev/sentinel/internal/monitor"
 	"github.com/sxwebdev/sentinel/internal/monitors"
 	"github.com/sxwebdev/sentinel/internal/receiver"
-	"github.com/sxwebdev/sentinel/internal/service"
 	"github.com/sxwebdev/sentinel/internal/storage"
+	"github.com/tkcrm/mx/logger"
 )
 
 // ErrServiceNotFound is returned when a service is not found
@@ -20,8 +21,10 @@ var ErrServiceNotFound = fmt.Errorf("service not found")
 
 // Scheduler manages the monitoring of multiple services
 type Scheduler struct {
+	logger logger.Logger
+
 	receiver   *receiver.Receiver
-	monitorSvc *service.MonitorService
+	monitorSvc *monitor.MonitorService
 
 	jobs *xsync.MapOf[string, *job]
 	wg   sync.WaitGroup
@@ -42,10 +45,12 @@ type job struct {
 
 // New creates a new scheduler
 func New(
-	monitorService *service.MonitorService,
+	l logger.Logger,
+	monitorService *monitor.MonitorService,
 	receiver *receiver.Receiver,
 ) *Scheduler {
 	return &Scheduler{
+		logger:     l,
 		monitorSvc: monitorService,
 		receiver:   receiver,
 		jobs:       xsync.NewMapOf[string, *job](),
@@ -108,7 +113,7 @@ func (s *Scheduler) stopAll() {
 func (s *Scheduler) addService(ctx context.Context, svc *storage.Service) {
 	// Only add enabled services to monitoring
 	if !svc.IsEnabled {
-		log.Printf("Skipping disabled service: %s (ID: %s)", svc.Name, svc.ID)
+		s.logger.Warnf("Skipping disabled service: %s (ID: %s)", svc.Name, svc.ID)
 		return
 	}
 
@@ -159,7 +164,7 @@ func (s *Scheduler) monitorService(ctx context.Context, job *job) {
 
 	// Perform initial check
 	if err := s.performCheck(ctx, job); err != nil {
-		log.Printf("Error performing initial check for service %s: %v", job.ServiceName, err)
+		s.logger.Errorf("Error performing initial check for service %s: %v", job.ServiceName, err)
 		return
 	}
 
@@ -170,8 +175,8 @@ func (s *Scheduler) monitorService(ctx context.Context, job *job) {
 		case <-job.StopChan:
 			return
 		case <-job.Ticker.C:
-			if err := s.performCheck(ctx, job); err != nil {
-				log.Printf("Error performing check for service %s: %v", job.ServiceName, err)
+			if err := s.performCheck(ctx, job); err != nil && !errors.Is(err, context.Canceled) {
+				s.logger.Errorf("Error performing check for service %s: %v", job.ServiceName, err)
 				continue
 			}
 		}
@@ -204,7 +209,7 @@ func (s *Scheduler) performCheck(ctx context.Context, job *job) error {
 	defer func() {
 		if closer, ok := monitor.(interface{ Close() error }); ok {
 			if err := closer.Close(); err != nil {
-				log.Printf("Error closing monitor for %s: %v", serviceName, err)
+				s.logger.Errorf("Error closing monitor for %s: %v", serviceName, err)
 			}
 		}
 	}()
@@ -231,7 +236,7 @@ func (s *Scheduler) performCheck(ctx context.Context, job *job) error {
 				return fmt.Errorf("failed to record success for %s: %w", serviceName, err)
 			}
 
-			log.Printf("Service %s check successful (attempt %d/%d) in %v\n", serviceName, attempt, job.Retries, attemptResponseTime)
+			s.logger.Debugf("service %s check successful (attempt %d/%d) in %v", serviceName, attempt, job.Retries, attemptResponseTime)
 
 			service, err := s.monitorSvc.GetServiceByID(ctx, job.ServiceID)
 			if err != nil {
@@ -261,7 +266,7 @@ func (s *Scheduler) performCheck(ctx context.Context, job *job) error {
 			}
 		}
 
-		log.Printf("Service %s check failed (attempt %d/%d): %s\n", serviceName, attempt, job.Retries, err)
+		s.logger.Debugf("service %s check failed (attempt %d/%d): %s", serviceName, attempt, job.Retries, err)
 	}
 
 	// All attempts failed - record the time of the last attempt
@@ -335,7 +340,7 @@ func (s *Scheduler) subscribeEvents(ctx context.Context) error {
 			switch item.EventType {
 			case receiver.TriggerServiceEventTypeCheck:
 				if err := s.checkService(ctx, item.Svc.ID); err != nil {
-					log.Println("check service error", err)
+					s.logger.Errorf("check service error: %v", err)
 				}
 			case receiver.TriggerServiceEventTypeCreated:
 				s.addService(ctx, item.Svc)
@@ -344,17 +349,17 @@ func (s *Scheduler) subscribeEvents(ctx context.Context) error {
 				if !item.Svc.IsEnabled {
 					// Remove from monitoring if service is now disabled
 					if err := s.removeJob(item.Svc.ID); err != nil {
-						log.Println("remove disabled service error", err)
+						s.logger.Errorf("remove disabled service error: %v", err)
 					}
 				} else {
 					// Update or add to monitoring if service is enabled
 					if err := s.updateJob(ctx, item.Svc); err != nil {
-						log.Println("update service error", err)
+						s.logger.Errorf("update service error: %v", err)
 					}
 				}
 			case receiver.TriggerServiceEventTypeDeleted:
 				if err := s.removeJob(item.Svc.ID); err != nil {
-					log.Println("remove service error", err)
+					s.logger.Errorf("remove service error: %v", err)
 				}
 			}
 

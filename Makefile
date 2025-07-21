@@ -18,7 +18,7 @@ help: ## Show this help message
 
 # Development
 dev: ## Run in development mode with auto-reload
-	go run $(MAIN_PATH)
+	go run $(MAIN_PATH) start
 
 run: build ## Build and run the application
 	./$(BUILD_DIR)/$(BINARY_NAME)
@@ -73,12 +73,17 @@ format: ## Format code
 	go fmt ./...
 	goimports -w .
 
-# Docker
-docker-push: ## Push Docker image
-	docker buildx build \
-		--platform linux/amd64 \
-		--push \
+docker-build-linux: ## Build Docker image for Linux
+	docker buildx build --platform linux/amd64 \
+		--build-arg VERSION=`git describe --tags --abbrev=0 || echo "0.0.0"` \
+		--build-arg COMMIT=`git rev-parse --short HEAD` \
+		--build-arg DATE=`date -u +'%Y-%m-%dT%H:%M:%SZ'` \
 		-t sxwebdev/sentinel:latest .
+
+# Docker
+docker-push: docker-build-linux ## Build and push Docker image
+	docker tag sxwebdev/sentinel:latest sxwebdev/sentinel:latest
+	docker push sxwebdev/sentinel:latest
 
 docker-run: ## Run Docker container
 	docker run -d \

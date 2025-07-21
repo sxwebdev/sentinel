@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"time"
 
-	"gopkg.in/yaml.v3"
+	"github.com/goccy/go-yaml"
 )
 
 // Load reads and parses the configuration file
