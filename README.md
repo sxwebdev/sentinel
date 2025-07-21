@@ -17,7 +17,43 @@ Sentinel is a lightweight, multi-protocol service monitoring system written in G
 
 ## Quick Start
 
-### Using Docker Compose (Recommended)
+### Automated Installation (Recommended for Linux)
+
+Install Sentinel automatically on Linux systems with systemd:
+
+```bash
+# Install with default settings
+curl -L https://raw.githubusercontent.com/sxwebdev/sentinel/master/scripts/install.sh | sudo bash
+
+# Install with custom options
+curl -L https://raw.githubusercontent.com/sxwebdev/sentinel/master/scripts/install.sh | sudo bash -s -- \
+    --install-dir /opt/sentinel/bin \
+    --config-dir /etc/sentinel \
+    --data-dir /var/lib/sentinel \
+    --service-name sentinel-monitor \
+    --user sentinel
+
+# Install specific version
+curl -L https://raw.githubusercontent.com/sxwebdev/sentinel/master/scripts/install.sh | sudo bash -s -- \
+    --version v1.0.0
+```
+
+**Installation Features:**
+
+- Automatic binary download for your platform (Linux amd64/arm64)
+- System user creation
+- Systemd service configuration with security hardening
+- Configuration file creation with sensible defaults
+- Automatic service startup and enablement
+
+**Post-Installation:**
+
+- Dashboard: <http://localhost:8080>
+- Configuration: `/etc/sentinel/config.yaml`
+- Service: `systemctl status sentinel`
+- Logs: `journalctl -u sentinel -f`
+
+### Using Docker Compose
 
 1. Clone the repository:
 
@@ -26,25 +62,25 @@ git clone https://github.com/sxwebdev/sentinel
 cd sentinel
 ```
 
-2. Create configuration file:
+1. Create configuration file:
 
 ```bash
 cp config.yaml.example config.yaml
 # Edit config.yaml with your notification provider credentials
 ```
 
-3. Start the services:
+1. Start the services:
 
 ```bash
 docker-compose up -d
 ```
 
-4. Access the dashboard at http://localhost:8080
+1. Access the dashboard at <http://localhost:8080>
 
 ### Manual Installation
 
 1. Install Go 1.24 or later
-2. Clone and build:
+1. Clone and build:
 
 ```bash
 git clone https://github.com/sxwebdev/sentinel
@@ -53,9 +89,9 @@ go mod download
 go build -o sentinel ./cmd/server
 ```
 
-3. Configure your services in `config.yaml`
-4. Set up notification providers (see Notification Setup section below)
-5. Run:
+1. Configure your services in `config.yaml`
+1. Set up notification providers (see Notification Setup section below)
+1. Run:
 
 ```bash
 ./sentinel
@@ -262,6 +298,45 @@ notifications:
     # Email
     - "smtp://username:password@host:port/?from=fromAddress&to=recipient1[,recipient2,...]"
 ```
+
+## Upgrading
+
+### Automatic Upgrade Script
+
+Sentinel includes an upgrade script that automatically downloads and installs the latest release with zero-downtime deployment:
+
+```bash
+# Download and run the upgrade script
+curl -L -o ./upgrade.sh https://raw.githubusercontent.com/sxwebdev/sentinel/master/scripts/upgrade.sh
+chmod +x ./upgrade.sh
+sudo ./upgrade.sh sentinel /usr/local/bin/sentinel
+
+# Or if you have the repository cloned
+sudo ./scripts/upgrade.sh sentinel /usr/local/bin/sentinel
+```
+
+### Upgrade Features
+
+- 🔄 **Automatic Download**: Fetches the latest release for your platform (Linux/macOS, amd64/arm64)
+- 🛡️ **Safe Deployment**: Creates backup and rollback on failure
+- 🔧 **Service Management**: Handles systemd service stop/start automatically
+- ✅ **Verification**: Tests new binary before deployment
+- 📊 **Status Check**: Shows service status after upgrade
+
+### Custom Binary Path
+
+```bash
+# For custom installation paths
+sudo ./scripts/upgrade.sh sentinel-monitoring /opt/sentinel/bin/sentinel
+```
+
+### Manual Upgrade
+
+1. Download the latest release for your platform from [GitHub Releases](https://github.com/sxwebdev/sentinel/releases)
+2. Stop the service: `sudo systemctl stop sentinel`
+3. Replace the binary: `sudo cp sentinel /usr/local/bin/sentinel`
+4. Start the service: `sudo systemctl start sentinel`
+5. Check status: `systemctl status sentinel`
 
 ## API Reference
 
@@ -552,6 +627,73 @@ Sentinel uses minimal logging focused on essential information:
 
 Debug logging has been removed to keep logs clean and focused.
 
+## Maintenance and Updates
+
+### Automated Upgrades
+
+For systems installed with the installation script, use the upgrade script:
+
+```bash
+# Upgrade to latest version
+curl -L https://raw.githubusercontent.com/sxwebdev/sentinel/master/scripts/upgrade.sh | sudo bash
+
+# Upgrade specific service
+curl -L https://raw.githubusercontent.com/sxwebdev/sentinel/master/scripts/upgrade.sh | sudo bash -s -- sentinel-monitor
+
+# Upgrade to specific version
+curl -L https://raw.githubusercontent.com/sxwebdev/sentinel/master/scripts/upgrade.sh | sudo bash -s -- --version v1.0.0
+
+# Dry run (check what would be updated)
+curl -L https://raw.githubusercontent.com/sxwebdev/sentinel/master/scripts/upgrade.sh | sudo bash -s -- --dry-run
+```
+
+**Upgrade Features:**
+
+- Automatic binary download and verification
+- Service backup and graceful shutdown
+- Configuration preservation
+- Health checks after upgrade
+- Automatic rollback on failure
+- Minimal downtime (typically 10-30 seconds)
+
+### Manual Upgrades
+
+For Docker installations:
+
+```bash
+# Pull latest image
+docker-compose pull
+
+# Restart services
+docker-compose up -d
+```
+
+For manual installations:
+
+1. Stop the service: `sudo systemctl stop sentinel`
+1. Backup current binary: `sudo cp /usr/local/bin/sentinel /usr/local/bin/sentinel.backup`
+1. Download new version and replace binary
+1. Start the service: `sudo systemctl start sentinel`
+1. Verify: `systemctl status sentinel`
+
+### Health Monitoring
+
+After installation or upgrade, monitor service health:
+
+```bash
+# Check service status
+systemctl status sentinel
+
+# View recent logs
+journalctl -u sentinel --since "10 minutes ago"
+
+# Monitor in real-time
+journalctl -u sentinel -f
+
+# Check web interface
+curl -f http://localhost:8080/health || echo "Service not responding"
+```
+
 ## Contributing
 
 1. Fork the repository
@@ -566,5 +708,5 @@ MIT License - see LICENSE file for details.
 
 ## Support
 
-- GitHub Issues: https://github.com/sxwebdev/sentinel/issues
-- Documentation: https://github.com/sxwebdev/sentinel/wiki
+- GitHub Issues: <https://github.com/sxwebdev/sentinel/issues>
+- Documentation: <https://github.com/sxwebdev/sentinel/wiki>
