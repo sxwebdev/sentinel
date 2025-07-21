@@ -2,6 +2,8 @@
 
 Sentinel is a lightweight, multi-protocol service monitoring system written in Go. It monitors HTTP/HTTPS, TCP and gRPC services, providing real-time status updates and incident management with multi-provider notifications.
 
+![Preview](https://github.com/sxwebdev/sentinel/blob/master/screenshots/dashboard.png?raw=true)
+
 ## Features
 
 - **Multi-Protocol Support**: HTTP/HTTPS, TCP, gRPC
@@ -65,7 +67,7 @@ cd sentinel
 1. Create configuration file:
 
 ```bash
-cp config.yaml.example config.yaml
+cp config.template.yaml config.yaml
 # Edit config.yaml with your notification provider credentials
 ```
 
@@ -86,7 +88,7 @@ docker-compose up -d
 git clone https://github.com/sxwebdev/sentinel
 cd sentinel
 go mod download
-go build -o sentinel ./cmd/server
+go build -o sentinel ./cmd/sentinel
 ```
 
 1. Configure your services in `config.yaml`
@@ -120,13 +122,13 @@ monitoring:
     default_retries: 3
 
 database:
-  path: "./data/db.sqlite3"
+  path: "./data/db.sqlite"
 
 notifications:
   enabled: true
   urls:
     # Telegram
-    - "telegram://token@telegram?chats=@channel-1[,chat-id-1,...]"
+    - "telegram://token@telegram?chats=@channel-1[,chat-id-1,...]&preview=false"
     # Discord (optional)
     - "discord://token@id"
     # Slack (optional)
@@ -152,8 +154,6 @@ server:
     users:
       - username: "admin"
         password: "secure_password_123"
-      - username: "viewer"
-        password: "readonly_pass_456"
 ```
 
 #### Security Features
@@ -182,50 +182,6 @@ server:
 - **Incident Management**: View and resolve incidents
 - **Service Details**: Detailed view with incident history and statistics
 
-### Service Configuration via UI
-
-When creating or editing services through the web interface:
-
-1. **Protocol Selection**: Choose from HTTP/HTTPS, TCP or gRPC
-2. **JSON Configuration**: Enter protocol-specific configuration in JSON format
-3. **Default Templates**: UI provides default YAML templates for each protocol
-4. **Validation**: Configuration is validated before saving
-
-Example JSON configurations for each protocol:
-
-**HTTP/HTTPS:**
-
-```json
-{
-  "method": "GET",
-  "expected_status": 200,
-  "headers": {
-    "User-Agent": "Sentinel Monitor",
-    "Authorization": "Bearer token"
-  }
-}
-```
-
-**TCP:**
-
-```json
-{
-  "send_data": "ping",
-  "expect_data": "pong"
-}
-```
-
-**gRPC:**
-
-```json
-{
-  "check_type": "connectivity",
-  "service_name": "",
-  "tls": true,
-  "insecure_tls": false
-}
-```
-
 ### gRPC Check Types
 
 The gRPC monitor supports three types of checks:
@@ -244,43 +200,6 @@ The gRPC monitor supports three types of checks:
 
 Sentinel uses [Shoutrrr](https://github.com/containrrr/shoutrrr) for notifications, which supports multiple providers:
 
-### Telegram Setup
-
-1. Create a Telegram bot:
-
-   - Message @BotFather on Telegram
-   - Send `/newbot` and follow instructions
-   - Save the bot token
-
-2. Get your chat ID or channel username:
-
-   - For private chats: Add the bot to your group/channel, send a message, then visit `https://api.telegram.org/bot<TOKEN>/getUpdates`
-   - For public channels: Use the channel username (e.g., `@mychannel`)
-
-3. Configure in `config.yaml`:
-
-```yaml
-notifications:
-  enabled: true
-  urls:
-    - "telegram://token@telegram?chats=@channel-1[,chat-id-1,...]"
-```
-
-### Discord Setup
-
-1. Create a Discord webhook in your server settings
-2. Use the webhook URL format: `discord://token@id`
-
-### Slack Setup
-
-1. Create a Slack app and get the tokens
-2. Use the Slack URL format: `slack://[botname@]token-a/token-b/token-c`
-
-### Email Setup
-
-1. Configure SMTP settings
-2. Use the SMTP URL format: `smtp://username:password@host:port/?from=fromAddress&to=recipient1[,recipient2,...]`
-
 ### Multiple Providers
 
 You can configure multiple notification providers simultaneously. If one provider fails, notifications will still be sent to the others:
@@ -290,7 +209,7 @@ notifications:
   enabled: true
   urls:
     # Telegram
-    - "telegram://token@telegram?chats=@channel-1[,chat-id-1,...]"
+    - "telegram://token@telegram?chats=@channel-1[,chat-id-1,...]&preview=false"
     # Discord
     - "discord://token@id"
     # Slack
@@ -338,158 +257,37 @@ sudo ./scripts/upgrade.sh sentinel-monitoring /opt/sentinel/bin/sentinel
 4. Start the service: `sudo systemctl start sentinel`
 5. Check status: `systemctl status sentinel`
 
-## API Reference
+### Health Monitoring
 
-### Get All Services
-
-```bash
-GET /api/services
-```
-
-### Get Services Table Data
+After installation or upgrade, monitor service health:
 
 ```bash
-GET /api/services/table
+# Check service status
+systemctl status sentinel
+
+# View recent logs
+journalctl -u sentinel --since "10 minutes ago"
+
+# Monitor in real-time
+journalctl -u sentinel -f
+
+# Check web interface
+curl -f http://localhost:8080/health || echo "Service not responding"
 ```
 
-Returns services with incident statistics for table display.
+## API Documentation
 
-### Get Service Details
+Sentinel provides a comprehensive REST API and WebSocket support for programmatic access to all monitoring features.
 
-```bash
-GET /api/services/{id}
-```
+**Interactive API Documentation**: <http://localhost:8080/api/v1/swagger/index.html>
 
-### Get Service Configuration
+The Swagger UI provides:
 
-```bash
-GET /api/services/config/{id}
-```
-
-### Get Service Incidents
-
-```bash
-GET /api/services/{id}/incidents
-```
-
-### Get Service Statistics
-
-```bash
-GET /api/services/{id}/stats?days=30
-```
-
-### Trigger Manual Check
-
-```bash
-POST /api/services/{id}/check
-```
-
-### Resolve Incidents
-
-```bash
-POST /api/services/{id}/resolve
-```
-
-### Create Service
-
-```bash
-POST /api/services
-Content-Type: application/json
-
-{
-  "name": "my-service",
-  "protocol": "http",
-  "endpoint": "https://example.com/health",
-  "interval": "30s",
-  "timeout": "10s",
-  "retries": 3,
-  "tags": ["api", "critical"],
-  "config": {
-    "method": "GET",
-    "expected_status": 200
-  }
-}
-```
-
-### Update Service
-
-```bash
-PUT /api/services/{id}
-Content-Type: application/json
-
-{
-  "name": "my-service",
-  "protocol": "http",
-  "endpoint": "https://example.com/health",
-  "interval": "30s",
-  "timeout": "10s",
-  "retries": 3,
-  "tags": ["api", "critical"],
-  "config": {
-    "method": "GET",
-    "expected_status": 200
-  }
-}
-```
-
-### Delete Service
-
-```bash
-DELETE /api/services/{id}
-```
-
-### Get Recent Incidents
-
-```bash
-GET /api/incidents?limit=50
-```
-
-### Get Dashboard Statistics
-
-```bash
-GET /api/dashboard/stats
-```
-
-Returns overall dashboard statistics including uptime percentage and average response time.
-
-## WebSocket API
-
-### Connect to WebSocket
-
-```javascript
-const ws = new WebSocket("ws://localhost:8080/ws");
-```
-
-### Message Format
-
-```json
-{
-  "type": "service_update",
-  "services": [
-    {
-      "id": "service-id",
-      "name": "Service Name",
-      "protocol": "http",
-      "endpoint": "https://example.com",
-      "interval": "30s",
-      "timeout": "10s",
-      "retries": 3,
-      "tags": ["api", "critical"],
-      "config": "method: \"GET\"\nexpected_status: 200",
-      "state": {
-        "status": "up",
-        "last_check": "2024-01-01T12:00:00Z",
-        "response_time": "150ms",
-        "consecutive_success": 10,
-        "total_checks": 100
-      },
-      "active_incidents": 0,
-      "total_incidents": 5
-    }
-  ],
-  "timestamp": 1704110400
-}
-```
+- Complete endpoint documentation with examples
+- Request/response schemas
+- Authentication setup
+- Interactive testing interface
+- WebSocket API documentation
 
 ## Monitoring Logic
 
@@ -502,59 +300,6 @@ const ws = new WebSocket("ws://localhost:8080/ws");
 7. **Clean Logging**: Minimal logging focused on check results and notifications
 
 ## Development
-
-### Project Structure
-
-```text
-sentinel/
-├── cmd/
-│   ├── server/          # Main application
-│   ├── tcpserver/       # TCP server for testing
-│   └── grpcserver/      # gRPC server for testing
-├── internal/
-│   ├── config/          # Configuration management
-│   ├── monitors/        # Protocol-specific monitors
-│   ├── storage/         # Data persistence (SQLite with retry logic)
-│   ├── notifier/        # Notification system
-│   ├── receiver/        # Event receiver for real-time updates
-│   ├── scheduler/       # Monitoring scheduler
-│   ├── service/         # Business logic
-│   └── web/             # Web interface with YAML configuration
-├── data/                # SQLite database files
-├── config.yaml          # Configuration file
-└── docker-compose.yml   # Docker services
-```
-
-### Building
-
-```bash
-# Build all binaries
-make build
-
-# Build specific binary
-go build -o sentinel ./cmd/server
-go build -o tcpserver ./cmd/tcpserver
-go build -o grpcserver ./cmd/grpcserver
-
-# Production build with optimizations
-CGO_ENABLED=0 go build -ldflags="-w -s" -o sentinel ./cmd/server
-
-# Cross-compile for Linux
-GOOS=linux GOARCH=amd64 go build -o sentinel-linux ./cmd/server
-```
-
-### Testing
-
-```bash
-# Run all tests
-go test ./...
-
-# Run tests with coverage
-go test -cover ./...
-
-# Run specific test
-go test ./internal/storage
-```
 
 ## Deployment
 
@@ -615,83 +360,6 @@ docker run -d \
   -v ./data:/root/data \
   -v config.yaml:/root/config.yaml
   sentinel
-```
-
-## Logging
-
-Sentinel uses minimal logging focused on essential information:
-
-- **Check Results**: Success/failure of each service check
-- **Notifications**: Success/failure of notification delivery
-- **Errors**: Critical errors that require attention
-
-Debug logging has been removed to keep logs clean and focused.
-
-## Maintenance and Updates
-
-### Automated Upgrades
-
-For systems installed with the installation script, use the upgrade script:
-
-```bash
-# Upgrade to latest version
-curl -L https://raw.githubusercontent.com/sxwebdev/sentinel/master/scripts/upgrade.sh | sudo bash
-
-# Upgrade specific service
-curl -L https://raw.githubusercontent.com/sxwebdev/sentinel/master/scripts/upgrade.sh | sudo bash -s -- sentinel-monitor
-
-# Upgrade to specific version
-curl -L https://raw.githubusercontent.com/sxwebdev/sentinel/master/scripts/upgrade.sh | sudo bash -s -- --version v1.0.0
-
-# Dry run (check what would be updated)
-curl -L https://raw.githubusercontent.com/sxwebdev/sentinel/master/scripts/upgrade.sh | sudo bash -s -- --dry-run
-```
-
-**Upgrade Features:**
-
-- Automatic binary download and verification
-- Service backup and graceful shutdown
-- Configuration preservation
-- Health checks after upgrade
-- Automatic rollback on failure
-- Minimal downtime (typically 10-30 seconds)
-
-### Manual Upgrades
-
-For Docker installations:
-
-```bash
-# Pull latest image
-docker-compose pull
-
-# Restart services
-docker-compose up -d
-```
-
-For manual installations:
-
-1. Stop the service: `sudo systemctl stop sentinel`
-1. Backup current binary: `sudo cp /usr/local/bin/sentinel /usr/local/bin/sentinel.backup`
-1. Download new version and replace binary
-1. Start the service: `sudo systemctl start sentinel`
-1. Verify: `systemctl status sentinel`
-
-### Health Monitoring
-
-After installation or upgrade, monitor service health:
-
-```bash
-# Check service status
-systemctl status sentinel
-
-# View recent logs
-journalctl -u sentinel --since "10 minutes ago"
-
-# Monitor in real-time
-journalctl -u sentinel -f
-
-# Check web interface
-curl -f http://localhost:8080/health || echo "Service not responding"
 ```
 
 ## Contributing
