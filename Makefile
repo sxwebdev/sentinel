@@ -4,7 +4,7 @@
 
 # Variables
 BINARY_NAME=sentinel
-MAIN_PATH=./cmd/server
+MAIN_PATH=./cmd/sentinel
 BUILD_DIR=./build
 VERSION?=dev
 LDFLAGS=-ldflags="-w -s -X main.version=${VERSION}"

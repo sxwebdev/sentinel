@@ -35,7 +35,7 @@ COPY . .
 COPY --from=frontend-builder /app/frontend/dist ./frontend/dist
 
 # Build the application with embedded frontend
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix -ldflags="-w -s" -o sentinel ./cmd/server
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix -ldflags="-w -s" -o sentinel ./cmd/sentinel
 
 # Final stage
 FROM alpine:latest
