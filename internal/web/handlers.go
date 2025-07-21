@@ -36,10 +36,13 @@ import (
 	"github.com/sxwebdev/sentinel/internal/utils"
 	"github.com/sxwebdev/sentinel/pkg/dbutils"
 	_ "github.com/sxwebdev/sentinel/pkg/dbutils"
+	"github.com/tkcrm/mx/logger"
 )
 
 // Server represents the web server
 type Server struct {
+	logger logger.Logger
+
 	monitorService *monitor.MonitorService
 	storage        storage.Storage
 	receiver       *receiver.Receiver
@@ -52,6 +55,7 @@ type Server struct {
 
 // NewServer creates a new web server
 func NewServer(
+	logger logger.Logger,
 	cfg *config.Config,
 	monitorService *monitor.MonitorService,
 	storage storage.Storage,
@@ -66,6 +70,7 @@ func NewServer(
 	app.Use(cors.New())
 
 	server := &Server{
+		logger:         logger,
 		monitorService: monitorService,
 		storage:        storage,
 		receiver:       receiver,
@@ -789,7 +794,7 @@ func (s *Server) handleAPIUpdateService(c *fiber.Ctx) error {
 	}
 
 	// Debug: log the received data
-	fmt.Printf("Update service request: %+v\n", serviceDTO)
+	s.logger.Debugf("update service request: %+v", serviceDTO)
 
 	// Convert to storage.Service
 	updateParams := storage.CreateUpdateServiceRequest{

@@ -22,6 +22,7 @@ import (
 	"github.com/sxwebdev/sentinel/internal/storage"
 	"github.com/sxwebdev/sentinel/internal/web"
 	"github.com/sxwebdev/sentinel/pkg/dbutils"
+	"github.com/tkcrm/mx/logger"
 )
 
 type TestSuite struct {
@@ -220,6 +221,8 @@ func setupTestSuite() (*TestSuite, error) {
 		Timezone: "UTC",
 	}
 
+	l := logger.Default()
+
 	// Initialize storage
 	stor, err := storage.NewStorage(storage.StorageTypeSQLite, dbPath)
 	if err != nil {
@@ -239,7 +242,7 @@ func setupTestSuite() (*TestSuite, error) {
 	monitorService := monitor.NewMonitorService(stor, cfg, notif, rc)
 
 	// Create web server
-	webServer, err := web.NewServer(cfg, monitorService, stor, rc)
+	webServer, err := web.NewServer(l, cfg, monitorService, stor, rc)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create web server: %w", err)
 	}

@@ -18,7 +18,7 @@ type websocketEvent struct {
 
 // handleWebSocket handles WebSocket connections
 func (s *Server) handleWebSocket(c *websocket.Conn) {
-	fmt.Printf("WebSocket: new connection from %s\n", c.RemoteAddr())
+	s.logger.Debugf("WebSocket: new connection from %s", c.RemoteAddr())
 
 	// Add connection to the map
 	s.wsMutex.Lock()
@@ -26,13 +26,13 @@ func (s *Server) handleWebSocket(c *websocket.Conn) {
 	connectionCount := len(s.wsConnections)
 	s.wsMutex.Unlock()
 
-	fmt.Printf("WebSocket: total connections: %d\n", connectionCount)
+	s.logger.Debugf("WebSocket: total connections: %d", connectionCount)
 
 	// Remove connection when it closes
 	defer func() {
 		// Recover from potential panic to ensure cleanup
 		if r := recover(); r != nil {
-			fmt.Printf("WebSocket: panic recovered: %v\n", r)
+			s.logger.Errorf("WebSocket: panic recovered: %v", r)
 		}
 
 		s.wsMutex.Lock()
@@ -40,7 +40,8 @@ func (s *Server) handleWebSocket(c *websocket.Conn) {
 		remainingConnections := len(s.wsConnections)
 		s.wsMutex.Unlock()
 		c.Close()
-		fmt.Printf("WebSocket: connection closed, remaining connections: %d\n", remainingConnections)
+
+		s.logger.Debugf("WebSocket: connection closed, remaining connections: %d", remainingConnections)
 	}()
 
 	// Set read timeout to prevent goroutine from hanging forever
@@ -62,7 +63,7 @@ func (s *Server) handleWebSocket(c *websocket.Conn) {
 			if !strings.Contains(err.Error(), "close 1001") &&
 				!strings.Contains(err.Error(), "timeout") &&
 				!websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				fmt.Printf("WebSocket: read error: %v\n", err)
+				s.logger.Errorf("WebSocket: read error: %v", err)
 			}
 			break
 		}
@@ -108,7 +109,7 @@ func (s *Server) broadcastServiceTriggered(data receiver.TriggerServiceData) err
 		conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
 
 		if err := conn.WriteJSON(update); err != nil {
-			fmt.Printf("WebSocket broadcast error: failed to send to connection: %v\n", err)
+			s.logger.Errorf("WebSocket broadcast error: failed to send to connection: %v", err)
 			connectionsToRemove = append(connectionsToRemove, conn)
 		} else {
 			activeConnections++
@@ -157,7 +158,7 @@ func (s *Server) broadcastStatsUpdate(ctx context.Context) error {
 		conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
 
 		if err := conn.WriteJSON(update); err != nil {
-			fmt.Printf("WebSocket broadcast error: failed to send stats update: %v\n", err)
+			s.logger.Errorf("WebSocket broadcast error: failed to send stats update: %v", err)
 			connectionsToRemove = append(connectionsToRemove, conn)
 		} else {
 			activeConnections++
@@ -184,7 +185,7 @@ func (s *Server) subscribeEvents(ctx context.Context) error {
 	// Ensure unsubscription happens even if panic occurs
 	defer func() {
 		if r := recover(); r != nil {
-			fmt.Printf("WebSocket subscribeEvents panic recovered: %v\n", r)
+			s.logger.Errorf("WebSocket subscribeEvents panic recovered: %v", r)
 		}
 		broker.Unsubscribe(sub)
 	}()
@@ -212,12 +213,12 @@ func (s *Server) subscribeEvents(ctx context.Context) error {
 
 			// Broadcast service triggered event
 			if err := s.broadcastServiceTriggered(data); err != nil {
-				fmt.Printf("WebSocket broadcast error: %v\n", err)
+				s.logger.Errorf("WebSocket broadcast error: %v", err)
 			}
 
 			// Broadcast stats update
 			if err := s.broadcastStatsUpdate(ctx); err != nil {
-				fmt.Printf("WebSocket broadcast error: %v\n", err)
+				s.logger.Errorf("WebSocket broadcast error: %v", err)
 			}
 
 		case <-ticker.C:

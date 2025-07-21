@@ -78,7 +78,7 @@ func startCMD() *cli.Command {
 			// Initialize scheduler
 			sched := scheduler.New(l, monitorService, rc)
 
-			webServer, err := web.NewServer(conf, monitorService, store, rc)
+			webServer, err := web.NewServer(l, conf, monitorService, store, rc)
 			if err != nil {
 				return fmt.Errorf("failed to initialize web server: %w", err)
 			}
