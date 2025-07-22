@@ -171,15 +171,10 @@ const ServiceDetail = () => {
         description="Are you sure you want to delete this incident?"
         type="delete"
       />
-      <div className="flex flex-col gap-6">
-        <header
-          className={cn(
-            "flex items-center gap-2 justify-between py-2",
-            isMobile && "flex-col gap-2"
-          )}
-        >
+      <div className="flex flex-col gap-4 lg:gap-6">
+        <header className="flex flex-col py-3 md:flex-row gap-3 justify-between items-center">
           <Link to={"/"}>
-            <Button className="group" variant="ghost">
+            <Button className="group" variant="ghost" size="sm">
               <ArrowLeftIcon
                 className="-ms-1 opacity-60 transition-transform group-hover:-translate-x-0.5"
                 size={16}

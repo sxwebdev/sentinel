@@ -40,7 +40,7 @@ const Dashboard = () => {
   return (
     <ContentWrapper>
       <div className="flex flex-col gap-4 lg:gap-6">
-        <header className="flex flex-col md:flex-row gap-3 justify-between items-center">
+        <header className="flex flex-col py-3 md:flex-row gap-3 justify-between items-center">
           <h1 className="text-lg md:text-2xl font-bold">Sentinel Dashboard</h1>
           <div className="flex flex-col md:flex-row">
             <Button
