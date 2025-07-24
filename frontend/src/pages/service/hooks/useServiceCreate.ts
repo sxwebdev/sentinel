@@ -1,14 +1,16 @@
-import type { ServiceForm } from "@/features/service/types/type";
-
 import { useState } from "react";
 import { toast } from "sonner";
+import type { WebCreateUpdateServiceRequest } from "@/shared/types/model";
+import { getServices } from "@/shared/api/services/services";
 
 export const useServiceCreate = () => {
   const [isOpenModal, setIsOpenModal] = useState(false);
+  const {postServices} = getServices();
 
-  const initialValues: ServiceForm = {
+  // Create initial values
+  const initialValues: WebCreateUpdateServiceRequest = {
     name: "",
-    protocol: "",
+    protocol: "http",
     interval: 30000,
     timeout: 10000,
     retries: 3,
@@ -25,7 +27,7 @@ export const useServiceCreate = () => {
             expected_status: 200,
             method: "GET",
             body: "",
-            headers: "",
+            headers: {},
             json_path: "",
             username: "",
             password: "",
@@ -47,10 +49,10 @@ export const useServiceCreate = () => {
     },
   };
 
-  const onCreateService = async (values: ServiceForm) => {
-    return await $api
-      .post("/services", values)
-      .then(() => {
+
+  // Handle create service
+  const onCreateService = async (values: WebCreateUpdateServiceRequest) => {
+    return await postServices(values).then(() => {
         toast.success("Service created successfully");
         setIsOpenModal(false);
       })
@@ -58,6 +60,7 @@ export const useServiceCreate = () => {
         toast.error(err.response.data.error);
       });
   };
+  
   return {
     initialValues,
     onCreateService,

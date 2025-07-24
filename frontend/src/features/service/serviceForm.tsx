@@ -1,6 +1,6 @@
-import React, { useCallback } from "react";
-import { Form, Formik, FastField, Field } from "formik";
-import type { FieldProps } from "formik";
+import React, {useCallback} from "react";
+import {Form, Formik, FastField, Field} from "formik";
+import type {FieldProps} from "formik";
 import {
   Button,
   Card,
@@ -17,13 +17,14 @@ import {
   Switch,
   Textarea,
 } from "@/shared/components/ui";
-import { PlusIcon, TrashIcon } from "lucide-react";
-import type { ServiceForm as ServiceFormType } from "./types/type";
+import {PlusIcon, TrashIcon} from "lucide-react";
 import * as Yup from "yup";
 import InputTag from "@/shared/components/ui/inputTag";
+import type {WebCreateUpdateServiceRequest} from "@/shared/types/model";
+
 interface ServiceFormProps {
-  initialValues: ServiceFormType;
-  onSubmit: (values: ServiceFormType) => Promise<void>;
+  initialValues: WebCreateUpdateServiceRequest;
+  onSubmit: (values: WebCreateUpdateServiceRequest) => Promise<void>;
   type: "create" | "update";
 }
 
@@ -42,7 +43,7 @@ const GRPCForm = React.memo(
           <div className="flex flex-col gap-2">
             <Label required>Endpoint</Label>
             <FastField name="config.grpc.endpoint">
-              {({ field }: FieldProps) => (
+              {({field}: FieldProps) => (
                 <Input
                   {...field}
                   value={field.value ?? ""}
@@ -55,7 +56,7 @@ const GRPCForm = React.memo(
             <div className="flex flex-col gap-2">
               <Label required>Check Type</Label>
               <Field name="config.grpc.check_type">
-                {({ field }: FieldProps) => (
+                {({field}: FieldProps) => (
                   <Select
                     value={field.value}
                     onValueChange={(value) =>
@@ -80,7 +81,7 @@ const GRPCForm = React.memo(
             <div className="flex flex-col gap-2">
               <Label>Service Name</Label>
               <FastField name="config.grpc.service_name">
-                {({ field }: FieldProps) => (
+                {({field}: FieldProps) => (
                   <Input
                     {...field}
                     value={field.value ?? ""}
@@ -94,7 +95,7 @@ const GRPCForm = React.memo(
             <div className="flex flex-col gap-2">
               <Label>Use TLS</Label>
               <Field name="config.grpc.tls">
-                {({ field }: FieldProps) => (
+                {({field}: FieldProps) => (
                   <Switch
                     checked={field.value}
                     onCheckedChange={(checked) =>
@@ -107,7 +108,7 @@ const GRPCForm = React.memo(
             <div className="flex flex-col gap-2">
               <Label>Insecure TLS</Label>
               <Field name="config.grpc.insecure_tls">
-                {({ field }: FieldProps) => (
+                {({field}: FieldProps) => (
                   <Switch
                     checked={field.value}
                     onCheckedChange={(checked) =>
@@ -134,7 +135,7 @@ const TCPForm = React.memo(() => {
         <div className="flex flex-col gap-2">
           <Label required>Endpoint</Label>
           <FastField name="config.tcp.endpoint">
-            {({ field }: FieldProps) => (
+            {({field}: FieldProps) => (
               <Input
                 {...field}
                 value={field.value ?? ""}
@@ -146,7 +147,7 @@ const TCPForm = React.memo(() => {
         <div className="flex flex-col gap-2">
           <Label>Send Data</Label>
           <FastField name="config.tcp.send_data">
-            {({ field }: FieldProps) => (
+            {({field}: FieldProps) => (
               <Textarea {...field} placeholder="Send Data" />
             )}
           </FastField>
@@ -154,7 +155,7 @@ const TCPForm = React.memo(() => {
         <div className="flex flex-col gap-2">
           <Label>Expected Response</Label>
           <FastField name="config.tcp.expect_data">
-            {({ field }: FieldProps) => (
+            {({field}: FieldProps) => (
               <Input
                 {...field}
                 value={field.value ?? ""}
@@ -173,14 +174,14 @@ const HTTPForm = React.memo(
     values,
     setFieldValue,
   }: {
-    values: ServiceFormType;
+    values: WebCreateUpdateServiceRequest;
     setFieldValue: (field: string, value: unknown) => void;
   }) => {
     // Мемоизированные обработчики
     const handleEndpointChange = useCallback(
       (index: number, field: string, value: unknown) => {
         const endpoints = [...(values.config?.http?.endpoints || [])];
-        endpoints[index] = { ...endpoints[index], [field]: value };
+        endpoints[index] = {...endpoints[index], [field]: value};
         setFieldValue("config.http.endpoints", endpoints);
       },
       [setFieldValue, values.config?.http?.endpoints]
@@ -222,7 +223,7 @@ const HTTPForm = React.memo(
           <div className="flex flex-col gap-2">
             <Label>JavaScript Condition</Label>
             <FastField name="config.http.condition">
-              {({ field }: FieldProps) => (
+              {({field}: FieldProps) => (
                 <Textarea
                   {...field}
                   value={field.value ?? ""}
@@ -246,7 +247,7 @@ const HTTPForm = React.memo(
           <div className="flex flex-col gap-2">
             <Label>Timeout(milliseconds)</Label>
             <FastField name="config.http.timeout">
-              {({ field }: FieldProps) => (
+              {({field}: FieldProps) => (
                 <Input
                   {...field}
                   value={field.value ?? ""}
@@ -283,7 +284,7 @@ const HTTPForm = React.memo(
                   <div className="flex flex-col gap-2">
                     <Label required>Name</Label>
                     <FastField name={`config.http.endpoints.${index}.name`}>
-                      {({ field }: FieldProps) => (
+                      {({field}: FieldProps) => (
                         <Input
                           {...field}
                           value={field.value ?? ""}
@@ -295,7 +296,7 @@ const HTTPForm = React.memo(
                   <div className="flex flex-col gap-2">
                     <Label required>URL</Label>
                     <FastField name={`config.http.endpoints.${index}.url`}>
-                      {({ field }: FieldProps) => (
+                      {({field}: FieldProps) => (
                         <Input
                           {...field}
                           value={field.value ?? ""}
@@ -307,7 +308,7 @@ const HTTPForm = React.memo(
                   <div className="flex flex-col gap-2">
                     <Label>Method</Label>
                     <Field name={`config.http.endpoints.${index}.method`}>
-                      {({ field }: FieldProps) => (
+                      {({field}: FieldProps) => (
                         <Select
                           value={field.value ?? ""}
                           onValueChange={(value) =>
@@ -336,7 +337,7 @@ const HTTPForm = React.memo(
                     <FastField
                       name={`config.http.endpoints.${index}.expected_status`}
                     >
-                      {({ field }: FieldProps) => (
+                      {({field}: FieldProps) => (
                         <Input
                           {...field}
                           value={field.value ?? ""}
@@ -358,7 +359,7 @@ const HTTPForm = React.memo(
                     <FastField
                       name={`config.http.endpoints.${index}.json_path`}
                     >
-                      {({ field }: FieldProps) => (
+                      {({field}: FieldProps) => (
                         <Input
                           {...field}
                           value={field.value ?? ""}
@@ -376,7 +377,7 @@ const HTTPForm = React.memo(
                   <div className="flex flex-col gap-2">
                     <Label>Username</Label>
                     <FastField name={`config.http.endpoints.${index}.username`}>
-                      {({ field }: FieldProps) => (
+                      {({field}: FieldProps) => (
                         <Input
                           {...field}
                           value={field.value ?? ""}
@@ -388,7 +389,7 @@ const HTTPForm = React.memo(
                   <div className="flex flex-col gap-2">
                     <Label>Password</Label>
                     <FastField name={`config.http.endpoints.${index}.password`}>
-                      {({ field }: FieldProps) => (
+                      {({field}: FieldProps) => (
                         <Input
                           {...field}
                           value={field.value ?? ""}
@@ -401,7 +402,7 @@ const HTTPForm = React.memo(
                 <div className="flex flex-col gap-2">
                   <Label>Headers</Label>
                   <FastField name={`config.http.endpoints.${index}.headers`}>
-                    {({ field }: FieldProps) => (
+                    {({field}: FieldProps) => (
                       <Textarea
                         {...field}
                         value={
@@ -427,7 +428,7 @@ const HTTPForm = React.memo(
                 <div className="flex flex-col gap-2">
                   <Label>Body</Label>
                   <FastField name={`config.http.endpoints.${index}.body`}>
-                    {({ field }: FieldProps) => (
+                    {({field}: FieldProps) => (
                       <Textarea
                         {...field}
                         value={field.value ?? ""}
@@ -482,13 +483,13 @@ export const ServiceForm = ({
       .required("Protocol is required"),
   });
 
-  const headersModificate = (values: ServiceFormType) => {
+  const headersModificate = (values: WebCreateUpdateServiceRequest) => {
     if (values.config?.http?.endpoints) {
       values.config.http.endpoints.forEach((endpoint) => {
         if (
           !endpoint.headers ||
           (typeof endpoint.headers === "string" &&
-            endpoint.headers.trim() === "")
+            (endpoint.headers as string).trim() === "")
         ) {
           endpoint.headers = {};
         } else {
@@ -504,20 +505,26 @@ export const ServiceForm = ({
     }
   };
 
-  const configModificate = (values: ServiceFormType) => {
+  const configModificate = (values: WebCreateUpdateServiceRequest) => {
     switch (values.protocol) {
       case "http":
-        values.config.grpc = null;
-        values.config.tcp = null;
+        if (values.config) {
+          values.config.grpc = undefined;
+          values.config.tcp = undefined;
+        }
         headersModificate(values);
         break;
       case "tcp":
-        values.config.grpc = null;
-        values.config.http = null;
+        if (values.config) {
+          values.config.grpc = undefined;
+          values.config.http = undefined;
+        }
         break;
       case "grpc":
-        values.config.http = null;
-        values.config.tcp = null;
+        if (values.config) {
+          values.config.http = undefined;
+          values.config.tcp = undefined;
+        }
         break;
     }
     return values;
@@ -528,7 +535,7 @@ export const ServiceForm = ({
       initialValues={initialValues}
       validationSchema={validateSchema}
       enableReinitialize
-      onSubmit={(values, { setSubmitting }) => {
+      onSubmit={(values, {setSubmitting}) => {
         configModificate(values);
         onSubmit(values).finally(() => {
           setSubmitting(false);
@@ -539,17 +546,17 @@ export const ServiceForm = ({
           if (values.protocol) {
             switch (values.protocol) {
               case "http":
-                await httpSchema.validate(values.config.http, {
+                await httpSchema.validate(values.config?.http, {
                   abortEarly: false,
                 });
                 break;
               case "tcp":
-                await tcpSchema.validate(values.config.tcp, {
+                await tcpSchema.validate(values.config?.tcp, {
                   abortEarly: false,
                 });
                 break;
               case "grpc":
-                await grpcSchema.validate(values.config.grpc, {
+                await grpcSchema.validate(values.config?.grpc, {
                   abortEarly: false,
                 });
                 break;
@@ -570,14 +577,14 @@ export const ServiceForm = ({
         }
       }}
     >
-      {({ isSubmitting, isValid, dirty, values, setFieldValue }) => {
+      {({isSubmitting, isValid, dirty, values, setFieldValue}) => {
         return (
           <Form className="flex flex-col gap-4">
             <Card className="p-6">
               <div className="flex flex-col gap-2">
                 <Label required>Service Name</Label>
                 <FastField name="name">
-                  {({ field }: FieldProps) => (
+                  {({field}: FieldProps) => (
                     <Input
                       {...field}
                       value={field.value ?? ""}
@@ -589,7 +596,7 @@ export const ServiceForm = ({
               <div className="flex flex-col gap-2">
                 <Label required>Protocol</Label>
                 <Field name="protocol">
-                  {({ field }: FieldProps) => (
+                  {({field}: FieldProps) => (
                     <Select
                       value={field.value}
                       onValueChange={(value) =>
@@ -615,7 +622,7 @@ export const ServiceForm = ({
                 <div className="flex flex-col gap-2">
                   <Label>Interval(milliseconds)</Label>
                   <FastField name="interval">
-                    {({ field }: FieldProps) => (
+                    {({field}: FieldProps) => (
                       <Input
                         {...field}
                         value={field.value ?? ""}
@@ -632,7 +639,7 @@ export const ServiceForm = ({
                 <div className="flex flex-col gap-2">
                   <Label>Timeout(milliseconds)</Label>
                   <FastField name="timeout">
-                    {({ field }: FieldProps) => (
+                    {({field}: FieldProps) => (
                       <Input
                         {...field}
                         value={field.value ?? ""}
@@ -649,7 +656,7 @@ export const ServiceForm = ({
                 <div className="flex flex-col gap-2">
                   <Label>Retries</Label>
                   <FastField name="retries">
-                    {({ field }: FieldProps) => (
+                    {({field}: FieldProps) => (
                       <Input
                         {...field}
                         value={field.value ?? ""}
@@ -667,7 +674,7 @@ export const ServiceForm = ({
               <div className="flex flex-col gap-2">
                 <Label>Tags</Label>
                 <FastField name="tags">
-                  {({ field }: FieldProps) => (
+                  {({field}: FieldProps) => (
                     <InputTag
                       tags={field.value.map((tag: string, index: number) => ({
                         id: index.toString(),
@@ -688,7 +695,7 @@ export const ServiceForm = ({
               <div className="flex flex-col gap-2">
                 <Label>Enabled Service</Label>
                 <Field name="is_enabled">
-                  {({ field }: FieldProps) => (
+                  {({field}: FieldProps) => (
                     <Switch
                       checked={field.value}
                       onCheckedChange={(checked) =>

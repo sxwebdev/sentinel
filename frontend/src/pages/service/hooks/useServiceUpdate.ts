@@ -1,12 +1,14 @@
-import type { ServiceForm } from "@/features/service/types/type";
+
 import $api from "@/shared/api/baseApi";
 import { useEffect, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { useServiceTableStore } from "../store/useServiceTableStore";
 import { toast } from "sonner";
+import type { WebCreateUpdateServiceRequest, WebServiceDTO } from "@/shared/types/model";
+import { getServices } from "@/shared/api/services/services";
 
 export const useServiceUpdate = () => {
-  const [serviceData, setServiceData] = useState<ServiceForm | null>(null);
+  const [serviceData, setServiceData] = useState<WebServiceDTO | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { updateServiceId, setUpdateServiceId } = useServiceTableStore(
     useShallow((s) => ({
@@ -14,6 +16,7 @@ export const useServiceUpdate = () => {
       updateServiceId: s.updateServiceId,
     })),
   );
+  const {putServicesId} = getServices();
 
   const getService = async () => {
     setIsLoading(true);
@@ -27,9 +30,8 @@ export const useServiceUpdate = () => {
       });
   };
 
-  const onUpdateService = async (values: ServiceForm) => {
-    return await $api
-      .put(`/services/${updateServiceId}`, values)
+  const onUpdateService = async (values: WebCreateUpdateServiceRequest) => {
+    return await putServicesId(updateServiceId ?? "", values)
       .then(() => {
         toast.success("Service updated successfully");
         setUpdateServiceId(null);
