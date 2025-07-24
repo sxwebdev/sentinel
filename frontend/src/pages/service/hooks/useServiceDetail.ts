@@ -104,7 +104,7 @@ export const useServiceDetail = () => {
     const res = await $api.get(`/services/${id}/incidents`, {
       params: {
         page: filters.page,
-        pageSize: filters.pageSize,
+        page_size: filters.pageSize,
       },
     });
     setIncidentsData(res.data.items);

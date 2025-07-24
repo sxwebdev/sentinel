@@ -66,10 +66,7 @@ export default function PaginationTable({
             aria-live="polite"
           >
             <span className="text-foreground">
-              {selectedPage * selectedRows - selectedRows + 1}-
-              {selectedPage * selectedRows > totalPages
-                ? totalPages
-                : selectedPage * selectedRows}
+              {selectedPage}
             </span>{" "}
             of <span className="text-foreground">{totalPages}</span>
           </p>
