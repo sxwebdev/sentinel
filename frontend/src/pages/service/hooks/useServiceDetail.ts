@@ -1,10 +1,11 @@
-import $api, { socketUrl } from "@/shared/api/baseApi";
-import { useEffect } from "react";
-import { useParams } from "react-router";
-import { useServiceApi } from "./useServiceApi";
-import { toast } from "sonner";
-import { useServiceDetailStore } from "../store/useServiceDeteilStore";
+import $api, {socketUrl} from "@/shared/api/baseApi";
+import {useEffect} from "react";
+import {useNavigate, useParams} from "react-router";
+import {useServiceApi} from "./useServiceApi";
+import {toast} from "sonner";
+import {useServiceDetailStore} from "../store/useServiceDeteilStore";
 import useWebSocket from "react-use-websocket";
+import {ROUTES} from "@/app/routes/constants";
 
 export const useServiceDetail = () => {
   const {
@@ -24,8 +25,8 @@ export const useServiceDetail = () => {
     setUpdateServiceStatsData,
     setResolveIncident,
   } = useServiceDetailStore();
-  const { id } = useParams();
-  const { onCheckService: onCheckServiceApi } = useServiceApi();
+  const {id} = useParams();
+  const {onCheckService: onCheckServiceApi} = useServiceApi();
 
   const onCheckService = async (id: string) => {
     await onCheckServiceApi(id)
@@ -39,7 +40,7 @@ export const useServiceDetail = () => {
       });
   };
 
-  const { lastMessage } = useWebSocket(socketUrl, {
+  const {lastMessage} = useWebSocket(socketUrl, {
     shouldReconnect: () => true,
   });
 
@@ -89,8 +90,13 @@ export const useServiceDetail = () => {
       });
   };
 
+  const navigate = useNavigate();
+
   const getServiceDetail = async () => {
-    const res = await $api.get(`/services/${id}`);
+    const res = await $api.get(`/services/${id}`).catch(() => {
+      navigate(ROUTES.NOT_FOUND);
+    });
+    if (!res) return;
     setServiceDetailData(res.data);
   };
 
