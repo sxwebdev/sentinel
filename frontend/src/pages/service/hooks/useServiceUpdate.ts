@@ -1,5 +1,4 @@
 
-import $api from "@/shared/api/baseApi";
 import { useEffect, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { useServiceTableStore } from "../store/useServiceTableStore";
@@ -16,20 +15,22 @@ export const useServiceUpdate = () => {
       updateServiceId: s.updateServiceId,
     })),
   );
-  const {putServicesId} = getServices();
+  const { putServicesId } = getServices();
+  const { getServicesId } = getServices();
 
+  // Get service
   const getService = async () => {
     setIsLoading(true);
-    await $api
-      .get(`/services/${updateServiceId}`)
+    await getServicesId(updateServiceId ?? "")
       .then((res) => {
-        setServiceData(res.data);
+        setServiceData(res);
       })
       .finally(() => {
         setIsLoading(false);
       });
   };
 
+  // Handle update service
   const onUpdateService = async (values: WebCreateUpdateServiceRequest) => {
     return await putServicesId(updateServiceId ?? "", values)
       .then(() => {

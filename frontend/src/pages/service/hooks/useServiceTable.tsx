@@ -19,7 +19,6 @@ import {
 } from "@tanstack/react-table";
 import {useEffect, useMemo} from "react";
 import {Link} from "react-router";
-import $api from "@/shared/api/baseApi";
 import {
   EllipsisIcon,
   PencilIcon,
@@ -53,12 +52,11 @@ export const useServiceTable = () => {
     setUpdateServiceId,
   } = useServiceTableStore();
 
-  const {getServices: getServicesAll, postServicesIdCheck} = getServices();
+  const {getServices: getServicesAll, postServicesIdCheck, deleteServicesId } = getServices();
   const {getTags: getTagsAll, getTagsCount} = getTags();
 
   const onDeleteService = async () => {
-    await $api
-      .delete(`/services/${deleteServiceId}`)
+    await deleteServicesId(deleteServiceId ?? "")
       .then(() => {
         toast.success("Service deleted");
       })
