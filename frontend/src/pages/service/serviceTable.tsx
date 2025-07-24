@@ -26,9 +26,9 @@ interface ServiceTableProps {
 
 export const ServiceTable = ({protocols}: ServiceTableProps) => {
   const {
+    data,
     table,
     filters,
-    servicesCount,
     allTags,
     countAllTags,
     setFilters,
@@ -186,7 +186,7 @@ export const ServiceTable = ({protocols}: ServiceTableProps) => {
           setSelectedRows={(value) => setFilters({pageSize: value})}
           selectedPage={filters.page}
           setSelectedPage={(value) => setFilters({page: value})}
-          totalPages={Math.ceil((servicesCount ?? 0) / filters.pageSize)}
+          totalPages={Math.ceil((data?.count ?? 0) / filters.pageSize)}
         />
       </Card>
     </>

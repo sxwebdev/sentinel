@@ -1,24 +1,10 @@
-import $api, { socketUrl } from "@/shared/api/baseApi";
-import { useEffect, useMemo } from "react";
+import {socketUrl} from "@/shared/api/baseApi";
+import {useEffect, useMemo} from "react";
 import useWebSocket from "react-use-websocket";
-import { useShallow } from "zustand/react/shallow";
-import { useServiceTableStore } from "@/pages/service/store/useServiceTableStore";
-import { useDashboardStore } from "../store/useDashboardStore";
-
-export interface DashboardInfo {
-  total_services: number;
-  services_up: number;
-  services_down: number;
-  services_unknown: number;
-  protocols: Record<string, number>;
-  recent_incidents: number;
-  active_incidents: number;
-  avg_response_time: number;
-  total_checks: number;
-  uptime_percentage: number;
-  last_check_time: string;
-  checks_per_minute: number;
-}
+import {useShallow} from "zustand/react/shallow";
+import {useServiceTableStore} from "@/pages/service/store/useServiceTableStore";
+import {useDashboardStore} from "../store/useDashboardStore";
+import {getDashboard} from "@/shared/api/dashboard/dashboard";
 
 export const useDashboardLogic = () => {
   const {
@@ -33,33 +19,34 @@ export const useDashboardLogic = () => {
       setUpdateAllServices: s.setUpdateAllServices,
       addServiceInData: s.addServiceInData,
     }))
-  );
+    );
+  
+  const {getDashboardStats} = getDashboard();
 
-  const { dashboardInfo, setDashboardInfo } = useDashboardStore(
+  const {dashboardInfo, setDashboardInfo} = useDashboardStore(
     useShallow((s) => ({
       dashboardInfo: s.dashboardInfo,
       setDashboardInfo: s.setDashboardInfo,
     }))
   );
 
-  const getDashboardInfo = async () => {
-    const res = await $api.get("/dashboard/stats");
-    setDashboardInfo(res.data);
-  };
 
-  const onRefreshDashboard = () => {
-    getDashboardInfo();
+
+  const onRefreshDashboard = async () => {
+    await getDashboardStats();
   };
 
   useEffect(() => {
-    getDashboardInfo();
+    getDashboardStats().then((res) => {
+      setDashboardInfo(res);
+    });
 
     return () => {
       setDashboardInfo(null);
     };
   }, []);
 
-  const { lastMessage } = useWebSocket(socketUrl, {
+  const {lastMessage} = useWebSocket(socketUrl, {
     shouldReconnect: () => true,
   });
 
@@ -87,14 +74,14 @@ export const useDashboardLogic = () => {
 
   const infoKeysDashboard = useMemo(
     () => [
-      { key: "total_services", label: "Total services" },
-      { key: "services_up", label: "Services up" },
-      { key: "services_down", label: "Services down" },
-      { key: "active_incidents", label: "Active incidents" },
-      { key: "avg_response_time", label: "Average response time (ms)" },
-      { key: "total_checks", label: "Total checks" },
-      { key: "uptime_percentage", label: "Uptime" },
-      { key: "checks_per_minute", label: "Checks per minute" },
+      {key: "total_services", label: "Total services"},
+      {key: "services_up", label: "Services up"},
+      {key: "services_down", label: "Services down"},
+      {key: "active_incidents", label: "Active incidents"},
+      {key: "avg_response_time", label: "Average response time (ms)"},
+      {key: "total_checks", label: "Total checks"},
+      {key: "uptime_percentage", label: "Uptime"},
+      {key: "checks_per_minute", label: "Checks per minute"},
     ],
     []
   );

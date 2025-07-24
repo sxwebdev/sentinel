@@ -20,6 +20,32 @@ const $api = axios.create({
   baseURL: config.baseUrl,
 });
 
-export default $api;
+// ✅ Правильный экспорт mutator-функции
+export const customFetcher = async <T>({
+  url,
+  method,
+  data,
+  params,
+  headers,
+}: {
+  url: string;
+  method: string;
+  data?: any;
+  params?: any;
+  headers?: any;
+}): Promise<T> => {
+  const response = await $api.request<T>({
+    url,
+    method,
+    data,
+    params,
+    headers,
+  });
+
+  return response.data;
+};
 
 export const socketUrl = config.socketUrl;
+
+// Можно экспортировать $api по желанию
+export default $api;

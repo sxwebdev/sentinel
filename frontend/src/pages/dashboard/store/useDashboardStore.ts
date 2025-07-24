@@ -1,9 +1,9 @@
 import { create } from "zustand";
-import type { DashboardInfo } from "../hooks/useDashboardLogic";
+import type { GetDashboardStatsResult } from "@/shared/api/dashboard/dashboard";
 
 interface DashboardStore {
-  dashboardInfo: DashboardInfo | null;
-  setDashboardInfo: (dashboardInfo: DashboardInfo | null) => void;
+  dashboardInfo: GetDashboardStatsResult | null;
+  setDashboardInfo: (dashboardInfo: GetDashboardStatsResult | null) => void;
 }
 
 export const useDashboardStore = create<DashboardStore>((set) => ({

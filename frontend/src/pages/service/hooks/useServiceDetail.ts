@@ -1,11 +1,13 @@
 import $api, {socketUrl} from "@/shared/api/baseApi";
 import {useEffect} from "react";
 import {useNavigate, useParams} from "react-router";
-import {useServiceApi} from "./useServiceApi";
 import {toast} from "sonner";
 import {useServiceDetailStore} from "../store/useServiceDeteilStore";
 import useWebSocket from "react-use-websocket";
 import {ROUTES} from "@/app/routes/constants";
+import { getServices } from "@/shared/api/services/services";
+import { getIncidents } from "@/shared/api/incidents/incidents";
+import { getStatistics } from "@/shared/api/statistics/statistics";
 
 export const useServiceDetail = () => {
   const {
@@ -14,26 +16,30 @@ export const useServiceDetail = () => {
     incidentsData,
     serviceStatsData,
     resolveIncident,
-    incidentsCount,
     filters,
     setDeleteIncident,
     setServiceDetailData,
     setIncidentsData,
-    setIncidentsCount,
     setServiceStatsData,
     setFilters,
     setUpdateServiceStatsData,
     setResolveIncident,
   } = useServiceDetailStore();
-  const {id} = useParams();
-  const {onCheckService: onCheckServiceApi} = useServiceApi();
+  const { id } = useParams();
+  
+  const { postServicesIdCheck, getServicesId } = getServices();
+  const { getServicesIdStats } = getStatistics();
+  const {getServicesIdIncidents, deleteServicesIdIncidentsIncidentId, postServicesIdResolve} =
+    getIncidents();
+
+
 
   const onCheckService = async (id: string) => {
-    await onCheckServiceApi(id)
+    await postServicesIdCheck(id)
       .then(() => {
         getServiceDetail();
         getIncidents();
-        getServiceStats();
+        getServicesIdStats(id);
       })
       .catch((err) => {
         toast.error(err.response.data.error);
@@ -57,12 +63,11 @@ export const useServiceDetail = () => {
   }, [lastMessage]);
 
   const onDeleteIncident = async (incidentId: string) => {
-    await $api
-      .delete(`/services/${id}/incidents/${incidentId}`)
+    await deleteServicesIdIncidentsIncidentId(id ?? "", incidentId)
       .then(() => {
-        getServiceDetail();
-        getIncidents();
-        getServiceStats();
+        getServicesId(id ?? "");
+        getServicesIdIncidents(id ?? "");
+        getServicesIdStats(id ?? "");
         toast.success("Incident deleted");
       })
       .catch((err) => {
@@ -74,12 +79,11 @@ export const useServiceDetail = () => {
   };
 
   const onResolveIncident = async () => {
-    await $api
-      .post(`/services/${id}/resolve`)
+    await postServicesIdResolve(id ?? "")
       .then(() => {
-        getServiceDetail();
-        getIncidents();
-        getServiceStats();
+        getServicesId(id ?? "");
+        getServicesIdIncidents(id ?? "");
+        getServicesIdStats(id ?? "");
         toast.success("Incident resolved");
       })
       .catch((err) => {
@@ -93,32 +97,25 @@ export const useServiceDetail = () => {
   const navigate = useNavigate();
 
   const getServiceDetail = async () => {
-    const res = await $api.get(`/services/${id}`).catch(() => {
+    return await getServicesId(id ?? "").then((res) => {
+      setServiceDetailData(res);
+    }).catch(() => {
       navigate(ROUTES.NOT_FOUND);
     });
-    if (!res) return;
-    setServiceDetailData(res.data);
+
   };
 
-  const getIncidents = async () => {
-    const res = await $api.get(`/services/${id}/incidents`, {
-      params: {
-        page: filters.page,
-        page_size: filters.pageSize,
-      },
-    });
-    setIncidentsData(res.data.items);
-    setIncidentsCount(res.data.count);
-  };
 
   const getServiceStats = async () => {
-    const res = await $api.get(`/services/${id}/stats`);
-    setServiceStatsData(res.data);
+    return await getServicesIdStats(id ?? "").then((res) => {
+      setServiceStatsData(res);
+    }).catch(() => {
+      navigate(ROUTES.NOT_FOUND);
+    });
   };
 
   useEffect(() => {
     getServiceDetail();
-
     getServiceStats();
     return () => {
       setServiceDetailData(null);
@@ -136,7 +133,6 @@ export const useServiceDetail = () => {
     serviceDetailData,
     incidentsData,
     serviceStatsData,
-    incidentsCount,
     resolveIncident,
     filters,
     onCheckService,

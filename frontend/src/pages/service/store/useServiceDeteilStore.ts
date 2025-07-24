@@ -1,29 +1,26 @@
-import { create } from "zustand";
 import type {
-  Incident,
-  Service,
-  ServiceStats,
-} from "../../../features/service/types/type";
+  DbutilsFindResponseWithCountWebIncident,
+  GetServicesIdIncidentsParams,
+  WebServiceDTO,
+} from "@/shared/types/model";
+import {create} from "zustand";
 
 interface ServiceDetailStore {
   deleteIncident: Incident | null;
   serviceDetailData: Service | null;
   resolveIncident: boolean;
-  incidentsCount: number | null;
-  incidentsData: Incident[] | null;
-  filters: {
-    page: number;
-    pageSize: number;
-  };
-  serviceStatsData: ServiceStats | null;
+  incidentsData: DbutilsFindResponseWithCountWebIncident | null;
+  filters: GetServicesIdIncidentsParams;
+  serviceStatsData: WebServiceDTO | null;
   setFilters: (value: Partial<ServiceDetailStore["filters"]>) => void;
-  setIncidentsCount: (incidentsCount: number) => void;
   setDeleteIncident: (deleteIncident: Incident | null) => void;
   setResolveIncident: (resolveIncident: boolean) => void;
-  setServiceDetailData: (serviceDetailData: Service | null) => void;
-  setIncidentsData: (incidentsData: Incident[] | null) => void;
-  setServiceStatsData: (serviceStatsData: ServiceStats | null) => void;
-  setUpdateServiceStatsData: (serviceStatsData: Service | null) => void;
+  setServiceDetailData: (serviceDetailData: WebServiceDTO | null) => void;
+  setIncidentsData: (
+    incidentsData: DbutilsFindResponseWithCountWebIncident | null
+  ) => void;
+  setServiceStatsData: (serviceStatsData: WebServiceDTO | null) => void;
+  setUpdateServiceStatsData: (serviceStatsData: WebServiceDTO | null) => void;
 }
 
 const initialState = {
@@ -31,7 +28,7 @@ const initialState = {
   serviceDetailData: null,
   resolveIncident: false,
   incidentsData: null,
-  incidentsCount: null,
+
   filters: {
     page: 1,
     pageSize: 10,
@@ -41,14 +38,13 @@ const initialState = {
 
 export const useServiceDetailStore = create<ServiceDetailStore>((set) => ({
   ...initialState,
-  setDeleteIncident: (deleteIncident) => set({ deleteIncident }),
-  setIncidentsCount: (incidentsCount) => set({ incidentsCount }),
+  setDeleteIncident: (deleteIncident) => set({deleteIncident}),
   setFilters: (filters) =>
-    set((state) => ({ filters: { ...state.filters, ...filters } })),
-  setResolveIncident: (resolveIncident) => set({ resolveIncident }),
-  setServiceDetailData: (serviceDetailData) => set({ serviceDetailData }),
-  setIncidentsData: (incidentsData) => set({ incidentsData }),
-  setServiceStatsData: (serviceStatsData) => set({ serviceStatsData }),
+    set((state) => ({filters: {...state.filters, ...filters}})),
+  setResolveIncident: (resolveIncident) => set({resolveIncident}),
+  setServiceDetailData: (serviceDetailData) => set({serviceDetailData}),
+  setIncidentsData: (incidentsData) => set({incidentsData}),
+  setServiceStatsData: (serviceStatsData) => set({serviceStatsData}),
   setUpdateServiceStatsData: (serviceStatsData) =>
     set((store) => {
       if (!serviceStatsData) return store;

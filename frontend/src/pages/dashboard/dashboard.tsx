@@ -8,32 +8,18 @@ import {
   Progress,
 } from "@/shared/components/ui";
 import ContentWrapper from "@/widgets/wrappers/contentWrapper";
-import { RefreshCcwIcon } from "lucide-react";
-import {
-  useDashboardLogic,
-  type DashboardInfo,
-} from "./hooks/useDashboardLogic";
-import { InfoCardStats } from "@/entities/infoStatsCard/infoCardStats";
+import {RefreshCcwIcon} from "lucide-react";
+import {useDashboardLogic} from "./hooks/useDashboardLogic";
+import {InfoCardStats} from "@/entities/infoStatsCard/infoCardStats";
 import ServiceCreate from "../service/serviceCreate";
-import { ServiceTable } from "../service/serviceTable";
-import { Loader } from "@/entities/loader/loader";
+import {Loader} from "@/entities/loader/loader";
+import type {GetDashboardStatsResult} from "@/shared/api/dashboard/dashboard";
+import {getProtocolDisplayName} from "@/shared/lib/getProtocolDisplayName";
+import {ServiceTable} from "../service/serviceTable";
 
 const Dashboard = () => {
-  const { infoKeysDashboard, dashboardInfo, onRefreshDashboard } =
+  const {infoKeysDashboard, dashboardInfo, onRefreshDashboard} =
     useDashboardLogic();
-
-  if (!dashboardInfo) return <Loader loaderPage />;
-
-  const getProtocolDisplayName = (protocol: string) => {
-    switch (protocol) {
-      case "http":
-        return "HTTP/HTTPS";
-      case "tcp":
-        return "TCP";
-      case "grpc":
-        return "gRPC";
-    }
-  };
 
   if (!dashboardInfo) return <Loader loaderPage />;
 
@@ -60,13 +46,14 @@ const Dashboard = () => {
             const value =
               item.key === "uptime_percentage"
                 ? Number(
-                    dashboardInfo[item.key as keyof DashboardInfo]
+                    dashboardInfo[item.key as keyof GetDashboardStatsResult]
                   ).toFixed(1) + "%"
                 : item.key === "avg_response_time"
-                  ? dashboardInfo[item.key as keyof DashboardInfo]?.toString() +
-                    "ms"
+                  ? dashboardInfo[
+                      item.key as keyof GetDashboardStatsResult
+                    ]?.toString() + "ms"
                   : (dashboardInfo[
-                      item.key as keyof DashboardInfo
+                      item.key as keyof GetDashboardStatsResult
                     ]?.toString() ?? "0");
 
             return (
@@ -74,25 +61,24 @@ const Dashboard = () => {
             );
           })}
         </div>
-        <div className="hidden">
+        <div>
           <Accordion type="multiple">
             <AccordionItem value="item-1" className="shadow-sm rounded-lg">
               <AccordionTrigger className="bg-white flex justify-between items-center border hover:no-underline border-border cursor-pointer text-lg  py-4 px-6">
                 <h3 className="no-underline">Distribution by protocol</h3>
               </AccordionTrigger>
               <AccordionContent className="px-6 py-4 bg-white rounded-b-lg flex flex-col gap-4">
-                {dashboardInfo.protocols &&
+                {dashboardInfo?.protocols &&
                 Object.entries(dashboardInfo.protocols).length > 0 ? (
                   Object.entries(dashboardInfo.protocols).map(
                     ([protocol, count]) => {
-                      const percentage = (
-                        (count /
-                          Object.values(dashboardInfo.protocols).reduce(
-                            (a, b) => a + b,
-                            0
-                          )) *
-                        100
-                      ).toFixed(1);
+                      const totalCount = Object.values(
+                        dashboardInfo.protocols!
+                      ).reduce((a, b) => a + b, 0);
+                      const percentage =
+                        totalCount > 0
+                          ? ((count / totalCount) * 100).toFixed(1)
+                          : "0.0";
 
                       return (
                         <Card
@@ -129,7 +115,7 @@ const Dashboard = () => {
           </Accordion>
         </div>
         <div>
-          <ServiceTable protocols={dashboardInfo.protocols} />
+          <ServiceTable protocols={dashboardInfo.protocols ?? {}} />
         </div>
       </div>
     </ContentWrapper>

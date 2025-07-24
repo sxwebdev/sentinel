@@ -25,7 +25,6 @@ import {
 import {useIsMobile} from "@/shared/hooks/useIsMobile";
 import {cn} from "@/shared/lib/utils";
 import {InfoCardStats} from "@/entities/infoStatsCard/infoCardStats";
-import type {Incident} from "../../features/service/types/type";
 import {Loader} from "@/entities/loader/loader";
 import {ConfirmDialog} from "@/entities/confirmDialog/confirmDialog";
 import {ActivityIndicatorSVG} from "@/entities/ActivityIndicatorSVG/ActivityIndicatorSVG";
@@ -37,12 +36,12 @@ import {
   AlertTitle,
 } from "@/shared/components/ui/alert";
 import {useState} from "react";
+import type { WebIncident } from "@/shared/types/model";
 
 const ServiceDetail = () => {
   const {
     filters,
     incidentsData,
-    incidentsCount,
     deleteIncident,
     resolveIncident,
     serviceDetailData,
@@ -132,15 +131,15 @@ const ServiceDetail = () => {
       description: "Total Checks",
     },
     {
-      value: `${(serviceStatsData?.avg_response_time / 1000000).toFixed(1)} ms`,
+      value: `${(serviceStatsData?.response_time ?? 0 / 1000000).toFixed(1)} ms`,
       key: "avg_response_time",
       description: "Avg Response Time",
     },
-    {
-      value: `${serviceStatsData?.uptime_percentage.toFixed(1)}%`,
-      key: "uptime",
-      description: "Uptime",
-    },
+    // {
+    //   value: `${serviceStatsData?.uptime_percentage.toFixed(1)}%`,
+    //   key: "uptime",
+    //   description: "Uptime",
+    // },
     {
       value: serviceDetailData?.consecutive_success,
       key: "consecutive_success",
@@ -301,14 +300,14 @@ const ServiceDetail = () => {
             <CardTitle>Recent Incidents</CardTitle>
           </CardHeader>
           <CardContent>
-            {incidentsData.length === 0 ? (
+            {incidentsData?.items?.length === 0 ? (
               <div className="text-center py-12">
                 <CircleAlertIcon className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
                 <p className="text-muted-foreground">No incidents found</p>
               </div>
             ) : (
               <div className="space-y-3">
-                {incidentsData?.map((incident: Incident) => (
+                {incidentsData?.items?.map((incident: WebIncident) => (
                   <div
                     key={incident.id}
                     className="flex items-center gap-4 p-4 rounded-lg border bg-card hover:shadow-sm transition-shadow"
@@ -345,19 +344,21 @@ const ServiceDetail = () => {
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <button
-                                onClick={() =>
-                                  handleCopyIncidentId(incident.id)
-                                }
+                                onClick={() => {
+                                  if (incident.id) {
+                                    handleCopyIncidentId(incident.id);
+                                  }
+                                }}
                                 className="font-medium text-foreground hover:text-blue-600 transition-colors duration-200 inline-flex items-center gap-1.5 px-1 py-0.5 rounded hover:bg-blue-50 cursor-pointer"
                                 aria-label={
-                                  copiedIncidents.has(incident.id)
+                                  copiedIncidents.has(incident.id ?? "")
                                     ? "Copied"
                                     : "Copy incident ID"
                                 }
                               >
-                                #{incident.id.slice(-6)}
+                                #{incident.id?.slice(-6)}
                                 <div className="w-3.5 h-3.5 flex items-center justify-center">
-                                  {copiedIncidents.has(incident.id) ? (
+                                  {copiedIncidents.has(incident.id ?? "") ? (
                                     <CheckIcon
                                       className="stroke-emerald-500 transition-all duration-200"
                                       aria-hidden="true"
@@ -372,7 +373,7 @@ const ServiceDetail = () => {
                               </button>
                             </TooltipTrigger>
                             <TooltipContent className="px-2 py-1 text-xs">
-                              {copiedIncidents.has(incident.id)
+                              {copiedIncidents.has(incident.id ?? "")
                                 ? "Copied!"
                                 : "Click to copy ID"}
                             </TooltipContent>
@@ -397,21 +398,21 @@ const ServiceDetail = () => {
                       <div className="text-sm text-muted-foreground">
                         <div
                           className={cn(
-                            !expandedIncidents.has(incident.id) &&
+                            !expandedIncidents.has(incident.id ?? "") &&
                               "line-clamp-1"
                           )}
-                          dangerouslySetInnerHTML={{__html: incident.error}}
+                          dangerouslySetInnerHTML={{__html: incident.message ?? ""}}
                         />
                         {/* Show toggle link if content is likely to be truncated or on mobile */}
-                        {incident.error &&
-                          (incident.error.length > 80 || isMobile) && (
+                        {incident.message &&
+                          (incident.message.length > 80 || isMobile) && (
                             <button
                               onClick={() =>
-                                toggleIncidentExpansion(incident.id)
+                                toggleIncidentExpansion(incident.id ?? "")
                               }
                               className="inline-flex items-center gap-1 mt-2 px-2 py-1 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 hover:text-blue-700 rounded-md transition-colors duration-200"
                             >
-                              {expandedIncidents.has(incident.id) ? (
+                              {expandedIncidents.has(incident.id ?? "") ? (
                                 <>
                                   <ChevronUp size={18} />
                                   Show less
@@ -429,22 +430,22 @@ const ServiceDetail = () => {
                       <div className="flex flex-wrap gap-2 md:gap-4 text-xs text-muted-foreground">
                         <div>
                           <span className="font-medium">Started:</span>{" "}
-                          {new Date(incident.start_time).toLocaleDateString()}{" "}
+                          {new Date(incident.started_at ?? "").toLocaleDateString()}{" "}
                           at{" "}
-                          {new Date(incident.start_time).toLocaleTimeString()}
+                          {new Date(incident.started_at ?? "").toLocaleTimeString()}
                         </div>
-                        {incident.end_time && (
+                        {incident.resolved_at && (
                           <div>
                             <span className="font-medium">Ended:</span>{" "}
-                            {new Date(incident.end_time).toLocaleDateString()}{" "}
+                            {new Date(incident.resolved_at ?? "").toLocaleDateString()}{" "}
                             at{" "}
-                            {new Date(incident.end_time).toLocaleTimeString()}
+                            {new Date(incident.resolved_at ?? "").toLocaleTimeString()}
                           </div>
                         )}
-                        {incident.duration && (
+                        {incident.duration && typeof incident.duration === "number" && (
                           <div>
                             <span className="font-medium">Duration:</span>{" "}
-                            {formatDuration(incident.duration)}
+                            {formatDuration(incident.duration ?? 0)}
                           </div>
                         )}
                       </div>
@@ -467,12 +468,12 @@ const ServiceDetail = () => {
                 <div className="pt-4">
                   <PaginationTable
                     className="px-0"
-                    selectedRows={filters.pageSize}
-                    setSelectedRows={(value) => setFilters({pageSize: value})}
-                    selectedPage={filters.page}
+                    selectedRows={filters.page_size ?? 10}
+                    setSelectedRows={(value) => setFilters({page_size: value})}
+                    selectedPage={filters.page ?? 1}
                     setSelectedPage={(value) => setFilters({page: value})}
                     totalPages={Math.ceil(
-                      (incidentsCount ?? 0) / filters.pageSize
+                      (incidentsData?.count ?? 0) / (filters.page_size ?? 10)
                     )}
                   />
                 </div>
