@@ -408,7 +408,7 @@ const HTTPForm = React.memo(
                         value={
                           typeof field.value === "string"
                             ? field.value
-                            : field.value
+                            : field.value && Object.keys(field.value).length > 0
                               ? JSON.stringify(field.value, null, 2)
                               : ""
                         }
