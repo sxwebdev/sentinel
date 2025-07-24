@@ -1,15 +1,15 @@
 // Package web provides HTTP handlers for the Sentinel monitoring system
 //
-//	@title			Sentinel Monitoring API
-//	@version		1.0
-//	@description	API for service monitoring and incident management
-//	@termsOfService	http://swagger.io/terms/
-//	@contact.name	API Support
-//	@contact.url	http://www.swagger.io/support
-//	@contact.email	support@swagger.io
-//	@license.name	Apache 2.0
-//	@license.url	http://www.apache.org/licenses/LICENSE-2.0.html
-//	@BasePath		/api/v1
+//	@title						Sentinel Monitoring API
+//	@version					1.0
+//	@description				API for service monitoring and incident management
+//	@termsOfService				http://swagger.io/terms/
+//	@contact.name				API Support
+//	@contact.url				http://www.swagger.io/support
+//	@contact.email				support@swagger.io
+//	@license.name				Apache 2.0
+//	@license.url				http://www.apache.org/licenses/LICENSE-2.0.html
+//	@BasePath					/api/v1
 //	@securityDefinitions.basic	BasicAuth
 package web
 
@@ -273,7 +273,7 @@ func (s *Server) handleSPA(c *fiber.Ctx) error {
 //	@Param			order_by	query		string										false	"Order by field"		ENUM("name", "created_at")
 //	@Param			page		query		uint32										false	"Page number (for pagination)"
 //	@Param			page_size	query		uint32										false	"Number of items per page (default 20)"
-//	@Success		200			{array}		dbutils.FindResponseWithCount[ServiceDTO]	"List of services with states"
+//	@Success		200			{object}	dbutils.FindResponseWithCount[ServiceDTO]	"List of services with states"
 //	@Failure		500			{object}	ErrorResponse								"Internal server error"
 //	@Router			/services [get]
 func (s *Server) handleFindServices(c *fiber.Ctx) error {
@@ -391,7 +391,7 @@ func (s *Server) handleAPIServiceDetail(c *fiber.Ctx) error {
 //	@Param			end_time	query		time.Time								false	"Filter by end time (RFC3339 format)"
 //	@Param			page		query		uint32									false	"Page number (for pagination)"
 //	@Param			page_size	query		uint32									false	"Number of items per page (default 20)"
-//	@Success		200			{array}		dbutils.FindResponseWithCount[Incident]	"List of incidents"
+//	@Success		200			{object}	dbutils.FindResponseWithCount[Incident]	"List of incidents"
 //	@Failure		400			{object}	ErrorResponse							"Bad request"
 //	@Failure		500			{object}	ErrorResponse							"Internal server error"
 //	@Router			/services/{id}/incidents [get]
@@ -587,7 +587,7 @@ func (s *Server) handleAPIServiceResolve(c *fiber.Ctx) error {
 //	@Param			end_time	query		time.Time								false	"End time for filtering (RFC3339 format)"
 //	@Param			page		query		uint32									false	"Page number (default 1)"
 //	@Param			page_size	query		uint32									false	"Number of items per page (default 100)"
-//	@Success		200			{array}		dbutils.FindResponseWithCount[Incident]	"List of incidents"
+//	@Success		200			{object}	dbutils.FindResponseWithCount[Incident]	"List of incidents"
 //	@Failure		500			{object}	ErrorResponse							"Internal server error"
 //	@Router			/incidents [get]
 func (s *Server) handleFindIncidents(c *fiber.Ctx) error {
