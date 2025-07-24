@@ -118,7 +118,7 @@ export const useServiceDetail = () => {
 
   useEffect(() => {
     getServiceDetail();
-    getIncidents();
+
     getServiceStats();
     return () => {
       setServiceDetailData(null);
@@ -126,6 +126,10 @@ export const useServiceDetail = () => {
       setServiceStatsData(null);
     };
   }, [id]);
+
+  useEffect(() => {
+    getIncidents();
+  }, [filters, id]);
 
   return {
     deleteIncident,

@@ -1,5 +1,5 @@
 import ContentWrapper from "@/widgets/wrappers/contentWrapper";
-import { useServiceDetail } from "./hooks/useServiceDetail";
+import {useServiceDetail} from "./hooks/useServiceDetail";
 import {
   Badge,
   Button,
@@ -22,21 +22,21 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
-import { useIsMobile } from "@/shared/hooks/useIsMobile";
-import { cn } from "@/shared/lib/utils";
-import { InfoCardStats } from "@/entities/infoStatsCard/infoCardStats";
-import type { Incident } from "../../features/service/types/type";
-import { Loader } from "@/entities/loader/loader";
-import { ConfirmDialog } from "@/entities/confirmDialog/confirmDialog";
-import { ActivityIndicatorSVG } from "@/entities/ActivityIndicatorSVG/ActivityIndicatorSVG";
-import { Link } from "react-router";
+import {useIsMobile} from "@/shared/hooks/useIsMobile";
+import {cn} from "@/shared/lib/utils";
+import {InfoCardStats} from "@/entities/infoStatsCard/infoCardStats";
+import type {Incident} from "../../features/service/types/type";
+import {Loader} from "@/entities/loader/loader";
+import {ConfirmDialog} from "@/entities/confirmDialog/confirmDialog";
+import {ActivityIndicatorSVG} from "@/entities/ActivityIndicatorSVG/ActivityIndicatorSVG";
+import {Link} from "react-router";
 import PaginationTable from "@/shared/components/paginationTable";
 import {
   Alert,
   AlertDescription,
   AlertTitle,
 } from "@/shared/components/ui/alert";
-import { useState } from "react";
+import {useState} from "react";
 
 const ServiceDetail = () => {
   const {
@@ -400,7 +400,7 @@ const ServiceDetail = () => {
                             !expandedIncidents.has(incident.id) &&
                               "line-clamp-1"
                           )}
-                          dangerouslySetInnerHTML={{ __html: incident.error }}
+                          dangerouslySetInnerHTML={{__html: incident.error}}
                         />
                         {/* Show toggle link if content is likely to be truncated or on mobile */}
                         {incident.error &&
@@ -464,23 +464,18 @@ const ServiceDetail = () => {
                   </div>
                 ))}
 
-                {incidentsCount != null &&
-                  incidentsCount > filters.pageSize && (
-                    <div className="pt-4">
-                      <PaginationTable
-                        className="px-0"
-                        selectedRows={filters.pageSize}
-                        setSelectedRows={(value) =>
-                          setFilters({ pageSize: value })
-                        }
-                        selectedPage={filters.page}
-                        setSelectedPage={(value) => setFilters({ page: value })}
-                        totalPages={Math.ceil(
-                          (incidentsCount ?? 0) / filters.pageSize
-                        )}
-                      />
-                    </div>
-                  )}
+                <div className="pt-4">
+                  <PaginationTable
+                    className="px-0"
+                    selectedRows={filters.pageSize}
+                    setSelectedRows={(value) => setFilters({pageSize: value})}
+                    selectedPage={filters.page}
+                    setSelectedPage={(value) => setFilters({page: value})}
+                    totalPages={Math.ceil(
+                      (incidentsCount ?? 0) / filters.pageSize
+                    )}
+                  />
+                </div>
               </div>
             )}
           </CardContent>
