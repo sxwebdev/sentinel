@@ -116,6 +116,7 @@ const ServiceDetail = () => {
     }
   };
 
+
   if (!serviceDetailData || !incidentsData || !serviceStatsData)
     return <Loader loaderPage />;
 
@@ -131,15 +132,15 @@ const ServiceDetail = () => {
       description: "Total Checks",
     },
     {
-      value: `${(serviceStatsData?.response_time ?? 0 / 1000000).toFixed(1)} ms`,
+      value: `${((serviceStatsData?.avg_response_time ?? 0) / 100000).toFixed(1)} ms`,
       key: "avg_response_time",
       description: "Avg Response Time",
     },
-    // {
-    //   value: `${serviceStatsData?.uptime_percentage.toFixed(1)}%`,
-    //   key: "uptime",
-    //   description: "Uptime",
-    // },
+    {
+      value: `${(serviceStatsData?.uptime_percentage ?? 0).toFixed(1)}%`,
+      key: "uptime",
+      description: "Uptime",
+    },
     {
       value: serviceDetailData?.consecutive_success,
       key: "consecutive_success",
@@ -191,7 +192,7 @@ const ServiceDetail = () => {
             <Button
               size="sm"
               className={cn(isMobile && "w-full")}
-              onClick={() => onCheckService(serviceDetailData?.id)}
+              onClick={() => onCheckService(serviceDetailData?.id ?? "")}
             >
               <PlayIcon />
               Trigger Check
@@ -248,7 +249,7 @@ const ServiceDetail = () => {
                       <TooltipTrigger>
                         <Badge variant={"secondary"} className="ml-3 text-sm">
                           {new Date(
-                            serviceDetailData?.last_check
+                            serviceDetailData?.last_check ?? ""
                           ).toLocaleString()}
                         </Badge>
                       </TooltipTrigger>
@@ -268,7 +269,7 @@ const ServiceDetail = () => {
                     "bg-yellow-100 text-yellow-600"
                 )}
               >
-                {serviceDetailData?.status.toLocaleUpperCase()}
+                {serviceDetailData?.status?.toLocaleUpperCase()}
               </Badge>
             </CardTitle>
           </CardHeader>

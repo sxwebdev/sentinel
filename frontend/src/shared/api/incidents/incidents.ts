@@ -38,7 +38,7 @@ const getServicesIdIncidents = (
     id: string,
     params?: GetServicesIdIncidentsParams,
  ) => {
-      return customFetcher<DbutilsFindResponseWithCountWebIncident[]>(
+      return customFetcher<DbutilsFindResponseWithCountWebIncident>(
       {url: `/services/${id}/incidents`, method: 'GET',
         params
     },

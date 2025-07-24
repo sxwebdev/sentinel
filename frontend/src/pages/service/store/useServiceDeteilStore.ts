@@ -1,26 +1,28 @@
 import type {
   DbutilsFindResponseWithCountWebIncident,
   GetServicesIdIncidentsParams,
+  WebIncident,
   WebServiceDTO,
+  WebServiceStats,
 } from "@/shared/types/model";
 import {create} from "zustand";
 
 interface ServiceDetailStore {
-  deleteIncident: Incident | null;
-  serviceDetailData: Service | null;
+  deleteIncident: WebIncident | null;
+  serviceDetailData: WebServiceDTO | null;
   resolveIncident: boolean;
   incidentsData: DbutilsFindResponseWithCountWebIncident | null;
   filters: GetServicesIdIncidentsParams;
-  serviceStatsData: WebServiceDTO | null;
+  serviceStatsData: WebServiceStats | null;
   setFilters: (value: Partial<ServiceDetailStore["filters"]>) => void;
-  setDeleteIncident: (deleteIncident: Incident | null) => void;
+  setDeleteIncident: (deleteIncident: WebIncident | null) => void;
   setResolveIncident: (resolveIncident: boolean) => void;
   setServiceDetailData: (serviceDetailData: WebServiceDTO | null) => void;
   setIncidentsData: (
     incidentsData: DbutilsFindResponseWithCountWebIncident | null
   ) => void;
-  setServiceStatsData: (serviceStatsData: WebServiceDTO | null) => void;
-  setUpdateServiceStatsData: (serviceStatsData: WebServiceDTO | null) => void;
+  setServiceStatsData: (serviceStatsData: WebServiceStats | null) => void;
+  setUpdateServiceStatsData: (serviceStatsData: WebServiceStats | null) => void;
 }
 
 const initialState = {
@@ -31,7 +33,7 @@ const initialState = {
 
   filters: {
     page: 1,
-    pageSize: 10,
+    page_size: 10,
   },
   serviceStatsData: null,
 };

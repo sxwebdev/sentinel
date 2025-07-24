@@ -1,4 +1,4 @@
-import $api, {socketUrl} from "@/shared/api/baseApi";
+import {socketUrl} from "@/shared/api/baseApi";
 import {useEffect} from "react";
 import {useNavigate, useParams} from "react-router";
 import {toast} from "sonner";
@@ -25,27 +25,94 @@ export const useServiceDetail = () => {
     setUpdateServiceStatsData,
     setResolveIncident,
   } = useServiceDetailStore();
-  const { id } = useParams();
-  
-  const { postServicesIdCheck, getServicesId } = getServices();
-  const { getServicesIdStats } = getStatistics();
-  const {getServicesIdIncidents, deleteServicesIdIncidentsIncidentId, postServicesIdResolve} =
-    getIncidents();
+  const {id} = useParams();
 
+  const {postServicesIdCheck, getServicesId} = getServices();
+  const {getServicesIdStats} = getStatistics();
+  const {
+    getServicesIdIncidents,
+    deleteServicesIdIncidentsIncidentId,
+    postServicesIdResolve,
+  } = getIncidents();
 
+  // Get service
+  const getServiceDetail = async () => {
+    return await getServicesId(id ?? "")
+      .then((res) => {
+        setServiceDetailData(res);
+      })
+      .catch(() => {
+        navigate(ROUTES.NOT_FOUND);
+      });
+  };
 
+  // Get service stats
+  const getServiceStats = async () => {
+    return await getServicesIdStats(id ?? "")
+      .then((res) => {
+        setServiceStatsData(res);
+      })
+      .catch(() => {
+        navigate(ROUTES.NOT_FOUND);
+      });
+  };
+
+  //Check service
   const onCheckService = async (id: string) => {
     await postServicesIdCheck(id)
       .then(() => {
         getServiceDetail();
         getIncidents();
-        getServicesIdStats(id);
+        getServiceStats();
       })
       .catch((err) => {
         toast.error(err.response.data.error);
       });
   };
 
+  // Get all incidents
+  const getAllIncidents = async () => {
+    return await getServicesIdIncidents(id ?? "", filters).then((res) => {
+      setIncidentsData(res);
+    });
+  };
+
+  // Delete incident
+  const onDeleteIncident = async (incidentId: string) => {
+    await deleteServicesIdIncidentsIncidentId(id ?? "", incidentId)
+      .then(() => {
+        getServiceDetail();
+        getAllIncidents();
+        getServiceStats();
+        toast.success("Incident deleted");
+      })
+      .catch((err) => {
+        toast.error(err.response.data.error);
+      })
+      .finally(() => {
+        setDeleteIncident(null);
+      });
+  };
+
+  // Resolve incident
+  const onResolveIncident = async () => {
+    await postServicesIdResolve(id ?? "")
+      .then(() => {
+        getServiceDetail();
+        getAllIncidents();
+        getServiceStats();
+        toast.success("Incident resolved");
+      })
+      .catch((err) => {
+        toast.error(err.response.data.error);
+      })
+      .finally(() => {
+        setResolveIncident(false);
+      });
+  };
+
+
+  // WebSocket connection to update service stats
   const {lastMessage} = useWebSocket(socketUrl, {
     shouldReconnect: () => true,
   });
@@ -62,61 +129,12 @@ export const useServiceDetail = () => {
     }
   }, [lastMessage]);
 
-  const onDeleteIncident = async (incidentId: string) => {
-    await deleteServicesIdIncidentsIncidentId(id ?? "", incidentId)
-      .then(() => {
-        getServicesId(id ?? "");
-        getServicesIdIncidents(id ?? "");
-        getServicesIdStats(id ?? "");
-        toast.success("Incident deleted");
-      })
-      .catch((err) => {
-        toast.error(err.response.data.error);
-      })
-      .finally(() => {
-        setDeleteIncident(null);
-      });
-  };
-
-  const onResolveIncident = async () => {
-    await postServicesIdResolve(id ?? "")
-      .then(() => {
-        getServicesId(id ?? "");
-        getServicesIdIncidents(id ?? "");
-        getServicesIdStats(id ?? "");
-        toast.success("Incident resolved");
-      })
-      .catch((err) => {
-        toast.error(err.response.data.error);
-      })
-      .finally(() => {
-        setResolveIncident(false);
-      });
-  };
-
   const navigate = useNavigate();
-
-  const getServiceDetail = async () => {
-    return await getServicesId(id ?? "").then((res) => {
-      setServiceDetailData(res);
-    }).catch(() => {
-      navigate(ROUTES.NOT_FOUND);
-    });
-
-  };
-
-
-  const getServiceStats = async () => {
-    return await getServicesIdStats(id ?? "").then((res) => {
-      setServiceStatsData(res);
-    }).catch(() => {
-      navigate(ROUTES.NOT_FOUND);
-    });
-  };
 
   useEffect(() => {
     getServiceDetail();
     getServiceStats();
+    getAllIncidents();
     return () => {
       setServiceDetailData(null);
       setIncidentsData(null);
@@ -125,7 +143,7 @@ export const useServiceDetail = () => {
   }, [id]);
 
   useEffect(() => {
-    getIncidents();
+    getAllIncidents();
   }, [filters, id]);
 
   return {
