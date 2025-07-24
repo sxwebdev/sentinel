@@ -8,19 +8,22 @@ import (
 )
 
 // ErrorResponse represents an error response
-// @Description Error response
+//
+//	@Description	Error response
 type ErrorResponse struct {
 	Error string `json:"error" example:"Error description"`
 }
 
 // SuccessResponse represents a successful response
-// @Description Successful response
+//
+//	@Description	Successful response
 type SuccessResponse struct {
 	Message string `json:"message" example:"Operation completed successfully"`
 }
 
 // DashboardStats represents dashboard statistics
-// @Description Dashboard statistics
+//
+//	@Description	Dashboard statistics
 type DashboardStats struct {
 	TotalServices    int                                 `json:"total_services" example:"10"`
 	ServicesUp       int                                 `json:"services_up" example:"8"`
@@ -36,7 +39,8 @@ type DashboardStats struct {
 }
 
 // Incident represents an incident
-// @Description Service incident
+//
+//	@Description	Service incident
 type Incident struct {
 	ID          string     `json:"id" example:"01HXYZ1234567890ABCDEF"`
 	ServiceID   string     `json:"service_id" example:"service-1"`
@@ -50,7 +54,8 @@ type Incident struct {
 }
 
 // ServiceStats represents service statistics
-// @Description Service statistics
+//
+//	@Description	Service statistics
 type ServiceStats struct {
 	ServiceID        string        `json:"service_id" example:"service-1"`
 	TotalIncidents   int           `json:"total_incidents" example:"5"`

@@ -380,10 +380,12 @@ paths:
         name: resolved
         type: boolean
       - description: Page number (default 1)
+        format: int32
         in: query
         name: page
         type: integer
       - description: Number of items per page (default 100)
+        format: int32
         in: query
         name: page_size
         type: integer
@@ -393,9 +395,7 @@ paths:
         "200":
           description: List of incidents
           schema:
-            items:
-              $ref: '#/definitions/dbutils.FindResponseWithCount-web_Incident'
-            type: array
+            $ref: '#/definitions/dbutils.FindResponseWithCount-web_Incident'
         "500":
           description: Internal server error
           schema:
@@ -437,10 +437,12 @@ paths:
         name: order_by
         type: string
       - description: Page number (for pagination)
+        format: int32
         in: query
         name: page
         type: integer
       - description: Number of items per page (default 20)
+        format: int32
         in: query
         name: page_size
         type: integer
@@ -450,9 +452,7 @@ paths:
         "200":
           description: List of services with states
           schema:
-            items:
-              $ref: '#/definitions/dbutils.FindResponseWithCount-web_ServiceDTO'
-            type: array
+            $ref: '#/definitions/dbutils.FindResponseWithCount-web_ServiceDTO'
         "500":
           description: Internal server error
           schema:
@@ -635,10 +635,12 @@ paths:
         name: resolved
         type: boolean
       - description: Page number (for pagination)
+        format: int32
         in: query
         name: page
         type: integer
       - description: Number of items per page (default 20)
+        format: int32
         in: query
         name: page_size
         type: integer
@@ -648,9 +650,7 @@ paths:
         "200":
           description: List of incidents
           schema:
-            items:
-              $ref: '#/definitions/dbutils.FindResponseWithCount-web_Incident'
-            type: array
+            $ref: '#/definitions/dbutils.FindResponseWithCount-web_Incident'
         "400":
           description: Bad request
           schema:
@@ -802,4 +802,7 @@ paths:
       summary: Get all tags with usage count
       tags:
       - tags
+securityDefinitions:
+  BasicAuth:
+    type: basic
 swagger: "2.0"

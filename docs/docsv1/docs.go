@@ -81,12 +81,14 @@ const docTemplate = `{
                     },
                     {
                         "type": "integer",
+                        "format": "int32",
                         "description": "Page number (default 1)",
                         "name": "page",
                         "in": "query"
                     },
                     {
                         "type": "integer",
+                        "format": "int32",
                         "description": "Number of items per page (default 100)",
                         "name": "page_size",
                         "in": "query"
@@ -96,10 +98,7 @@ const docTemplate = `{
                     "200": {
                         "description": "List of incidents",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/dbutils.FindResponseWithCount-web_Incident"
-                            }
+                            "$ref": "#/definitions/dbutils.FindResponseWithCount-web_Incident"
                         }
                     },
                     "500": {
@@ -167,12 +166,14 @@ const docTemplate = `{
                     },
                     {
                         "type": "integer",
+                        "format": "int32",
                         "description": "Page number (for pagination)",
                         "name": "page",
                         "in": "query"
                     },
                     {
                         "type": "integer",
+                        "format": "int32",
                         "description": "Number of items per page (default 20)",
                         "name": "page_size",
                         "in": "query"
@@ -182,10 +183,7 @@ const docTemplate = `{
                     "200": {
                         "description": "List of services with states",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/dbutils.FindResponseWithCount-web_ServiceDTO"
-                            }
+                            "$ref": "#/definitions/dbutils.FindResponseWithCount-web_ServiceDTO"
                         }
                     },
                     "500": {
@@ -466,12 +464,14 @@ const docTemplate = `{
                     },
                     {
                         "type": "integer",
+                        "format": "int32",
                         "description": "Page number (for pagination)",
                         "name": "page",
                         "in": "query"
                     },
                     {
                         "type": "integer",
+                        "format": "int32",
                         "description": "Number of items per page (default 20)",
                         "name": "page_size",
                         "in": "query"
@@ -481,10 +481,7 @@ const docTemplate = `{
                     "200": {
                         "description": "List of incidents",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/dbutils.FindResponseWithCount-web_Incident"
-                            }
+                            "$ref": "#/definitions/dbutils.FindResponseWithCount-web_Incident"
                         }
                     },
                     "400": {
@@ -1188,6 +1185,11 @@ const docTemplate = `{
                     "example": "Operation completed successfully"
                 }
             }
+        }
+    },
+    "securityDefinitions": {
+        "BasicAuth": {
+            "type": "basic"
         }
     }
 }`
