@@ -20,7 +20,7 @@ const $api = axios.create({
   baseURL: config.baseUrl,
 });
 
-// ✅ Правильный экспорт mutator-функции
+// $api is used in orval-generated functions for making HTTP requests
 export const customFetcher = async <T>({
   url,
   method,
@@ -30,9 +30,9 @@ export const customFetcher = async <T>({
 }: {
   url: string;
   method: string;
-  data?: any;
-  params?: any;
-  headers?: any;
+  data?: T;
+  params?: Record<string, unknown>;
+  headers?: Record<string, string>;
 }): Promise<T> => {
   const response = await $api.request<T>({
     url,
@@ -47,5 +47,3 @@ export const customFetcher = async <T>({
 
 export const socketUrl = config.socketUrl;
 
-// Можно экспортировать $api по желанию
-export default $api;
