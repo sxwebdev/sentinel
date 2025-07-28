@@ -81,14 +81,12 @@ const docTemplate = `{
                     },
                     {
                         "type": "integer",
-                        "format": "int32",
                         "description": "Page number (default 1)",
                         "name": "page",
                         "in": "query"
                     },
                     {
                         "type": "integer",
-                        "format": "int32",
                         "description": "Number of items per page (default 100)",
                         "name": "page_size",
                         "in": "query"
@@ -99,6 +97,35 @@ const docTemplate = `{
                         "description": "List of incidents",
                         "schema": {
                             "$ref": "#/definitions/dbutils.FindResponseWithCount-web_Incident"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/info": {
+            "get": {
+                "description": "Returns basic information about the server",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "info"
+                ],
+                "summary": "Get server info",
+                "responses": {
+                    "200": {
+                        "description": "Server information",
+                        "schema": {
+                            "$ref": "#/definitions/web.ServerInfoResponse"
                         }
                     },
                     "500": {
@@ -166,14 +193,12 @@ const docTemplate = `{
                     },
                     {
                         "type": "integer",
-                        "format": "int32",
                         "description": "Page number (for pagination)",
                         "name": "page",
                         "in": "query"
                     },
                     {
                         "type": "integer",
-                        "format": "int32",
                         "description": "Number of items per page (default 20)",
                         "name": "page_size",
                         "in": "query"
@@ -464,14 +489,12 @@ const docTemplate = `{
                     },
                     {
                         "type": "integer",
-                        "format": "int32",
                         "description": "Page number (for pagination)",
                         "name": "page",
                         "in": "query"
                     },
                     {
                         "type": "integer",
-                        "format": "int32",
                         "description": "Number of items per page (default 20)",
                         "name": "page_size",
                         "in": "query"
@@ -1049,6 +1072,35 @@ const docTemplate = `{
                 "status": {
                     "type": "string",
                     "example": "down"
+                }
+            }
+        },
+        "web.ServerInfoResponse": {
+            "type": "object",
+            "properties": {
+                "arch": {
+                    "type": "string",
+                    "example": "amd64"
+                },
+                "build_date": {
+                    "type": "string",
+                    "example": "2023-10-01T12:00:00Z"
+                },
+                "commit_hash": {
+                    "type": "string",
+                    "example": "abc123def456"
+                },
+                "go_version": {
+                    "type": "string",
+                    "example": "go1.24.4"
+                },
+                "os": {
+                    "type": "string",
+                    "example": "linux"
+                },
+                "version": {
+                    "type": "string",
+                    "example": "1.0.0"
                 }
             }
         },

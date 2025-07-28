@@ -43,6 +43,8 @@ import (
 type Server struct {
 	logger logger.Logger
 
+	serverInfo ServerInfo
+
 	monitorService *monitor.MonitorService
 	storage        storage.Storage
 	receiver       *receiver.Receiver
@@ -57,6 +59,7 @@ type Server struct {
 func NewServer(
 	logger logger.Logger,
 	cfg *config.Config,
+	serverInfo ServerInfo,
 	monitorService *monitor.MonitorService,
 	storage storage.Storage,
 	receiver *receiver.Receiver,
@@ -71,6 +74,7 @@ func NewServer(
 
 	server := &Server{
 		logger:         logger,
+		serverInfo:     serverInfo,
 		monitorService: monitorService,
 		storage:        storage,
 		receiver:       receiver,
@@ -169,6 +173,9 @@ func (s *Server) setupRoutes() {
 	// Tags API
 	api.Get("/tags", s.handleGetAllTags)
 	api.Get("/tags/count", s.handleGetAllTagsWithCount)
+
+	// Server info API
+	api.Get("/info", s.handleAPIInfo)
 
 	// WebSocket endpoint
 	s.app.Use("/ws", func(c *fiber.Ctx) error {
@@ -884,4 +891,27 @@ func (s *Server) handleAPIDeleteService(c *fiber.Ctx) error {
 	}
 
 	return c.SendStatus(fiber.StatusNoContent)
+}
+
+// info returns basic server information
+//
+//	@Summary		Get server info
+//	@Description	Returns basic information about the server
+//	@Tags			info
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	ServerInfoResponse	"Server information"
+//	@Failure		500	{object}	ErrorResponse		"Internal server error"
+//	@Router			/info [get]
+func (s *Server) handleAPIInfo(c *fiber.Ctx) error {
+	info := ServerInfoResponse{
+		Version:    s.serverInfo.Version,
+		CommitHash: s.serverInfo.CommitHash,
+		BuildDate:  s.serverInfo.BuildDate,
+		GoVersion:  s.serverInfo.GoVersion,
+		OS:         s.serverInfo.OS,
+		Arch:       s.serverInfo.Arch,
+	}
+
+	return c.JSON(info)
 }

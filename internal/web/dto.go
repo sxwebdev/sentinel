@@ -99,3 +99,12 @@ type ServiceDTO struct {
 	TotalChecks        int                         `json:"total_checks" example:"100"`
 	ResponseTime       uint32                      `json:"response_time" swaggertype:"primitive,integer" example:"150000000"`
 }
+
+type ServerInfoResponse struct {
+	Version    string `json:"version" example:"1.0.0"`
+	CommitHash string `json:"commit_hash" example:"abc123def456"`
+	BuildDate  string `json:"build_date" example:"2023-10-01T12:00:00Z"`
+	GoVersion  string `json:"go_version" example:"go1.24.4"`
+	OS         string `json:"os" example:"linux"`
+	Arch       string `json:"arch" example:"amd64"`
+}
