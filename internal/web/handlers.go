@@ -115,6 +115,10 @@ func (s *Server) Start(ctx context.Context) error {
 	}()
 
 	go func() {
+		s.checkNewVersionWrapper(ctx)
+	}()
+
+	go func() {
 		errChan <- s.subscribeEvents(ctx)
 	}()
 
@@ -905,12 +909,13 @@ func (s *Server) handleAPIDeleteService(c *fiber.Ctx) error {
 //	@Router			/info [get]
 func (s *Server) handleAPIInfo(c *fiber.Ctx) error {
 	info := ServerInfoResponse{
-		Version:    s.serverInfo.Version,
-		CommitHash: s.serverInfo.CommitHash,
-		BuildDate:  s.serverInfo.BuildDate,
-		GoVersion:  s.serverInfo.GoVersion,
-		OS:         s.serverInfo.OS,
-		Arch:       s.serverInfo.Arch,
+		Version:         s.serverInfo.Version,
+		CommitHash:      s.serverInfo.CommitHash,
+		BuildDate:       s.serverInfo.BuildDate,
+		GoVersion:       s.serverInfo.GoVersion,
+		OS:              s.serverInfo.OS,
+		Arch:            s.serverInfo.Arch,
+		AvailableUpdate: s.serverInfo.AvailableUpdate,
 	}
 
 	return c.JSON(info)

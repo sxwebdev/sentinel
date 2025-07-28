@@ -101,10 +101,11 @@ type ServiceDTO struct {
 }
 
 type ServerInfoResponse struct {
-	Version    string `json:"version" example:"1.0.0"`
-	CommitHash string `json:"commit_hash" example:"abc123def456"`
-	BuildDate  string `json:"build_date" example:"2023-10-01T12:00:00Z"`
-	GoVersion  string `json:"go_version" example:"go1.24.4"`
-	OS         string `json:"os" example:"linux"`
-	Arch       string `json:"arch" example:"amd64"`
+	Version         string           `json:"version" example:"1.0.0"`
+	CommitHash      string           `json:"commit_hash" example:"abc123def456"`
+	BuildDate       string           `json:"build_date" example:"2023-10-01T12:00:00Z"`
+	GoVersion       string           `json:"go_version" example:"go1.24.4"`
+	OS              string           `json:"os" example:"linux"`
+	Arch            string           `json:"arch" example:"amd64"`
+	AvailableUpdate *AvailableUpdate `json:"available_update,omitempty"`
 }

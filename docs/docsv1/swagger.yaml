@@ -135,6 +135,15 @@ definitions:
     - StatusUp
     - StatusDown
     - StatusMaintenance
+  web.AvailableUpdate:
+    properties:
+      description:
+        type: string
+      tag_name:
+        type: string
+      url:
+        type: string
+    type: object
   web.CreateUpdateServiceRequest:
     properties:
       config:
@@ -244,6 +253,8 @@ definitions:
       arch:
         example: amd64
         type: string
+      available_update:
+        $ref: '#/definitions/web.AvailableUpdate'
       build_date:
         example: "2023-10-01T12:00:00Z"
         type: string

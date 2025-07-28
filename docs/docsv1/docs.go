@@ -928,6 +928,20 @@ const docTemplate = `{
                 "StatusMaintenance"
             ]
         },
+        "web.AvailableUpdate": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "tag_name": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
         "web.CreateUpdateServiceRequest": {
             "type": "object",
             "properties": {
@@ -1081,6 +1095,9 @@ const docTemplate = `{
                 "arch": {
                     "type": "string",
                     "example": "amd64"
+                },
+                "available_update": {
+                    "$ref": "#/definitions/web.AvailableUpdate"
                 },
                 "build_date": {
                     "type": "string",
