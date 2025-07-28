@@ -77,7 +77,7 @@ const Dashboard = () => {
         <div className="hidden">
           <Accordion type="multiple">
             <AccordionItem value="item-1" className="shadow-sm rounded-lg">
-              <AccordionTrigger className="bg-white flex justify-between items-center border hover:no-underline border-border cursor-pointer text-lg  py-4 px-6">
+              <AccordionTrigger className="bg-white flex justify-between items-center border hover:no-underline border-border cursor-pointer text-lg py-4 px-6">
                 <h3 className="no-underline">Distribution by protocol</h3>
               </AccordionTrigger>
               <AccordionContent className="px-6 py-4 bg-white rounded-b-lg flex flex-col gap-4">

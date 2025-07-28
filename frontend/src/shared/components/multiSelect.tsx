@@ -1,4 +1,7 @@
-import MultipleSelector, {type Option} from "@shared/components/ui/multiselect";
+import MultipleSelector, {
+  type Option,
+} from "@shared/components/ui/multiselect";
+import { cn } from "../lib/utils";
 
 interface MultiSelectProps {
   options: Option[];
@@ -16,7 +19,7 @@ export default function MultiSelect({
   className,
 }: MultiSelectProps) {
   return (
-    <div className="*:not-first:mt-2">
+    <div className={cn("*:not-first:mt-2", className)}>
       <MultipleSelector
         commandProps={{
           label: placeholder,
@@ -24,7 +27,6 @@ export default function MultiSelect({
         value={value}
         options={options}
         placeholder={placeholder}
-        className={className}
         onChange={onChange}
         hideClearAllButton
         hidePlaceholderWhenSelected
