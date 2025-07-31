@@ -17,17 +17,17 @@ import { ExpandableText } from "@/shared/components/expandableText";
 import { formatDuration } from "@/shared/utils";
 import PaginationTable from "@/shared/components/paginationTable";
 import type {
-  DbutilsFindResponseWithCountWebIncident,
+  DbutilsFindResponseWithCountStorageIncident,
   GetServicesIdIncidentsParams,
-  WebIncident,
+  StorageIncident,
 } from "@/shared/types/model";
 
 interface IncidentsListProps {
-  incidentsData: DbutilsFindResponseWithCountWebIncident;
+  incidentsData: DbutilsFindResponseWithCountStorageIncident;
   incidentsCount: number | null;
   filters: GetServicesIdIncidentsParams;
   setFilters: (filters: Partial<GetServicesIdIncidentsParams>) => void;
-  setDeleteIncident: (incident: WebIncident) => void;
+  setDeleteIncident: (incident: StorageIncident) => void;
 }
 
 export const IncidentsList = ({
@@ -39,7 +39,7 @@ export const IncidentsList = ({
 }: IncidentsListProps) => {
   // State to track copied incident IDs
   const [copiedIncidents, setCopiedIncidents] = useState<Set<string>>(
-    new Set(),
+    new Set()
   );
 
   const handleCopyIncidentId = async (incidentId: string) => {
@@ -71,7 +71,7 @@ export const IncidentsList = ({
           </div>
         ) : (
           <div className="space-y-3">
-            {incidentsData?.items?.map((incident: WebIncident) => (
+            {incidentsData?.items?.map((incident: StorageIncident) => (
               <div
                 key={incident.id}
                 className="flex items-center gap-4 p-4 rounded-lg border bg-card hover:shadow-sm transition-shadow"
@@ -84,9 +84,7 @@ export const IncidentsList = ({
                         <div
                           className={cn(
                             "w-2.5 h-2.5 rounded-full",
-                            incident.resolved
-                              ? "bg-emerald-400"
-                              : "bg-rose-400",
+                            incident.resolved ? "bg-emerald-400" : "bg-rose-400"
                           )}
                         />
                       </TooltipTrigger>
@@ -147,7 +145,7 @@ export const IncidentsList = ({
                       className={cn(
                         "text-xs font-medium",
                         incident.resolved && "bg-emerald-100 text-emerald-600",
-                        !incident.resolved && "bg-rose-100 text-rose-600",
+                        !incident.resolved && "bg-rose-100 text-rose-600"
                       )}
                     >
                       {incident.resolved ? "Resolved" : "Active"}
@@ -156,7 +154,7 @@ export const IncidentsList = ({
 
                   <div className="text-sm text-muted-foreground">
                     <ExpandableText
-                      content={incident?.message ?? ""}
+                      content={incident?.error ?? ""}
                       className="text-sm text-muted-foreground"
                     />
                   </div>
@@ -165,22 +163,22 @@ export const IncidentsList = ({
                     <div>
                       <span className="font-medium">Started:</span>{" "}
                       {new Date(
-                        incident?.started_at ?? "",
+                        incident?.start_time ?? ""
                       ).toLocaleDateString()}{" "}
                       at{" "}
                       {new Date(
-                        incident?.started_at ?? "",
+                        incident?.start_time ?? ""
                       ).toLocaleTimeString()}
                     </div>
-                    {incident?.resolved_at && (
+                    {incident?.end_time && (
                       <div>
                         <span className="font-medium">Ended:</span>{" "}
                         {new Date(
-                          incident?.resolved_at ?? "",
+                          incident?.end_time ?? ""
                         ).toLocaleDateString()}{" "}
                         at{" "}
                         {new Date(
-                          incident?.resolved_at ?? "",
+                          incident?.end_time ?? ""
                         ).toLocaleTimeString()}
                       </div>
                     )}
@@ -216,7 +214,7 @@ export const IncidentsList = ({
                   selectedPage={filters.page ?? 0}
                   setSelectedPage={(value) => setFilters({ page: value })}
                   totalPages={Math.ceil(
-                    (incidentsCount ?? 0) / (filters.page_size ?? 0),
+                    (incidentsCount ?? 0) / (filters.page_size ?? 0)
                   )}
                 />
               </div>

@@ -7,7 +7,7 @@
  */
 import type { WebIncident } from "./webIncident";
 
-export interface DbutilsFindResponseWithCountWebIncident {
+export interface DbutilsFindResponseWithCountStorageIncidentDbutilsFindResponseWithCountWebIncident {
   count?: number;
   items?: WebIncident[];
 }
