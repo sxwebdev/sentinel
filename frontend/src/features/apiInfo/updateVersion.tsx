@@ -37,12 +37,21 @@ export const UpdateVersion = ({apiInfo}: {apiInfo: WebServerInfoResponse}) => {
             Cancel
           </Button>
           <Button
+            asChild
             variant="outline"
             onClick={() => {
-              window.open(apiInfo?.available_update?.url, "_blank");
+              window.open(
+                apiInfo?.available_update?.url &&
+                  apiInfo?.available_update?.url !== ""
+                  ? apiInfo?.available_update?.url
+                  : "",
+                "_blank"
+              );
             }}
           >
-            Open release
+            <a href={apiInfo?.available_update?.url} target="_blank">
+              Open release
+            </a>
           </Button>
         </DialogFooter>
       </DialogContent>

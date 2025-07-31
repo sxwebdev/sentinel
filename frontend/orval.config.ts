@@ -2,7 +2,7 @@
 // This file is used to generate the API client using orval
 export default {
   api: {
-    input: "./src/shared/types/doc.json", // путь к Swagger JSON
+    input: "../docs/docsv1/swagger.json", // путь к Swagger JSON
     output: {
       mode: "tags-split", // или 'split' / 'single'
       target: "./src/shared/api/generated.ts", // куда будет сгенерировано
