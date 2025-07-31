@@ -16,9 +16,11 @@ import {Loader} from "@/entities/loader/loader";
 import type {GetDashboardStatsResult} from "@/shared/api/dashboard/dashboard";
 import {getProtocolDisplayName} from "@/shared/lib/getProtocolDisplayName";
 import {ServiceTable} from "../service/serviceTable";
+import {ApiInfo} from "@/features/apiInfo/apiInfo";
+import { UpdateVersion } from "@/features/apiInfo/updateVersion";
 
 const Dashboard = () => {
-  const {infoKeysDashboard, dashboardInfo, onRefreshDashboard} =
+  const {apiInfo, infoKeysDashboard, dashboardInfo, onRefreshDashboard} =
     useDashboardLogic();
 
   if (!dashboardInfo) return <Loader loaderPage />;
@@ -27,7 +29,12 @@ const Dashboard = () => {
     <ContentWrapper>
       <div className="flex flex-col gap-4 lg:gap-6">
         <header className="flex flex-col py-3 md:flex-row gap-3 justify-between items-center">
-          <h1 className="text-lg md:text-2xl font-bold">Sentinel Dashboard</h1>
+          <div className="flex flex-row gap-3 items-center">
+            <h1 className="text-lg md:text-2xl font-bold">
+              Sentinel Dashboard
+            </h1>
+            {apiInfo?.available_update && <UpdateVersion apiInfo={apiInfo} />}
+          </div>
           <div className="flex flex-col md:flex-row">
             <Button
               size="sm"
@@ -116,6 +123,9 @@ const Dashboard = () => {
         </div>
         <div>
           <ServiceTable protocols={dashboardInfo.protocols ?? {}} />
+        </div>
+        <div className="flex flex-col gap-4 w-fit">
+          <ApiInfo apiInfo={apiInfo} />
         </div>
       </div>
     </ContentWrapper>

@@ -37,6 +37,7 @@ interface ServiceTableStore {
 const initialState = {
   data: null,
   deleteServiceId: null,
+  apiInfo: null,
   updateServiceId: null,
   allTags: null,
   countAllTags: null,
@@ -64,8 +65,7 @@ export const useServiceTableStore = create<ServiceTableStore>((set) => ({
   setFilters: (value) =>
     set((state) => ({filters: {...state.filters, ...value}})),
   setUpdateServiceId: (updateServiceId) => set({updateServiceId}),
-  setPage: (page) => set({filters: {...initialState.filters, page}}),
-
+  setPage: (page) => set({ filters: { ...initialState.filters, page } }),
   setUpdateService: (updateService: WebServiceDTO) =>
     set((state) => {
       if (!updateService) return {data: state.data};

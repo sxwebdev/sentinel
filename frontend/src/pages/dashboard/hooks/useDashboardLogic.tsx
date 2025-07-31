@@ -5,6 +5,7 @@ import {useShallow} from "zustand/react/shallow";
 import {useServiceTableStore} from "@/pages/service/store/useServiceTableStore";
 import {useDashboardStore} from "../store/useDashboardStore";
 import {getDashboard} from "@/shared/api/dashboard/dashboard";
+import {getInfo} from "@/shared/api/info/info";
 
 export const useDashboardLogic = () => {
   const {
@@ -23,10 +24,12 @@ export const useDashboardLogic = () => {
   
   const {getDashboardStats} = getDashboard();
 
-  const {dashboardInfo, setDashboardInfo} = useDashboardStore(
+  const {apiInfo, dashboardInfo, setDashboardInfo, setApiInfo} = useDashboardStore(
     useShallow((s) => ({
+      apiInfo: s.apiInfo,
       dashboardInfo: s.dashboardInfo,
       setDashboardInfo: s.setDashboardInfo,
+      setApiInfo: s.setApiInfo,
     }))
   );
 
@@ -36,13 +39,20 @@ export const useDashboardLogic = () => {
     await getDashboardStats();
   };
 
+  // get Api Info
+  const {getInfo: getApiInfo} = getInfo();
+
   useEffect(() => {
     getDashboardStats().then((res) => {
       setDashboardInfo(res);
     });
+    getApiInfo().then((res) => {
+      setApiInfo(res);
+    });
 
     return () => {
       setDashboardInfo(null);
+      setApiInfo(null);
     };
   }, []);
 
@@ -87,6 +97,7 @@ export const useDashboardLogic = () => {
   );
 
   return {
+    apiInfo,
     dashboardInfo,
     infoKeysDashboard,
     onRefreshDashboard,
