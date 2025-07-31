@@ -7,6 +7,7 @@ interface ServiceTableStore {
   data: GetServicesResult | null;
   deleteServiceId: string | null;
   updateServiceId: string | null;
+  createFromService: WebServiceDTO | null;
   isOpenDropdownIdAction: string | null;
   isLoadingAllServices: boolean;
   allTags: GetTagsResult | null;
@@ -25,6 +26,7 @@ interface ServiceTableStore {
   setPage: (page: number) => void;
   setAllTags: (allTags: GetTagsResult) => void;
   setCountAllTags: (countAllTags: GetTagsCountResult) => void;
+  setCreateFromService: (createFromService: WebServiceDTO | null) => void;
   setUpdateAllServices: (updateService: WebServiceDTO) => void;
   setIsLoadingAllServices: (isLoadingAllServices: boolean) => void;
   setDeleteServiceId: (deleteServiceId: string | null) => void;
@@ -37,7 +39,7 @@ interface ServiceTableStore {
 const initialState = {
   data: null,
   deleteServiceId: null,
-  apiInfo: null,
+  createFromService: null,
   updateServiceId: null,
   allTags: null,
   countAllTags: null,
@@ -62,6 +64,7 @@ export const useServiceTableStore = create<ServiceTableStore>((set) => ({
   setAllTags: (allTags) => set({allTags}),
   setCountAllTags: (countAllTags) => set({countAllTags}),
   setDeleteServiceId: (deleteServiceId) => set({deleteServiceId}),
+  setCreateFromService: (createFromService) => set({createFromService}),
   setFilters: (value) =>
     set((state) => ({filters: {...state.filters, ...value}})),
   setUpdateServiceId: (updateServiceId) => set({updateServiceId}),

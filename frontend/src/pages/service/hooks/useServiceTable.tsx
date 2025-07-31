@@ -20,6 +20,7 @@ import {
 import {useEffect, useMemo} from "react";
 import {Link} from "react-router";
 import {
+  CopyIcon,
   EllipsisIcon,
   PencilIcon,
   RefreshCcwIcon,
@@ -50,9 +51,14 @@ export const useServiceTable = () => {
     setCountAllTags,
     setDeleteServiceId,
     setUpdateServiceId,
+    setCreateFromService,
   } = useServiceTableStore();
 
-  const {getServices: getServicesAll, postServicesIdCheck, deleteServicesId } = getServices();
+  const {
+    getServices: getServicesAll,
+    postServicesIdCheck,
+    deleteServicesId,
+  } = getServices();
   const {getTags: getTagsAll, getTagsCount} = getTags();
 
   const onDeleteService = async () => {
@@ -67,7 +73,6 @@ export const useServiceTable = () => {
         setDeleteServiceId(null);
       });
   };
-
 
   const columns: ColumnDef<WebServiceDTO>[] = useMemo(
     () => [
@@ -248,6 +253,11 @@ export const useServiceTable = () => {
                   >
                     <PencilIcon /> <span>Edit</span>
                   </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => setCreateFromService(row.original)}
+                  >
+                    <CopyIcon /> <span>Create from this</span>
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     className="text-destructive focus:text-destructive"
@@ -277,11 +287,13 @@ export const useServiceTable = () => {
       tags: filters.tags,
       protocol: filters.protocol,
       status: filters.status,
-    }).then((res) => {
-      setData(res);
-    }).finally(() => {
-      setIsLoadingAllServices(false);
-    });
+    })
+      .then((res) => {
+        setData(res);
+      })
+      .finally(() => {
+        setIsLoadingAllServices(false);
+      });
   }, [filters]);
 
   useEffect(() => {
@@ -292,7 +304,6 @@ export const useServiceTable = () => {
       setCountAllTags(res);
     });
   }, []);
-
 
   const table = useReactTable({
     data: data?.items ?? [],

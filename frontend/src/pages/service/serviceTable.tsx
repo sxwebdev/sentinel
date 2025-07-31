@@ -19,6 +19,7 @@ import {cn} from "@/shared/lib/utils";
 import {Search} from "@/entities/search/search";
 import PaginationTable from "@/shared/components/paginationTable";
 import MultiSelect from "@/shared/components/multiSelect";
+import ServiceCreateFromService from "./serviceCreateFromService";
 
 interface ServiceTableProps {
   protocols: Record<string, number>;
@@ -40,6 +41,7 @@ export const ServiceTable = ({protocols}: ServiceTableProps) => {
 
   return (
     <>
+      <ServiceCreateFromService />
       <ServiceUpdate />
       <ConfirmDialog
         open={!!deleteServiceId}
