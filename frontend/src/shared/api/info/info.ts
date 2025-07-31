@@ -5,26 +5,23 @@
  * API for service monitoring and incident management
  * OpenAPI spec version: 1.0
  */
-import type {
-  WebServerInfoResponse
-} from '../../types/model';
+import type { WebServerInfoResponse } from "../../types/model";
 
-import { customFetcher } from '.././baseApi';
+import { customFetcher } from ".././baseApi";
 
-
-
-  export const getInfo = () => {
-/**
- * Returns basic information about the server
- * @summary Get server info
- */
-const getInfo = (
-    
- ) => {
-      return customFetcher<WebServerInfoResponse>(
-      {url: `/info`, method: 'GET'
-    },
-      );
-    }
-  return {getInfo}};
-export type GetInfoResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getInfo>['getInfo']>>>
+export const getInfo = () => {
+  /**
+   * Returns basic information about the server
+   * @summary Get server info
+   */
+  const getInfo = () => {
+    return customFetcher<WebServerInfoResponse>({
+      url: `/info`,
+      method: "GET",
+    });
+  };
+  return { getInfo };
+};
+export type GetInfoResult = NonNullable<
+  Awaited<ReturnType<ReturnType<typeof getInfo>["getInfo"]>>
+>;

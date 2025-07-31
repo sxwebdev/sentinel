@@ -1,4 +1,4 @@
-import {useState} from "react";
+import { useState } from "react";
 import {
   Badge,
   Button,
@@ -11,10 +11,10 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/shared/components/ui";
-import {CheckIcon, CircleAlertIcon, TrashIcon, CopyIcon} from "lucide-react";
-import {cn} from "@/shared/lib/utils";
-import {ExpandableText} from "@/shared/components/expandableText";
-import {formatDuration} from "@/shared/utils";
+import { CheckIcon, CircleAlertIcon, TrashIcon, CopyIcon } from "lucide-react";
+import { cn } from "@/shared/lib/utils";
+import { ExpandableText } from "@/shared/components/expandableText";
+import { formatDuration } from "@/shared/utils";
 import PaginationTable from "@/shared/components/paginationTable";
 import type {
   DbutilsFindResponseWithCountWebIncident,
@@ -39,7 +39,7 @@ export const IncidentsList = ({
 }: IncidentsListProps) => {
   // State to track copied incident IDs
   const [copiedIncidents, setCopiedIncidents] = useState<Set<string>>(
-    new Set()
+    new Set(),
   );
 
   const handleCopyIncidentId = async (incidentId: string) => {
@@ -84,7 +84,9 @@ export const IncidentsList = ({
                         <div
                           className={cn(
                             "w-2.5 h-2.5 rounded-full",
-                            incident.resolved ? "bg-emerald-400" : "bg-rose-400"
+                            incident.resolved
+                              ? "bg-emerald-400"
+                              : "bg-rose-400",
                           )}
                         />
                       </TooltipTrigger>
@@ -145,7 +147,7 @@ export const IncidentsList = ({
                       className={cn(
                         "text-xs font-medium",
                         incident.resolved && "bg-emerald-100 text-emerald-600",
-                        !incident.resolved && "bg-rose-100 text-rose-600"
+                        !incident.resolved && "bg-rose-100 text-rose-600",
                       )}
                     >
                       {incident.resolved ? "Resolved" : "Active"}
@@ -162,15 +164,24 @@ export const IncidentsList = ({
                   <div className="flex flex-wrap gap-2 md:gap-4 text-xs text-muted-foreground">
                     <div>
                       <span className="font-medium">Started:</span>{" "}
-                      {new Date(incident?.started_at ?? "").toLocaleDateString()}{" "}
+                      {new Date(
+                        incident?.started_at ?? "",
+                      ).toLocaleDateString()}{" "}
                       at{" "}
-                      {new Date(incident?.started_at ?? "").toLocaleTimeString()}
+                      {new Date(
+                        incident?.started_at ?? "",
+                      ).toLocaleTimeString()}
                     </div>
                     {incident?.resolved_at && (
                       <div>
                         <span className="font-medium">Ended:</span>{" "}
-                        {new Date(incident?.resolved_at ?? "").toLocaleDateString()} at{" "}
-                        {new Date(incident?.resolved_at ?? "").toLocaleTimeString()}
+                        {new Date(
+                          incident?.resolved_at ?? "",
+                        ).toLocaleDateString()}{" "}
+                        at{" "}
+                        {new Date(
+                          incident?.resolved_at ?? "",
+                        ).toLocaleTimeString()}
                       </div>
                     )}
                     {incident.duration && (
@@ -201,11 +212,11 @@ export const IncidentsList = ({
                 <PaginationTable
                   className="px-0"
                   selectedRows={filters.page_size ?? 0}
-                  setSelectedRows={(value) => setFilters({page_size: value})}
+                  setSelectedRows={(value) => setFilters({ page_size: value })}
                   selectedPage={filters.page ?? 0}
-                  setSelectedPage={(value) => setFilters({page: value})}
+                  setSelectedPage={(value) => setFilters({ page: value })}
                   totalPages={Math.ceil(
-                    (incidentsCount ?? 0) / (filters.page_size ?? 0)
+                    (incidentsCount ?? 0) / (filters.page_size ?? 0),
                   )}
                 />
               </div>

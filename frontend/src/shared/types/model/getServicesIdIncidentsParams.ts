@@ -7,20 +7,20 @@
  */
 
 export type GetServicesIdIncidentsParams = {
-/**
- * Filter by incident ID
- */
-incident_id?: string;
-/**
- * Filter by resolved status
- */
-resolved?: boolean;
-/**
- * Page number (for pagination)
- */
-page?: number;
-/**
- * Number of items per page (default 20)
- */
-page_size?: number;
+  /**
+   * Filter by incident ID
+   */
+  incident_id?: string;
+  /**
+   * Filter by resolved status
+   */
+  resolved?: boolean;
+  /**
+   * Page number (for pagination)
+   */
+  page?: number;
+  /**
+   * Number of items per page (default 20)
+   */
+  page_size?: number;
 };

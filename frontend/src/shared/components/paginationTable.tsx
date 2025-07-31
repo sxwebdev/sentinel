@@ -65,10 +65,8 @@ export default function PaginationTable({
             className="text-muted-foreground text-sm whitespace-nowrap"
             aria-live="polite"
           >
-            <span className="text-foreground">
-              {selectedPage}
-            </span>{" "}
-            of <span className="text-foreground">{totalPages}</span>
+            <span className="text-foreground">{selectedPage}</span> of{" "}
+            <span className="text-foreground">{totalPages}</span>
           </p>
         </div>
 

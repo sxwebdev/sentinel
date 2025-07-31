@@ -6,71 +6,83 @@
  * OpenAPI spec version: 1.0
  */
 import type {
-  DbutilsFindResponseWithCountWebIncident,
+  DbutilsFindResponseWithCountStorageIncident,
   GetIncidentsParams,
   GetServicesIdIncidentsParams,
-  WebSuccessResponse
-} from '../../types/model';
+  WebSuccessResponse,
+} from "../../types/model";
 
-import { customFetcher } from '.././baseApi';
+import { customFetcher } from ".././baseApi";
 
-
-
-  export const getIncidents = () => {
-/**
- * Returns a list of recent incidents across all services
- * @summary Get recent incidents
- */
-const getIncidents = (
-    params?: GetIncidentsParams,
- ) => {
-      return customFetcher<DbutilsFindResponseWithCountWebIncident>(
-      {url: `/incidents`, method: 'GET',
-        params
-    },
-      );
-    }
+export const getIncidents = () => {
   /**
- * Returns a list of incidents for a specific service
- * @summary Get service incidents
- */
-const getServicesIdIncidents = (
+   * Returns a list of recent incidents across all services
+   * @summary Get recent incidents
+   */
+  const getIncidents = (params?: GetIncidentsParams) => {
+    return customFetcher<DbutilsFindResponseWithCountStorageIncident>({
+      url: `/incidents`,
+      method: "GET",
+      params,
+    });
+  };
+  /**
+   * Returns a list of incidents for a specific service
+   * @summary Get service incidents
+   */
+  const getServicesIdIncidents = (
     id: string,
     params?: GetServicesIdIncidentsParams,
- ) => {
-      return customFetcher<DbutilsFindResponseWithCountWebIncident>(
-      {url: `/services/${id}/incidents`, method: 'GET',
-        params
-    },
-      );
-    }
+  ) => {
+    return customFetcher<DbutilsFindResponseWithCountStorageIncident>({
+      url: `/services/${id}/incidents`,
+      method: "GET",
+      params,
+    });
+  };
   /**
- * Deletes a specific incident for a service
- * @summary Delete incident
- */
-const deleteServicesIdIncidentsIncidentId = (
+   * Deletes a specific incident for a service
+   * @summary Delete incident
+   */
+  const deleteServicesIdIncidentsIncidentId = (
     id: string,
     incidentId: string,
- ) => {
-      return customFetcher<void>(
-      {url: `/services/${id}/incidents/${incidentId}`, method: 'DELETE'
-    },
-      );
-    }
+  ) => {
+    return customFetcher<void>({
+      url: `/services/${id}/incidents/${incidentId}`,
+      method: "DELETE",
+    });
+  };
   /**
- * Forcefully resolves all active incidents for a service
- * @summary Resolve service incidents
- */
-const postServicesIdResolve = (
-    id: string,
- ) => {
-      return customFetcher<WebSuccessResponse>(
-      {url: `/services/${id}/resolve`, method: 'POST'
-    },
-      );
-    }
-  return {getIncidents,getServicesIdIncidents,deleteServicesIdIncidentsIncidentId,postServicesIdResolve}};
-export type GetIncidentsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getIncidents>['getIncidents']>>>
-export type GetServicesIdIncidentsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getIncidents>['getServicesIdIncidents']>>>
-export type DeleteServicesIdIncidentsIncidentIdResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getIncidents>['deleteServicesIdIncidentsIncidentId']>>>
-export type PostServicesIdResolveResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getIncidents>['postServicesIdResolve']>>>
+   * Forcefully resolves all active incidents for a service
+   * @summary Resolve service incidents
+   */
+  const postServicesIdResolve = (id: string) => {
+    return customFetcher<WebSuccessResponse>({
+      url: `/services/${id}/resolve`,
+      method: "POST",
+    });
+  };
+  return {
+    getIncidents,
+    getServicesIdIncidents,
+    deleteServicesIdIncidentsIncidentId,
+    postServicesIdResolve,
+  };
+};
+export type GetIncidentsResult = NonNullable<
+  Awaited<ReturnType<ReturnType<typeof getIncidents>["getIncidents"]>>
+>;
+export type GetServicesIdIncidentsResult = NonNullable<
+  Awaited<ReturnType<ReturnType<typeof getIncidents>["getServicesIdIncidents"]>>
+>;
+export type DeleteServicesIdIncidentsIncidentIdResult = NonNullable<
+  Awaited<
+    ReturnType<
+      ReturnType<typeof getIncidents>["deleteServicesIdIncidentsIncidentId"]
+    >
+  >
+>;
+export type PostServicesIdResolveResult = NonNullable<
+  Awaited<ReturnType<ReturnType<typeof getIncidents>["postServicesIdResolve"]>>
+>;

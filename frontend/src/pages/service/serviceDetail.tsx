@@ -22,7 +22,6 @@ const ServiceDetail = () => {
     onResolveIncident,
   } = useServiceDetail();
 
-
   if (!serviceDetailData || !incidentsData || !serviceStatsData)
     return <Loader loaderPage />;
 

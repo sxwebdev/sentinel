@@ -8,19 +8,19 @@ import {
   Progress,
 } from "@/shared/components/ui";
 import ContentWrapper from "@/widgets/wrappers/contentWrapper";
-import {RefreshCcwIcon} from "lucide-react";
-import {useDashboardLogic} from "./hooks/useDashboardLogic";
-import {InfoCardStats} from "@/entities/infoStatsCard/infoCardStats";
+import { RefreshCcwIcon } from "lucide-react";
+import { useDashboardLogic } from "./hooks/useDashboardLogic";
+import { InfoCardStats } from "@/entities/infoStatsCard/infoCardStats";
 import ServiceCreate from "../service/serviceCreate";
-import {Loader} from "@/entities/loader/loader";
-import type {GetDashboardStatsResult} from "@/shared/api/dashboard/dashboard";
-import {getProtocolDisplayName} from "@/shared/lib/getProtocolDisplayName";
-import {ServiceTable} from "../service/serviceTable";
-import {ApiInfo} from "@/features/apiInfo/apiInfo";
+import { Loader } from "@/entities/loader/loader";
+import type { GetDashboardStatsResult } from "@/shared/api/dashboard/dashboard";
+import { getProtocolDisplayName } from "@/shared/lib/getProtocolDisplayName";
+import { ServiceTable } from "../service/serviceTable";
+import { ApiInfo } from "@/features/apiInfo/apiInfo";
 import { UpdateVersion } from "@/features/apiInfo/updateVersion";
 
 const Dashboard = () => {
-  const {apiInfo, infoKeysDashboard, dashboardInfo, onRefreshDashboard} =
+  const { apiInfo, infoKeysDashboard, dashboardInfo, onRefreshDashboard } =
     useDashboardLogic();
 
   if (!dashboardInfo) return <Loader loaderPage />;
@@ -53,7 +53,7 @@ const Dashboard = () => {
             const value =
               item.key === "uptime_percentage"
                 ? Number(
-                    dashboardInfo[item.key as keyof GetDashboardStatsResult]
+                    dashboardInfo[item.key as keyof GetDashboardStatsResult],
                   ).toFixed(1) + "%"
                 : item.key === "avg_response_time"
                   ? dashboardInfo[
@@ -68,7 +68,7 @@ const Dashboard = () => {
             );
           })}
         </div>
-        <div>
+        <div className="hidden">
           <Accordion type="multiple">
             <AccordionItem value="item-1" className="shadow-sm rounded-lg">
               <AccordionTrigger className="bg-white flex justify-between items-center border hover:no-underline border-border cursor-pointer text-lg py-4 px-6">
@@ -80,7 +80,7 @@ const Dashboard = () => {
                   Object.entries(dashboardInfo.protocols).map(
                     ([protocol, count]) => {
                       const totalCount = Object.values(
-                        dashboardInfo.protocols!
+                        dashboardInfo.protocols!,
                       ).reduce((a, b) => a + b, 0);
                       const percentage =
                         totalCount > 0
@@ -110,7 +110,7 @@ const Dashboard = () => {
                           </div>
                         </Card>
                       );
-                    }
+                    },
                   )
                 ) : (
                   <p className="text-muted-foreground text-center">

@@ -5,7 +5,7 @@
  * API for service monitoring and incident management
  * OpenAPI spec version: 1.0
  */
-import type { MonitorsGRPCConfigCheckType } from './monitorsGRPCConfigCheckType';
+import type { MonitorsGRPCConfigCheckType } from "./monitorsGRPCConfigCheckType";
 
 export interface MonitorsGRPCConfig {
   check_type: MonitorsGRPCConfigCheckType;

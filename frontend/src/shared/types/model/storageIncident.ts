@@ -5,9 +5,13 @@
  * API for service monitoring and incident management
  * OpenAPI spec version: 1.0
  */
-import type { WebIncident } from "./webIncident";
 
-export interface DbutilsFindResponseWithCountWebIncident {
-  count?: number;
-  items?: WebIncident[];
+export interface StorageIncident {
+  duration?: number;
+  end_time?: string;
+  error?: string;
+  id?: string;
+  resolved?: boolean;
+  service_id?: string;
+  start_time?: string;
 }

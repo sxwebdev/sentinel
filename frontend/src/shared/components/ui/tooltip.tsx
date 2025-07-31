@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Tooltip as TooltipPrimitive } from "radix-ui";
 
-import {cn} from "@shared/lib/utils";
+import { cn } from "@shared/lib/utils";
 
 function TooltipProvider({
   delayDuration = 0,
@@ -45,7 +45,7 @@ function TooltipContent({
         sideOffset={sideOffset}
         className={cn(
           "bg-background mb-1 text-foreground border animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 w-fit origin-(--radix-tooltip-content-transform-origin) rounded-md px-3 py-1.5 text-xs text-balance",
-          className
+          className,
         )}
         {...props}
       >
@@ -56,4 +56,4 @@ function TooltipContent({
   );
 }
 
-export {Tooltip, TooltipTrigger, TooltipContent, TooltipProvider};
+export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider };

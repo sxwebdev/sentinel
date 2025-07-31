@@ -5,7 +5,7 @@ import type {
   WebServiceDTO,
   WebServiceStats,
 } from "@/shared/types/model";
-import {create} from "zustand";
+import { create } from "zustand";
 
 interface ServiceDetailStore {
   deleteIncident: WebIncident | null;
@@ -19,7 +19,7 @@ interface ServiceDetailStore {
   setResolveIncident: (resolveIncident: boolean) => void;
   setServiceDetailData: (serviceDetailData: WebServiceDTO | null) => void;
   setIncidentsData: (
-    incidentsData: DbutilsFindResponseWithCountWebIncident | null
+    incidentsData: DbutilsFindResponseWithCountWebIncident | null,
   ) => void;
   setServiceStatsData: (serviceStatsData: WebServiceStats | null) => void;
   setUpdateServiceStatsData: (serviceStatsData: WebServiceStats | null) => void;
@@ -40,13 +40,13 @@ const initialState = {
 
 export const useServiceDetailStore = create<ServiceDetailStore>((set) => ({
   ...initialState,
-  setDeleteIncident: (deleteIncident) => set({deleteIncident}),
+  setDeleteIncident: (deleteIncident) => set({ deleteIncident }),
   setFilters: (filters) =>
-    set((state) => ({filters: {...state.filters, ...filters}})),
-  setResolveIncident: (resolveIncident) => set({resolveIncident}),
-  setServiceDetailData: (serviceDetailData) => set({serviceDetailData}),
-  setIncidentsData: (incidentsData) => set({incidentsData}),
-  setServiceStatsData: (serviceStatsData) => set({serviceStatsData}),
+    set((state) => ({ filters: { ...state.filters, ...filters } })),
+  setResolveIncident: (resolveIncident) => set({ resolveIncident }),
+  setServiceDetailData: (serviceDetailData) => set({ serviceDetailData }),
+  setIncidentsData: (incidentsData) => set({ incidentsData }),
+  setServiceStatsData: (serviceStatsData) => set({ serviceStatsData }),
   setUpdateServiceStatsData: (serviceStatsData) =>
     set((store) => {
       if (!serviceStatsData) return store;

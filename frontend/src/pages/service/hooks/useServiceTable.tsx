@@ -11,14 +11,14 @@ import {
   TooltipTrigger,
   Button,
 } from "@/shared/components/ui";
-import {cn} from "@/shared/lib/utils";
+import { cn } from "@/shared/lib/utils";
 import {
   getCoreRowModel,
   useReactTable,
   type ColumnDef,
 } from "@tanstack/react-table";
-import {useEffect, useMemo} from "react";
-import {Link} from "react-router";
+import { useEffect, useMemo } from "react";
+import { Link } from "react-router";
 import {
   CopyIcon,
   EllipsisIcon,
@@ -26,12 +26,12 @@ import {
   RefreshCcwIcon,
   TrashIcon,
 } from "lucide-react";
-import {toast} from "sonner";
-import {useServiceTableStore} from "../store/useServiceTableStore";
-import {ActivityIndicatorSVG} from "@/entities/ActivityIndicatorSVG/ActivityIndicatorSVG";
-import {getServices} from "@/shared/api/services/services";
-import {getTags} from "@/shared/api/tags/tags";
-import type {WebServiceDTO} from "@/shared/types/model";
+import { toast } from "sonner";
+import { useServiceTableStore } from "../store/useServiceTableStore";
+import { ActivityIndicatorSVG } from "@/entities/ActivityIndicatorSVG/ActivityIndicatorSVG";
+import { getServices } from "@/shared/api/services/services";
+import { getTags } from "@/shared/api/tags/tags";
+import type { WebServiceDTO } from "@/shared/types/model";
 
 export const useServiceTable = () => {
   const {
@@ -59,7 +59,7 @@ export const useServiceTable = () => {
     postServicesIdCheck,
     deleteServicesId,
   } = getServices();
-  const {getTags: getTagsAll, getTagsCount} = getTags();
+  const { getTags: getTagsAll, getTagsCount } = getTags();
 
   const onDeleteService = async () => {
     await deleteServicesId(deleteServiceId ?? "")
@@ -80,7 +80,7 @@ export const useServiceTable = () => {
         header: "Enabled",
         accessorKey: "enabled",
         size: 60,
-        cell: ({row}) => {
+        cell: ({ row }) => {
           return (
             <div className="flex items-center justify-center">
               <TooltipProvider>
@@ -107,7 +107,7 @@ export const useServiceTable = () => {
       {
         header: "Service ",
         accessorKey: "service",
-        cell: ({row}) => {
+        cell: ({ row }) => {
           return (
             <Link
               to={`/service/${row.original?.id}`}
@@ -121,7 +121,7 @@ export const useServiceTable = () => {
       {
         header: "Status",
         accessorKey: "status",
-        cell: ({row}) => {
+        cell: ({ row }) => {
           return (
             <Badge
               className={cn(
@@ -130,7 +130,7 @@ export const useServiceTable = () => {
                   "bg-emerald-100 text-emerald-600",
                 row.original?.status === "down" && "bg-rose-100 text-rose-600",
                 row.original?.status === "unknown" &&
-                  "bg-yellow-100 text-yellow-600"
+                  "bg-yellow-100 text-yellow-600",
               )}
             >
               {row.original?.status?.toUpperCase()}
@@ -141,7 +141,7 @@ export const useServiceTable = () => {
       {
         header: "Tags",
         accessorKey: "tags",
-        cell: ({row}) => {
+        cell: ({ row }) => {
           if (row.original?.tags?.length === 0) {
             return (
               <div className="flex items-center justify-center">
@@ -167,7 +167,7 @@ export const useServiceTable = () => {
       {
         header: "Last Check",
         accessorKey: "last_check",
-        cell: ({row}) => {
+        cell: ({ row }) => {
           return row.original?.last_check ? (
             new Date(row.original.last_check).toLocaleString("ru", {
               year: "numeric",
@@ -187,7 +187,7 @@ export const useServiceTable = () => {
       {
         header: "Incidents",
         accessorKey: "incidents",
-        cell: ({row}) => {
+        cell: ({ row }) => {
           return (
             <>
               <TooltipProvider>
@@ -218,7 +218,7 @@ export const useServiceTable = () => {
       {
         header: () => <span className="sr-only">Actions</span>,
         accessorKey: "actions",
-        cell: ({row}) => {
+        cell: ({ row }) => {
           return (
             <div>
               <DropdownMenu
@@ -273,7 +273,7 @@ export const useServiceTable = () => {
         },
       },
     ],
-    [isOpenDropdownIdAction]
+    [isOpenDropdownIdAction],
   );
 
   useEffect(() => {

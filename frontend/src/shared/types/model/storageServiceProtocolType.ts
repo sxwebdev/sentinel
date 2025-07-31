@@ -6,12 +6,12 @@
  * OpenAPI spec version: 1.0
  */
 
-export type StorageServiceProtocolType = typeof StorageServiceProtocolType[keyof typeof StorageServiceProtocolType];
-
+export type StorageServiceProtocolType =
+  (typeof StorageServiceProtocolType)[keyof typeof StorageServiceProtocolType];
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const StorageServiceProtocolType = {
-  ServiceProtocolTypeHTTP: 'http',
-  ServiceProtocolTypeTCP: 'tcp',
-  ServiceProtocolTypeGRPC: 'grpc',
+  ServiceProtocolTypeHTTP: "http",
+  ServiceProtocolTypeTCP: "tcp",
+  ServiceProtocolTypeGRPC: "grpc",
 } as const;

@@ -5,7 +5,7 @@
  * API for service monitoring and incident management
  * OpenAPI spec version: 1.0
  */
-import type { WebDashboardStatsProtocols } from './webDashboardStatsProtocols';
+import type { WebDashboardStatsProtocols } from "./webDashboardStatsProtocols";
 
 /**
  * Dashboard statistics

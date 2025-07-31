@@ -5,7 +5,7 @@
  * API for service monitoring and incident management
  * OpenAPI spec version: 1.0
  */
-import type { WebServiceDTO } from './webServiceDTO';
+import type { WebServiceDTO } from "./webServiceDTO";
 
 export interface DbutilsFindResponseWithCountWebServiceDTO {
   count?: number;

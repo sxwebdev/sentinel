@@ -1,4 +1,4 @@
-import {ServiceForm} from "@/features/service/serviceForm";
+import { ServiceForm } from "@/features/service/serviceForm";
 import {
   Button,
   DialogTrigger,
@@ -7,8 +7,8 @@ import {
   DialogTitle,
   Dialog,
 } from "@/shared/components/ui";
-import {PlusIcon} from "lucide-react";
-import {useCreateFromService} from "./hooks/useCreateFromService";
+import { PlusIcon } from "lucide-react";
+import { useCreateFromService } from "./hooks/useCreateFromService";
 
 const ServiceCreateFromService = () => {
   const {

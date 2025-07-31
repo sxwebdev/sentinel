@@ -5,9 +5,9 @@
  * API for service monitoring and incident management
  * OpenAPI spec version: 1.0
  */
-import type { MonitorsGRPCConfig } from './monitorsGRPCConfig';
-import type { MonitorsHTTPConfig } from './monitorsHTTPConfig';
-import type { MonitorsTCPConfig } from './monitorsTCPConfig';
+import type { MonitorsGRPCConfig } from "./monitorsGRPCConfig";
+import type { MonitorsHTTPConfig } from "./monitorsHTTPConfig";
+import type { MonitorsTCPConfig } from "./monitorsTCPConfig";
 
 export interface MonitorsConfig {
   grpc?: MonitorsGRPCConfig;

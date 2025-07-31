@@ -46,4 +46,3 @@ export const customFetcher = async <T>({
 };
 
 export const socketUrl = config.socketUrl;
-

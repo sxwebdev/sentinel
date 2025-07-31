@@ -1,10 +1,10 @@
-import {socketUrl} from "@/shared/api/baseApi";
-import {useEffect} from "react";
-import {useNavigate, useParams} from "react-router";
-import {toast} from "sonner";
-import {useServiceDetailStore} from "../store/useServiceDeteilStore";
+import { socketUrl } from "@/shared/api/baseApi";
+import { useEffect } from "react";
+import { useNavigate, useParams } from "react-router";
+import { toast } from "sonner";
+import { useServiceDetailStore } from "../store/useServiceDeteilStore";
 import useWebSocket from "react-use-websocket";
-import {ROUTES} from "@/app/routes/constants";
+import { ROUTES } from "@/app/routes/constants";
 import { getServices } from "@/shared/api/services/services";
 import { getIncidents } from "@/shared/api/incidents/incidents";
 import { getStatistics } from "@/shared/api/statistics/statistics";
@@ -25,10 +25,10 @@ export const useServiceDetail = () => {
     setUpdateServiceStatsData,
     setResolveIncident,
   } = useServiceDetailStore();
-  const {id} = useParams();
+  const { id } = useParams();
 
-  const {postServicesIdCheck, getServicesId} = getServices();
-  const {getServicesIdStats} = getStatistics();
+  const { postServicesIdCheck, getServicesId } = getServices();
+  const { getServicesIdStats } = getStatistics();
   const {
     getServicesIdIncidents,
     deleteServicesIdIncidentsIncidentId,
@@ -111,9 +111,8 @@ export const useServiceDetail = () => {
       });
   };
 
-
   // WebSocket connection to update service stats
-  const {lastMessage} = useWebSocket(socketUrl, {
+  const { lastMessage } = useWebSocket(socketUrl, {
     shouldReconnect: () => true,
   });
 

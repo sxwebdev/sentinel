@@ -6,4 +6,4 @@
  * OpenAPI spec version: 1.0
  */
 
-export type GetTagsCount200 = {[key: string]: number};
+export type GetTagsCount200 = { [key: string]: number };

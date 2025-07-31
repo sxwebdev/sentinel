@@ -1,7 +1,7 @@
-import {create} from "zustand";
-import type {GetTagsCountResult, GetTagsResult} from "@/shared/api/tags/tags";
-import type {GetServicesResult} from "@/shared/api/services/services";
-import type {WebServiceDTO} from "@/shared/types/model";
+import { create } from "zustand";
+import type { GetTagsCountResult, GetTagsResult } from "@/shared/api/tags/tags";
+import type { GetServicesResult } from "@/shared/api/services/services";
+import type { WebServiceDTO } from "@/shared/types/model";
 
 interface ServiceTableStore {
   data: GetServicesResult | null;
@@ -58,41 +58,41 @@ const initialState = {
 
 export const useServiceTableStore = create<ServiceTableStore>((set) => ({
   ...initialState,
-  setData: (data) => set({data}),
+  setData: (data) => set({ data }),
   setIsOpenDropdownIdAction: (isOpenDropdownIdAction) =>
-    set({isOpenDropdownIdAction}),
-  setAllTags: (allTags) => set({allTags}),
-  setCountAllTags: (countAllTags) => set({countAllTags}),
-  setDeleteServiceId: (deleteServiceId) => set({deleteServiceId}),
-  setCreateFromService: (createFromService) => set({createFromService}),
+    set({ isOpenDropdownIdAction }),
+  setAllTags: (allTags) => set({ allTags }),
+  setCountAllTags: (countAllTags) => set({ countAllTags }),
+  setDeleteServiceId: (deleteServiceId) => set({ deleteServiceId }),
+  setCreateFromService: (createFromService) => set({ createFromService }),
   setFilters: (value) =>
-    set((state) => ({filters: {...state.filters, ...value}})),
-  setUpdateServiceId: (updateServiceId) => set({updateServiceId}),
+    set((state) => ({ filters: { ...state.filters, ...value } })),
+  setUpdateServiceId: (updateServiceId) => set({ updateServiceId }),
   setPage: (page) => set({ filters: { ...initialState.filters, page } }),
   setUpdateService: (updateService: WebServiceDTO) =>
     set((state) => {
-      if (!updateService) return {data: state.data};
+      if (!updateService) return { data: state.data };
       const exists = state.data?.items?.some(
-        (ser) => ser?.id === updateService?.id
+        (ser) => ser?.id === updateService?.id,
       );
       return {
         data: {
           count: state.data?.count,
           items: exists
             ? state.data?.items?.map((ser) =>
-                ser.id === updateService.id ? updateService : ser
+                ser.id === updateService.id ? updateService : ser,
               )
             : [...(state.data?.items ?? []), updateService],
         },
       };
     }),
   setIsLoadingAllServices: (isLoadingAllServices) =>
-    set({isLoadingAllServices}),
+    set({ isLoadingAllServices }),
   setUpdateAllServices: (updateService: WebServiceDTO) =>
     set((state) => {
-      if (!updateService) return {data: state.data};
+      if (!updateService) return { data: state.data };
       const exists = state.data?.items?.some(
-        (ser) => ser?.id === updateService?.id
+        (ser) => ser?.id === updateService?.id,
       );
       if (!exists)
         return {
@@ -105,7 +105,7 @@ export const useServiceTableStore = create<ServiceTableStore>((set) => ({
         data: {
           count: state.data?.count,
           items: state.data?.items?.map((ser) =>
-            ser.id === updateService.id ? updateService : ser
+            ser.id === updateService.id ? updateService : ser,
           ),
         },
       };
@@ -113,7 +113,7 @@ export const useServiceTableStore = create<ServiceTableStore>((set) => ({
   deleteServiceInData: (deleteServiceId) =>
     set((state) => {
       const exists = state.data?.items?.some(
-        (ser) => ser.id === deleteServiceId
+        (ser) => ser.id === deleteServiceId,
       );
 
       return {

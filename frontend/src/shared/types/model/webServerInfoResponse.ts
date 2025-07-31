@@ -5,7 +5,7 @@
  * API for service monitoring and incident management
  * OpenAPI spec version: 1.0
  */
-import type { WebAvailableUpdate } from './webAvailableUpdate';
+import type { WebAvailableUpdate } from "./webAvailableUpdate";
 
 export interface WebServerInfoResponse {
   arch?: string;

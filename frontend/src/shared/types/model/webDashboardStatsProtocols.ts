@@ -6,4 +6,4 @@
  * OpenAPI spec version: 1.0
  */
 
-export type WebDashboardStatsProtocols = {[key: string]: number};
+export type WebDashboardStatsProtocols = { [key: string]: number };

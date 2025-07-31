@@ -5,7 +5,7 @@ import { getServices } from "@/shared/api/services/services";
 
 export const useServiceCreate = () => {
   const [isOpenModal, setIsOpenModal] = useState(false);
-  const {postServices} = getServices();
+  const { postServices } = getServices();
 
   // Create initial values
   const initialValues: WebCreateUpdateServiceRequest = {
@@ -49,10 +49,10 @@ export const useServiceCreate = () => {
     },
   };
 
-
   // Handle create service
   const onCreateService = async (values: WebCreateUpdateServiceRequest) => {
-    return await postServices(values).then(() => {
+    return await postServices(values)
+      .then(() => {
         toast.success("Service created successfully");
         setIsOpenModal(false);
       })
@@ -60,7 +60,7 @@ export const useServiceCreate = () => {
         toast.error(err.response.data.error);
       });
   };
-  
+
   return {
     initialValues,
     onCreateService,

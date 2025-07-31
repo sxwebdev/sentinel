@@ -7,36 +7,36 @@
  */
 
 export type GetServicesParams = {
-/**
- * Filter by service name
- */
-name?: string;
-/**
- * Filter by service tags
- */
-tags?: string[];
-/**
- * Filter by service status
- */
-status?: string;
-/**
- * Filter by enabled status
- */
-is_enabled?: boolean;
-/**
- * Filter by protocol
- */
-protocol?: string;
-/**
- * Order by field
- */
-order_by?: string;
-/**
- * Page number (for pagination)
- */
-page?: number;
-/**
- * Number of items per page (default 20)
- */
-page_size?: number;
+  /**
+   * Filter by service name
+   */
+  name?: string;
+  /**
+   * Filter by service tags
+   */
+  tags?: string[];
+  /**
+   * Filter by service status
+   */
+  status?: string;
+  /**
+   * Filter by enabled status
+   */
+  is_enabled?: boolean;
+  /**
+   * Filter by protocol
+   */
+  protocol?: string;
+  /**
+   * Order by field
+   */
+  order_by?: string;
+  /**
+   * Page number (for pagination)
+   */
+  page?: number;
+  /**
+   * Number of items per page (default 20)
+   */
+  page_size?: number;
 };

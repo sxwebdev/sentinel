@@ -6,15 +6,15 @@
  * OpenAPI spec version: 1.0
  */
 
-export type MonitorsEndpointConfigMethod = typeof MonitorsEndpointConfigMethod[keyof typeof MonitorsEndpointConfigMethod];
-
+export type MonitorsEndpointConfigMethod =
+  (typeof MonitorsEndpointConfigMethod)[keyof typeof MonitorsEndpointConfigMethod];
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const MonitorsEndpointConfigMethod = {
-  GET: 'GET',
-  POST: 'POST',
-  PUT: 'PUT',
-  DELETE: 'DELETE',
-  HEAD: 'HEAD',
-  OPTIONS: 'OPTIONS',
+  GET: "GET",
+  POST: "POST",
+  PUT: "PUT",
+  DELETE: "DELETE",
+  HEAD: "HEAD",
+  OPTIONS: "OPTIONS",
 } as const;

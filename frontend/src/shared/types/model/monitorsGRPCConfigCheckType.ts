@@ -6,12 +6,12 @@
  * OpenAPI spec version: 1.0
  */
 
-export type MonitorsGRPCConfigCheckType = typeof MonitorsGRPCConfigCheckType[keyof typeof MonitorsGRPCConfigCheckType];
-
+export type MonitorsGRPCConfigCheckType =
+  (typeof MonitorsGRPCConfigCheckType)[keyof typeof MonitorsGRPCConfigCheckType];
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const MonitorsGRPCConfigCheckType = {
-  health: 'health',
-  reflection: 'reflection',
-  connectivity: 'connectivity',
+  health: "health",
+  reflection: "reflection",
+  connectivity: "connectivity",
 } as const;

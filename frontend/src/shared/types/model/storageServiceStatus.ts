@@ -6,13 +6,13 @@
  * OpenAPI spec version: 1.0
  */
 
-export type StorageServiceStatus = typeof StorageServiceStatus[keyof typeof StorageServiceStatus];
-
+export type StorageServiceStatus =
+  (typeof StorageServiceStatus)[keyof typeof StorageServiceStatus];
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const StorageServiceStatus = {
-  StatusUnknown: 'unknown',
-  StatusUp: 'up',
-  StatusDown: 'down',
-  StatusMaintenance: 'maintenance',
+  StatusUnknown: "unknown",
+  StatusUp: "up",
+  StatusDown: "down",
+  StatusMaintenance: "maintenance",
 } as const;

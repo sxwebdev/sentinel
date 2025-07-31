@@ -7,27 +7,28 @@
  */
 import type {
   GetServicesIdStatsParams,
-  WebServiceStats
-} from '../../types/model';
+  StorageServiceStats,
+} from "../../types/model";
 
-import { customFetcher } from '.././baseApi';
+import { customFetcher } from ".././baseApi";
 
-
-
-  export const getStatistics = () => {
-/**
- * Returns service statistics for the specified period
- * @summary Get service statistics
- */
-const getServicesIdStats = (
+export const getStatistics = () => {
+  /**
+   * Returns service statistics for the specified period
+   * @summary Get service statistics
+   */
+  const getServicesIdStats = (
     id: string,
     params?: GetServicesIdStatsParams,
- ) => {
-      return customFetcher<WebServiceStats>(
-      {url: `/services/${id}/stats`, method: 'GET',
-        params
-    },
-      );
-    }
-  return {getServicesIdStats}};
-export type GetServicesIdStatsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getStatistics>['getServicesIdStats']>>>
+  ) => {
+    return customFetcher<StorageServiceStats>({
+      url: `/services/${id}/stats`,
+      method: "GET",
+      params,
+    });
+  };
+  return { getServicesIdStats };
+};
+export type GetServicesIdStatsResult = NonNullable<
+  Awaited<ReturnType<ReturnType<typeof getStatistics>["getServicesIdStats"]>>
+>;

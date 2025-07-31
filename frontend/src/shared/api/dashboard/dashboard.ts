@@ -5,26 +5,23 @@
  * API for service monitoring and incident management
  * OpenAPI spec version: 1.0
  */
-import type {
-  WebDashboardStats
-} from '../../types/model';
+import type { WebDashboardStats } from "../../types/model";
 
-import { customFetcher } from '.././baseApi';
+import { customFetcher } from ".././baseApi";
 
-
-
-  export const getDashboard = () => {
-/**
- * Returns statistics for the dashboard
- * @summary Get dashboard statistics
- */
-const getDashboardStats = (
-    
- ) => {
-      return customFetcher<WebDashboardStats>(
-      {url: `/dashboard/stats`, method: 'GET'
-    },
-      );
-    }
-  return {getDashboardStats}};
-export type GetDashboardStatsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getDashboard>['getDashboardStats']>>>
+export const getDashboard = () => {
+  /**
+   * Returns statistics for the dashboard
+   * @summary Get dashboard statistics
+   */
+  const getDashboardStats = () => {
+    return customFetcher<WebDashboardStats>({
+      url: `/dashboard/stats`,
+      method: "GET",
+    });
+  };
+  return { getDashboardStats };
+};
+export type GetDashboardStatsResult = NonNullable<
+  Awaited<ReturnType<ReturnType<typeof getDashboard>["getDashboardStats"]>>
+>;

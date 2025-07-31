@@ -5,9 +5,9 @@
  * API for service monitoring and incident management
  * OpenAPI spec version: 1.0
  */
-import type { MonitorsConfig } from './monitorsConfig';
-import type { StorageServiceProtocolType } from './storageServiceProtocolType';
-import type { StorageServiceStatus } from './storageServiceStatus';
+import type { MonitorsConfig } from "./monitorsConfig";
+import type { StorageServiceProtocolType } from "./storageServiceProtocolType";
+import type { StorageServiceStatus } from "./storageServiceStatus";
 
 export interface WebServiceDTO {
   active_incidents?: number;

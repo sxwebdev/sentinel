@@ -5,8 +5,8 @@
  * API for service monitoring and incident management
  * OpenAPI spec version: 1.0
  */
-import type { MonitorsEndpointConfigHeaders } from './monitorsEndpointConfigHeaders';
-import type { MonitorsEndpointConfigMethod } from './monitorsEndpointConfigMethod';
+import type { MonitorsEndpointConfigHeaders } from "./monitorsEndpointConfigHeaders";
+import type { MonitorsEndpointConfigMethod } from "./monitorsEndpointConfigMethod";
 
 export interface MonitorsEndpointConfig {
   body?: string;

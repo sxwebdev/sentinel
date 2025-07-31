@@ -1,4 +1,4 @@
-import {Badge} from "@/shared/components/ui/badge";
+import { Badge } from "@/shared/components/ui/badge";
 
 import {
   Button,
@@ -10,11 +10,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/shared/components/ui";
-import type {WebServerInfoResponse} from "@/shared/types/model";
+import type { WebServerInfoResponse } from "@/shared/types/model";
 import Markdown from "react-markdown";
-import {useState} from "react";
+import { useState } from "react";
 
-export const UpdateVersion = ({apiInfo}: {apiInfo: WebServerInfoResponse}) => {
+export const UpdateVersion = ({
+  apiInfo,
+}: {
+  apiInfo: WebServerInfoResponse;
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -45,7 +49,7 @@ export const UpdateVersion = ({apiInfo}: {apiInfo: WebServerInfoResponse}) => {
                   apiInfo?.available_update?.url !== ""
                   ? apiInfo?.available_update?.url
                   : "",
-                "_blank"
+                "_blank",
               );
             }}
           >

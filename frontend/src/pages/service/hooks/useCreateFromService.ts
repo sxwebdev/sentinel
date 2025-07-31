@@ -1,12 +1,12 @@
-import {useMemo} from "react";
-import {useServiceTableStore} from "../store/useServiceTableStore";
-import {getServices} from "@/shared/api/services/services";
-import {toast} from "sonner";
+import { useMemo } from "react";
+import { useServiceTableStore } from "../store/useServiceTableStore";
+import { getServices } from "@/shared/api/services/services";
+import { toast } from "sonner";
 import type { WebCreateUpdateServiceRequest } from "@/shared/types/model";
 
 export const useCreateFromService = () => {
-  const {postServices} = getServices();
-  const {createFromService, setCreateFromService} = useServiceTableStore();
+  const { postServices } = getServices();
+  const { createFromService, setCreateFromService } = useServiceTableStore();
 
   const initialValues = useMemo(() => {
     return {

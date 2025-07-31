@@ -5,10 +5,9 @@
  * API for service monitoring and incident management
  * OpenAPI spec version: 1.0
  */
+import type { StorageIncident } from "./storageIncident";
 
-export type GetServicesIdStatsParams = {
-  /**
-   * Number of days (default 30)
-   */
-  days?: number;
-};
+export interface DbutilsFindResponseWithCountStorageIncident {
+  count?: number;
+  items?: StorageIncident[];
+}

@@ -1,5 +1,5 @@
-import type {WebServerInfoResponse} from "@/shared/types/model";
-import {Button} from "@shared/components/ui/button";
+import type { WebServerInfoResponse } from "@/shared/types/model";
+import { Button } from "@shared/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
@@ -7,7 +7,11 @@ import {
   TooltipTrigger,
 } from "@shared/components/ui/tooltip";
 
-export const ApiInfo = ({apiInfo}: {apiInfo: WebServerInfoResponse | null}) => {
+export const ApiInfo = ({
+  apiInfo,
+}: {
+  apiInfo: WebServerInfoResponse | null;
+}) => {
   if (!apiInfo) return null;
 
   return (

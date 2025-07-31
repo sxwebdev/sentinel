@@ -1,9 +1,11 @@
-
 import { useEffect, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { useServiceTableStore } from "../store/useServiceTableStore";
 import { toast } from "sonner";
-import type { WebCreateUpdateServiceRequest, WebServiceDTO } from "@/shared/types/model";
+import type {
+  WebCreateUpdateServiceRequest,
+  WebServiceDTO,
+} from "@/shared/types/model";
 import { getServices } from "@/shared/api/services/services";
 
 export const useServiceUpdate = () => {

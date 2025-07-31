@@ -10,96 +10,103 @@ import type {
   GetServicesParams,
   WebCreateUpdateServiceRequest,
   WebServiceDTO,
-  WebSuccessResponse
-} from '../../types/model';
+  WebSuccessResponse,
+} from "../../types/model";
 
-import { customFetcher } from '.././baseApi';
+import { customFetcher } from ".././baseApi";
 
-
-
-  export const getServices = () => {
-/**
- * Returns a list of all services with their current states
- * @summary Get all services
- */
-const getServices = (
-    params?: GetServicesParams,
- ) => {
-      return customFetcher<DbutilsFindResponseWithCountWebServiceDTO>(
-      {url: `/services`, method: 'GET',
-        params
-    },
-      );
-    }
+export const getServices = () => {
   /**
- * Creates a new service for monitoring
- * @summary Create new service
- */
-const postServices = (
+   * Returns a list of all services with their current states
+   * @summary Get all services
+   */
+  const getServices = (params?: GetServicesParams) => {
+    return customFetcher<DbutilsFindResponseWithCountWebServiceDTO>({
+      url: `/services`,
+      method: "GET",
+      params,
+    });
+  };
+  /**
+   * Creates a new service for monitoring
+   * @summary Create new service
+   */
+  const postServices = (
     webCreateUpdateServiceRequest: WebCreateUpdateServiceRequest,
- ) => {
-      return customFetcher<WebServiceDTO>(
-      {url: `/services`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: webCreateUpdateServiceRequest
-    },
-      );
-    }
+  ) => {
+    return customFetcher<WebServiceDTO>({
+      url: `/services`,
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      data: webCreateUpdateServiceRequest,
+    });
+  };
   /**
- * Returns detailed information about a specific service
- * @summary Get service details
- */
-const getServicesId = (
-    id: string,
- ) => {
-      return customFetcher<WebServiceDTO>(
-      {url: `/services/${id}`, method: 'GET'
-    },
-      );
-    }
+   * Returns detailed information about a specific service
+   * @summary Get service details
+   */
+  const getServicesId = (id: string) => {
+    return customFetcher<WebServiceDTO>({
+      url: `/services/${id}`,
+      method: "GET",
+    });
+  };
   /**
- * Updates an existing service
- * @summary Update service
- */
-const putServicesId = (
+   * Updates an existing service
+   * @summary Update service
+   */
+  const putServicesId = (
     id: string,
     webCreateUpdateServiceRequest: WebCreateUpdateServiceRequest,
- ) => {
-      return customFetcher<WebServiceDTO>(
-      {url: `/services/${id}`, method: 'PUT',
-      headers: {'Content-Type': 'application/json', },
-      data: webCreateUpdateServiceRequest
-    },
-      );
-    }
+  ) => {
+    return customFetcher<WebServiceDTO>({
+      url: `/services/${id}`,
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      data: webCreateUpdateServiceRequest,
+    });
+  };
   /**
- * Deletes a service from the monitoring system
- * @summary Delete service
- */
-const deleteServicesId = (
-    id: string,
- ) => {
-      return customFetcher<void>(
-      {url: `/services/${id}`, method: 'DELETE'
-    },
-      );
-    }
+   * Deletes a service from the monitoring system
+   * @summary Delete service
+   */
+  const deleteServicesId = (id: string) => {
+    return customFetcher<void>({ url: `/services/${id}`, method: "DELETE" });
+  };
   /**
- * Triggers a manual check of service status
- * @summary Trigger service check
- */
-const postServicesIdCheck = (
-    id: string,
- ) => {
-      return customFetcher<WebSuccessResponse>(
-      {url: `/services/${id}/check`, method: 'POST'
-    },
-      );
-    }
-  return {getServices,postServices,getServicesId,putServicesId,deleteServicesId,postServicesIdCheck}};
-export type GetServicesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getServices>['getServices']>>>
-export type PostServicesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getServices>['postServices']>>>
-export type GetServicesIdResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getServices>['getServicesId']>>>
-export type PutServicesIdResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getServices>['putServicesId']>>>
-export type DeleteServicesIdResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getServices>['deleteServicesId']>>>
-export type PostServicesIdCheckResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getServices>['postServicesIdCheck']>>>
+   * Triggers a manual check of service status
+   * @summary Trigger service check
+   */
+  const postServicesIdCheck = (id: string) => {
+    return customFetcher<WebSuccessResponse>({
+      url: `/services/${id}/check`,
+      method: "POST",
+    });
+  };
+  return {
+    getServices,
+    postServices,
+    getServicesId,
+    putServicesId,
+    deleteServicesId,
+    postServicesIdCheck,
+  };
+};
+export type GetServicesResult = NonNullable<
+  Awaited<ReturnType<ReturnType<typeof getServices>["getServices"]>>
+>;
+export type PostServicesResult = NonNullable<
+  Awaited<ReturnType<ReturnType<typeof getServices>["postServices"]>>
+>;
+export type GetServicesIdResult = NonNullable<
+  Awaited<ReturnType<ReturnType<typeof getServices>["getServicesId"]>>
+>;
+export type PutServicesIdResult = NonNullable<
+  Awaited<ReturnType<ReturnType<typeof getServices>["putServicesId"]>>
+>;
+export type DeleteServicesIdResult = NonNullable<
+  Awaited<ReturnType<ReturnType<typeof getServices>["deleteServicesId"]>>
+>;
+export type PostServicesIdCheckResult = NonNullable<
+  Awaited<ReturnType<ReturnType<typeof getServices>["postServicesIdCheck"]>>
+>;

@@ -6,4 +6,4 @@
  * OpenAPI spec version: 1.0
  */
 
-export type MonitorsEndpointConfigHeaders = {[key: string]: string};
+export type MonitorsEndpointConfigHeaders = { [key: string]: string };

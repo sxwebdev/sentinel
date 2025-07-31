@@ -10,13 +10,13 @@ import {
   SelectItem,
   SelectWithClear,
 } from "@/shared/components/ui";
-import {flexRender} from "@tanstack/react-table";
-import {useServiceTable} from "./hooks/useServiceTable";
-import {Loader} from "@/entities/loader/loader";
-import {ConfirmDialog} from "@/entities/confirmDialog/confirmDialog";
-import {ServiceUpdate} from "./serviceUpdate";
-import {cn} from "@/shared/lib/utils";
-import {Search} from "@/entities/search/search";
+import { flexRender } from "@tanstack/react-table";
+import { useServiceTable } from "./hooks/useServiceTable";
+import { Loader } from "@/entities/loader/loader";
+import { ConfirmDialog } from "@/entities/confirmDialog/confirmDialog";
+import { ServiceUpdate } from "./serviceUpdate";
+import { cn } from "@/shared/lib/utils";
+import { Search } from "@/entities/search/search";
 import PaginationTable from "@/shared/components/paginationTable";
 import MultiSelect from "@/shared/components/multiSelect";
 import ServiceCreateFromService from "./serviceCreateFromService";
@@ -25,7 +25,7 @@ interface ServiceTableProps {
   protocols: Record<string, number>;
 }
 
-export const ServiceTable = ({protocols}: ServiceTableProps) => {
+export const ServiceTable = ({ protocols }: ServiceTableProps) => {
   const {
     data,
     table,
@@ -58,7 +58,7 @@ export const ServiceTable = ({protocols}: ServiceTableProps) => {
               className="lg:col-span-2"
               placeholder="Search"
               value={filters.search}
-              onChange={(value) => setFilters({search: value ?? undefined})}
+              onChange={(value) => setFilters({ search: value ?? undefined })}
               clear
             />
             <MultiSelect
@@ -76,7 +76,7 @@ export const ServiceTable = ({protocols}: ServiceTableProps) => {
                 })) ?? []
               }
               onChange={(value) => {
-                setFilters({tags: value.map((v) => v.value)});
+                setFilters({ tags: value.map((v) => v.value) });
               }}
               placeholder="Select tags"
             />
@@ -84,9 +84,9 @@ export const ServiceTable = ({protocols}: ServiceTableProps) => {
               className="w-full"
               value={filters.protocol || ""}
               onValueChange={(value) => {
-                setFilters({protocol: value || undefined});
+                setFilters({ protocol: value || undefined });
               }}
-              onClear={() => setFilters({protocol: undefined})}
+              onClear={() => setFilters({ protocol: undefined })}
               placeholder="Select protocol"
             >
               {Object.keys(protocols).map((protocol) => {
@@ -106,9 +106,9 @@ export const ServiceTable = ({protocols}: ServiceTableProps) => {
               className="w-full"
               value={filters.status || ""}
               onValueChange={(value) => {
-                setFilters({status: value || undefined});
+                setFilters({ status: value || undefined });
               }}
-              onClear={() => setFilters({status: undefined})}
+              onClear={() => setFilters({ status: undefined })}
               placeholder="Select status"
             >
               <SelectItem value="up">Up</SelectItem>
@@ -130,7 +130,7 @@ export const ServiceTable = ({protocols}: ServiceTableProps) => {
                             ? null
                             : flexRender(
                                 header.column.columnDef.header,
-                                header.getContext()
+                                header.getContext(),
                               )}
                         </TableHead>
                       );
@@ -161,7 +161,7 @@ export const ServiceTable = ({protocols}: ServiceTableProps) => {
                               <TableCell key={cell.id}>
                                 {flexRender(
                                   cell.column.columnDef.cell,
-                                  cell.getContext()
+                                  cell.getContext(),
                                 )}
                               </TableCell>
                             ))}
@@ -186,9 +186,9 @@ export const ServiceTable = ({protocols}: ServiceTableProps) => {
         </CardContent>
         <PaginationTable
           selectedRows={filters.pageSize}
-          setSelectedRows={(value) => setFilters({pageSize: value})}
+          setSelectedRows={(value) => setFilters({ pageSize: value })}
           selectedPage={filters.page}
-          setSelectedPage={(value) => setFilters({page: value})}
+          setSelectedPage={(value) => setFilters({ page: value })}
           totalPages={Math.ceil((data?.count ?? 0) / filters.pageSize)}
         />
       </Card>

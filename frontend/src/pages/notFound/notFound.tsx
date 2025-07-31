@@ -1,6 +1,6 @@
-import {Button} from "@/shared/components/ui/button";
-import {useNavigate} from "react-router";
-import {ROUTES} from "@/app/routes/constants";
+import { Button } from "@/shared/components/ui/button";
+import { useNavigate } from "react-router";
+import { ROUTES } from "@/app/routes/constants";
 
 const NotFound = () => {
   const navigate = useNavigate();
