@@ -96,7 +96,7 @@ const docTemplate = `{
                     "200": {
                         "description": "List of incidents",
                         "schema": {
-                            "$ref": "#/definitions/dbutils.FindResponseWithCount-web_Incident"
+                            "$ref": "#/definitions/dbutils.FindResponseWithCount-storage_Incident"
                         }
                     },
                     "500": {
@@ -504,7 +504,7 @@ const docTemplate = `{
                     "200": {
                         "description": "List of incidents",
                         "schema": {
-                            "$ref": "#/definitions/dbutils.FindResponseWithCount-web_Incident"
+                            "$ref": "#/definitions/dbutils.FindResponseWithCount-storage_Incident"
                         }
                     },
                     "400": {
@@ -652,7 +652,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Service statistics",
                         "schema": {
-                            "$ref": "#/definitions/web.ServiceStats"
+                            "$ref": "#/definitions/storage.ServiceStats"
                         }
                     },
                     "400": {
@@ -736,7 +736,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "dbutils.FindResponseWithCount-web_Incident": {
+        "dbutils.FindResponseWithCount-storage_Incident": {
             "type": "object",
             "properties": {
                 "count": {
@@ -745,7 +745,7 @@ const docTemplate = `{
                 "items": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/web.Incident"
+                        "$ref": "#/definitions/storage.Incident"
                     }
                 }
             }
@@ -900,6 +900,32 @@ const docTemplate = `{
                 }
             }
         },
+        "storage.Incident": {
+            "type": "object",
+            "properties": {
+                "duration": {
+                    "type": "integer"
+                },
+                "end_time": {
+                    "type": "string"
+                },
+                "error": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "resolved": {
+                    "type": "boolean"
+                },
+                "service_id": {
+                    "type": "string"
+                },
+                "start_time": {
+                    "type": "string"
+                }
+            }
+        },
         "storage.ServiceProtocolType": {
             "type": "string",
             "enum": [
@@ -912,6 +938,29 @@ const docTemplate = `{
                 "ServiceProtocolTypeTCP",
                 "ServiceProtocolTypeGRPC"
             ]
+        },
+        "storage.ServiceStats": {
+            "type": "object",
+            "properties": {
+                "avg_response_time": {
+                    "type": "integer"
+                },
+                "period": {
+                    "type": "integer"
+                },
+                "service_id": {
+                    "type": "string"
+                },
+                "total_downtime": {
+                    "type": "integer"
+                },
+                "total_incidents": {
+                    "type": "integer"
+                },
+                "uptime_percentage": {
+                    "type": "number"
+                }
+            }
         },
         "storage.ServiceStatus": {
             "type": "string",
@@ -1049,46 +1098,6 @@ const docTemplate = `{
                 }
             }
         },
-        "web.Incident": {
-            "description": "Service incident",
-            "type": "object",
-            "properties": {
-                "duration": {
-                    "type": "string",
-                    "example": "2h30m"
-                },
-                "id": {
-                    "type": "string",
-                    "example": "01HXYZ1234567890ABCDEF"
-                },
-                "message": {
-                    "type": "string",
-                    "example": "Connection timeout"
-                },
-                "resolved": {
-                    "type": "boolean",
-                    "example": false
-                },
-                "resolved_at": {
-                    "type": "string"
-                },
-                "service_id": {
-                    "type": "string",
-                    "example": "service-1"
-                },
-                "service_name": {
-                    "type": "string",
-                    "example": "Web Server"
-                },
-                "started_at": {
-                    "type": "string"
-                },
-                "status": {
-                    "type": "string",
-                    "example": "down"
-                }
-            }
-        },
         "web.ServerInfoResponse": {
             "type": "object",
             "properties": {
@@ -1212,36 +1221,6 @@ const docTemplate = `{
                 "total_incidents": {
                     "type": "integer",
                     "example": 10
-                }
-            }
-        },
-        "web.ServiceStats": {
-            "description": "Service statistics",
-            "type": "object",
-            "properties": {
-                "avg_response_time": {
-                    "type": "integer",
-                    "example": 150000000
-                },
-                "period": {
-                    "type": "integer",
-                    "example": 2592000000000000
-                },
-                "service_id": {
-                    "type": "string",
-                    "example": "service-1"
-                },
-                "total_downtime": {
-                    "type": "integer",
-                    "example": 1800000000000
-                },
-                "total_incidents": {
-                    "type": "integer",
-                    "example": 5
-                },
-                "uptime_percentage": {
-                    "type": "number",
-                    "example": 95
                 }
             }
         },
