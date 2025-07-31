@@ -1,12 +1,12 @@
 basePath: /api/v1
 definitions:
-  dbutils.FindResponseWithCount-web_Incident:
+  dbutils.FindResponseWithCount-storage_Incident:
     properties:
       count:
         type: integer
       items:
         items:
-          $ref: '#/definitions/web.Incident'
+          $ref: '#/definitions/storage.Incident'
         type: array
     type: object
   dbutils.FindResponseWithCount-web_ServiceDTO:
@@ -113,6 +113,23 @@ definitions:
     required:
     - endpoint
     type: object
+  storage.Incident:
+    properties:
+      duration:
+        type: integer
+      end_time:
+        type: string
+      error:
+        type: string
+      id:
+        type: string
+      resolved:
+        type: boolean
+      service_id:
+        type: string
+      start_time:
+        type: string
+    type: object
   storage.ServiceProtocolType:
     enum:
     - http
@@ -123,6 +140,21 @@ definitions:
     - ServiceProtocolTypeHTTP
     - ServiceProtocolTypeTCP
     - ServiceProtocolTypeGRPC
+  storage.ServiceStats:
+    properties:
+      avg_response_time:
+        type: integer
+      period:
+        type: integer
+      service_id:
+        type: string
+      total_downtime:
+        type: integer
+      total_incidents:
+        type: integer
+      uptime_percentage:
+        type: number
+    type: object
   storage.ServiceStatus:
     enum:
     - unknown
@@ -219,35 +251,6 @@ definitions:
         example: Error description
         type: string
     type: object
-  web.Incident:
-    description: Service incident
-    properties:
-      duration:
-        example: 2h30m
-        type: string
-      id:
-        example: 01HXYZ1234567890ABCDEF
-        type: string
-      message:
-        example: Connection timeout
-        type: string
-      resolved:
-        example: false
-        type: boolean
-      resolved_at:
-        type: string
-      service_id:
-        example: service-1
-        type: string
-      service_name:
-        example: Web Server
-        type: string
-      started_at:
-        type: string
-      status:
-        example: down
-        type: string
-    type: object
   web.ServerInfoResponse:
     properties:
       arch:
@@ -336,28 +339,6 @@ definitions:
         example: 10
         type: integer
     type: object
-  web.ServiceStats:
-    description: Service statistics
-    properties:
-      avg_response_time:
-        example: 150000000
-        type: integer
-      period:
-        example: 2592000000000000
-        type: integer
-      service_id:
-        example: service-1
-        type: string
-      total_downtime:
-        example: 1800000000000
-        type: integer
-      total_incidents:
-        example: 5
-        type: integer
-      uptime_percentage:
-        example: 95
-        type: number
-    type: object
   web.SuccessResponse:
     description: Successful response
     properties:
@@ -425,7 +406,7 @@ paths:
         "200":
           description: List of incidents
           schema:
-            $ref: '#/definitions/dbutils.FindResponseWithCount-web_Incident'
+            $ref: '#/definitions/dbutils.FindResponseWithCount-storage_Incident'
         "500":
           description: Internal server error
           schema:
@@ -695,7 +676,7 @@ paths:
         "200":
           description: List of incidents
           schema:
-            $ref: '#/definitions/dbutils.FindResponseWithCount-web_Incident'
+            $ref: '#/definitions/dbutils.FindResponseWithCount-storage_Incident'
         "400":
           description: Bad request
           schema:
@@ -793,7 +774,7 @@ paths:
         "200":
           description: Service statistics
           schema:
-            $ref: '#/definitions/web.ServiceStats'
+            $ref: '#/definitions/storage.ServiceStats'
         "400":
           description: Bad request
           schema:
