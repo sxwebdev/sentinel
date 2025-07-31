@@ -53,13 +53,14 @@ export const ServiceTable = ({protocols}: ServiceTableProps) => {
         <CardContent className="flex flex-col gap-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 justify-between items-center w-full gap-3">
             <Search
-              className="w-full lg:col-span-3"
+              className="lg:col-span-2"
               placeholder="Search"
               value={filters.search}
               onChange={(value) => setFilters({search: value ?? undefined})}
               clear
             />
             <MultiSelect
+              className="lg:col-span-2"
               options={
                 allTags?.map((tag) => ({
                   label: `${tag} (${countAllTags?.[tag] ?? 0})`,

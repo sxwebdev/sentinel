@@ -20,8 +20,6 @@ var (
 	buildDate  = "unknown"
 )
 
-func getVersion() string { return version + "-" + commitHash }
-
 func getBuildVersion() string {
 	return fmt.Sprintf(
 		"\nrelease: %s\ncommit hash: %s\nbuild date: %s\ngo version: %s",
@@ -48,7 +46,7 @@ func main() {
 	app := &cli.Command{
 		Name:    appName,
 		Usage:   "A CLI application for " + appName,
-		Version: getVersion(),
+		Version: version,
 		Suggest: true,
 		Commands: []*cli.Command{
 			startCMD(),

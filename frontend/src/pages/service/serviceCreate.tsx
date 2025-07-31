@@ -3,12 +3,12 @@ import {
   Button,
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogTitle,
   DialogTrigger,
 } from "@/shared/components/ui";
 import { PlusIcon } from "lucide-react";
 import { useServiceCreate } from "./hooks/useServiceCreate";
-import { DialogDescription } from "@radix-ui/react-dialog";
 
 const ServiceCreate = () => {
   const { initialValues, onCreateService, isOpenModal, setIsOpenModal } =

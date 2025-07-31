@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"runtime"
 	"time"
 
 	"github.com/sxwebdev/sentinel/internal/config"
@@ -78,7 +79,14 @@ func startCMD() *cli.Command {
 			// Initialize scheduler
 			sched := scheduler.New(l, monitorService, rc)
 
-			webServer, err := web.NewServer(l, conf, monitorService, store, rc)
+			webServer, err := web.NewServer(l, conf, web.ServerInfo{
+				Version:    version,
+				CommitHash: commitHash,
+				BuildDate:  buildDate,
+				GoVersion:  runtime.Version(),
+				OS:         runtime.GOOS,
+				Arch:       runtime.GOARCH,
+			}, monitorService, store, rc)
 			if err != nil {
 				return fmt.Errorf("failed to initialize web server: %w", err)
 			}

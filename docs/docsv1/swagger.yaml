@@ -135,6 +135,15 @@ definitions:
     - StatusUp
     - StatusDown
     - StatusMaintenance
+  web.AvailableUpdate:
+    properties:
+      description:
+        type: string
+      tag_name:
+        type: string
+      url:
+        type: string
+    type: object
   web.CreateUpdateServiceRequest:
     properties:
       config:
@@ -237,6 +246,29 @@ definitions:
         type: string
       status:
         example: down
+        type: string
+    type: object
+  web.ServerInfoResponse:
+    properties:
+      arch:
+        example: amd64
+        type: string
+      available_update:
+        $ref: '#/definitions/web.AvailableUpdate'
+      build_date:
+        example: "2023-10-01T12:00:00Z"
+        type: string
+      commit_hash:
+        example: abc123def456
+        type: string
+      go_version:
+        example: go1.24.4
+        type: string
+      os:
+        example: linux
+        type: string
+      version:
+        example: 1.0.0
         type: string
     type: object
   web.ServiceDTO:
@@ -380,12 +412,10 @@ paths:
         name: resolved
         type: boolean
       - description: Page number (default 1)
-        format: int32
         in: query
         name: page
         type: integer
       - description: Number of items per page (default 100)
-        format: int32
         in: query
         name: page_size
         type: integer
@@ -403,6 +433,25 @@ paths:
       summary: Get recent incidents
       tags:
       - incidents
+  /info:
+    get:
+      consumes:
+      - application/json
+      description: Returns basic information about the server
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Server information
+          schema:
+            $ref: '#/definitions/web.ServerInfoResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+      summary: Get server info
+      tags:
+      - info
   /services:
     get:
       consumes:
@@ -437,12 +486,10 @@ paths:
         name: order_by
         type: string
       - description: Page number (for pagination)
-        format: int32
         in: query
         name: page
         type: integer
       - description: Number of items per page (default 20)
-        format: int32
         in: query
         name: page_size
         type: integer
@@ -635,12 +682,10 @@ paths:
         name: resolved
         type: boolean
       - description: Page number (for pagination)
-        format: int32
         in: query
         name: page
         type: integer
       - description: Number of items per page (default 20)
-        format: int32
         in: query
         name: page_size
         type: integer
