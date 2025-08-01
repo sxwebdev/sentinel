@@ -1,3 +1,4 @@
+import { Badge } from "@/shared/components/ui";
 import type { WebServerInfoResponse } from "@/shared/types/model";
 import { Button } from "@shared/components/ui/button";
 import {
@@ -23,11 +24,22 @@ export const ServerInfo = ({
             <span>Server info</span>
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="max-w-[150px] py-3 shadow-none" side="top">
-          <ul className="grid gap-3 text-xs">
+        <PopoverContent className="max-w-[180px] py-3 shadow-none" side="top">
+          <ul className="grid gap-3 text-sm">
             <li className="grid gap-0.5">
               <span className="text-muted-foreground">Sentinel version</span>
-              <span className="font-medium">{apiInfo.version}</span>
+              <span className="flex justify-between items-center font-medium">
+                {apiInfo.version}
+                {apiInfo.version != "local" && apiInfo.available_update ? (
+                  <Badge className="bg-rose-500 text-white ml-2">
+                    Outdated
+                  </Badge>
+                ) : (
+                  <Badge className="bg-emerald-500 text-white ml-2">
+                    Latest
+                  </Badge>
+                )}
+              </span>
             </li>
             <li className="grid gap-0.5">
               <span className="text-muted-foreground">Go version</span>
