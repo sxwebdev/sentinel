@@ -55,7 +55,7 @@ export const ServiceOverview = ({
         <div
           className={cn(
             "flex items-center gap-2",
-            isMobile && "w-full flex-col",
+            isMobile && "w-full flex-col"
           )}
         >
           <Button
@@ -118,7 +118,7 @@ export const ServiceOverview = ({
                     <TooltipTrigger>
                       <Badge variant={"secondary"} className="ml-3 text-sm">
                         {new Date(
-                          serviceDetailData?.last_check ?? "",
+                          serviceDetailData?.last_check ?? ""
                         ).toLocaleString()}
                       </Badge>
                     </TooltipTrigger>
@@ -135,7 +135,7 @@ export const ServiceOverview = ({
                 serviceDetailData?.status === "down" &&
                   "bg-rose-100 text-rose-600",
                 serviceDetailData?.status === "unknown" &&
-                  "bg-yellow-100 text-yellow-600",
+                  "bg-yellow-100 text-yellow-600"
               )}
             >
               {serviceDetailData?.status?.toLocaleUpperCase() ?? ""}

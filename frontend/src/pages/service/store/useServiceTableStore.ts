@@ -73,14 +73,14 @@ export const useServiceTableStore = create<ServiceTableStore>((set) => ({
     set((state) => {
       if (!updateService) return { data: state.data };
       const exists = state.data?.items?.some(
-        (ser) => ser?.id === updateService?.id,
+        (ser) => ser?.id === updateService?.id
       );
       return {
         data: {
           count: state.data?.count,
           items: exists
             ? state.data?.items?.map((ser) =>
-                ser.id === updateService.id ? updateService : ser,
+                ser.id === updateService.id ? updateService : ser
               )
             : [...(state.data?.items ?? []), updateService],
         },
@@ -92,7 +92,7 @@ export const useServiceTableStore = create<ServiceTableStore>((set) => ({
     set((state) => {
       if (!updateService) return { data: state.data };
       const exists = state.data?.items?.some(
-        (ser) => ser?.id === updateService?.id,
+        (ser) => ser?.id === updateService?.id
       );
       if (!exists)
         return {
@@ -105,7 +105,7 @@ export const useServiceTableStore = create<ServiceTableStore>((set) => ({
         data: {
           count: state.data?.count,
           items: state.data?.items?.map((ser) =>
-            ser.id === updateService.id ? updateService : ser,
+            ser.id === updateService.id ? updateService : ser
           ),
         },
       };
@@ -113,7 +113,7 @@ export const useServiceTableStore = create<ServiceTableStore>((set) => ({
   deleteServiceInData: (deleteServiceId) =>
     set((state) => {
       const exists = state.data?.items?.some(
-        (ser) => ser.id === deleteServiceId,
+        (ser) => ser.id === deleteServiceId
       );
 
       return {

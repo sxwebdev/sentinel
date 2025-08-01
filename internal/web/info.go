@@ -5,6 +5,7 @@ type ServerInfo struct {
 	CommitHash      string
 	BuildDate       string
 	GoVersion       string
+	SqliteVersion   string
 	OS              string
 	Arch            string
 	AvailableUpdate *AvailableUpdate

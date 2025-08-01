@@ -47,7 +47,7 @@ export function usePagination({
 
     return Array.from(
       { length: adjustedRange.end - adjustedRange.start + 1 },
-      (_, i) => adjustedRange.start + i,
+      (_, i) => adjustedRange.start + i
     );
   }
 

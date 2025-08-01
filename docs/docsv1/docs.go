@@ -1124,6 +1124,10 @@ const docTemplate = `{
                     "type": "string",
                     "example": "linux"
                 },
+                "sqlite_version": {
+                    "type": "string",
+                    "example": "3.50.1"
+                },
                 "version": {
                     "type": "string",
                     "example": "1.0.0"

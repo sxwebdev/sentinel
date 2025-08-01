@@ -130,7 +130,7 @@ function removePickedOption(groupOption: GroupOption, picked: Option[]) {
 
   for (const [key, value] of Object.entries(cloneOption)) {
     cloneOption[key] = value.filter(
-      (val) => !picked.find((p) => p.value === val.value),
+      (val) => !picked.find((p) => p.value === val.value)
     );
   }
   return cloneOption;
@@ -200,7 +200,7 @@ const MultipleSelector = ({
 
   const [selected, setSelected] = React.useState<Option[]>(value || []);
   const [options, setOptions] = React.useState<GroupOption>(
-    transToGroupOption(arrayDefaultOptions, groupBy),
+    transToGroupOption(arrayDefaultOptions, groupBy)
   );
   const [inputValue, setInputValue] = React.useState("");
   const debouncedSearchTerm = useDebounce(inputValue, delay || 500);
@@ -223,7 +223,7 @@ const MultipleSelector = ({
       setSelected(newOptions);
       onChange?.(newOptions);
     },
-    [onChange, selected],
+    [onChange, selected]
   );
 
   const handleKeyDown = React.useCallback(
@@ -245,7 +245,7 @@ const MultipleSelector = ({
         }
       }
     },
-    [handleUnselect, selected],
+    [handleUnselect, selected]
   );
 
   useEffect(() => {
@@ -392,7 +392,7 @@ const MultipleSelector = ({
 
   const selectables = React.useMemo<GroupOption>(
     () => removePickedOption(options, selected),
-    [options, selected],
+    [options, selected]
   );
 
   /** Avoid Creatable Selector freezing or lagging when paste a long string. */
@@ -420,7 +420,7 @@ const MultipleSelector = ({
       }}
       className={cn(
         "h-auto overflow-visible bg-transparent",
-        commandProps?.className,
+        commandProps?.className
       )}
       shouldFilter={
         commandProps?.shouldFilter !== undefined
@@ -437,7 +437,7 @@ const MultipleSelector = ({
             "cursor-text": !disabled && selected.length !== 0,
           },
           !hideClearAllButton && "pe-9",
-          className,
+          className
         )}
         onClick={() => {
           if (disabled) return;
@@ -451,7 +451,7 @@ const MultipleSelector = ({
                 key={option.value}
                 className={cn(
                   "animate-fadeIn bg-background text-secondary-foreground hover:bg-background relative inline-flex h-7 cursor-default items-center rounded-md border ps-2 pe-7 pl-2 text-xs font-medium transition-all disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 data-fixed:pe-2",
-                  badgeClassName,
+                  badgeClassName
                 )}
                 data-fixed={option.fixed}
                 data-disabled={disabled || undefined}
@@ -511,7 +511,7 @@ const MultipleSelector = ({
                 "px-3 py-2": selected.length === 0,
                 "ml-1": selected.length !== 0,
               },
-              inputProps?.className,
+              inputProps?.className
             )}
           />
           <button
@@ -526,7 +526,7 @@ const MultipleSelector = ({
                 disabled ||
                 selected.length < 1 ||
                 selected.filter((s) => s.fixed).length === selected.length) &&
-                "hidden",
+                "hidden"
             )}
             aria-label="Clear all"
           >
@@ -539,7 +539,7 @@ const MultipleSelector = ({
           className={cn(
             "border-input absolute top-2 z-10 w-full overflow-hidden rounded-md border",
             "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
-            !open && "hidden",
+            !open && "hidden"
           )}
           data-state={open ? "open" : "closed"}
         >
@@ -595,7 +595,7 @@ const MultipleSelector = ({
                               className={cn(
                                 "cursor-pointer",
                                 option.disable &&
-                                  "pointer-events-none cursor-not-allowed opacity-50",
+                                  "pointer-events-none cursor-not-allowed opacity-50"
                               )}
                             >
                               {option.label}

@@ -270,6 +270,9 @@ definitions:
       os:
         example: linux
         type: string
+      sqlite_version:
+        example: 3.50.1
+        type: string
       version:
         example: 1.0.0
         type: string
