@@ -1,64 +1,27 @@
-import { socketUrl } from "@/shared/api/baseApi";
 import { useEffect, useMemo } from "react";
-import useWebSocket from "react-use-websocket";
 import { useShallow } from "zustand/react/shallow";
-import { useServiceTableStore } from "@/pages/service/store/useServiceTableStore";
 import { useDashboardStore } from "../store/useDashboardStore";
 import { getDashboard } from "@/shared/api/dashboard/dashboard";
 
 export const useDashboardLogic = () => {
-  const {
-    deleteServiceInData,
-    setUpdateService,
-    setUpdateAllServices,
-    addServiceInData,
-  } = useServiceTableStore(
-    useShallow((s) => ({
-      deleteServiceInData: s.deleteServiceInData,
-      setUpdateService: s.setUpdateService,
-      setUpdateAllServices: s.setUpdateAllServices,
-      addServiceInData: s.addServiceInData,
-    })),
-  );
-
   const { getDashboardStats } = getDashboard();
 
   const { dashboardInfo, setDashboardInfo } = useDashboardStore(
     useShallow((s) => ({
       dashboardInfo: s.dashboardInfo,
       setDashboardInfo: s.setDashboardInfo,
-    })),
+    }))
   );
+
+  useEffect(() => {
+    getDashboardStats().then((res) => {
+      setDashboardInfo(res);
+    });
+  }, []);
 
   const onRefreshDashboard = async () => {
     await getDashboardStats();
   };
-
-  const { lastMessage } = useWebSocket(socketUrl, {
-    shouldReconnect: () => true,
-  });
-
-  useEffect(() => {
-    if (!lastMessage) return;
-    const data = JSON.parse(lastMessage.data);
-    switch (data.type) {
-      case "stats_update":
-        setDashboardInfo(data.data);
-        break;
-      case "service_deleted":
-        deleteServiceInData(data.data.id);
-        break;
-      case "service_updated":
-        setUpdateService(data.data);
-        break;
-      case "service_created":
-        addServiceInData(data.data);
-        break;
-      case "service_updated_state":
-        setUpdateAllServices(data.data);
-        break;
-    }
-  }, [lastMessage]);
 
   const infoKeysDashboard = useMemo(
     () => [
@@ -71,7 +34,7 @@ export const useDashboardLogic = () => {
       { key: "uptime_percentage", label: "Uptime" },
       { key: "checks_per_minute", label: "Checks per minute" },
     ],
-    [],
+    []
   );
 
   return {
