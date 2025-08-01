@@ -150,3 +150,27 @@ body {
   border-radius: 6px;
   border-left: 3px solid #e2e8f0;
 }
+
+.changelog {
+  color: var(--color-foreground);
+  @apply max-w-full overflow-y-scroll;
+
+  h2 {
+    @apply text-lg font-semibold mb-2;
+  }
+
+  ul {
+    @apply list-disc pl-5;
+    li {
+      @apply mb-1 text-accent-foreground text-sm;
+    }
+  }
+
+  p {
+    @apply p-2;
+  }
+
+  a {
+    @apply text-sm text-blue-500 transition-colors hover:text-blue-700 hover:underline;
+  }
+}

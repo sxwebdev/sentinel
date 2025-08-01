@@ -16,11 +16,9 @@ import { Loader } from "@/entities/loader/loader";
 import type { GetDashboardStatsResult } from "@/shared/api/dashboard/dashboard";
 import { getProtocolDisplayName } from "@/shared/lib/getProtocolDisplayName";
 import { ServiceTable } from "../service/serviceTable";
-import { ApiInfo } from "@/features/apiInfo/apiInfo";
-import { UpdateVersion } from "@/features/apiInfo/updateVersion";
 
 const Dashboard = () => {
-  const { apiInfo, infoKeysDashboard, dashboardInfo, onRefreshDashboard } =
+  const { infoKeysDashboard, dashboardInfo, onRefreshDashboard } =
     useDashboardLogic();
 
   if (!dashboardInfo) return <Loader loaderPage />;
@@ -33,7 +31,6 @@ const Dashboard = () => {
             <h1 className="text-lg md:text-2xl font-bold">
               Sentinel Dashboard
             </h1>
-            {apiInfo?.available_update && <UpdateVersion apiInfo={apiInfo} />}
           </div>
           <div className="flex flex-col md:flex-row">
             <Button
@@ -53,7 +50,7 @@ const Dashboard = () => {
             const value =
               item.key === "uptime_percentage"
                 ? Number(
-                    dashboardInfo[item.key as keyof GetDashboardStatsResult]
+                    dashboardInfo[item.key as keyof GetDashboardStatsResult],
                   ).toFixed(1) + "%"
                 : item.key === "avg_response_time"
                   ? dashboardInfo[
@@ -80,7 +77,7 @@ const Dashboard = () => {
                   Object.entries(dashboardInfo.protocols).map(
                     ([protocol, count]) => {
                       const totalCount = Object.values(
-                        dashboardInfo.protocols!
+                        dashboardInfo.protocols!,
                       ).reduce((a, b) => a + b, 0);
                       const percentage =
                         totalCount > 0
@@ -110,7 +107,7 @@ const Dashboard = () => {
                           </div>
                         </Card>
                       );
-                    }
+                    },
                   )
                 ) : (
                   <p className="text-muted-foreground text-center">
@@ -123,9 +120,6 @@ const Dashboard = () => {
         </div>
         <div>
           <ServiceTable protocols={dashboardInfo.protocols ?? {}} />
-        </div>
-        <div className="flex flex-col gap-4 w-fit">
-          <ApiInfo apiInfo={apiInfo} />
         </div>
       </div>
     </ContentWrapper>
