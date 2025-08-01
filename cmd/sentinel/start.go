@@ -61,6 +61,13 @@ func startCMD() *cli.Command {
 				return fmt.Errorf("failed to initialize storage: %w", err)
 			}
 
+			// Print SQLite version if using SQLite storage
+			sqliteVersion, err := store.GetSQLiteVersion(ctx)
+			if err != nil {
+				return fmt.Errorf("failed to get SQLite version: %w", err)
+			}
+			l.Infof("SQLite version: %s", sqliteVersion)
+
 			// Initialize notifier
 			var notif notifier.Notifier
 			if conf.Notifications.Enabled {
@@ -80,12 +87,13 @@ func startCMD() *cli.Command {
 			sched := scheduler.New(l, monitorService, rc)
 
 			webServer, err := web.NewServer(l, conf, web.ServerInfo{
-				Version:    version,
-				CommitHash: commitHash,
-				BuildDate:  buildDate,
-				GoVersion:  runtime.Version(),
-				OS:         runtime.GOOS,
-				Arch:       runtime.GOARCH,
+				Version:       version,
+				CommitHash:    commitHash,
+				BuildDate:     buildDate,
+				GoVersion:     runtime.Version(),
+				SqliteVersion: sqliteVersion,
+				OS:            runtime.GOOS,
+				Arch:          runtime.GOARCH,
 			}, monitorService, store, rc)
 			if err != nil {
 				return fmt.Errorf("failed to initialize web server: %w", err)
@@ -99,17 +107,6 @@ func startCMD() *cli.Command {
 				service.New(service.WithService(sched)),
 				service.New(service.WithService(webServer)),
 			)
-
-			ln.AddAfterStartHooks(func() error {
-				// Print SQLite version if using SQLite storage
-				sqliteVersion, err := store.GetSQLiteVersion(ctx)
-				if err != nil {
-					return fmt.Errorf("failed to get SQLite version: %w", err)
-				}
-				l.Infof("SQLite version: %s", sqliteVersion)
-
-				return nil
-			})
 
 			return ln.Run()
 		},

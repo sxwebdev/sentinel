@@ -53,7 +53,7 @@ const Dashboard = () => {
             const value =
               item.key === "uptime_percentage"
                 ? Number(
-                    dashboardInfo[item.key as keyof GetDashboardStatsResult],
+                    dashboardInfo[item.key as keyof GetDashboardStatsResult]
                   ).toFixed(1) + "%"
                 : item.key === "avg_response_time"
                   ? dashboardInfo[
@@ -80,7 +80,7 @@ const Dashboard = () => {
                   Object.entries(dashboardInfo.protocols).map(
                     ([protocol, count]) => {
                       const totalCount = Object.values(
-                        dashboardInfo.protocols!,
+                        dashboardInfo.protocols!
                       ).reduce((a, b) => a + b, 0);
                       const percentage =
                         totalCount > 0
@@ -110,7 +110,7 @@ const Dashboard = () => {
                           </div>
                         </Card>
                       );
-                    },
+                    }
                   )
                 ) : (
                   <p className="text-muted-foreground text-center">

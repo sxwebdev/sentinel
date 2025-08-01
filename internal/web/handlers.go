@@ -913,6 +913,7 @@ func (s *Server) handleAPIInfo(c *fiber.Ctx) error {
 		CommitHash:      s.serverInfo.CommitHash,
 		BuildDate:       s.serverInfo.BuildDate,
 		GoVersion:       s.serverInfo.GoVersion,
+		SqliteVersion:   s.serverInfo.SqliteVersion,
 		OS:              s.serverInfo.OS,
 		Arch:            s.serverInfo.Arch,
 		AvailableUpdate: s.serverInfo.AvailableUpdate,

@@ -15,7 +15,7 @@ export const useServiceUpdate = () => {
     useShallow((s) => ({
       setUpdateServiceId: s.setUpdateServiceId,
       updateServiceId: s.updateServiceId,
-    })),
+    }))
   );
   const { putServicesId } = getServices();
   const { getServicesId } = getServices();

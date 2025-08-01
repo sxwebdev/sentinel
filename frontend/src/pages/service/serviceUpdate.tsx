@@ -29,7 +29,7 @@ export const ServiceUpdate = () => {
       <DialogContent
         className={cn(
           "overflow-y-auto max-h-[90%]  sm:max-w-[90%] lg:max-w-[800px] h-full",
-          (isLoading || !serviceData) && "flex flex-col",
+          (isLoading || !serviceData) && "flex flex-col"
         )}
       >
         <DialogTitle className="h-fit">Update Service</DialogTitle>

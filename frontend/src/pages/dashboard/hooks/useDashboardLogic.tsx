@@ -19,7 +19,7 @@ export const useDashboardLogic = () => {
       setUpdateService: s.setUpdateService,
       setUpdateAllServices: s.setUpdateAllServices,
       addServiceInData: s.addServiceInData,
-    })),
+    }))
   );
 
   const { getDashboardStats } = getDashboard();
@@ -31,7 +31,7 @@ export const useDashboardLogic = () => {
         dashboardInfo: s.dashboardInfo,
         setDashboardInfo: s.setDashboardInfo,
         setApiInfo: s.setApiInfo,
-      })),
+      }))
     );
 
   const onRefreshDashboard = async () => {
@@ -92,7 +92,7 @@ export const useDashboardLogic = () => {
       { key: "uptime_percentage", label: "Uptime" },
       { key: "checks_per_minute", label: "Checks per minute" },
     ],
-    [],
+    []
   );
 
   return {

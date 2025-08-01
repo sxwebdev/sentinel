@@ -49,7 +49,7 @@ export const UpdateVersion = ({
                   apiInfo?.available_update?.url !== ""
                   ? apiInfo?.available_update?.url
                   : "",
-                "_blank",
+                "_blank"
               );
             }}
           >

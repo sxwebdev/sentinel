@@ -130,7 +130,7 @@ export const useServiceTable = () => {
                   "bg-emerald-100 text-emerald-600",
                 row.original?.status === "down" && "bg-rose-100 text-rose-600",
                 row.original?.status === "unknown" &&
-                  "bg-yellow-100 text-yellow-600",
+                  "bg-yellow-100 text-yellow-600"
               )}
             >
               {row.original?.status?.toUpperCase()}
@@ -273,7 +273,7 @@ export const useServiceTable = () => {
         },
       },
     ],
-    [isOpenDropdownIdAction],
+    [isOpenDropdownIdAction]
   );
 
   useEffect(() => {
