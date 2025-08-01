@@ -1,5 +1,5 @@
 import { socketUrl } from "@/shared/api/baseApi";
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
 import useWebSocket from "react-use-websocket";
 import { useShallow } from "zustand/react/shallow";
 import { useServiceTableStore } from "@/pages/service/store/useServiceTableStore";
@@ -18,7 +18,7 @@ export const useDashboardLogic = () => {
       setUpdateService: s.setUpdateService,
       setUpdateAllServices: s.setUpdateAllServices,
       addServiceInData: s.addServiceInData,
-    })),
+    }))
   );
 
   const { getDashboardStats } = getDashboard();
@@ -27,12 +27,22 @@ export const useDashboardLogic = () => {
     useShallow((s) => ({
       dashboardInfo: s.dashboardInfo,
       setDashboardInfo: s.setDashboardInfo,
-    })),
+    }))
   );
 
   const onRefreshDashboard = async () => {
     await getDashboardStats();
   };
+
+  useEffect(() => {
+    getDashboardStats().then((res) => {
+      setDashboardInfo(res);
+    });
+
+    return () => {
+      setDashboardInfo(null);
+    };
+  }, []);
 
   const { lastMessage } = useWebSocket(socketUrl, {
     shouldReconnect: () => true,
@@ -60,23 +70,8 @@ export const useDashboardLogic = () => {
     }
   }, [lastMessage]);
 
-  const infoKeysDashboard = useMemo(
-    () => [
-      { key: "total_services", label: "Total services" },
-      { key: "services_up", label: "Services up" },
-      { key: "services_down", label: "Services down" },
-      { key: "active_incidents", label: "Active incidents" },
-      { key: "avg_response_time", label: "Average response time (ms)" },
-      { key: "total_checks", label: "Total checks" },
-      { key: "uptime_percentage", label: "Uptime" },
-      { key: "checks_per_minute", label: "Checks per minute" },
-    ],
-    [],
-  );
-
   return {
     dashboardInfo,
-    infoKeysDashboard,
     onRefreshDashboard,
   };
 };

@@ -17,9 +17,19 @@ import type { GetDashboardStatsResult } from "@/shared/api/dashboard/dashboard";
 import { getProtocolDisplayName } from "@/shared/lib/getProtocolDisplayName";
 import { ServiceTable } from "../service/serviceTable";
 
+const infoKeysDashboard = [
+  { key: "total_services", label: "Total services" },
+  { key: "services_up", label: "Services up" },
+  { key: "services_down", label: "Services down" },
+  { key: "active_incidents", label: "Active incidents" },
+  { key: "avg_response_time", label: "Average response time (ms)" },
+  { key: "total_checks", label: "Total checks" },
+  { key: "uptime_percentage", label: "Uptime" },
+  { key: "checks_per_minute", label: "Checks per minute" },
+];
+
 const Dashboard = () => {
-  const { infoKeysDashboard, dashboardInfo, onRefreshDashboard } =
-    useDashboardLogic();
+  const { dashboardInfo, onRefreshDashboard } = useDashboardLogic();
 
   if (!dashboardInfo) return <Loader loaderPage />;
 
@@ -50,7 +60,7 @@ const Dashboard = () => {
             const value =
               item.key === "uptime_percentage"
                 ? Number(
-                    dashboardInfo[item.key as keyof GetDashboardStatsResult],
+                    dashboardInfo[item.key as keyof GetDashboardStatsResult]
                   ).toFixed(1) + "%"
                 : item.key === "avg_response_time"
                   ? dashboardInfo[
@@ -77,7 +87,7 @@ const Dashboard = () => {
                   Object.entries(dashboardInfo.protocols).map(
                     ([protocol, count]) => {
                       const totalCount = Object.values(
-                        dashboardInfo.protocols!,
+                        dashboardInfo.protocols!
                       ).reduce((a, b) => a + b, 0);
                       const percentage =
                         totalCount > 0
@@ -107,7 +117,7 @@ const Dashboard = () => {
                           </div>
                         </Card>
                       );
-                    },
+                    }
                   )
                 ) : (
                   <p className="text-muted-foreground text-center">
