@@ -10,7 +10,6 @@ const ServiceDetail = () => {
   const {
     filters,
     incidentsData,
-    incidentsCount,
     deleteIncident,
     resolveIncident,
     serviceDetailData,
@@ -59,7 +58,7 @@ const ServiceDetail = () => {
 
         <IncidentsList
           incidentsData={incidentsData}
-          incidentsCount={incidentsCount}
+          incidentsCount={incidentsData.count ?? 0}
           filters={filters}
           setFilters={setFilters}
           setDeleteIncident={setDeleteIncident}

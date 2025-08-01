@@ -20,6 +20,29 @@ const $api = axios.create({
   baseURL: config.baseUrl,
 });
 
-export default $api;
+// $api is used in orval-generated functions for making HTTP requests
+export const customFetcher = async <T>({
+  url,
+  method,
+  data,
+  params,
+  headers,
+}: {
+  url: string;
+  method: string;
+  data?: T;
+  params?: Record<string, unknown>;
+  headers?: Record<string, string>;
+}): Promise<T> => {
+  const response = await $api.request<T>({
+    url,
+    method,
+    data,
+    params,
+    headers,
+  });
+
+  return response.data;
+};
 
 export const socketUrl = config.socketUrl;

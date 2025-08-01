@@ -19,6 +19,7 @@ import { cn } from "@/shared/lib/utils";
 import { Search } from "@/entities/search/search";
 import PaginationTable from "@/shared/components/paginationTable";
 import MultiSelect from "@/shared/components/multiSelect";
+import ServiceCreateFromService from "./serviceCreateFromService";
 
 interface ServiceTableProps {
   protocols: Record<string, number>;
@@ -26,9 +27,9 @@ interface ServiceTableProps {
 
 export const ServiceTable = ({ protocols }: ServiceTableProps) => {
   const {
+    data,
     table,
     filters,
-    servicesCount,
     allTags,
     countAllTags,
     setFilters,
@@ -40,6 +41,7 @@ export const ServiceTable = ({ protocols }: ServiceTableProps) => {
 
   return (
     <>
+      <ServiceCreateFromService />
       <ServiceUpdate />
       <ConfirmDialog
         open={!!deleteServiceId}
@@ -128,7 +130,7 @@ export const ServiceTable = ({ protocols }: ServiceTableProps) => {
                             ? null
                             : flexRender(
                                 header.column.columnDef.header,
-                                header.getContext()
+                                header.getContext(),
                               )}
                         </TableHead>
                       );
@@ -159,7 +161,7 @@ export const ServiceTable = ({ protocols }: ServiceTableProps) => {
                               <TableCell key={cell.id}>
                                 {flexRender(
                                   cell.column.columnDef.cell,
-                                  cell.getContext()
+                                  cell.getContext(),
                                 )}
                               </TableCell>
                             ))}
@@ -182,15 +184,13 @@ export const ServiceTable = ({ protocols }: ServiceTableProps) => {
             </Table>
           </div>
         </CardContent>
-        {servicesCount != null && servicesCount > filters.pageSize && (
-          <PaginationTable
-            selectedRows={filters.pageSize}
-            setSelectedRows={(value) => setFilters({ pageSize: value })}
-            selectedPage={filters.page}
-            setSelectedPage={(value) => setFilters({ page: value })}
-            totalPages={Math.ceil((servicesCount ?? 0) / filters.pageSize)}
-          />
-        )}
+        <PaginationTable
+          selectedRows={filters.pageSize}
+          setSelectedRows={(value) => setFilters({ pageSize: value })}
+          selectedPage={filters.page}
+          setSelectedPage={(value) => setFilters({ page: value })}
+          totalPages={Math.ceil((data?.count ?? 0) / filters.pageSize)}
+        />
       </Card>
     </>
   );

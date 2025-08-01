@@ -19,9 +19,8 @@ import {
 } from "@tanstack/react-table";
 import { useEffect, useMemo } from "react";
 import { Link } from "react-router";
-import type { Service } from "@features/service/types/type";
-import $api from "@/shared/api/baseApi";
 import {
+  CopyIcon,
   EllipsisIcon,
   PencilIcon,
   RefreshCcwIcon,
@@ -29,14 +28,15 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useServiceTableStore } from "../store/useServiceTableStore";
-import { useServiceApi } from "./useServiceApi";
 import { ActivityIndicatorSVG } from "@/entities/ActivityIndicatorSVG/ActivityIndicatorSVG";
+import { getServices } from "@/shared/api/services/services";
+import { getTags } from "@/shared/api/tags/tags";
+import type { WebServiceDTO } from "@/shared/types/model";
 
 export const useServiceTable = () => {
   const {
     data,
     filters,
-    servicesCount,
     deleteServiceId,
     isOpenDropdownIdAction,
     allTags,
@@ -45,49 +45,24 @@ export const useServiceTable = () => {
     setData,
     setPage,
     setFilters,
-    setServicesCount,
     setIsOpenDropdownIdAction,
     setIsLoadingAllServices,
     setAllTags,
     setCountAllTags,
     setDeleteServiceId,
     setUpdateServiceId,
+    setCreateFromService,
   } = useServiceTableStore();
 
-  const { onCheckService } = useServiceApi();
-
-  const getAllTags = async () => {
-    const res = await $api.get("/tags");
-    setAllTags(res.data);
-  };
-
-  const getCountAllTags = async () => {
-    const res = await $api.get("/tags/count");
-    setCountAllTags(res.data);
-  };
-
-  const getAllServices = async () => {
-    const res = await $api.get("/services", {
-      params: {
-        name: filters.search,
-        page: filters.page,
-        page_size: filters.pageSize,
-        tags: filters.tags,
-        protocol: filters.protocol,
-        status: filters.status,
-      },
-    });
-    if (res.data === null) {
-      setData([]);
-    } else {
-      setData(res.data.items);
-      setServicesCount(res.data.count);
-    }
-  };
+  const {
+    getServices: getServicesAll,
+    postServicesIdCheck,
+    deleteServicesId,
+  } = getServices();
+  const { getTags: getTagsAll, getTagsCount } = getTags();
 
   const onDeleteService = async () => {
-    await $api
-      .delete(`/services/${deleteServiceId}`)
+    await deleteServicesId(deleteServiceId ?? "")
       .then(() => {
         toast.success("Service deleted");
       })
@@ -99,7 +74,7 @@ export const useServiceTable = () => {
       });
   };
 
-  const columns: ColumnDef<Service>[] = useMemo(
+  const columns: ColumnDef<WebServiceDTO>[] = useMemo(
     () => [
       {
         header: "Enabled",
@@ -155,7 +130,7 @@ export const useServiceTable = () => {
                   "bg-emerald-100 text-emerald-600",
                 row.original?.status === "down" && "bg-rose-100 text-rose-600",
                 row.original?.status === "unknown" &&
-                  "bg-yellow-100 text-yellow-600"
+                  "bg-yellow-100 text-yellow-600",
               )}
             >
               {row.original?.status?.toUpperCase()}
@@ -250,7 +225,7 @@ export const useServiceTable = () => {
                 open={isOpenDropdownIdAction === row.original?.id}
                 onOpenChange={(open) =>
                   open
-                    ? setIsOpenDropdownIdAction(row.original?.id)
+                    ? setIsOpenDropdownIdAction(row.original?.id ?? null)
                     : setIsOpenDropdownIdAction(null)
                 }
               >
@@ -268,20 +243,25 @@ export const useServiceTable = () => {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem
-                    onClick={() => onCheckService(row.original?.id)}
+                    onClick={() => postServicesIdCheck(row.original?.id ?? "")}
                   >
                     <RefreshCcwIcon className="w-4 h-4" />
                     <span>Check</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    onClick={() => setUpdateServiceId(row.original?.id)}
+                    onClick={() => setUpdateServiceId(row.original?.id ?? null)}
                   >
                     <PencilIcon /> <span>Edit</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => setCreateFromService(row.original)}
+                  >
+                    <CopyIcon /> <span>Create from this</span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     className="text-destructive focus:text-destructive"
-                    onClick={() => setDeleteServiceId(row.original?.id)}
+                    onClick={() => setDeleteServiceId(row.original?.id ?? null)}
                   >
                     <TrashIcon className="group-hover:text-white" />
                     <span>Delete</span>
@@ -293,25 +273,40 @@ export const useServiceTable = () => {
         },
       },
     ],
-    [isOpenDropdownIdAction]
+    [isOpenDropdownIdAction],
   );
 
   useEffect(() => {
     if (data === null) {
       setIsLoadingAllServices(true);
     }
-    getAllServices().finally(() => {
-      setIsLoadingAllServices(false);
-    });
+    getServicesAll({
+      name: filters.search,
+      page: filters.page,
+      page_size: filters.pageSize,
+      tags: filters.tags,
+      protocol: filters.protocol,
+      status: filters.status,
+    })
+      .then((res) => {
+        setData(res);
+      })
+      .finally(() => {
+        setIsLoadingAllServices(false);
+      });
   }, [filters]);
 
   useEffect(() => {
-    getAllTags();
-    getCountAllTags();
+    getTagsAll().then((res) => {
+      setAllTags(res);
+    });
+    getTagsCount().then((res) => {
+      setCountAllTags(res);
+    });
   }, []);
 
   const table = useReactTable({
-    data: data ?? [],
+    data: data?.items ?? [],
     columns,
     getCoreRowModel: getCoreRowModel(),
   });
@@ -320,7 +315,6 @@ export const useServiceTable = () => {
     data,
     table,
     filters,
-    servicesCount,
     allTags,
     countAllTags,
     deleteServiceId,

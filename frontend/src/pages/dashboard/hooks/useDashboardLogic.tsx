@@ -1,24 +1,11 @@
-import $api, { socketUrl } from "@/shared/api/baseApi";
+import { socketUrl } from "@/shared/api/baseApi";
 import { useEffect, useMemo } from "react";
 import useWebSocket from "react-use-websocket";
 import { useShallow } from "zustand/react/shallow";
 import { useServiceTableStore } from "@/pages/service/store/useServiceTableStore";
 import { useDashboardStore } from "../store/useDashboardStore";
-
-export interface DashboardInfo {
-  total_services: number;
-  services_up: number;
-  services_down: number;
-  services_unknown: number;
-  protocols: Record<string, number>;
-  recent_incidents: number;
-  active_incidents: number;
-  avg_response_time: number;
-  total_checks: number;
-  uptime_percentage: number;
-  last_check_time: string;
-  checks_per_minute: number;
-}
+import { getDashboard } from "@/shared/api/dashboard/dashboard";
+import { getInfo } from "@/shared/api/info/info";
 
 export const useDashboardLogic = () => {
   const {
@@ -32,30 +19,39 @@ export const useDashboardLogic = () => {
       setUpdateService: s.setUpdateService,
       setUpdateAllServices: s.setUpdateAllServices,
       addServiceInData: s.addServiceInData,
-    }))
+    })),
   );
 
-  const { dashboardInfo, setDashboardInfo } = useDashboardStore(
-    useShallow((s) => ({
-      dashboardInfo: s.dashboardInfo,
-      setDashboardInfo: s.setDashboardInfo,
-    }))
-  );
+  const { getDashboardStats } = getDashboard();
 
-  const getDashboardInfo = async () => {
-    const res = await $api.get("/dashboard/stats");
-    setDashboardInfo(res.data);
+  const { apiInfo, dashboardInfo, setDashboardInfo, setApiInfo } =
+    useDashboardStore(
+      useShallow((s) => ({
+        apiInfo: s.apiInfo,
+        dashboardInfo: s.dashboardInfo,
+        setDashboardInfo: s.setDashboardInfo,
+        setApiInfo: s.setApiInfo,
+      })),
+    );
+
+  const onRefreshDashboard = async () => {
+    await getDashboardStats();
   };
 
-  const onRefreshDashboard = () => {
-    getDashboardInfo();
-  };
+  // get Api Info
+  const { getInfo: getApiInfo } = getInfo();
 
   useEffect(() => {
-    getDashboardInfo();
+    getDashboardStats().then((res) => {
+      setDashboardInfo(res);
+    });
+    getApiInfo().then((res) => {
+      setApiInfo(res);
+    });
 
     return () => {
       setDashboardInfo(null);
+      setApiInfo(null);
     };
   }, []);
 
@@ -96,10 +92,11 @@ export const useDashboardLogic = () => {
       { key: "uptime_percentage", label: "Uptime" },
       { key: "checks_per_minute", label: "Checks per minute" },
     ],
-    []
+    [],
   );
 
   return {
+    apiInfo,
     dashboardInfo,
     infoKeysDashboard,
     onRefreshDashboard,

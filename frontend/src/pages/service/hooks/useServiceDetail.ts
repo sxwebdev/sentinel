@@ -1,10 +1,13 @@
-import $api, { socketUrl } from "@/shared/api/baseApi";
+import { socketUrl } from "@/shared/api/baseApi";
 import { useEffect } from "react";
-import { useParams } from "react-router";
-import { useServiceApi } from "./useServiceApi";
+import { useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
 import { useServiceDetailStore } from "../store/useServiceDeteilStore";
 import useWebSocket from "react-use-websocket";
+import { ROUTES } from "@/app/routes/constants";
+import { getServices } from "@/shared/api/services/services";
+import { getIncidents } from "@/shared/api/incidents/incidents";
+import { getStatistics } from "@/shared/api/statistics/statistics";
 
 export const useServiceDetail = () => {
   const {
@@ -13,22 +16,50 @@ export const useServiceDetail = () => {
     incidentsData,
     serviceStatsData,
     resolveIncident,
-    incidentsCount,
     filters,
     setDeleteIncident,
     setServiceDetailData,
     setIncidentsData,
-    setIncidentsCount,
     setServiceStatsData,
     setFilters,
     setUpdateServiceStatsData,
     setResolveIncident,
   } = useServiceDetailStore();
   const { id } = useParams();
-  const { onCheckService: onCheckServiceApi } = useServiceApi();
 
+  const { postServicesIdCheck, getServicesId } = getServices();
+  const { getServicesIdStats } = getStatistics();
+  const {
+    getServicesIdIncidents,
+    deleteServicesIdIncidentsIncidentId,
+    postServicesIdResolve,
+  } = getIncidents();
+
+  // Get service
+  const getServiceDetail = async () => {
+    return await getServicesId(id ?? "")
+      .then((res) => {
+        setServiceDetailData(res);
+      })
+      .catch(() => {
+        navigate(ROUTES.NOT_FOUND);
+      });
+  };
+
+  // Get service stats
+  const getServiceStats = async () => {
+    return await getServicesIdStats(id ?? "")
+      .then((res) => {
+        setServiceStatsData(res);
+      })
+      .catch(() => {
+        navigate(ROUTES.NOT_FOUND);
+      });
+  };
+
+  //Check service
   const onCheckService = async (id: string) => {
-    await onCheckServiceApi(id)
+    await postServicesIdCheck(id)
       .then(() => {
         getServiceDetail();
         getIncidents();
@@ -39,6 +70,48 @@ export const useServiceDetail = () => {
       });
   };
 
+  // Get all incidents
+  const getAllIncidents = async () => {
+    return await getServicesIdIncidents(id ?? "", filters).then((res) => {
+      setIncidentsData(res);
+    });
+  };
+
+  // Delete incident
+  const onDeleteIncident = async (incidentId: string) => {
+    await deleteServicesIdIncidentsIncidentId(id ?? "", incidentId)
+      .then(() => {
+        getServiceDetail();
+        getAllIncidents();
+        getServiceStats();
+        toast.success("Incident deleted");
+      })
+      .catch((err) => {
+        toast.error(err.response.data.error);
+      })
+      .finally(() => {
+        setDeleteIncident(null);
+      });
+  };
+
+  // Resolve incident
+  const onResolveIncident = async () => {
+    await postServicesIdResolve(id ?? "")
+      .then(() => {
+        getServiceDetail();
+        getAllIncidents();
+        getServiceStats();
+        toast.success("Incident resolved");
+      })
+      .catch((err) => {
+        toast.error(err.response.data.error);
+      })
+      .finally(() => {
+        setResolveIncident(false);
+      });
+  };
+
+  // WebSocket connection to update service stats
   const { lastMessage } = useWebSocket(socketUrl, {
     shouldReconnect: () => true,
   });
@@ -55,65 +128,12 @@ export const useServiceDetail = () => {
     }
   }, [lastMessage]);
 
-  const onDeleteIncident = async (incidentId: string) => {
-    await $api
-      .delete(`/services/${id}/incidents/${incidentId}`)
-      .then(() => {
-        getServiceDetail();
-        getIncidents();
-        getServiceStats();
-        toast.success("Incident deleted");
-      })
-      .catch((err) => {
-        toast.error(err.response.data.error);
-      })
-      .finally(() => {
-        setDeleteIncident(null);
-      });
-  };
-
-  const onResolveIncident = async () => {
-    await $api
-      .post(`/services/${id}/resolve`)
-      .then(() => {
-        getServiceDetail();
-        getIncidents();
-        getServiceStats();
-        toast.success("Incident resolved");
-      })
-      .catch((err) => {
-        toast.error(err.response.data.error);
-      })
-      .finally(() => {
-        setResolveIncident(false);
-      });
-  };
-
-  const getServiceDetail = async () => {
-    const res = await $api.get(`/services/${id}`);
-    setServiceDetailData(res.data);
-  };
-
-  const getIncidents = async () => {
-    const res = await $api.get(`/services/${id}/incidents`, {
-      params: {
-        page: filters.page,
-        pageSize: filters.pageSize,
-      },
-    });
-    setIncidentsData(res.data.items);
-    setIncidentsCount(res.data.count);
-  };
-
-  const getServiceStats = async () => {
-    const res = await $api.get(`/services/${id}/stats`);
-    setServiceStatsData(res.data);
-  };
+  const navigate = useNavigate();
 
   useEffect(() => {
     getServiceDetail();
-    getIncidents();
     getServiceStats();
+    getAllIncidents();
     return () => {
       setServiceDetailData(null);
       setIncidentsData(null);
@@ -121,12 +141,15 @@ export const useServiceDetail = () => {
     };
   }, [id]);
 
+  useEffect(() => {
+    getAllIncidents();
+  }, [filters, id]);
+
   return {
     deleteIncident,
     serviceDetailData,
     incidentsData,
     serviceStatsData,
-    incidentsCount,
     resolveIncident,
     filters,
     onCheckService,

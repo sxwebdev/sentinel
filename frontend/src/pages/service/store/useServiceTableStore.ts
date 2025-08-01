@@ -1,15 +1,17 @@
 import { create } from "zustand";
-import type { Service } from "../../../features/service/types/type";
+import type { GetTagsCountResult, GetTagsResult } from "@/shared/api/tags/tags";
+import type { GetServicesResult } from "@/shared/api/services/services";
+import type { WebServiceDTO } from "@/shared/types/model";
 
 interface ServiceTableStore {
-  data: Service[] | null;
+  data: GetServicesResult | null;
   deleteServiceId: string | null;
   updateServiceId: string | null;
-  servicesCount: number | null;
+  createFromService: WebServiceDTO | null;
   isOpenDropdownIdAction: string | null;
   isLoadingAllServices: boolean;
-  allTags: string[] | null;
-  countAllTags: Record<string, number> | null;
+  allTags: GetTagsResult | null;
+  countAllTags: GetTagsCountResult | null;
   filters: {
     search: string | undefined;
     page: number;
@@ -18,25 +20,26 @@ interface ServiceTableStore {
     protocol: string | undefined;
     status: string | undefined;
   };
-  setData: (data: Service[] | null) => void;
+  setData: (data: GetServicesResult | null) => void;
   setFilters: (value: Partial<ServiceTableStore["filters"]>) => void;
-  setServicesCount: (servicesCount: number) => void;
-  setUpdateService: (updateService: Service | null) => void;
+  setUpdateService: (updateService: WebServiceDTO) => void;
   setPage: (page: number) => void;
-  setAllTags: (allTags: string[]) => void;
-  setCountAllTags: (countAllTags: Record<string, number>) => void;
-  setUpdateAllServices: (updateService: Service | null) => void;
+  setAllTags: (allTags: GetTagsResult) => void;
+  setCountAllTags: (countAllTags: GetTagsCountResult) => void;
+  setCreateFromService: (createFromService: WebServiceDTO | null) => void;
+  setUpdateAllServices: (updateService: WebServiceDTO) => void;
   setIsLoadingAllServices: (isLoadingAllServices: boolean) => void;
   setDeleteServiceId: (deleteServiceId: string | null) => void;
   setUpdateServiceId: (updateServiceId: string | null) => void;
   setIsOpenDropdownIdAction: (isOpenDropdownIdAction: string | null) => void;
   deleteServiceInData: (deleteServiceId: string) => void;
-  addServiceInData: (service: Service) => void;
+  addServiceInData: (service: WebServiceDTO) => void;
 }
 
 const initialState = {
   data: null,
   deleteServiceId: null,
+  createFromService: null,
   updateServiceId: null,
   allTags: null,
   countAllTags: null,
@@ -61,48 +64,74 @@ export const useServiceTableStore = create<ServiceTableStore>((set) => ({
   setAllTags: (allTags) => set({ allTags }),
   setCountAllTags: (countAllTags) => set({ countAllTags }),
   setDeleteServiceId: (deleteServiceId) => set({ deleteServiceId }),
+  setCreateFromService: (createFromService) => set({ createFromService }),
   setFilters: (value) =>
     set((state) => ({ filters: { ...state.filters, ...value } })),
   setUpdateServiceId: (updateServiceId) => set({ updateServiceId }),
   setPage: (page) => set({ filters: { ...initialState.filters, page } }),
-  setServicesCount: (servicesCount) => set({ servicesCount }),
-  setUpdateService: (updateService) =>
+  setUpdateService: (updateService: WebServiceDTO) =>
     set((state) => {
       if (!updateService) return { data: state.data };
-      const exists = state.data?.some((ser) => ser?.id === updateService?.id);
+      const exists = state.data?.items?.some(
+        (ser) => ser?.id === updateService?.id,
+      );
       return {
-        data: exists
-          ? state.data?.map((ser) =>
-              ser.id === updateService.id ? updateService : ser
-            )
-          : [...(state.data ?? []), updateService],
+        data: {
+          count: state.data?.count,
+          items: exists
+            ? state.data?.items?.map((ser) =>
+                ser.id === updateService.id ? updateService : ser,
+              )
+            : [...(state.data?.items ?? []), updateService],
+        },
       };
     }),
   setIsLoadingAllServices: (isLoadingAllServices) =>
     set({ isLoadingAllServices }),
-  setUpdateAllServices: (updateService) =>
+  setUpdateAllServices: (updateService: WebServiceDTO) =>
     set((state) => {
       if (!updateService) return { data: state.data };
-      const exists = state.data?.some((ser) => ser?.id === updateService?.id);
-      if (!exists) return { data: [...(state.data ?? [])] };
+      const exists = state.data?.items?.some(
+        (ser) => ser?.id === updateService?.id,
+      );
+      if (!exists)
+        return {
+          data: {
+            count: state.data?.count,
+            items: [...(state.data?.items ?? [])],
+          },
+        };
       return {
-        data: state.data?.map((ser) =>
-          ser.id === updateService.id ? updateService : ser
-        ),
+        data: {
+          count: state.data?.count,
+          items: state.data?.items?.map((ser) =>
+            ser.id === updateService.id ? updateService : ser,
+          ),
+        },
       };
     }),
   deleteServiceInData: (deleteServiceId) =>
     set((state) => {
-      const exists = state.data?.some((ser) => ser.id === deleteServiceId);
+      const exists = state.data?.items?.some(
+        (ser) => ser.id === deleteServiceId,
+      );
 
       return {
-        data: exists
-          ? state.data?.filter((ser) => ser.id !== deleteServiceId)
-          : state.data,
+        data: {
+          count: state.data?.count,
+          items: exists
+            ? state.data?.items?.filter((ser) => ser.id !== deleteServiceId)
+            : state.data?.items,
+        },
       };
     }),
-  addServiceInData: (service) =>
+  addServiceInData: (service: WebServiceDTO) =>
     set((state) => {
-      return { data: [...(state.data ?? []), service] };
+      return {
+        data: {
+          count: state.data?.count ? state.data.count + 1 : 1,
+          items: [...(state.data?.items ?? []), service],
+        },
+      };
     }),
 }));

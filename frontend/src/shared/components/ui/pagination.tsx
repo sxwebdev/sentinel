@@ -1,12 +1,12 @@
-import * as React from "react"
+import * as React from "react";
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
   MoreHorizontalIcon,
-} from "lucide-react"
+} from "lucide-react";
 
-import { cn } from "@shared/lib/utils"
-import { Button, buttonVariants } from "@shared/components/ui/button"
+import { cn } from "@shared/lib/utils";
+import { Button, buttonVariants } from "@shared/components/ui/button";
 
 function Pagination({ className, ...props }: React.ComponentProps<"nav">) {
   return (
@@ -17,7 +17,7 @@ function Pagination({ className, ...props }: React.ComponentProps<"nav">) {
       className={cn("mx-auto flex w-full justify-center", className)}
       {...props}
     />
-  )
+  );
 }
 
 function PaginationContent({
@@ -30,18 +30,18 @@ function PaginationContent({
       className={cn("flex flex-row items-center gap-1", className)}
       {...props}
     />
-  )
+  );
 }
 
 function PaginationItem({ ...props }: React.ComponentProps<"li">) {
-  return <li data-slot="pagination-item" {...props} />
+  return <li data-slot="pagination-item" {...props} />;
 }
 
 type PaginationLinkProps = {
-  isActive?: boolean
-  isDisabled?: boolean
+  isActive?: boolean;
+  isDisabled?: boolean;
 } & Pick<React.ComponentProps<typeof Button>, "size"> &
-  React.ComponentProps<"a">
+  React.ComponentProps<"a">;
 
 function PaginationLink({
   className,
@@ -59,11 +59,11 @@ function PaginationLink({
           variant: isActive ? "outline" : "ghost",
           size,
         }),
-        className
+        className,
       )}
       {...props}
     />
-  )
+  );
 }
 
 function PaginationPrevious({
@@ -73,14 +73,13 @@ function PaginationPrevious({
   return (
     <PaginationLink
       aria-label="Go to previous page"
-      size="default"
       className={cn("gap-1 px-2.5 sm:pe-4", className)}
       {...props}
     >
       <ChevronLeftIcon size={16} />
       <span>Previous</span>
     </PaginationLink>
-  )
+  );
 }
 
 function PaginationNext({
@@ -90,14 +89,13 @@ function PaginationNext({
   return (
     <PaginationLink
       aria-label="Go to next page"
-      size="default"
       className={cn("gap-1 px-2.5 sm:ps-4", className)}
       {...props}
     >
       <span>Next</span>
       <ChevronRightIcon size={16} />
     </PaginationLink>
-  )
+  );
 }
 
 function PaginationEllipsis({
@@ -114,7 +112,7 @@ function PaginationEllipsis({
       <MoreHorizontalIcon size={16} />
       <span className="sr-only">More pages</span>
     </span>
-  )
+  );
 }
 
 export {
@@ -125,4 +123,4 @@ export {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-}
+};

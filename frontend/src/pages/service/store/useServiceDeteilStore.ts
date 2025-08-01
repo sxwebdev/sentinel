@@ -1,29 +1,28 @@
-import { create } from "zustand";
 import type {
-  Incident,
-  Service,
-  ServiceStats,
-} from "../../../features/service/types/type";
+  DbutilsFindResponseWithCountStorageIncident,
+  GetServicesIdIncidentsParams,
+  StorageIncident,
+  WebServiceDTO,
+  WebServiceStats,
+} from "@/shared/types/model";
+import { create } from "zustand";
 
 interface ServiceDetailStore {
-  deleteIncident: Incident | null;
-  serviceDetailData: Service | null;
+  deleteIncident: StorageIncident | null;
+  serviceDetailData: WebServiceDTO | null;
   resolveIncident: boolean;
-  incidentsCount: number | null;
-  incidentsData: Incident[] | null;
-  filters: {
-    page: number;
-    pageSize: number;
-  };
-  serviceStatsData: ServiceStats | null;
+  incidentsData: DbutilsFindResponseWithCountStorageIncident | null;
+  filters: GetServicesIdIncidentsParams;
+  serviceStatsData: WebServiceStats | null;
   setFilters: (value: Partial<ServiceDetailStore["filters"]>) => void;
-  setIncidentsCount: (incidentsCount: number) => void;
-  setDeleteIncident: (deleteIncident: Incident | null) => void;
+  setDeleteIncident: (deleteIncident: StorageIncident | null) => void;
   setResolveIncident: (resolveIncident: boolean) => void;
-  setServiceDetailData: (serviceDetailData: Service | null) => void;
-  setIncidentsData: (incidentsData: Incident[] | null) => void;
-  setServiceStatsData: (serviceStatsData: ServiceStats | null) => void;
-  setUpdateServiceStatsData: (serviceStatsData: Service | null) => void;
+  setServiceDetailData: (serviceDetailData: WebServiceDTO | null) => void;
+  setIncidentsData: (
+    incidentsData: DbutilsFindResponseWithCountStorageIncident | null
+  ) => void;
+  setServiceStatsData: (serviceStatsData: WebServiceStats | null) => void;
+  setUpdateServiceStatsData: (serviceStatsData: WebServiceStats | null) => void;
 }
 
 const initialState = {
@@ -31,10 +30,10 @@ const initialState = {
   serviceDetailData: null,
   resolveIncident: false,
   incidentsData: null,
-  incidentsCount: null,
+
   filters: {
     page: 1,
-    pageSize: 10,
+    page_size: 10,
   },
   serviceStatsData: null,
 };
@@ -42,7 +41,6 @@ const initialState = {
 export const useServiceDetailStore = create<ServiceDetailStore>((set) => ({
   ...initialState,
   setDeleteIncident: (deleteIncident) => set({ deleteIncident }),
-  setIncidentsCount: (incidentsCount) => set({ incidentsCount }),
   setFilters: (filters) =>
     set((state) => ({ filters: { ...state.filters, ...filters } })),
   setResolveIncident: (resolveIncident) => set({ resolveIncident }),

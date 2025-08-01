@@ -1,12 +1,7 @@
 import * as React from "react";
-import {XIcon} from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectTrigger,
-  SelectValue,
-} from "./select";
-import {cn} from "@shared/lib/utils";
+import { XIcon } from "lucide-react";
+import { Select, SelectContent, SelectTrigger, SelectValue } from "./select";
+import { cn } from "@shared/lib/utils";
 
 interface SelectWithClearProps {
   value?: string;

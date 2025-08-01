@@ -1,16 +1,9 @@
 import { InfoCardStats } from "@/entities/infoStatsCard/infoCardStats";
+import type { WebServiceDTO, WebServiceStats } from "@/shared/types/model";
 
 interface ServiceStatsProps {
-  serviceDetailData: {
-    total_incidents: number;
-    total_checks: number;
-    consecutive_success: number;
-    consecutive_fails: number;
-  };
-  serviceStatsData: {
-    avg_response_time: number;
-    uptime_percentage: number;
-  };
+  serviceDetailData: WebServiceDTO;
+  serviceStatsData: WebServiceStats;
 }
 
 export const ServiceStats = ({
@@ -29,12 +22,12 @@ export const ServiceStats = ({
       description: "Total Checks",
     },
     {
-      value: `${(serviceStatsData?.avg_response_time / 1000000).toFixed(1)} ms`,
+      value: `${((serviceStatsData?.avg_response_time ?? 0) / 1000000).toFixed(1)} ms`,
       key: "avg_response_time",
       description: "Avg Response Time",
     },
     {
-      value: `${serviceStatsData?.uptime_percentage.toFixed(1)}%`,
+      value: `${(serviceStatsData?.uptime_percentage ?? 0).toFixed(1)}%`,
       key: "uptime",
       description: "Uptime",
     },

@@ -18,12 +18,13 @@ import {
   Textarea,
 } from "@/shared/components/ui";
 import { PlusIcon, TrashIcon } from "lucide-react";
-import type { ServiceForm as ServiceFormType } from "./types/type";
 import * as Yup from "yup";
 import InputTag from "@/shared/components/ui/inputTag";
+import type { WebCreateUpdateServiceRequest } from "@/shared/types/model";
+
 interface ServiceFormProps {
-  initialValues: ServiceFormType;
-  onSubmit: (values: ServiceFormType) => Promise<void>;
+  initialValues: WebCreateUpdateServiceRequest;
+  onSubmit: (values: WebCreateUpdateServiceRequest) => Promise<void>;
   type: "create" | "update";
 }
 
@@ -121,7 +122,7 @@ const GRPCForm = React.memo(
         </CardContent>
       </Card>
     );
-  }
+  },
 );
 
 const TCPForm = React.memo(() => {
@@ -173,7 +174,7 @@ const HTTPForm = React.memo(
     values,
     setFieldValue,
   }: {
-    values: ServiceFormType;
+    values: WebCreateUpdateServiceRequest;
     setFieldValue: (field: string, value: unknown) => void;
   }) => {
     // Мемоизированные обработчики
@@ -183,17 +184,17 @@ const HTTPForm = React.memo(
         endpoints[index] = { ...endpoints[index], [field]: value };
         setFieldValue("config.http.endpoints", endpoints);
       },
-      [setFieldValue, values.config?.http?.endpoints]
+      [setFieldValue, values.config?.http?.endpoints],
     );
 
     const handleRemoveEndpoint = useCallback(
       (index: number) => {
         setFieldValue(
           "config.http.endpoints",
-          (values.config?.http?.endpoints || []).filter((_, i) => i !== index)
+          (values.config?.http?.endpoints || []).filter((_, i) => i !== index),
         );
       },
-      [setFieldValue, values.config?.http?.endpoints]
+      [setFieldValue, values.config?.http?.endpoints],
     );
 
     const handleAddEndpoint = useCallback(() => {
@@ -255,7 +256,7 @@ const HTTPForm = React.memo(
                     if (!isNaN(Number(e.target.value))) {
                       setFieldValue(
                         "config.http.timeout",
-                        Number(e.target.value)
+                        Number(e.target.value),
                       );
                     }
                   }}
@@ -345,7 +346,7 @@ const HTTPForm = React.memo(
                             if (!isNaN(Number(e.target.value))) {
                               setFieldValue(
                                 `config.http.endpoints.${index}.expected_status`,
-                                Number(e.target.value)
+                                Number(e.target.value),
                               );
                             }
                           }}
@@ -407,16 +408,16 @@ const HTTPForm = React.memo(
                         value={
                           typeof field.value === "string"
                             ? field.value
-                            : field.value
+                            : field.value && Object.keys(field.value).length > 0
                               ? JSON.stringify(field.value, null, 2)
                               : ""
                         }
                         onChange={(
-                          e: React.ChangeEvent<HTMLTextAreaElement>
+                          e: React.ChangeEvent<HTMLTextAreaElement>,
                         ) => {
                           setFieldValue(
                             `config.http.endpoints.${index}.headers`,
-                            e.target.value
+                            e.target.value,
                           );
                         }}
                         placeholder={'{"Content-Type": "application/json"}'}
@@ -450,7 +451,7 @@ const HTTPForm = React.memo(
         </CardContent>
       </Card>
     );
-  }
+  },
 );
 
 export const ServiceForm = ({
@@ -467,7 +468,7 @@ export const ServiceForm = ({
       Yup.object({
         name: Yup.string().required("Endpoint name is required"),
         url: Yup.string().required("URL is required"),
-      })
+      }),
     ),
   });
 
@@ -482,13 +483,13 @@ export const ServiceForm = ({
       .required("Protocol is required"),
   });
 
-  const headersModificate = (values: ServiceFormType) => {
+  const headersModificate = (values: WebCreateUpdateServiceRequest) => {
     if (values.config?.http?.endpoints) {
       values.config.http.endpoints.forEach((endpoint) => {
         if (
           !endpoint.headers ||
           (typeof endpoint.headers === "string" &&
-            endpoint.headers.trim() === "")
+            (endpoint.headers as string).trim() === "")
         ) {
           endpoint.headers = {};
         } else {
@@ -504,20 +505,26 @@ export const ServiceForm = ({
     }
   };
 
-  const configModificate = (values: ServiceFormType) => {
+  const configModificate = (values: WebCreateUpdateServiceRequest) => {
     switch (values.protocol) {
       case "http":
-        values.config.grpc = null;
-        values.config.tcp = null;
+        if (values.config) {
+          values.config.grpc = undefined;
+          values.config.tcp = undefined;
+        }
         headersModificate(values);
         break;
       case "tcp":
-        values.config.grpc = null;
-        values.config.http = null;
+        if (values.config) {
+          values.config.grpc = undefined;
+          values.config.http = undefined;
+        }
         break;
       case "grpc":
-        values.config.http = null;
-        values.config.tcp = null;
+        if (values.config) {
+          values.config.http = undefined;
+          values.config.tcp = undefined;
+        }
         break;
     }
     return values;
@@ -539,17 +546,17 @@ export const ServiceForm = ({
           if (values.protocol) {
             switch (values.protocol) {
               case "http":
-                await httpSchema.validate(values.config.http, {
+                await httpSchema.validate(values.config?.http, {
                   abortEarly: false,
                 });
                 break;
               case "tcp":
-                await tcpSchema.validate(values.config.tcp, {
+                await tcpSchema.validate(values.config?.tcp, {
                   abortEarly: false,
                 });
                 break;
               case "grpc":
-                await grpcSchema.validate(values.config.grpc, {
+                await grpcSchema.validate(values.config?.grpc, {
                   abortEarly: false,
                 });
                 break;
@@ -678,7 +685,7 @@ export const ServiceForm = ({
                           "tags",
                           typeof tags === "object"
                             ? tags.map((tag) => tag.text)
-                            : []
+                            : [],
                         );
                       }}
                     />

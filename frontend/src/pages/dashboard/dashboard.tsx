@@ -9,31 +9,19 @@ import {
 } from "@/shared/components/ui";
 import ContentWrapper from "@/widgets/wrappers/contentWrapper";
 import { RefreshCcwIcon } from "lucide-react";
-import {
-  useDashboardLogic,
-  type DashboardInfo,
-} from "./hooks/useDashboardLogic";
+import { useDashboardLogic } from "./hooks/useDashboardLogic";
 import { InfoCardStats } from "@/entities/infoStatsCard/infoCardStats";
 import ServiceCreate from "../service/serviceCreate";
-import { ServiceTable } from "../service/serviceTable";
 import { Loader } from "@/entities/loader/loader";
+import type { GetDashboardStatsResult } from "@/shared/api/dashboard/dashboard";
+import { getProtocolDisplayName } from "@/shared/lib/getProtocolDisplayName";
+import { ServiceTable } from "../service/serviceTable";
+import { ApiInfo } from "@/features/apiInfo/apiInfo";
+import { UpdateVersion } from "@/features/apiInfo/updateVersion";
 
 const Dashboard = () => {
-  const { infoKeysDashboard, dashboardInfo, onRefreshDashboard } =
+  const { apiInfo, infoKeysDashboard, dashboardInfo, onRefreshDashboard } =
     useDashboardLogic();
-
-  if (!dashboardInfo) return <Loader loaderPage />;
-
-  const getProtocolDisplayName = (protocol: string) => {
-    switch (protocol) {
-      case "http":
-        return "HTTP/HTTPS";
-      case "tcp":
-        return "TCP";
-      case "grpc":
-        return "gRPC";
-    }
-  };
 
   if (!dashboardInfo) return <Loader loaderPage />;
 
@@ -41,7 +29,12 @@ const Dashboard = () => {
     <ContentWrapper>
       <div className="flex flex-col gap-4 lg:gap-6">
         <header className="flex flex-col py-3 md:flex-row gap-3 justify-between items-center">
-          <h1 className="text-lg md:text-2xl font-bold">Sentinel Dashboard</h1>
+          <div className="flex flex-row gap-3 items-center">
+            <h1 className="text-lg md:text-2xl font-bold">
+              Sentinel Dashboard
+            </h1>
+            {apiInfo?.available_update && <UpdateVersion apiInfo={apiInfo} />}
+          </div>
           <div className="flex flex-col md:flex-row">
             <Button
               size="sm"
@@ -60,13 +53,14 @@ const Dashboard = () => {
             const value =
               item.key === "uptime_percentage"
                 ? Number(
-                    dashboardInfo[item.key as keyof DashboardInfo]
+                    dashboardInfo[item.key as keyof GetDashboardStatsResult],
                   ).toFixed(1) + "%"
                 : item.key === "avg_response_time"
-                  ? dashboardInfo[item.key as keyof DashboardInfo]?.toString() +
-                    "ms"
+                  ? dashboardInfo[
+                      item.key as keyof GetDashboardStatsResult
+                    ]?.toString() + "ms"
                   : (dashboardInfo[
-                      item.key as keyof DashboardInfo
+                      item.key as keyof GetDashboardStatsResult
                     ]?.toString() ?? "0");
 
             return (
@@ -81,18 +75,17 @@ const Dashboard = () => {
                 <h3 className="no-underline">Distribution by protocol</h3>
               </AccordionTrigger>
               <AccordionContent className="px-6 py-4 bg-white rounded-b-lg flex flex-col gap-4">
-                {dashboardInfo.protocols &&
+                {dashboardInfo?.protocols &&
                 Object.entries(dashboardInfo.protocols).length > 0 ? (
                   Object.entries(dashboardInfo.protocols).map(
                     ([protocol, count]) => {
-                      const percentage = (
-                        (count /
-                          Object.values(dashboardInfo.protocols).reduce(
-                            (a, b) => a + b,
-                            0
-                          )) *
-                        100
-                      ).toFixed(1);
+                      const totalCount = Object.values(
+                        dashboardInfo.protocols!,
+                      ).reduce((a, b) => a + b, 0);
+                      const percentage =
+                        totalCount > 0
+                          ? ((count / totalCount) * 100).toFixed(1)
+                          : "0.0";
 
                       return (
                         <Card
@@ -117,7 +110,7 @@ const Dashboard = () => {
                           </div>
                         </Card>
                       );
-                    }
+                    },
                   )
                 ) : (
                   <p className="text-muted-foreground text-center">
@@ -129,7 +122,10 @@ const Dashboard = () => {
           </Accordion>
         </div>
         <div>
-          <ServiceTable protocols={dashboardInfo.protocols} />
+          <ServiceTable protocols={dashboardInfo.protocols ?? {}} />
+        </div>
+        <div className="flex flex-col gap-4 w-fit">
+          <ApiInfo apiInfo={apiInfo} />
         </div>
       </div>
     </ContentWrapper>

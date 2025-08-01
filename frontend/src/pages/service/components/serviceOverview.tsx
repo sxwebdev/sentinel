@@ -24,17 +24,10 @@ import {
   AlertDescription,
   AlertTitle,
 } from "@/shared/components/ui/alert";
+import type { WebServiceDTO } from "@/shared/types/model";
 
 interface ServiceOverviewProps {
-  serviceDetailData: {
-    id: string;
-    name: string;
-    protocol: string;
-    last_check: string;
-    status: string;
-    is_enabled: boolean;
-    last_error?: string;
-  };
+  serviceDetailData: WebServiceDTO;
   onCheckService: (serviceId: string) => void;
   setResolveIncident: (value: boolean) => void;
 }
@@ -62,13 +55,13 @@ export const ServiceOverview = ({
         <div
           className={cn(
             "flex items-center gap-2",
-            isMobile && "w-full flex-col"
+            isMobile && "w-full flex-col",
           )}
         >
           <Button
             size="sm"
             className={cn(isMobile && "w-full")}
-            onClick={() => onCheckService(serviceDetailData?.id)}
+            onClick={() => onCheckService(serviceDetailData?.id ?? "")}
           >
             <PlayIcon />
             Trigger Check
@@ -125,7 +118,7 @@ export const ServiceOverview = ({
                     <TooltipTrigger>
                       <Badge variant={"secondary"} className="ml-3 text-sm">
                         {new Date(
-                          serviceDetailData?.last_check
+                          serviceDetailData?.last_check ?? "",
                         ).toLocaleString()}
                       </Badge>
                     </TooltipTrigger>
@@ -142,10 +135,10 @@ export const ServiceOverview = ({
                 serviceDetailData?.status === "down" &&
                   "bg-rose-100 text-rose-600",
                 serviceDetailData?.status === "unknown" &&
-                  "bg-yellow-100 text-yellow-600"
+                  "bg-yellow-100 text-yellow-600",
               )}
             >
-              {serviceDetailData?.status.toLocaleUpperCase()}
+              {serviceDetailData?.status?.toLocaleUpperCase() ?? ""}
             </Badge>
           </CardTitle>
         </CardHeader>
