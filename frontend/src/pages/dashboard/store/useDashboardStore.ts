@@ -1,9 +1,14 @@
 import { create } from "zustand";
-import type { GetDashboardStatsResult } from "@/shared/api/dashboard/dashboard";
+import {
+  type GetDashboardStatsResult,
+  getDashboard,
+} from "@/shared/api/dashboard/dashboard";
 
 interface DashboardStore {
   dashboardInfo: GetDashboardStatsResult | null;
-  setDashboardInfo: (dashboardInfo: GetDashboardStatsResult | null) => void;
+  setStats: (dashboardInfo: GetDashboardStatsResult | null) => void;
+
+  loadStats: () => Promise<void>;
 }
 
 const initialState = {
@@ -12,5 +17,9 @@ const initialState = {
 
 export const useDashboardStore = create<DashboardStore>((set) => ({
   ...initialState,
-  setDashboardInfo: (dashboardInfo) => set({ dashboardInfo }),
+  setStats: (dashboardInfo) => set({ dashboardInfo }),
+  loadStats: async () => {
+    const response = await getDashboard().getDashboardStats();
+    set({ dashboardInfo: response });
+  },
 }));
