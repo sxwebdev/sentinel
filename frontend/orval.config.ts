@@ -1,6 +1,6 @@
-// orval.config.ts
-// This file is used to generate the API client using orval
-export default {
+import { defineConfig } from "orval";
+
+export default defineConfig({
   api: {
     input: "../docs/docsv1/swagger.json", // путь к Swagger JSON
     output: {
@@ -15,5 +15,8 @@ export default {
         },
       },
     },
+    hooks: {
+      afterAllFilesWrite: "pnpm format",
+    },
   },
-};
+});
