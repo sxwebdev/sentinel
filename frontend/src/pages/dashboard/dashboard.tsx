@@ -16,20 +16,30 @@ import { Loader } from "@/entities/loader/loader";
 import type { GetDashboardStatsResult } from "@/shared/api/dashboard/dashboard";
 import { getProtocolDisplayName } from "@/shared/lib/getProtocolDisplayName";
 import { ServiceTable } from "../service/serviceTable";
+import { useWsLogic } from "./hooks/useWsLogic";
 
 const infoKeysDashboard = [
   { key: "total_services", label: "Total services" },
   { key: "services_up", label: "Services up" },
   { key: "services_down", label: "Services down" },
   { key: "active_incidents", label: "Active incidents" },
-  { key: "avg_response_time", label: "Average response time (ms)" },
+  {
+    key: "avg_response_time",
+    label: "Average response time (ms)",
+    valueFormatter: (value: string) => `${value}ms`,
+  },
   { key: "total_checks", label: "Total checks" },
-  { key: "uptime_percentage", label: "Uptime" },
+  {
+    key: "uptime_percentage",
+    label: "Uptime",
+    valueFormatter: (value: string) => `${Number(value).toFixed(1)}%`,
+  },
   { key: "checks_per_minute", label: "Checks per minute" },
 ];
 
 const Dashboard = () => {
   const { dashboardInfo, onRefreshDashboard } = useDashboardLogic();
+  useWsLogic();
 
   if (!dashboardInfo) return <Loader loaderPage />;
 
@@ -58,23 +68,20 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6">
           {infoKeysDashboard.map((item) => {
             const value =
-              item.key === "uptime_percentage"
-                ? Number(
-                    dashboardInfo[item.key as keyof GetDashboardStatsResult]
-                  ).toFixed(1) + "%"
-                : item.key === "avg_response_time"
-                  ? dashboardInfo[
-                      item.key as keyof GetDashboardStatsResult
-                    ]?.toString() + "ms"
-                  : (dashboardInfo[
-                      item.key as keyof GetDashboardStatsResult
-                    ]?.toString() ?? "0");
+              dashboardInfo[
+                item.key as keyof GetDashboardStatsResult
+              ]?.toString() || "-";
 
             return (
-              <InfoCardStats key={item.key} title={item.label} value={value} />
+              <InfoCardStats
+                key={item.key}
+                title={item.label}
+                value={item.valueFormatter ? item.valueFormatter(value) : value}
+              />
             );
           })}
         </div>
+
         <div className="hidden">
           <Accordion type="multiple">
             <AccordionItem value="item-1" className="shadow-sm rounded-lg">

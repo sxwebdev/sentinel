@@ -256,7 +256,7 @@ export const useServiceTable = () => {
                   <DropdownMenuItem
                     onClick={() => setCreateFromService(row.original)}
                   >
-                    <CopyIcon /> <span>Create from this</span>
+                    <CopyIcon /> <span>Copy</span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
