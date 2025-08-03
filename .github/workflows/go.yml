@@ -10,10 +10,45 @@ on:
     branches: ["master"]
 
 jobs:
-  build:
+  build-frontend:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: "24"
+
+      - name: Install dependencies
+        run: npm install -g pnpm
+
+      - name: Run format check
+        run: pnpm run format-check
+
+      - name: Build frontend
+        run: pnpm run build
+
+      - name: Upload frontend dist
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist/
+
+      # - name: Run lint
+      #   run: pnpm run lint
+
+  build-backend:
+    runs-on: ubuntu-latest
+    needs: build-frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download frontend dist
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist/
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -22,7 +57,6 @@ jobs:
 
       - name: Build
         run: |-
-          mkdir -p frontend/dist
           go mod download
           go build -v ./...
 
