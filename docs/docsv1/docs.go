@@ -108,7 +108,36 @@ const docTemplate = `{
                 }
             }
         },
-        "/info": {
+        "/server/health": {
+            "get": {
+                "description": "Checks the health of the server",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "server"
+                ],
+                "summary": "Health check",
+                "responses": {
+                    "200": {
+                        "description": "Health check successful",
+                        "schema": {
+                            "$ref": "#/definitions/web.healthCheckResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/server/info": {
             "get": {
                 "description": "Returns basic information about the server",
                 "consumes": [
@@ -118,7 +147,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "info"
+                    "server"
                 ],
                 "summary": "Get server info",
                 "responses": {
@@ -126,6 +155,35 @@ const docTemplate = `{
                         "description": "Server information",
                         "schema": {
                             "$ref": "#/definitions/web.ServerInfoResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/server/upgrade": {
+            "get": {
+                "description": "Triggers a manual upgrade of the server",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "server"
+                ],
+                "summary": "Manual upgrade",
+                "responses": {
+                    "200": {
+                        "description": "Upgrade initiated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/web.SuccessResponse"
                         }
                     },
                     "500": {
@@ -1235,6 +1293,15 @@ const docTemplate = `{
                 "message": {
                     "type": "string",
                     "example": "Operation completed successfully"
+                }
+            }
+        },
+        "web.healthCheckResponse": {
+            "type": "object",
+            "properties": {
+                "status": {
+                    "type": "string",
+                    "example": "healthy"
                 }
             }
         }

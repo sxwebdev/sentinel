@@ -349,6 +349,12 @@ definitions:
         example: Operation completed successfully
         type: string
     type: object
+  web.healthCheckResponse:
+    properties:
+      status:
+        example: healthy
+        type: string
+    type: object
 info:
   contact:
     email: support@swagger.io
@@ -417,7 +423,26 @@ paths:
       summary: Get recent incidents
       tags:
       - incidents
-  /info:
+  /server/health:
+    get:
+      consumes:
+      - application/json
+      description: Checks the health of the server
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Health check successful
+          schema:
+            $ref: '#/definitions/web.healthCheckResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+      summary: Health check
+      tags:
+      - server
+  /server/info:
     get:
       consumes:
       - application/json
@@ -435,7 +460,26 @@ paths:
             $ref: '#/definitions/web.ErrorResponse'
       summary: Get server info
       tags:
-      - info
+      - server
+  /server/upgrade:
+    get:
+      consumes:
+      - application/json
+      description: Triggers a manual upgrade of the server
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Upgrade initiated successfully
+          schema:
+            $ref: '#/definitions/web.SuccessResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+      summary: Manual upgrade
+      tags:
+      - server
   /services:
     get:
       consumes:

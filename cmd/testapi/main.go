@@ -20,6 +20,7 @@ import (
 	"github.com/sxwebdev/sentinel/internal/notifier"
 	"github.com/sxwebdev/sentinel/internal/receiver"
 	"github.com/sxwebdev/sentinel/internal/storage"
+	"github.com/sxwebdev/sentinel/internal/upgrader"
 	"github.com/sxwebdev/sentinel/internal/web"
 	"github.com/sxwebdev/sentinel/pkg/dbutils"
 	"github.com/tkcrm/mx/logger"
@@ -238,11 +239,14 @@ func setupTestSuite() (*TestSuite, error) {
 		return nil, fmt.Errorf("failed to start receiver: %w", err)
 	}
 
+	// Initialize upgrader if configured
+	upgr := upgrader.New(l, cfg.Upgrader)
+
 	// Create monitor service
 	monitorService := monitor.NewMonitorService(stor, cfg, notif, rc)
 
 	// Create web server
-	webServer, err := web.NewServer(l, cfg, web.ServerInfo{}, monitorService, stor, rc)
+	webServer, err := web.NewServer(l, cfg, web.ServerInfo{}, monitorService, stor, rc, upgr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create web server: %w", err)
 	}

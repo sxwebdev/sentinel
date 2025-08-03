@@ -14,14 +14,14 @@ export const getInfo = () => {
    * Returns basic information about the server
    * @summary Get server info
    */
-  const getInfo = () => {
+  const getServerInfo = () => {
     return customFetcher<WebServerInfoResponse>({
-      url: `/info`,
+      url: `/server/info`,
       method: "GET",
     });
   };
-  return { getInfo };
+  return { getServerInfo };
 };
-export type GetInfoResult = NonNullable<
-  Awaited<ReturnType<ReturnType<typeof getInfo>["getInfo"]>>
+export type GetServerInfoResult = NonNullable<
+  Awaited<ReturnType<ReturnType<typeof getInfo>["getServerInfo"]>>
 >;

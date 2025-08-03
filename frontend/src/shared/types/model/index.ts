@@ -36,3 +36,4 @@ export * from "./webServerInfoResponse";
 export * from "./webServiceDTO";
 export * from "./webServiceStats";
 export * from "./webSuccessResponse";
+export * from "./webHealthCheckResponse";

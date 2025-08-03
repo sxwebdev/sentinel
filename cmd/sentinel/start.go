@@ -12,6 +12,7 @@ import (
 	"github.com/sxwebdev/sentinel/internal/receiver"
 	"github.com/sxwebdev/sentinel/internal/scheduler"
 	"github.com/sxwebdev/sentinel/internal/storage"
+	"github.com/sxwebdev/sentinel/internal/upgrader"
 	"github.com/sxwebdev/sentinel/internal/web"
 	"github.com/tkcrm/mx/launcher"
 	"github.com/tkcrm/mx/logger"
@@ -80,6 +81,9 @@ func startCMD() *cli.Command {
 			// Init receiver
 			rc := receiver.New()
 
+			// Initialize upgrader if configured
+			upgr := upgrader.New(l, conf.Upgrader)
+
 			// Create monitor service
 			monitorService := monitor.NewMonitorService(store, conf, notif, rc)
 
@@ -94,7 +98,7 @@ func startCMD() *cli.Command {
 				SqliteVersion: sqliteVersion,
 				OS:            runtime.GOOS,
 				Arch:          runtime.GOARCH,
-			}, monitorService, store, rc)
+			}, monitorService, store, rc, upgr)
 			if err != nil {
 				return fmt.Errorf("failed to initialize web server: %w", err)
 			}
