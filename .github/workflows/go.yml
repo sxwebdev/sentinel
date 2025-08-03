@@ -21,13 +21,13 @@ jobs:
           node-version: "24"
 
       - name: Install dependencies
-        run: npm install -g pnpm
+        run: cd frontend && npm install -g pnpm
 
       - name: Run format check
-        run: pnpm run format-check
+        run: cd frontend && pnpm run format-check
 
       - name: Build frontend
-        run: pnpm run build
+        run: cd frontend && pnpm run build
 
       - name: Upload frontend dist
         uses: actions/upload-artifact@v4
