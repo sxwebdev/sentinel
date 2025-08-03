@@ -61,7 +61,9 @@ export const ServerInfo = () => {
             </li>
             <li className="grid gap-0.5">
               <span className="text-muted-foreground">Commit hash</span>
-              <span className="font-medium">{serverInfo.commit_hash}</span>
+              <span className="font-medium">
+                {serverInfo.commit_hash?.slice(0, 8) || "N/A"}
+              </span>
             </li>
           </ul>
         </PopoverContent>
