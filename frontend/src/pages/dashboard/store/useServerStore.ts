@@ -69,6 +69,8 @@ export const useServerStore = create<ServerStore>((set, get) => {
                 clearInterval(interval);
                 toast.success("Server upgraded successfully!", {
                   description: "The page will refresh in 2 seconds.",
+                  closeButton: true,
+                  duration: Infinity,
                 });
                 setTimeout(() => {
                   window.location.reload();
@@ -82,8 +84,13 @@ export const useServerStore = create<ServerStore>((set, get) => {
             });
         }, 1000);
       } catch (error) {
+        toast.dismiss(toastID);
         set({ isUpdating: false });
-        toast.error(error instanceof Error ? error.message : "Unknown error");
+        toast.error("Failed to upgrade server", {
+          description: error instanceof Error ? error.message : "Unknown error",
+          closeButton: true,
+          duration: Infinity,
+        });
       }
     },
   };
