@@ -12,7 +12,8 @@ type ServerInfo struct {
 }
 
 type AvailableUpdate struct {
-	TagName     string `json:"tag_name"`
-	URL         string `json:"url"`
-	Description string `json:"description,omitempty"`
+	IsAvailableManual bool   `json:"is_available_manual"`
+	TagName           string `json:"tag_name"`
+	URL               string `json:"url"`
+	Description       string `json:"description,omitempty"`
 }

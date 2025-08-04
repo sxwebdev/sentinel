@@ -240,7 +240,10 @@ func setupTestSuite() (*TestSuite, error) {
 	}
 
 	// Initialize upgrader if configured
-	upgr := upgrader.New(l, cfg.Upgrader)
+	upgr, err := upgrader.New(l, cfg.Upgrader)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize upgrader: %w", err)
+	}
 
 	// Create monitor service
 	monitorService := monitor.NewMonitorService(stor, cfg, notif, rc)

@@ -14,11 +14,15 @@ type Upgrader struct {
 	config config.Upgrader
 }
 
-func New(l logger.Logger, cfg config.Upgrader) *Upgrader {
+func New(l logger.Logger, cfg config.Upgrader) (*Upgrader, error) {
+	if cfg.IsEnabled && cfg.Command == "" {
+		return nil, errors.New("upgrade command is not configured")
+	}
+
 	return &Upgrader{
 		logger: l,
 		config: cfg,
-	}
+	}, nil
 }
 
 // Do performs the upgrade operation based on the configured command

@@ -1041,6 +1041,9 @@ const docTemplate = `{
                 "description": {
                     "type": "string"
                 },
+                "is_available_manual": {
+                    "type": "boolean"
+                },
                 "tag_name": {
                     "type": "string"
                 },

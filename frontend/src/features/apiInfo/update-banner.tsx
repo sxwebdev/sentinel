@@ -75,40 +75,45 @@ export const UpdateBanner = () => {
                 </a>
               </Button>
 
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="default" disabled={serverStore.isUpdating}>
-                    {serverStore.isUpdating && (
-                      <LoaderCircleIcon
-                        className="-ms-1 animate-spin"
-                        size={16}
-                        aria-hidden="true"
-                      />
-                    )}
-                    Upgrade
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This will upgrade the server to the latest version. The
-                      server will restart, and you will be redirected to the
-                      dashboard after the upgrade is complete.
-                      <br />
-                      <br />
-                      Please ensure you have a backup of your data before
-                      proceeding.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => serverStore.doUpgrade()}>
-                      Let's do it!
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+              {serverStore.serverInfo?.available_update
+                ?.is_available_manual && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="default" disabled={serverStore.isUpdating}>
+                      {serverStore.isUpdating && (
+                        <LoaderCircleIcon
+                          className="-ms-1 animate-spin"
+                          size={16}
+                          aria-hidden="true"
+                        />
+                      )}
+                      Upgrade
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will upgrade the server to the latest version. The
+                        server will restart, and you will be redirected to the
+                        dashboard after the upgrade is complete.
+                        <br />
+                        <br />
+                        Please ensure you have a backup of your data before
+                        proceeding.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => serverStore.doUpgrade()}
+                      >
+                        Let's do it!
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
             </DialogFooter>
           </DialogContent>
         </Dialog>

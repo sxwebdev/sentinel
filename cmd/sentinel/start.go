@@ -82,7 +82,10 @@ func startCMD() *cli.Command {
 			rc := receiver.New()
 
 			// Initialize upgrader if configured
-			upgr := upgrader.New(l, conf.Upgrader)
+			upgr, err := upgrader.New(l, conf.Upgrader)
+			if err != nil {
+				return fmt.Errorf("failed to initialize upgrader: %w", err)
+			}
 
 			// Create monitor service
 			monitorService := monitor.NewMonitorService(store, conf, notif, rc)
