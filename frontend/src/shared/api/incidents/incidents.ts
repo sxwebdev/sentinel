@@ -8,7 +8,9 @@
 import type {
   DbutilsFindResponseWithCountStorageIncident,
   GetIncidentsParams,
+  GetIncidentsStatsParams,
   GetServicesIdIncidentsParams,
+  WebGetIncidentsStatsItem,
   WebSuccessResponse,
 } from "../../types/model";
 
@@ -22,6 +24,17 @@ export const getIncidents = () => {
   const getIncidents = (params?: GetIncidentsParams) => {
     return customFetcher<DbutilsFindResponseWithCountStorageIncident>({
       url: `/incidents`,
+      method: "GET",
+      params,
+    });
+  };
+  /**
+   * Returns the stats of incidents by date range
+   * @summary Get incidents stats by date range
+   */
+  const getIncidentsStats = (params: GetIncidentsStatsParams) => {
+    return customFetcher<WebGetIncidentsStatsItem[]>({
+      url: `/incidents/stats`,
       method: "GET",
       params,
     });
@@ -65,6 +78,7 @@ export const getIncidents = () => {
   };
   return {
     getIncidents,
+    getIncidentsStats,
     getServicesIdIncidents,
     deleteServicesIdIncidentsIncidentId,
     postServicesIdResolve,
@@ -72,6 +86,9 @@ export const getIncidents = () => {
 };
 export type GetIncidentsResult = NonNullable<
   Awaited<ReturnType<ReturnType<typeof getIncidents>["getIncidents"]>>
+>;
+export type GetIncidentsStatsResult = NonNullable<
+  Awaited<ReturnType<ReturnType<typeof getIncidents>["getIncidentsStats"]>>
 >;
 export type GetServicesIdIncidentsResult = NonNullable<
   Awaited<ReturnType<ReturnType<typeof getIncidents>["getServicesIdIncidents"]>>

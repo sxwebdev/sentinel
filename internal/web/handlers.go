@@ -15,6 +15,7 @@ package web
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	goHTML "html"
 	"strconv"
@@ -22,6 +23,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/dromara/carbon/v2"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
@@ -176,6 +178,7 @@ func (s *Server) setupRoutes() {
 
 	// Incident management API
 	api.Get("/incidents", s.handleFindIncidents)
+	api.Get("/incidents/stats", s.handleAPIGetIncidentsStats)
 	api.Get("/services/:id/incidents", s.handleAPIServiceIncidents)
 	api.Delete("/services/:id/incidents/:incidentId", s.handleAPIDeleteIncident)
 
@@ -700,6 +703,62 @@ func (s *Server) handleAPIDeleteIncident(c *fiber.Ctx) error {
 	}
 
 	return c.SendStatus(fiber.StatusNoContent)
+}
+
+type getIncidentsStatsItem struct {
+	Date             time.Time `json:"date"`
+	Count            int64     `json:"count"`
+	AvgDuration      uint32    `json:"avg_duration"`
+	AvgDurationHuman string    `json:"avg_duration_human"`
+}
+
+type getIncidentsStatsData []getIncidentsStatsItem
+
+// handleAPIGetIncidentsStats
+//
+//	@Summary		Get incidents stats by date range
+//	@Description	Returns the stats of incidents by date range
+//	@Tags			incidents
+//	@Accept			json
+//	@Produce		json
+//	@Param			start_time	query		string					true	"Start time (RFC3339 format)"
+//	@Param			end_time	query		string					true	"End time (RFC3339 format)"
+//	@Success		200			{object}	getIncidentsStatsData	"Incidents stats by date range"
+//	@Failure		400			{object}	ErrorResponse			"Bad request"
+//	@Failure		500			{object}	ErrorResponse			"Internal server error"
+//	@Router			/incidents/stats [get]
+func (s *Server) handleAPIGetIncidentsStats(c *fiber.Ctx) error {
+	startTimeStr := carbon.Parse(c.Query("start_time"))
+	endTimeStr := carbon.Parse(c.Query("end_time"))
+
+	if startTimeStr.HasError() || endTimeStr.HasError() {
+		return newErrorResponse(c, fiber.StatusBadRequest, errors.New("start_time and end_time query parameters are required"))
+	}
+
+	startTime := startTimeStr.StdTime()
+	endTime := endTimeStr.StdTime()
+
+	if endTime.Before(startTime) {
+		return newErrorResponse(c, fiber.StatusBadRequest, errors.New("end_time must be after start_time"))
+	}
+
+	stats, err := s.storage.GetIncidentsStatsByDateRange(c.Context(), startTime, endTime)
+	if err != nil {
+		return newErrorResponse(c, fiber.StatusInternalServerError, errors.New("failed to get incidents stats: "+err.Error()))
+	}
+
+	// Convert to response format
+	response := make(getIncidentsStatsData, 0, len(stats))
+	for _, item := range stats {
+		response = append(response, getIncidentsStatsItem{
+			Date:             item.Date,
+			Count:            item.Count,
+			AvgDuration:      uint32(item.AvgDuration.Seconds()),
+			AvgDurationHuman: item.AvgDuration.Round(time.Second).String(),
+		})
+	}
+
+	return c.JSON(response)
 }
 
 // handleAPICreateService creates a new service

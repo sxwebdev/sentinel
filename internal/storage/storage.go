@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"time"
 
 	"github.com/sxwebdev/sentinel/pkg/dbutils"
 	"github.com/tkcrm/mx/service"
@@ -19,6 +20,7 @@ type Storage interface {
 	FindIncidents(ctx context.Context, params FindIncidentsParams) (dbutils.FindResponseWithCount[*Incident], error)
 	IncidentsCount(ctx context.Context, params FindIncidentsParams) (uint32, error)
 	ResolveAllIncidents(ctx context.Context, serviceID string) ([]*Incident, error)
+	GetIncidentsStatsByDateRange(ctx context.Context, startTime, endTime time.Time) (GetIncidentsStatsByDateRangeData, error)
 
 	// Service management
 	CreateService(ctx context.Context, request CreateUpdateServiceRequest) (*Service, error)

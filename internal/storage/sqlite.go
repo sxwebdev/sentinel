@@ -125,6 +125,11 @@ func (s *SQLiteStorage) ResolveAllIncidents(ctx context.Context, serviceID strin
 	return s.orm.ResolveAllIncidents(ctx, serviceID)
 }
 
+// GetIncidentsStatsByDateRange retrieves incident stats by date range
+func (s *SQLiteStorage) GetIncidentsStatsByDateRange(ctx context.Context, startTime, endTime time.Time) (GetIncidentsStatsByDateRangeData, error) {
+	return s.orm.GetIncidentsStatsByDateRange(ctx, startTime, endTime)
+}
+
 // Service methods
 
 // CreateService saves a new service to the database

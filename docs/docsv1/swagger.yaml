@@ -351,6 +351,17 @@ definitions:
         example: Operation completed successfully
         type: string
     type: object
+  web.getIncidentsStatsItem:
+    properties:
+      avg_duration:
+        type: integer
+      avg_duration_human:
+        type: string
+      count:
+        type: integer
+      date:
+        type: string
+    type: object
   web.healthCheckResponse:
     properties:
       status:
@@ -423,6 +434,42 @@ paths:
           schema:
             $ref: '#/definitions/web.ErrorResponse'
       summary: Get recent incidents
+      tags:
+      - incidents
+  /incidents/stats:
+    get:
+      consumes:
+      - application/json
+      description: Returns the stats of incidents by date range
+      parameters:
+      - description: Start time (RFC3339 format)
+        in: query
+        name: start_time
+        required: true
+        type: string
+      - description: End time (RFC3339 format)
+        in: query
+        name: end_time
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Incidents stats by date range
+          schema:
+            items:
+              $ref: '#/definitions/web.getIncidentsStatsItem'
+            type: array
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+      summary: Get incidents stats by date range
       tags:
       - incidents
   /server/health:

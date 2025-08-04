@@ -17,6 +17,7 @@ import type { GetDashboardStatsResult } from "@/shared/api/dashboard/dashboard";
 import { getProtocolDisplayName } from "@/shared/lib/getProtocolDisplayName";
 import { ServiceTable } from "../service/serviceTable";
 import { useWsLogic } from "./hooks/useWsLogic";
+import { ChartIncidentsStats } from "./incidents-stats";
 
 const infoKeysDashboard = [
   { key: "total_services", label: "Total services" },
@@ -81,6 +82,8 @@ const Dashboard = () => {
             );
           })}
         </div>
+
+        <ChartIncidentsStats />
 
         <div className="hidden">
           <Accordion type="multiple">
