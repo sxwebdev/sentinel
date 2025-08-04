@@ -46,7 +46,7 @@ RUN go build -trimpath -ldflags="-w -s -X 'main.version=${VERSION}' -X 'main.com
 FROM alpine:latest
 
 # Install ca-certificates for HTTPS requests
-RUN apk --no-cache add ca-certificates tzdata
+RUN apk --no-cache add ca-certificates tzdata curl
 
 WORKDIR /root/
 
