@@ -19,7 +19,7 @@ export const useServiceCreate = () => {
     config: {
       http: {
         condition: "",
-        timeout: 10000,
+        timeout: 0,
         endpoints: [
           {
             name: "",

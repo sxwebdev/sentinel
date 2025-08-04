@@ -11,7 +11,6 @@ export const useCreateFromService = () => {
   const initialValues = useMemo(() => {
     return {
       ...createFromService,
-      name: "",
     };
   }, [createFromService]);
 
