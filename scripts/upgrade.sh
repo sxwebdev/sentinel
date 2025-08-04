@@ -124,7 +124,7 @@ fi
 # Get current version if possible
 CURRENT_VERSION=""
 if [ -x "$BINARY_PATH" ]; then
-    CURRENT_VERSION=$("$BINARY_PATH" --version 2>/dev/null || echo "unknown")
+    CURRENT_VERSION=$("$BINARY_PATH" version 2>/dev/null || echo "unknown")
     print_info "Current version: $CURRENT_VERSION"
 fi
 
@@ -226,7 +226,7 @@ fi
 
 # Verify the new binary works
 print_info "Verifying new binary..."
-NEW_VERSION=$("$EXTRACTED_BINARY" --version 2>/dev/null || echo "unknown")
+NEW_VERSION=$("$EXTRACTED_BINARY" version 2>/dev/null || echo "unknown")
 print_info "New binary version: $NEW_VERSION"
 
 # Stop the service
