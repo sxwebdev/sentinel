@@ -31,6 +31,7 @@ export * from "./webCreateUpdateServiceRequest";
 export * from "./webDashboardStats";
 export * from "./webDashboardStatsProtocols";
 export * from "./webErrorResponse";
+export * from "./webHealthCheckResponse";
 export * from "./webIncident";
 export * from "./webServerInfoResponse";
 export * from "./webServiceDTO";

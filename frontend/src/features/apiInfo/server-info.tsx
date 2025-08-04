@@ -1,5 +1,5 @@
+import { useServerStore } from "@/pages/dashboard/store/useServerStore";
 import { Badge } from "@/shared/components/ui";
-import type { WebServerInfoResponse } from "@/shared/types/model";
 import { Button } from "@shared/components/ui/button";
 import {
   Popover,
@@ -8,12 +8,10 @@ import {
 } from "@shared/components/ui/popover";
 import { Info } from "lucide-react";
 
-export const ServerInfo = ({
-  serverInfo: apiInfo,
-}: {
-  serverInfo: WebServerInfoResponse | null;
-}) => {
-  if (!apiInfo) return null;
+export const ServerInfo = () => {
+  const serverInfo = useServerStore((s) => s.serverInfo);
+
+  if (!serverInfo) return null;
 
   return (
     <div className="flex justify-center mt-6">
@@ -29,8 +27,8 @@ export const ServerInfo = ({
             <li className="grid gap-0.5">
               <span className="text-muted-foreground">Sentinel version</span>
               <span className="flex justify-between items-center font-medium">
-                {apiInfo.version}
-                {apiInfo.version != "local" && apiInfo.available_update ? (
+                {serverInfo.version}
+                {serverInfo.available_update ? (
                   <Badge className="bg-rose-500 text-white ml-2">
                     Outdated
                   </Badge>
@@ -43,27 +41,29 @@ export const ServerInfo = ({
             </li>
             <li className="grid gap-0.5">
               <span className="text-muted-foreground">Go version</span>
-              <span className="font-medium">{apiInfo.go_version}</span>
+              <span className="font-medium">{serverInfo.go_version}</span>
             </li>
             <li className="grid gap-0.5">
               <span className="text-muted-foreground">SQLite version</span>
-              <span className="font-medium">{apiInfo.sqlite_version}</span>
+              <span className="font-medium">{serverInfo.sqlite_version}</span>
             </li>
             <li className="grid gap-0.5">
               <span className="text-muted-foreground">OS</span>
-              <span className="font-medium">{apiInfo.os}</span>
+              <span className="font-medium">{serverInfo.os}</span>
             </li>
             <li className="grid gap-0.5">
               <span className="text-muted-foreground">Arch</span>
-              <span className="font-medium">{apiInfo.arch}</span>
+              <span className="font-medium">{serverInfo.arch}</span>
             </li>
             <li className="grid gap-0.5">
               <span className="text-muted-foreground">Build date</span>
-              <span className="font-medium">{apiInfo.build_date}</span>
+              <span className="font-medium">{serverInfo.build_date}</span>
             </li>
             <li className="grid gap-0.5">
               <span className="text-muted-foreground">Commit hash</span>
-              <span className="font-medium">{apiInfo.commit_hash}</span>
+              <span className="font-medium">
+                {serverInfo.commit_hash?.slice(0, 8) || "N/A"}
+              </span>
             </li>
           </ul>
         </PopoverContent>

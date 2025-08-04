@@ -62,9 +62,10 @@ func (s *Server) checkNewVersion() error {
 		s.logger.Infof("New version available: %s", releaseInfo.TagName)
 
 		s.serverInfo.AvailableUpdate = &AvailableUpdate{
-			TagName:     releaseInfo.TagName,
-			URL:         "https://github.com/sxwebdev/sentinel/releases/tag/" + releaseInfo.TagName,
-			Description: releaseInfo.Body,
+			IsAvailableManual: s.config.Upgrader.IsEnabled,
+			TagName:           releaseInfo.TagName,
+			URL:               "https://github.com/sxwebdev/sentinel/releases/tag/" + releaseInfo.TagName,
+			Description:       releaseInfo.Body,
 		}
 	}
 

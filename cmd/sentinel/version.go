@@ -12,7 +12,7 @@ func versionCMD() *cli.Command {
 		Name:  "version",
 		Usage: "print current version",
 		Action: func(_ context.Context, _ *cli.Command) error {
-			fmt.Printf("%s version %s\n", appName, getBuildVersion())
+			fmt.Println(version)
 			return nil
 		},
 	}

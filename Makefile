@@ -92,6 +92,9 @@ docker-stop: ## Stop Docker container
 	docker stop sentinel || true
 	docker rm sentinel || true
 
+deocker-dev:
+	docker compose -f docker-compose.local.yml up -d
+
 # Docker Compose
 up: ## Start with docker-compose
 	docker-compose up -d

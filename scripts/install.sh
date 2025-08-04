@@ -273,7 +273,7 @@ fi
 
 # Verify the new binary works
 print_info "Verifying binary..."
-BINARY_VERSION=$("$EXTRACTED_BINARY" --version 2>/dev/null || echo "unknown")
+BINARY_VERSION=$("$EXTRACTED_BINARY" version 2>/dev/null || echo "unknown")
 print_info "Binary version: $BINARY_VERSION"
 
 # Create system user if it doesn't exist

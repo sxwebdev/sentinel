@@ -7,20 +7,6 @@ import (
 	"github.com/sxwebdev/sentinel/internal/storage"
 )
 
-// ErrorResponse represents an error response
-//
-//	@Description	Error response
-type ErrorResponse struct {
-	Error string `json:"error" example:"Error description"`
-}
-
-// SuccessResponse represents a successful response
-//
-//	@Description	Successful response
-type SuccessResponse struct {
-	Message string `json:"message" example:"Operation completed successfully"`
-}
-
 // DashboardStats represents dashboard statistics
 //
 //	@Description	Dashboard statistics

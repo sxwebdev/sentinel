@@ -1,8 +1,12 @@
-version: "3.8"
-
 services:
   sentinel:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VERSION: local-dev
+        COMMIT_HASH: local
+        BUILD_DATE: local
     ports:
       - "8080:8080"
     volumes:

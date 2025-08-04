@@ -6,9 +6,6 @@
  * OpenAPI spec version: 1.0
  */
 
-export interface WebAvailableUpdate {
-  description?: string;
-  is_available_manual?: boolean;
-  tag_name?: string;
-  url?: string;
+export interface WebHealthCheckResponse {
+  status?: string;
 }

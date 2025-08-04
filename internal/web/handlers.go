@@ -33,6 +33,7 @@ import (
 	"github.com/sxwebdev/sentinel/internal/monitor"
 	"github.com/sxwebdev/sentinel/internal/receiver"
 	"github.com/sxwebdev/sentinel/internal/storage"
+	"github.com/sxwebdev/sentinel/internal/upgrader"
 	"github.com/sxwebdev/sentinel/internal/utils"
 	"github.com/sxwebdev/sentinel/pkg/dbutils"
 	_ "github.com/sxwebdev/sentinel/pkg/dbutils"
@@ -45,14 +46,16 @@ type Server struct {
 
 	serverInfo ServerInfo
 
-	monitorService *monitor.MonitorService
+	config        *config.Config
+	app           *fiber.App
+	wsConnections map[*websocket.Conn]bool
+	wsMutex       sync.Mutex
+	validator     *validator.Validate
+
 	storage        storage.Storage
+	monitorService *monitor.MonitorService
 	receiver       *receiver.Receiver
-	config         *config.Config
-	app            *fiber.App
-	wsConnections  map[*websocket.Conn]bool
-	wsMutex        sync.Mutex
-	validator      *validator.Validate
+	upgrader       *upgrader.Upgrader
 }
 
 // NewServer creates a new web server
@@ -63,6 +66,7 @@ func NewServer(
 	monitorService *monitor.MonitorService,
 	storage storage.Storage,
 	receiver *receiver.Receiver,
+	upgrader *upgrader.Upgrader,
 ) (*Server, error) {
 	// Create Fiber app
 	app := fiber.New(fiber.Config{
@@ -82,6 +86,7 @@ func NewServer(
 		app:            app,
 		wsConnections:  make(map[*websocket.Conn]bool),
 		validator:      validator.New(),
+		upgrader:       upgrader,
 	}
 
 	// Setup basic auth if enabled
@@ -178,8 +183,11 @@ func (s *Server) setupRoutes() {
 	api.Get("/tags", s.handleGetAllTags)
 	api.Get("/tags/count", s.handleGetAllTagsWithCount)
 
-	// Server info API
-	api.Get("/info", s.handleAPIInfo)
+	// Server API
+	serverGroup := api.Group("/server")
+	serverGroup.Get("/info", s.handleAPIInfo)
+	serverGroup.Get("/upgrade", s.handleManualUpgrade)
+	serverGroup.Get("/health", s.handleHealthCheck)
 
 	// WebSocket endpoint
 	s.app.Use("/ws", func(c *fiber.Ctx) error {
@@ -901,12 +909,12 @@ func (s *Server) handleAPIDeleteService(c *fiber.Ctx) error {
 //
 //	@Summary		Get server info
 //	@Description	Returns basic information about the server
-//	@Tags			info
+//	@Tags			server
 //	@Accept			json
 //	@Produce		json
 //	@Success		200	{object}	ServerInfoResponse	"Server information"
 //	@Failure		500	{object}	ErrorResponse		"Internal server error"
-//	@Router			/info [get]
+//	@Router			/server/info [get]
 func (s *Server) handleAPIInfo(c *fiber.Ctx) error {
 	info := ServerInfoResponse{
 		Version:         s.serverInfo.Version,
