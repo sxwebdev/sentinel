@@ -183,7 +183,7 @@ definitions:
       config:
         $ref: '#/definitions/monitors.Config'
       interval:
-        example: 30000
+        example: 60000
         type: integer
       is_enabled:
         example: true
@@ -196,7 +196,7 @@ definitions:
         - $ref: '#/definitions/storage.ServiceProtocolType'
         example: http
       retries:
-        example: 3
+        example: 5
         type: integer
       tags:
         example:
@@ -206,7 +206,7 @@ definitions:
           type: string
         type: array
       timeout:
-        example: 5000
+        example: 10000
         type: integer
     type: object
   web.DashboardStats:
@@ -296,7 +296,7 @@ definitions:
         example: service-1
         type: string
       interval:
-        example: 30000
+        example: 60000
         type: integer
       is_enabled:
         example: true
@@ -321,7 +321,7 @@ definitions:
         example: 150000000
         type: integer
       retries:
-        example: 3
+        example: 5
         type: integer
       status:
         allOf:
@@ -335,7 +335,7 @@ definitions:
           type: string
         type: array
       timeout:
-        example: 5000
+        example: 10000
         type: integer
       total_checks:
         example: 100

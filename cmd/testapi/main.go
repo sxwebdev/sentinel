@@ -209,9 +209,9 @@ func setupTestSuite() (*TestSuite, error) {
 		},
 		Monitoring: config.MonitoringConfig{
 			Global: config.GlobalConfig{
-				DefaultInterval: 30 * time.Second,
+				DefaultInterval: time.Minute,
 				DefaultTimeout:  5 * time.Second,
-				DefaultRetries:  3,
+				DefaultRetries:  5,
 			},
 		},
 		Server: config.ServerConfig{

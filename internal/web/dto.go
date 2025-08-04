@@ -55,9 +55,9 @@ type ServiceStats struct {
 type CreateUpdateServiceRequest struct {
 	Name      string                      `json:"name" example:"Web Server"`
 	Protocol  storage.ServiceProtocolType `json:"protocol" example:"http"`
-	Interval  uint32                      `json:"interval" swaggertype:"primitive,integer" example:"30000"`
-	Timeout   uint32                      `json:"timeout" swaggertype:"primitive,integer" example:"5000"`
-	Retries   int                         `json:"retries" example:"3"`
+	Interval  uint32                      `json:"interval" swaggertype:"primitive,integer" example:"60000"`
+	Timeout   uint32                      `json:"timeout" swaggertype:"primitive,integer" example:"10000"`
+	Retries   int                         `json:"retries" example:"5"`
 	Tags      []string                    `json:"tags" example:"web,production"`
 	Config    monitors.Config             `json:"config"`
 	IsEnabled bool                        `json:"is_enabled" example:"true"`
@@ -68,9 +68,9 @@ type ServiceDTO struct {
 	ID                 string                      `json:"id" example:"service-1"`
 	Name               string                      `json:"name" example:"Web Server"`
 	Protocol           storage.ServiceProtocolType `json:"protocol" example:"http"`
-	Interval           uint32                      `json:"interval" swaggertype:"primitive,integer" example:"30000"`
-	Timeout            uint32                      `json:"timeout" swaggertype:"primitive,integer" example:"5000"`
-	Retries            int                         `json:"retries" example:"3"`
+	Interval           uint32                      `json:"interval" swaggertype:"primitive,integer" example:"60000"`
+	Timeout            uint32                      `json:"timeout" swaggertype:"primitive,integer" example:"10000"`
+	Retries            int                         `json:"retries" example:"5"`
 	Tags               []string                    `json:"tags" example:"web,production"`
 	Config             monitors.Config             `json:"config"`
 	IsEnabled          bool                        `json:"is_enabled" example:"true"`

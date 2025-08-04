@@ -38,9 +38,9 @@ server:
     users: []
 monitoring:
   global:
-    default_interval: 30s
+    default_interval: 60s
     default_timeout: 10s
-    default_retries: 3
+    default_retries: 5
 database:
   path: ./data/db.sqlite
 notifications:

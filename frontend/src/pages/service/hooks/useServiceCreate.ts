@@ -11,9 +11,9 @@ export const useServiceCreate = () => {
   const initialValues: WebCreateUpdateServiceRequest = {
     name: "",
     protocol: "http",
-    interval: 30000,
+    interval: 60000,
     timeout: 10000,
-    retries: 3,
+    retries: 5,
     tags: [],
     is_enabled: true,
     config: {

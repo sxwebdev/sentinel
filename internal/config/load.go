@@ -92,13 +92,13 @@ func (c *Config) setDefaults() error {
 
 	// Monitoring defaults
 	if c.Monitoring.Global.DefaultInterval == 0 {
-		c.Monitoring.Global.DefaultInterval = 30 * time.Second
+		c.Monitoring.Global.DefaultInterval = time.Minute
 	}
 	if c.Monitoring.Global.DefaultTimeout == 0 {
 		c.Monitoring.Global.DefaultTimeout = 10 * time.Second
 	}
 	if c.Monitoring.Global.DefaultRetries == 0 {
-		c.Monitoring.Global.DefaultRetries = 3
+		c.Monitoring.Global.DefaultRetries = 5
 	}
 
 	// Database defaults

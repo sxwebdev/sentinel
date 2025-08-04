@@ -1060,7 +1060,7 @@ const docTemplate = `{
                 },
                 "interval": {
                     "type": "integer",
-                    "example": 30000
+                    "example": 60000
                 },
                 "is_enabled": {
                     "type": "boolean",
@@ -1080,7 +1080,7 @@ const docTemplate = `{
                 },
                 "retries": {
                     "type": "integer",
-                    "example": 3
+                    "example": 5
                 },
                 "tags": {
                     "type": "array",
@@ -1094,7 +1094,7 @@ const docTemplate = `{
                 },
                 "timeout": {
                     "type": "integer",
-                    "example": 5000
+                    "example": 10000
                 }
             }
         },
@@ -1219,7 +1219,7 @@ const docTemplate = `{
                 },
                 "interval": {
                     "type": "integer",
-                    "example": 30000
+                    "example": 60000
                 },
                 "is_enabled": {
                     "type": "boolean",
@@ -1255,7 +1255,7 @@ const docTemplate = `{
                 },
                 "retries": {
                     "type": "integer",
-                    "example": 3
+                    "example": 5
                 },
                 "status": {
                     "allOf": [
@@ -1277,7 +1277,7 @@ const docTemplate = `{
                 },
                 "timeout": {
                     "type": "integer",
-                    "example": 5000
+                    "example": 10000
                 },
                 "total_checks": {
                     "type": "integer",
