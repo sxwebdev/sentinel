@@ -361,6 +361,10 @@ definitions:
         type: integer
       date:
         type: string
+      total_duration:
+        type: integer
+      total_duration_human:
+        type: string
     type: object
   web.healthCheckResponse:
     properties:

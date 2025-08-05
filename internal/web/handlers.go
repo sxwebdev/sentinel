@@ -706,10 +706,12 @@ func (s *Server) handleAPIDeleteIncident(c *fiber.Ctx) error {
 }
 
 type getIncidentsStatsItem struct {
-	Date             time.Time `json:"date"`
-	Count            int64     `json:"count"`
-	AvgDuration      uint32    `json:"avg_duration"`
-	AvgDurationHuman string    `json:"avg_duration_human"`
+	Date               time.Time `json:"date"`
+	Count              int64     `json:"count"`
+	AvgDuration        uint32    `json:"avg_duration"`
+	AvgDurationHuman   string    `json:"avg_duration_human"`
+	TotalDuration      uint32    `json:"total_duration"`
+	TotalDurationHuman string    `json:"total_duration_human"`
 }
 
 type getIncidentsStatsData []getIncidentsStatsItem
@@ -751,10 +753,12 @@ func (s *Server) handleAPIGetIncidentsStats(c *fiber.Ctx) error {
 	response := make(getIncidentsStatsData, 0, len(stats))
 	for _, item := range stats {
 		response = append(response, getIncidentsStatsItem{
-			Date:             item.Date,
-			Count:            item.Count,
-			AvgDuration:      uint32(item.AvgDuration.Seconds()),
-			AvgDurationHuman: item.AvgDuration.Round(time.Second).String(),
+			Date:               item.Date,
+			Count:              item.Count,
+			AvgDuration:        uint32(item.AvgDuration.Seconds()),
+			AvgDurationHuman:   item.AvgDuration.Round(time.Second).String(),
+			TotalDuration:      uint32(item.TotalDuration.Seconds()),
+			TotalDurationHuman: item.TotalDuration.Round(time.Second).String(),
 		})
 	}
 

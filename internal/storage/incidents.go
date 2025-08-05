@@ -332,9 +332,10 @@ func (o *ORMStorage) DeleteIncident(ctx context.Context, incidentID string) erro
 }
 
 type GetIncidentsStatsByDateRangeItem struct {
-	Date        time.Time     `json:"date"`
-	Count       int64         `json:"count"`
-	AvgDuration time.Duration `json:"avg_duration"`
+	Date          time.Time     `json:"date"`
+	Count         int64         `json:"count"`
+	AvgDuration   time.Duration `json:"avg_duration"`
+	TotalDuration time.Duration `json:"total_duration"`
 }
 
 type GetIncidentsStatsByDateRangeData []GetIncidentsStatsByDateRangeItem
@@ -355,6 +356,7 @@ func (o *ORMStorage) GetIncidentsStatsByDateRange(ctx context.Context, startTime
 		sb.Select(
 			"COUNT(*) as count",
 			"AVG(CASE WHEN resolved = true THEN duration_ns ELSE (strftime('%s', 'now') - strftime('%s', start_time)) * 1000000000 END) as avg_duration",
+			"SUM(CASE WHEN resolved = true THEN duration_ns ELSE (strftime('%s', 'now') - strftime('%s', start_time)) * 1000000000 END) as total_duration",
 		)
 		sb.From("incidents")
 		sb.Where(sb.GreaterEqualThan("start_time", dayStart))
@@ -365,8 +367,9 @@ func (o *ORMStorage) GetIncidentsStatsByDateRange(ctx context.Context, startTime
 
 		var count int64
 		var avgDurationNS *float64
+		var totalDurationNS *float64
 
-		if err := row.Scan(&count, &avgDurationNS); err != nil {
+		if err := row.Scan(&count, &avgDurationNS, &totalDurationNS); err != nil {
 			return nil, fmt.Errorf("failed to scan incident stats for date %s: %w", d.Format("2006-01-02"), err)
 		}
 
@@ -378,6 +381,10 @@ func (o *ORMStorage) GetIncidentsStatsByDateRange(ctx context.Context, startTime
 		// Convert nanoseconds to duration
 		if avgDurationNS != nil {
 			item.AvgDuration = time.Duration(int64(*avgDurationNS))
+		}
+
+		if totalDurationNS != nil {
+			item.TotalDuration = time.Duration(int64(*totalDurationNS))
 		}
 
 		result = append(result, item)

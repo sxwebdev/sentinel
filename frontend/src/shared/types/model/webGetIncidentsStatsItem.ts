@@ -11,4 +11,6 @@ export interface WebGetIncidentsStatsItem {
   avg_duration_human?: string;
   count?: number;
   date?: string;
+  total_duration?: number;
+  total_duration_human?: string;
 }

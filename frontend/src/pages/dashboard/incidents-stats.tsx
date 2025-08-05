@@ -26,6 +26,7 @@ export const description = "An interactive area chart";
 const ChartType = {
   IncidentsCount: "incidentsCount",
   IncidentsAvgDuration: "incidentsAvgDuration",
+  IncidentsTotalDuration: "incidentsTotalDuration",
 } as const;
 
 type ChartType = (typeof ChartType)[keyof typeof ChartType];
@@ -35,6 +36,8 @@ interface IncidentStatsItem {
   count: number;
   avg_duration: number; // in seconds
   avg_duration_human: string; // for human-readable format
+  total_duration: number; // in seconds
+  total_duration_human: string; // for human-readable format
 }
 
 export function ChartIncidentsStats() {
@@ -52,11 +55,15 @@ export function ChartIncidentsStats() {
         label:
           chartType === ChartType.IncidentsCount
             ? "Incidents Count"
-            : "Avg Duration",
+            : chartType === ChartType.IncidentsAvgDuration
+              ? "Avg Duration"
+              : "Total Duration",
         color:
           chartType === ChartType.IncidentsCount
-            ? "var(--chart-1)"
-            : "var(--chart-2)",
+            ? "var(--chart-6)"
+            : chartType === ChartType.IncidentsAvgDuration
+              ? "var(--chart-2)"
+              : "var(--chart-3)",
       },
     }),
     [chartType]
@@ -92,6 +99,8 @@ export function ChartIncidentsStats() {
           count: item.count || 0,
           avg_duration: item.avg_duration || 0,
           avg_duration_human: item.avg_duration_human || "",
+          total_duration: item.total_duration || 0,
+          total_duration_human: item.total_duration_human || "",
         }));
         setIncidentsData(formattedData);
       })
@@ -109,13 +118,16 @@ export function ChartIncidentsStats() {
       const dataKey =
         chartType === ChartType.IncidentsCount
           ? item.count
-          : Math.round(item.avg_duration);
+          : chartType === ChartType.IncidentsAvgDuration
+            ? Math.round(item.avg_duration)
+            : Math.round(item.total_duration);
 
       return {
         date: item.date,
         incidents: dataKey,
         count: item.count,
         avg_duration_human: item.avg_duration_human,
+        total_duration_human: item.total_duration_human,
         formattedDate: date.toLocaleDateString("en-US", {
           month: "short",
           day: "numeric",
@@ -159,6 +171,12 @@ export function ChartIncidentsStats() {
             >
               Average duration
             </SelectItem>
+            <SelectItem
+              value={ChartType.IncidentsTotalDuration}
+              className="rounded-lg"
+            >
+              Total duration
+            </SelectItem>
           </SelectContent>
         </Select>
 
@@ -194,8 +212,10 @@ export function ChartIncidentsStats() {
                   offset="5%"
                   stopColor={
                     chartType === ChartType.IncidentsCount
-                      ? "var(--chart-1)"
-                      : "var(--chart-2)"
+                      ? "var(--chart-6)"
+                      : chartType === ChartType.IncidentsAvgDuration
+                        ? "var(--chart-2)"
+                        : "var(--chart-3)"
                   }
                   stopOpacity={0.8}
                 />
@@ -203,8 +223,10 @@ export function ChartIncidentsStats() {
                   offset="95%"
                   stopColor={
                     chartType === ChartType.IncidentsCount
-                      ? "var(--chart-1)"
-                      : "var(--chart-2)"
+                      ? "var(--chart-6)"
+                      : chartType === ChartType.IncidentsAvgDuration
+                        ? "var(--chart-2)"
+                        : "var(--chart-3)"
                   }
                   stopOpacity={0.1}
                 />
@@ -248,12 +270,16 @@ export function ChartIncidentsStats() {
                           <span className="text-[0.70rem] uppercase text-muted-foreground">
                             {chartType === ChartType.IncidentsCount
                               ? "Count"
-                              : "Duration"}
+                              : chartType === ChartType.IncidentsAvgDuration
+                                ? "Avg Duration"
+                                : "Total Duration"}
                           </span>
                           <span className="font-bold">
-                            {chartType === ChartType.IncidentsAvgDuration
-                              ? data.avg_duration_human || "0s"
-                              : data.count}
+                            {chartType === ChartType.IncidentsCount
+                              ? data.count
+                              : chartType === ChartType.IncidentsAvgDuration
+                                ? data.avg_duration_human || "0s"
+                                : data.total_duration_human || "0s"}
                           </span>
                         </div>
                       </div>
@@ -269,8 +295,10 @@ export function ChartIncidentsStats() {
               fill="url(#fillIncidents)"
               stroke={
                 chartType === ChartType.IncidentsCount
-                  ? "var(--chart-1)"
-                  : "var(--chart-2)"
+                  ? "var(--chart-6)"
+                  : chartType === ChartType.IncidentsAvgDuration
+                    ? "var(--chart-2)"
+                    : "var(--chart-3)"
               }
             />
           </AreaChart>

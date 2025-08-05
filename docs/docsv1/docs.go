@@ -1367,6 +1367,12 @@ const docTemplate = `{
                 },
                 "date": {
                     "type": "string"
+                },
+                "total_duration": {
+                    "type": "integer"
+                },
+                "total_duration_human": {
+                    "type": "string"
                 }
             }
         },
