@@ -249,7 +249,7 @@ func findServicesBuilder(params FindServicesParams, col ...string) *sqlbuilder.S
 		}
 
 		if len(tagConditions) > 0 {
-			sb.Where(fmt.Sprintf("(%s)", strings.Join(tagConditions, " OR ")))
+			sb.Where(fmt.Sprintf("(%s)", strings.Join(tagConditions, " AND ")))
 		}
 	}
 

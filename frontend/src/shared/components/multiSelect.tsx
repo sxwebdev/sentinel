@@ -30,7 +30,9 @@ export default function MultiSelect({
         onChange={onChange}
         hideClearAllButton
         hidePlaceholderWhenSelected
-        emptyIndicator={<p className="text-center text-sm">No results found</p>}
+        emptyIndicator={
+          <p className="text-center text-sm pt-3">No results found</p>
+        }
       />
     </div>
   );
