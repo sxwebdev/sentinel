@@ -72,7 +72,7 @@ func startCMD() *cli.Command {
 			// Initialize notifier
 			var notif *notifier.Notifier
 			if conf.Notifications.Enabled {
-				notif, err = notifier.New(conf.Notifications.URLs)
+				notif, err = notifier.New(l, conf.Notifications.URLs)
 				if err != nil {
 					return fmt.Errorf("failed to initialize notifier: %w", err)
 				}

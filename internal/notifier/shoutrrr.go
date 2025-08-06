@@ -9,6 +9,7 @@ import (
 
 	"github.com/containrrr/shoutrrr"
 	"github.com/sxwebdev/sentinel/internal/storage"
+	"github.com/tkcrm/mx/logger"
 )
 
 // notificationRequest represents a single notification request
@@ -18,6 +19,7 @@ type notificationRequest struct {
 }
 
 type Notifier struct {
+	logger    logger.Logger
 	urls      []string
 	queue     chan *notificationRequest
 	done      chan struct{}
@@ -28,16 +30,17 @@ type Notifier struct {
 }
 
 // New creates a new Notifier instance as a service
-func New(urls []string) (*Notifier, error) {
+func New(l logger.Logger, urls []string) (*Notifier, error) {
 	if len(urls) == 0 {
 		return nil, fmt.Errorf("no notification URLs provided")
 	}
 
 	notifier := &Notifier{
-		urls:  urls,
-		queue: make(chan *notificationRequest, 500), // buffer for 500 notifications
-		done:  make(chan struct{}),
-		name:  "NotificationService",
+		logger: l,
+		urls:   urls,
+		queue:  make(chan *notificationRequest, 500), // buffer for 500 notifications
+		done:   make(chan struct{}),
+		name:   "NotificationService",
 	}
 
 	return notifier, nil
@@ -112,7 +115,7 @@ func (s *Notifier) processQueue() {
 			for {
 				select {
 				case req := <-s.queue:
-					s.sendMessageSync(req.Message)
+					s.processNotification(req)
 				default:
 					return
 				}
@@ -122,11 +125,25 @@ func (s *Notifier) processQueue() {
 			// Check queue every 500ms
 			select {
 			case req := <-s.queue:
-				s.sendMessageSync(req.Message)
+				s.processNotification(req)
 			default:
 				// Queue is empty, continue
 			}
 		}
+	}
+}
+
+// processNotification processes a single notification with simple retry
+func (s *Notifier) processNotification(req *notificationRequest) {
+	err := s.sendMessageSync(req.Message)
+
+	if err != nil {
+		s.logger.Errorf("failed to send notification: %v", err)
+
+		// Put back in queue for retry
+		s.queue <- req
+	} else {
+		s.logger.Info("notification sent successfully")
 	}
 }
 
@@ -190,6 +207,12 @@ func (s *Notifier) sendMessageSync(message string) error {
 				return
 			}
 
+			providerName, _, err := sender.ExtractServiceName(providerURL)
+			if err != nil {
+				errors <- fmt.Errorf("provider %d: failed to extract service name: %w", index, err)
+				return
+			}
+
 			// Send message with timeout
 			timeoutCtx, timeoutCancel := context.WithTimeout(context.Background(), 30*time.Second)
 			defer timeoutCancel()
@@ -198,7 +221,7 @@ func (s *Notifier) sendMessageSync(message string) error {
 			go func() {
 				defer func() {
 					if r := recover(); r != nil {
-						errors <- fmt.Errorf("provider %d: panic during send: %v", index, r)
+						errors <- fmt.Errorf("provider %s: panic during send: %v", providerName, r)
 					}
 				}()
 				done <- sender.Send(message, nil)
@@ -216,10 +239,10 @@ func (s *Notifier) sendMessageSync(message string) error {
 				}
 
 				if hasErrors {
-					errors <- fmt.Errorf("provider %d: failed to send: %v", index, errs)
+					errors <- fmt.Errorf("provider %s: failed to send: %v", providerName, errs)
 				}
 			case <-timeoutCtx.Done():
-				errors <- fmt.Errorf("provider %d: timeout", index)
+				errors <- fmt.Errorf("provider %s: timeout", providerName)
 				// Note: The goroutine with sender.Send() might still be running,
 				// but we can't force-kill it. This is a limitation of the shoutrrr library.
 			}
