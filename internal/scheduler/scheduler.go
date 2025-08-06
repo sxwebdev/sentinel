@@ -40,6 +40,9 @@ type job struct {
 	ticker      *time.Ticker
 	stopChan    chan struct{}
 	inProgress  atomic.Bool
+	// Context and cancel function for canceling ongoing checks
+	checkCtx    context.Context
+	checkCancel context.CancelFunc
 }
 
 // New creates a new scheduler
@@ -98,6 +101,11 @@ func (s *Scheduler) Stop(ctx context.Context) error {
 // stopAll stops monitoring for all services
 func (s *Scheduler) stopAll() {
 	s.jobs.Range(func(key string, value *job) bool {
+		// Cancel any ongoing checks
+		if value.checkCancel != nil {
+			value.checkCancel()
+		}
+
 		select {
 		case <-value.stopChan:
 			// Channel already closed
@@ -120,6 +128,7 @@ func (s *Scheduler) addService(ctx context.Context, svc *storage.Service) {
 	}
 
 	// Create new service job with minimal info
+	checkCtx, checkCancel := context.WithCancel(ctx)
 	job := &job{
 		serviceID:   svc.ID,
 		serviceName: svc.Name,
@@ -127,6 +136,8 @@ func (s *Scheduler) addService(ctx context.Context, svc *storage.Service) {
 		timeout:     svc.Timeout,
 		retries:     svc.Retries,
 		stopChan:    make(chan struct{}),
+		checkCtx:    checkCtx,
+		checkCancel: checkCancel,
 	}
 
 	s.addJob(ctx, job)
@@ -136,6 +147,11 @@ func (s *Scheduler) addService(ctx context.Context, svc *storage.Service) {
 func (s *Scheduler) addJob(ctx context.Context, job *job) {
 	// Check if job already exists
 	if existingJob, exists := s.jobs.Load(job.serviceID); exists {
+		// Cancel any ongoing checks for the existing job
+		if existingJob.checkCancel != nil {
+			existingJob.checkCancel()
+		}
+
 		// Stop existing job gracefully
 		select {
 		case <-existingJob.stopChan:
@@ -165,7 +181,7 @@ func (s *Scheduler) monitorService(ctx context.Context, job *job) {
 	defer job.ticker.Stop()
 
 	// Perform initial check
-	if err := s.performCheck(ctx, job); err != nil {
+	if err := s.performCheck(job); err != nil {
 		s.logger.Errorf("Error performing initial check for service %s: %v", job.serviceName, err)
 		return
 	}
@@ -177,7 +193,7 @@ func (s *Scheduler) monitorService(ctx context.Context, job *job) {
 		case <-job.stopChan:
 			return
 		case <-job.ticker.C:
-			if err := s.performCheck(ctx, job); err != nil && !errors.Is(err, context.Canceled) {
+			if err := s.performCheck(job); err != nil && !errors.Is(err, context.Canceled) {
 				s.logger.Errorf("error performing check for service %s: %v", job.serviceName, err)
 				continue
 			}
@@ -186,17 +202,22 @@ func (s *Scheduler) monitorService(ctx context.Context, job *job) {
 }
 
 // performCheck executes a health check for a service
-func (s *Scheduler) performCheck(ctx context.Context, job *job) error {
+func (s *Scheduler) performCheck(job *job) error {
 	if !job.inProgress.CompareAndSwap(false, true) {
 		// Another check is already in progress
 		return nil
 	}
 	defer job.inProgress.Store(false)
 
+	// Check if job context is cancelled (handles job updates/deletions)
+	if job.checkCtx.Err() != nil {
+		return job.checkCtx.Err()
+	}
+
 	serviceName := job.serviceName
 
 	// Get current service configuration from database
-	service, err := s.monitorSvc.GetServiceByID(ctx, job.serviceID)
+	service, err := s.monitorSvc.GetServiceByID(job.checkCtx, job.serviceID)
 	if err != nil {
 		return fmt.Errorf("failed to get service config for %s: %w", serviceName, err)
 	}
@@ -219,13 +240,14 @@ func (s *Scheduler) performCheck(ctx context.Context, job *job) error {
 	// Perform the check with retries
 	var lastErr error
 	var lastAttemptResponseTime time.Duration
+
 	for attempt := 1; attempt <= job.retries; attempt++ {
 		// Create context with timeout for this specific check
-		checkCtx, cancel := context.WithTimeout(ctx, job.timeout)
+		attemptCtx, cancel := context.WithTimeout(job.checkCtx, job.timeout)
 
 		// Measure time for this specific attempt
 		attemptStartTime := time.Now()
-		err := monitor.Check(checkCtx)
+		err := monitor.Check(attemptCtx)
 		attemptResponseTime := time.Since(attemptStartTime)
 		lastAttemptResponseTime = attemptResponseTime
 
@@ -234,13 +256,17 @@ func (s *Scheduler) performCheck(ctx context.Context, job *job) error {
 
 		if err == nil {
 			// Success - record the time of this successful attempt
-			if err := s.monitorSvc.RecordSuccess(ctx, job.serviceID, attemptResponseTime); err != nil {
+			if err := s.monitorSvc.RecordSuccess(job.checkCtx, job.serviceID, attemptResponseTime); err != nil {
 				return fmt.Errorf("failed to record success for %s: %w", serviceName, err)
 			}
 
-			s.logger.Debugf("service %s check successful (attempt %d/%d) in %v", serviceName, attempt, job.retries, attemptResponseTime)
+			if attempt == 1 {
+				s.logger.Debugf("service %s check successful in %v", serviceName, attemptResponseTime)
+			} else {
+				s.logger.Debugf("service %s check successful (attempt %d/%d) in %v", serviceName, attempt, job.retries, attemptResponseTime)
+			}
 
-			service, err := s.monitorSvc.GetServiceByID(ctx, job.serviceID)
+			service, err := s.monitorSvc.GetServiceByID(job.checkCtx, job.serviceID)
 			if err != nil {
 				return fmt.Errorf("failed to get service config for %s: %w", serviceName, err)
 			}
@@ -258,11 +284,11 @@ func (s *Scheduler) performCheck(ctx context.Context, job *job) error {
 
 		// If not the last attempt, wait a bit before retrying
 		if attempt < job.retries {
-			// Check if parent context is cancelled before retrying
+			// Check if job context is cancelled before retrying
 			select {
-			case <-ctx.Done():
-				// Parent context cancelled, stop retrying
-				return ctx.Err()
+			case <-job.checkCtx.Done():
+				// Job context cancelled, stop retrying
+				return job.checkCtx.Err()
 			case <-time.After(time.Millisecond * 500 * time.Duration(attempt)):
 				// Exponential backoff - continue to next attempt
 			}
@@ -272,11 +298,11 @@ func (s *Scheduler) performCheck(ctx context.Context, job *job) error {
 	}
 
 	// All attempts failed - record the time of the last attempt
-	if err := s.monitorSvc.RecordFailure(ctx, job.serviceID, lastErr, lastAttemptResponseTime); err != nil {
+	if err := s.monitorSvc.RecordFailure(job.checkCtx, job.serviceID, lastErr, lastAttemptResponseTime); err != nil {
 		return fmt.Errorf("failed to record failure for %s: %w", serviceName, err)
 	}
 
-	service, err = s.monitorSvc.GetServiceByID(ctx, job.serviceID)
+	service, err = s.monitorSvc.GetServiceByID(job.checkCtx, job.serviceID)
 	if err != nil {
 		return fmt.Errorf("failed to get service config for %s: %w", serviceName, err)
 	}
@@ -291,13 +317,13 @@ func (s *Scheduler) performCheck(ctx context.Context, job *job) error {
 }
 
 // checkService manually triggers a check for a specific service
-func (s *Scheduler) checkService(ctx context.Context, serviceID string) error {
+func (s *Scheduler) checkService(serviceID string) error {
 	job, exists := s.jobs.Load(serviceID)
 	if !exists {
 		return ErrServiceNotFound
 	}
 
-	return s.performCheck(ctx, job)
+	return s.performCheck(job)
 }
 
 // removeJob removes a service dynamically (for runtime removals)
@@ -305,6 +331,11 @@ func (s *Scheduler) removeJob(serviceID string) error {
 	job, exists := s.jobs.Load(serviceID)
 	if !exists {
 		return ErrServiceNotFound
+	}
+
+	// Cancel any ongoing checks for this job
+	if job.checkCancel != nil {
+		job.checkCancel()
 	}
 
 	// Stop the monitoring gracefully
@@ -341,7 +372,7 @@ func (s *Scheduler) subscribeEvents(ctx context.Context) error {
 		case item := <-sub:
 			switch item.EventType {
 			case receiver.TriggerServiceEventTypeCheck:
-				if err := s.checkService(ctx, item.Svc.ID); err != nil {
+				if err := s.checkService(item.Svc.ID); err != nil {
 					s.logger.Errorf("check service error: %v", err)
 				}
 			case receiver.TriggerServiceEventTypeCreated:
