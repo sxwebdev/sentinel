@@ -258,13 +258,13 @@ func (s *Scheduler) performCheck(ctx context.Context, job *job) error {
 
 		// If not the last attempt, wait a bit before retrying
 		if attempt < job.retries {
+			// Check if parent context is cancelled before retrying
 			select {
-			case <-checkCtx.Done():
-				// Context cancelled, don't retry
-				break
-			case <-time.After(time.Second * time.Duration(attempt)):
-				// Exponential backoff
-				continue
+			case <-ctx.Done():
+				// Parent context cancelled, stop retrying
+				return ctx.Err()
+			case <-time.After(time.Millisecond * 500 * time.Duration(attempt)):
+				// Exponential backoff - continue to next attempt
 			}
 		}
 

@@ -231,7 +231,7 @@ func setupTestSuite() (*TestSuite, error) {
 	}
 
 	// Initialize notifier (disabled for tests)
-	var notif notifier.Notifier
+	var notif *notifier.Notifier
 
 	// Initialize receiver
 	rc := receiver.New()

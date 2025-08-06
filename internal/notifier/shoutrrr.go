@@ -11,41 +11,169 @@ import (
 	"github.com/sxwebdev/sentinel/internal/storage"
 )
 
-// Notifier определяет интерфейс для отправки уведомлений
-type Notifier interface {
-	SendAlert(service *storage.Service, incident *storage.Incident) error
-	SendRecovery(sservice *storage.Service, incident *storage.Incident) error
+// notificationRequest represents a single notification request
+type notificationRequest struct {
+	Message   string
+	CreatedAt time.Time
 }
 
-var _ Notifier = (*NotifierImpl)(nil)
-
-type NotifierImpl struct {
-	urls []string
+type Notifier struct {
+	urls      []string
+	queue     chan *notificationRequest
+	done      chan struct{}
+	wg        sync.WaitGroup
+	mu        sync.RWMutex
+	isStarted bool
+	name      string
 }
 
-// NewNotifier создает новый экземпляр Notifier
-func NewNotifier(urls []string) (Notifier, error) {
+// New creates a new Notifier instance as a service
+func New(urls []string) (*Notifier, error) {
 	if len(urls) == 0 {
 		return nil, fmt.Errorf("no notification URLs provided")
 	}
-	return &NotifierImpl{urls: urls}, nil
+
+	notifier := &Notifier{
+		urls:  urls,
+		queue: make(chan *notificationRequest, 500), // buffer for 500 notifications
+		done:  make(chan struct{}),
+		name:  "NotificationService",
+	}
+
+	return notifier, nil
+}
+
+// Name returns the service name
+func (s *Notifier) Name() string { return s.name }
+
+// Start starts the notification service
+func (s *Notifier) Start(ctx context.Context) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if s.isStarted {
+		return fmt.Errorf("notification service already started")
+	}
+
+	s.isStarted = true
+	s.wg.Add(1)
+
+	go func() {
+		defer s.wg.Done()
+		s.processQueue()
+	}()
+
+	return nil
+}
+
+// Stop stops the notification service
+func (s *Notifier) Stop(ctx context.Context) error {
+	s.mu.Lock()
+	if !s.isStarted {
+		s.mu.Unlock()
+		return nil
+	}
+	s.mu.Unlock()
+
+	// Close the done channel to signal stop
+	close(s.done)
+
+	// Wait for completion with timeout from context
+	done := make(chan struct{})
+	go func() {
+		s.wg.Wait()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+		// All goroutines completed
+	case <-ctx.Done():
+		// Timeout - force termination
+		return fmt.Errorf("notification service stop timeout: %w", ctx.Err())
+	}
+
+	s.mu.Lock()
+	s.isStarted = false
+	s.mu.Unlock()
+
+	return nil
+}
+
+// processQueue processes the notification queue with 500ms delay
+func (s *Notifier) processQueue() {
+	ticker := time.NewTicker(500 * time.Millisecond)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-s.done:
+			// Process remaining notifications in queue before exit
+			for {
+				select {
+				case req := <-s.queue:
+					s.sendMessageSync(req.Message)
+				default:
+					return
+				}
+			}
+
+		case <-ticker.C:
+			// Check queue every 500ms
+			select {
+			case req := <-s.queue:
+				s.sendMessageSync(req.Message)
+			default:
+				// Queue is empty, continue
+			}
+		}
+	}
 }
 
 // SendAlert sends an alert notification when a service goes down
-func (s *NotifierImpl) SendAlert(service *storage.Service, incident *storage.Incident) error {
+func (s *Notifier) SendAlert(service *storage.Service, incident *storage.Incident) error {
+	s.mu.RLock()
+	if !s.isStarted {
+		s.mu.RUnlock()
+		return fmt.Errorf("notification service is not started")
+	}
+	s.mu.RUnlock()
+
 	message := s.formatAlertMessage(service, incident)
-	return s.sendMessage(message)
+	return s.enqueueMessage(message)
 }
 
 // SendRecovery sends a recovery notification when a service comes back up
-func (s *NotifierImpl) SendRecovery(service *storage.Service, incident *storage.Incident) error {
+func (s *Notifier) SendRecovery(service *storage.Service, incident *storage.Incident) error {
+	s.mu.RLock()
+	if !s.isStarted {
+		s.mu.RUnlock()
+		return fmt.Errorf("notification service is not started")
+	}
+	s.mu.RUnlock()
+
 	message := s.formatRecoveryMessage(service, incident)
-	return s.sendMessage(message)
+	return s.enqueueMessage(message)
 }
 
-// sendMessage sends a message to all configured providers
+// enqueueMessage adds a message to the queue for sending
+func (s *Notifier) enqueueMessage(message string) error {
+	req := &notificationRequest{
+		Message:   message,
+		CreatedAt: time.Now(),
+	}
+
+	select {
+	case s.queue <- req:
+		return nil
+	default:
+		return fmt.Errorf("notification queue is full")
+	}
+}
+
+// sendMessageSync sends a message to all configured providers synchronously
 // If one provider fails, it continues with others and returns partial errors
-func (s *NotifierImpl) sendMessage(message string) error {
+func (s *Notifier) sendMessageSync(message string) error {
 	// Send to all providers concurrently
 	var wg sync.WaitGroup
 	errors := make(chan error, len(s.urls))
@@ -121,7 +249,7 @@ func (s *NotifierImpl) sendMessage(message string) error {
 }
 
 // formatAlertMessage formats an alert message
-func (s *NotifierImpl) formatAlertMessage(service *storage.Service, incident *storage.Incident) string {
+func (s *Notifier) formatAlertMessage(service *storage.Service, incident *storage.Incident) string {
 	tags := "-"
 	if len(service.Tags) > 0 {
 		tags = strings.Join(service.Tags, ", ")
@@ -144,7 +272,7 @@ func (s *NotifierImpl) formatAlertMessage(service *storage.Service, incident *st
 }
 
 // formatRecoveryMessage formats a recovery message
-func (s *NotifierImpl) formatRecoveryMessage(service *storage.Service, incident *storage.Incident) string {
+func (s *Notifier) formatRecoveryMessage(service *storage.Service, incident *storage.Incident) string {
 	var duration string
 	if incident.Duration != nil {
 		duration = formatDuration(*incident.Duration)

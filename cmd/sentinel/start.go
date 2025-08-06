@@ -70,9 +70,9 @@ func startCMD() *cli.Command {
 			l.Infof("SQLite version: %s", sqliteVersion)
 
 			// Initialize notifier
-			var notif notifier.Notifier
+			var notif *notifier.Notifier
 			if conf.Notifications.Enabled {
-				notif, err = notifier.NewNotifier(conf.Notifications.URLs)
+				notif, err = notifier.New(conf.Notifications.URLs)
 				if err != nil {
 					return fmt.Errorf("failed to initialize notifier: %w", err)
 				}
@@ -114,6 +114,12 @@ func startCMD() *cli.Command {
 				service.New(service.WithService(sched)),
 				service.New(service.WithService(webServer)),
 			)
+
+			if notif != nil {
+				ln.ServicesRunner().Register(
+					service.New(service.WithService(notif)),
+				)
+			}
 
 			return ln.Run()
 		},
