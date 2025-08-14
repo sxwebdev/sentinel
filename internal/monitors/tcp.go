@@ -1,6 +1,7 @@
 package monitors
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"net"
@@ -8,6 +9,7 @@ import (
 	"time"
 
 	"github.com/sxwebdev/sentinel/internal/storage"
+	"github.com/sxwebdev/sentinel/internal/utils"
 )
 
 // TCPConfig represents TCP monitor configuration
@@ -47,9 +49,14 @@ func (t *TCPMonitor) Check(ctx context.Context) error {
 	}
 	endpoint := t.conf.Endpoint
 
+	timeout := t.config.Timeout
+	if timeout <= 0 {
+		timeout = 5 * time.Second
+	}
+
 	// Create connection with timeout
 	dialer := net.Dialer{
-		Timeout: t.config.Timeout,
+		Timeout: timeout,
 	}
 
 	conn, err := dialer.DialContext(ctx, "tcp", endpoint)
@@ -60,6 +67,10 @@ func (t *TCPMonitor) Check(ctx context.Context) error {
 
 	// Send data if specified
 	if t.conf.SendData != "" {
+		if err := conn.SetWriteDeadline(time.Now().Add(timeout)); err != nil {
+			return fmt.Errorf("failed to set write deadline: %w", err)
+		}
+
 		_, err = conn.Write([]byte(t.conf.SendData))
 		if err != nil {
 			return fmt.Errorf("failed to send data: %w", err)
@@ -69,22 +80,48 @@ func (t *TCPMonitor) Check(ctx context.Context) error {
 	// Expect data if specified
 	if t.conf.ExpectData != "" {
 		// Set read deadline
-		deadline := time.Now().Add(t.config.Timeout)
+		deadline := time.Now().Add(timeout)
 		err = conn.SetReadDeadline(deadline)
 		if err != nil {
 			return fmt.Errorf("failed to set read deadline: %w", err)
 		}
 
-		// Read response
-		buffer := make([]byte, 1024)
-		n, err := conn.Read(buffer)
-		if err != nil {
-			return fmt.Errorf("failed to read response: %w", err)
+		var response strings.Builder
+		reader := bufio.NewReader(conn)
+
+		for {
+			buffer := make([]byte, 1024)
+			n, err := reader.Read(buffer)
+			if err != nil {
+				if utils.IsErrTimeout(err) {
+					break
+				}
+				return fmt.Errorf("failed to read response: %w", err)
+			}
+
+			if n == 0 {
+				break
+			}
+
+			if _, err := response.Write(buffer[:n]); err != nil {
+				return fmt.Errorf("failed to write response: %w", err)
+			}
+
+			if reader.Buffered() == 0 {
+				break
+			}
 		}
 
-		response := string(buffer[:n])
-		if !strings.Contains(response, t.conf.ExpectData) {
-			return fmt.Errorf("expected data not found in response: %s", t.conf.ExpectData)
+		// Now process the complete response
+		receivedData := response.String()
+
+		if len(receivedData) == 0 {
+			return fmt.Errorf("server sent no data, expected: '%s'", t.conf.ExpectData)
+		}
+
+		// Check if we have the expected data
+		if !strings.Contains(receivedData, t.conf.ExpectData) {
+			return fmt.Errorf("expected data '%s' not found in response: '%s'", t.conf.ExpectData, receivedData)
 		}
 	}
 
