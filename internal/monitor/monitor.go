@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"slices"
 	"time"
 
 	"github.com/sxwebdev/sentinel/internal/config"
@@ -38,9 +39,13 @@ func (m *MonitorService) FindServices(ctx context.Context, params storage.FindSe
 }
 
 // CreateService adds a new service and starts monitoring it
-func (m *MonitorService) CreateService(ctx context.Context, service storage.CreateUpdateServiceRequest) (*storage.Service, error) {
+func (m *MonitorService) CreateService(ctx context.Context, params storage.CreateUpdateServiceRequest) (*storage.Service, error) {
+	if len(params.Tags) > 0 {
+		slices.Sort(params.Tags)
+	}
+
 	// Save to storage
-	svc, err := m.storage.CreateService(ctx, service)
+	svc, err := m.storage.CreateService(ctx, params)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create service: %w", err)
 	}
@@ -55,6 +60,10 @@ func (m *MonitorService) CreateService(ctx context.Context, service storage.Crea
 
 // UpdateService updates an existing service
 func (m *MonitorService) UpdateService(ctx context.Context, id string, params storage.CreateUpdateServiceRequest) (*storage.Service, error) {
+	if len(params.Tags) > 0 {
+		slices.Sort(params.Tags)
+	}
+
 	// Update in storage
 	svc, err := m.storage.UpdateService(ctx, id, params)
 	if err != nil {
