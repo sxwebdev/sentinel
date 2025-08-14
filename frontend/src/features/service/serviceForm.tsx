@@ -156,7 +156,7 @@ const TCPForm = React.memo(() => {
           <Label>Expected Response</Label>
           <FastField name="config.tcp.expect_data">
             {({ field }: FieldProps) => (
-              <Input
+              <Textarea
                 {...field}
                 value={field.value ?? ""}
                 placeholder="Expected Response"
