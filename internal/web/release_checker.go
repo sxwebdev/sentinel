@@ -124,26 +124,24 @@ func (s *Server) checkNewVersion() error {
 		return nil
 	}
 
-	// Sort newer releases by version (oldest to newest)
-	// sort.Slice(newerReleases, func(i, j int) bool {
-	// 	return newerReleases[i].Version.LessThan(newerReleases[j].Version)
-	// })
-
 	// Get the latest version info
-	latestRelease := newerReleases[len(newerReleases)-1]
+	latestRelease := newerReleases[0]
 
 	// Combine descriptions from all newer releases
 	var combinedBody strings.Builder
 	combinedBody.WriteString(fmt.Sprintf("# Found %d newer version(s):\n\n", len(newerReleases)))
 
-	for _, release := range newerReleases {
+	for idx, release := range newerReleases {
 		combinedBody.WriteString(fmt.Sprintf("## Version %s\n", release.TagName))
 		if release.Body != "" {
 			combinedBody.WriteString(release.Body)
 		} else {
 			combinedBody.WriteString("No release notes available.")
 		}
-		combinedBody.WriteString("\n\n---\n\n")
+
+		if idx < len(newerReleases)-1 {
+			combinedBody.WriteString("\n\n---\n\n")
+		}
 	}
 
 	s.logger.Infof("Found %d newer version(s), latest: %s", len(newerReleases), latestRelease.TagName)
