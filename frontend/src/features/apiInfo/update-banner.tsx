@@ -4,6 +4,7 @@ import {
   DialogClose,
   DialogContent,
   DialogFooter,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -38,22 +39,31 @@ export const UpdateBanner = () => {
             Available new update
           </Button>
         </DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>🚀 Available new update</DialogTitle>
+        <DialogContent className="flex flex-col gap-0 p-0 max-h-[85vh] sm:max-h-[min(840px,95vh)] sm:max-w-2xl [&>button:last-child]:top-3.5">
+          <DialogHeader className="contents space-y-0 text-left">
+            <DialogTitle className="border-b px-6 py-4 text-base">
+              🚀 Available new update
+            </DialogTitle>
           </DialogHeader>
-          <div className="changelog">
-            <h2>
-              Version:{" "}
-              <span className="text-accent-foreground font-semibold">
-                {serverStore.serverInfo?.available_update?.tag_name}
-              </span>
-            </h2>
-            <Markdown remarkPlugins={[remarkGfm]}>
-              {serverStore.serverInfo?.available_update?.description}
-            </Markdown>
-          </div>
-          <DialogFooter>
+
+          <DialogDescription asChild>
+            <div className="flex-1 changelog overflow-y-auto overscroll-contain p-6">
+              {/* Current version */}
+              <div className="mb-3 text-lg font-semibold">
+                Current version:{" "}
+                <span className="text-zinc-500">
+                  {serverStore.serverInfo?.version}
+                </span>
+              </div>
+
+              {/* New version */}
+              <Markdown remarkPlugins={[remarkGfm]}>
+                {serverStore.serverInfo?.available_update?.description}
+              </Markdown>
+            </div>
+          </DialogDescription>
+
+          <DialogFooter className="flex-shrink-0 border-t px-6 py-4 sm:items-center">
             <DialogClose asChild>
               <Button variant="outline">Close</Button>
             </DialogClose>

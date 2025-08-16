@@ -3,6 +3,7 @@ module github.com/sxwebdev/sentinel
 go 1.24.5
 
 require (
+	github.com/Masterminds/semver/v3 v3.4.0
 	github.com/containrrr/shoutrrr v0.8.0
 	github.com/dop251/goja v0.0.0-20250630131328-58d95d85e994
 	github.com/dromara/carbon/v2 v2.6.11

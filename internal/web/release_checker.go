@@ -3,8 +3,12 @@ package web
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"strings"
 	"time"
+
+	"github.com/Masterminds/semver/v3"
 )
 
 // checkNewVersion checks if a new version is available from github releases
@@ -31,15 +35,16 @@ func (s *Server) checkNewVersionWrapper(ctx context.Context) {
 	}
 }
 
-// checkNewVersion checks if a new version is available from GitHub releases
+// checkNewVersion checks if new versions are available from GitHub releases
 func (s *Server) checkNewVersion() error {
-	s.logger.Info("Checking for new version...")
+	s.logger.Info("Checking for new versions...")
 
-	// get latest release from GitHub
+	// Get all releases from GitHub
 	httpClient := http.DefaultClient
 	httpClient.Timeout = time.Second * 10
 
-	resp, err := httpClient.Get("https://api.github.com/repos/sxwebdev/sentinel/releases/latest")
+	// Get multiple pages of releases to ensure we don't miss any
+	resp, err := httpClient.Get("https://api.github.com/repos/sxwebdev/sentinel/releases?per_page=100")
 	if err != nil {
 		return nil
 	}
@@ -49,24 +54,105 @@ func (s *Server) checkNewVersion() error {
 		return nil
 	}
 
-	var releaseInfo struct {
-		TagName string `json:"tag_name"`
-		Body    string `json:"body"`
+	var releases []struct {
+		TagName     string `json:"tag_name"`
+		Body        string `json:"body"`
+		PublishedAt string `json:"published_at"`
+		Draft       bool   `json:"draft"`
+		Prerelease  bool   `json:"prerelease"`
 	}
-	if err := json.NewDecoder(resp.Body).Decode(&releaseInfo); err != nil {
+	if err := json.NewDecoder(resp.Body).Decode(&releases); err != nil {
 		return nil
 	}
 
-	// Compare with current version
-	if releaseInfo.TagName != s.serverInfo.Version {
-		s.logger.Infof("New version available: %s", releaseInfo.TagName)
+	// Parse current version
+	var currentVersion *semver.Version
 
-		s.serverInfo.AvailableUpdate = &AvailableUpdate{
-			IsAvailableManual: s.config.Upgrader.IsEnabled,
-			TagName:           releaseInfo.TagName,
-			URL:               "https://github.com/sxwebdev/sentinel/releases/tag/" + releaseInfo.TagName,
-			Description:       releaseInfo.Body,
+	// Handle special cases like "local", "dev", etc.
+	if s.serverInfo.Version == "local" || s.serverInfo.Version == "dev" || s.serverInfo.Version == "" {
+		// For development versions, consider them as version 0.0.0
+		s.logger.Debugf("Development version detected (%s), treating as 0.0.0 for comparison", s.serverInfo.Version)
+		currentVersion, err = semver.NewVersion("0.0.0")
+	} else {
+		currentVersion, err = semver.NewVersion(s.serverInfo.Version)
+	}
+
+	if err != nil {
+		s.logger.Warnf("Failed to parse current version %s: %v", s.serverInfo.Version, err)
+		return nil
+	}
+
+	// Find newer releases (excluding drafts and prereleases)
+	var newerReleases []struct {
+		TagName     string
+		Body        string
+		PublishedAt string
+		Version     *semver.Version
+	}
+
+	for _, release := range releases {
+		// Skip drafts and prereleases
+		if release.Draft || release.Prerelease {
+			continue
 		}
+
+		// Parse release version
+		releaseVersion, err := semver.NewVersion(release.TagName)
+		if err != nil {
+			continue // Skip invalid version tags
+		}
+
+		// Check if release is newer than current version
+		if releaseVersion.GreaterThan(currentVersion) {
+			newerReleases = append(newerReleases, struct {
+				TagName     string
+				Body        string
+				PublishedAt string
+				Version     *semver.Version
+			}{
+				TagName:     release.TagName,
+				Body:        release.Body,
+				PublishedAt: release.PublishedAt,
+				Version:     releaseVersion,
+			})
+		}
+	}
+
+	// If no newer releases found, clear the update info
+	if len(newerReleases) == 0 {
+		s.serverInfo.AvailableUpdate = nil
+		return nil
+	}
+
+	// Sort newer releases by version (oldest to newest)
+	// sort.Slice(newerReleases, func(i, j int) bool {
+	// 	return newerReleases[i].Version.LessThan(newerReleases[j].Version)
+	// })
+
+	// Get the latest version info
+	latestRelease := newerReleases[len(newerReleases)-1]
+
+	// Combine descriptions from all newer releases
+	var combinedBody strings.Builder
+	combinedBody.WriteString(fmt.Sprintf("# Found %d newer version(s):\n\n", len(newerReleases)))
+
+	for _, release := range newerReleases {
+		combinedBody.WriteString(fmt.Sprintf("## Version %s\n", release.TagName))
+		if release.Body != "" {
+			combinedBody.WriteString(release.Body)
+		} else {
+			combinedBody.WriteString("No release notes available.")
+		}
+		combinedBody.WriteString("\n\n---\n\n")
+	}
+
+	s.logger.Infof("Found %d newer version(s), latest: %s", len(newerReleases), latestRelease.TagName)
+
+	s.serverInfo.AvailableUpdate = &AvailableUpdate{
+		IsAvailableManual: s.config.Upgrader.IsEnabled,
+		TagName:           latestRelease.TagName,
+		URL:               "https://github.com/sxwebdev/sentinel/releases/tag/" + latestRelease.TagName,
+		Description:       combinedBody.String(),
 	}
 
 	return nil
