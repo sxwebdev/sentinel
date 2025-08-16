@@ -1,4 +1,3 @@
-import ContentWrapper from "@/widgets/wrappers/contentWrapper";
 import { useServiceDetail } from "./hooks/useServiceDetail";
 import { Loader } from "@/entities/loader/loader";
 import { ConfirmDialog } from "@/entities/confirmDialog/confirmDialog";
@@ -6,7 +5,11 @@ import { ServiceOverview } from "./components/serviceOverview";
 import { ServiceStats } from "./components/serviceStats";
 import { IncidentsList } from "./components/incidentsList";
 
-const ServiceDetail = () => {
+type ServiceDetailProps = {
+  serviceID: string;
+};
+
+const ServiceDetail = ({ serviceID }: ServiceDetailProps) => {
   const {
     filters,
     incidentsData,
@@ -20,13 +23,13 @@ const ServiceDetail = () => {
     onDeleteIncident,
     setResolveIncident,
     onResolveIncident,
-  } = useServiceDetail();
+  } = useServiceDetail(serviceID);
 
   if (!serviceDetailData || !incidentsData || !serviceStatsData)
     return <Loader loaderPage />;
 
   return (
-    <ContentWrapper>
+    <>
       <ConfirmDialog
         open={resolveIncident}
         setOpen={() => setResolveIncident(false)}
@@ -64,7 +67,7 @@ const ServiceDetail = () => {
           setDeleteIncident={setDeleteIncident}
         />
       </div>
-    </ContentWrapper>
+    </>
   );
 };
 

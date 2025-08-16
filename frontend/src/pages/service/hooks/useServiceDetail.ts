@@ -1,15 +1,13 @@
 import { socketUrl } from "@/shared/api/baseApi";
 import { useEffect } from "react";
-import { useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
 import { useServiceDetailStore } from "../store/useServiceDeteilStore";
 import useWebSocket from "react-use-websocket";
-import { ROUTES } from "@/app/routes/constants";
 import { getServices } from "@/shared/api/services/services";
 import { getIncidents } from "@/shared/api/incidents/incidents";
 import { getStatistics } from "@/shared/api/statistics/statistics";
 
-export const useServiceDetail = () => {
+export const useServiceDetail = (serviceID: string) => {
   const {
     deleteIncident,
     serviceDetailData,
@@ -25,7 +23,6 @@ export const useServiceDetail = () => {
     setUpdateServiceStatsData,
     setResolveIncident,
   } = useServiceDetailStore();
-  const { id } = useParams();
 
   const { postServicesIdCheck, getServicesId } = getServices();
   const { getServicesIdStats } = getStatistics();
@@ -37,24 +34,22 @@ export const useServiceDetail = () => {
 
   // Get service
   const getServiceDetail = async () => {
-    return await getServicesId(id ?? "")
-      .then((res) => {
-        setServiceDetailData(res);
-      })
-      .catch(() => {
-        navigate(ROUTES.NOT_FOUND);
-      });
+    return await getServicesId(serviceID ?? "").then((res) => {
+      setServiceDetailData(res);
+    });
+    // .catch(() => {
+    //   navigate(ROUTES.NOT_FOUND);
+    // });
   };
 
   // Get service stats
   const getServiceStats = async () => {
-    return await getServicesIdStats(id ?? "")
-      .then((res) => {
-        setServiceStatsData(res);
-      })
-      .catch(() => {
-        navigate(ROUTES.NOT_FOUND);
-      });
+    return await getServicesIdStats(serviceID ?? "").then((res) => {
+      setServiceStatsData(res);
+    });
+    // .catch(() => {
+    //   navigate(ROUTES.NOT_FOUND);
+    // });
   };
 
   //Check service
@@ -72,14 +67,16 @@ export const useServiceDetail = () => {
 
   // Get all incidents
   const getAllIncidents = async () => {
-    return await getServicesIdIncidents(id ?? "", filters).then((res) => {
-      setIncidentsData(res);
-    });
+    return await getServicesIdIncidents(serviceID ?? "", filters).then(
+      (res) => {
+        setIncidentsData(res);
+      }
+    );
   };
 
   // Delete incident
   const onDeleteIncident = async (incidentId: string) => {
-    await deleteServicesIdIncidentsIncidentId(id ?? "", incidentId)
+    await deleteServicesIdIncidentsIncidentId(serviceID ?? "", incidentId)
       .then(() => {
         getServiceDetail();
         getAllIncidents();
@@ -96,7 +93,7 @@ export const useServiceDetail = () => {
 
   // Resolve incident
   const onResolveIncident = async () => {
-    await postServicesIdResolve(id ?? "")
+    await postServicesIdResolve(serviceID ?? "")
       .then(() => {
         getServiceDetail();
         getAllIncidents();
@@ -121,14 +118,14 @@ export const useServiceDetail = () => {
     const data = JSON.parse(lastMessage.data);
     switch (data.type) {
       case "service_updated_state":
-        if (data.data.id === id) {
+        if (data.data.id === serviceID) {
           setUpdateServiceStatsData(data.data);
         }
         break;
     }
   }, [lastMessage]);
 
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
 
   useEffect(() => {
     getServiceDetail();
@@ -139,11 +136,11 @@ export const useServiceDetail = () => {
       setIncidentsData(null);
       setServiceStatsData(null);
     };
-  }, [id]);
+  }, [serviceID]);
 
   useEffect(() => {
     getAllIncidents();
-  }, [filters, id]);
+  }, [filters, serviceID]);
 
   return {
     deleteIncident,

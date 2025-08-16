@@ -9,16 +9,10 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/shared/components/ui";
-import {
-  ArrowLeftIcon,
-  CheckIcon,
-  CircleAlertIcon,
-  PlayIcon,
-} from "lucide-react";
+import { CircleAlertIcon, PlayIcon } from "lucide-react";
 import { useIsMobile } from "@/shared/hooks/useIsMobile";
 import { cn } from "@/shared/lib/utils";
 import { ActivityIndicatorSVG } from "@/entities/ActivityIndicatorSVG/ActivityIndicatorSVG";
-import { Link } from "react-router";
 import {
   Alert,
   AlertDescription,
@@ -35,72 +29,48 @@ interface ServiceOverviewProps {
 export const ServiceOverview = ({
   serviceDetailData,
   onCheckService,
-  setResolveIncident,
 }: ServiceOverviewProps) => {
   const isMobile = useIsMobile();
 
   return (
     <>
-      <header className="flex flex-col py-3 md:flex-row gap-3 justify-between items-center">
-        <Link to={"/"}>
-          <Button className="group" variant="ghost" size="sm">
-            <ArrowLeftIcon
-              className="-ms-1 opacity-60 transition-transform group-hover:-translate-x-0.5"
-              size={16}
-              aria-hidden="true"
-            />
-            Back
-          </Button>
-        </Link>
-        <div
-          className={cn(
-            "flex items-center gap-2",
-            isMobile && "w-full flex-col"
-          )}
-        >
-          <Button
-            size="sm"
-            className={cn(isMobile && "w-full")}
-            onClick={() => onCheckService(serviceDetailData?.id ?? "")}
-          >
-            <PlayIcon />
-            Trigger Check
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            className={cn(isMobile && "w-full")}
-            onClick={() => setResolveIncident(true)}
-          >
-            <CheckIcon />
-            Resolve Incidents
-          </Button>
-        </div>
-      </header>
-
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-3.5 md:gap-4">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger>
-                  <ActivityIndicatorSVG
-                    active={serviceDetailData?.is_enabled}
-                    size={24}
-                  />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>
-                    {serviceDetailData?.is_enabled
-                      ? "Service enabled"
-                      : "Service disabled"}
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            <div>
+          <CardTitle className="flex items-center gap-3.5 md:gap-5 flex-col md:flex-row">
+            <Badge
+              className={cn(
+                "text-xs md:text-sm font-semibold",
+                serviceDetailData?.status === "up" &&
+                  "bg-emerald-100 text-emerald-600",
+                serviceDetailData?.status === "down" &&
+                  "bg-rose-100 text-rose-600",
+                serviceDetailData?.status === "unknown" &&
+                  "bg-yellow-100 text-yellow-600"
+              )}
+            >
+              {serviceDetailData?.status?.toLocaleUpperCase() ?? ""}
+            </Badge>
+
+            <div className="flex flex-col w-full">
               <h3 className="text-base md:text-lg font-bold">
-                {serviceDetailData?.name}
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <ActivityIndicatorSVG
+                        active={serviceDetailData?.is_enabled}
+                        size={24}
+                      />
+                    </TooltipTrigger>
+                    <TooltipContent className="dark" showArrow>
+                      <p>
+                        {serviceDetailData?.is_enabled
+                          ? "Service enabled"
+                          : "Service disabled"}
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <span className="ml-2">{serviceDetailData?.name}</span>
               </h3>
               <div className="mt-2">
                 <TooltipProvider>
@@ -110,7 +80,9 @@ export const ServiceOverview = ({
                         {serviceDetailData?.protocol}
                       </Badge>
                     </TooltipTrigger>
-                    <TooltipContent>Protocol</TooltipContent>
+                    <TooltipContent className="dark" showArrow>
+                      Protocol
+                    </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
                 <TooltipProvider>
@@ -122,24 +94,23 @@ export const ServiceOverview = ({
                         ).toLocaleString()}
                       </Badge>
                     </TooltipTrigger>
-                    <TooltipContent>Last Check</TooltipContent>
+                    <TooltipContent className="dark" showArrow>
+                      Last Check
+                    </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
               </div>
             </div>
-            <Badge
-              className={cn(
-                "text-xs md:text-sm font-semibold ml-auto",
-                serviceDetailData?.status === "up" &&
-                  "bg-emerald-100 text-emerald-600",
-                serviceDetailData?.status === "down" &&
-                  "bg-rose-100 text-rose-600",
-                serviceDetailData?.status === "unknown" &&
-                  "bg-yellow-100 text-yellow-600"
-              )}
+
+            <Button
+              size="sm"
+              className={cn("ml-auto", isMobile && "w-full")}
+              disabled={!serviceDetailData?.is_enabled}
+              onClick={() => onCheckService(serviceDetailData?.id ?? "")}
             >
-              {serviceDetailData?.status?.toLocaleUpperCase() ?? ""}
-            </Badge>
+              <PlayIcon />
+              Trigger Check
+            </Button>
           </CardTitle>
         </CardHeader>
       </Card>

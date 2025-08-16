@@ -1,6 +1,6 @@
-import React, { useCallback } from "react";
+import React, { useCallback, forwardRef, useImperativeHandle } from "react";
 import { Form, Formik, FastField, Field } from "formik";
-import type { FieldProps } from "formik";
+import type { FieldProps, FormikProps } from "formik";
 import {
   Button,
   Card,
@@ -22,10 +22,22 @@ import * as Yup from "yup";
 import InputTag from "@/shared/components/ui/inputTag";
 import type { WebCreateUpdateServiceRequest } from "@/shared/types/model";
 
+export interface ServiceFormRef {
+  submitForm: () => void;
+  isSubmitting: boolean;
+  isValid: boolean;
+  dirty: boolean;
+}
+
 interface ServiceFormProps {
   initialValues: WebCreateUpdateServiceRequest;
   onSubmit: (values: WebCreateUpdateServiceRequest) => Promise<void>;
   type: "create" | "update";
+  onFormStateChange?: (state: {
+    isSubmitting: boolean;
+    isValid: boolean;
+    dirty: boolean;
+  }) => void;
 }
 
 const GRPCForm = React.memo(
@@ -454,133 +466,175 @@ const HTTPForm = React.memo(
   }
 );
 
-export const ServiceForm = ({
-  initialValues,
-  onSubmit,
-  type,
-}: ServiceFormProps) => {
-  const grpcSchema = Yup.object({
-    endpoint: Yup.string().required("GRPC endpoint is required"),
-  });
+export const ServiceForm = forwardRef<ServiceFormRef, ServiceFormProps>(
+  ({ initialValues, onSubmit, onFormStateChange }, ref) => {
+    const formikRef =
+      React.useRef<FormikProps<WebCreateUpdateServiceRequest> | null>(null);
+    const lastStateRef = React.useRef({
+      isSubmitting: false,
+      isValid: false,
+      dirty: false,
+    });
 
-  const httpSchema = Yup.object({
-    endpoints: Yup.array().of(
-      Yup.object({
-        name: Yup.string().required("Endpoint name is required"),
-        url: Yup.string().required("URL is required"),
-      })
-    ),
-  });
+    // Стабильная функция для отложенного обновления состояния
+    const updateFormState = React.useCallback(
+      (state: { isSubmitting: boolean; isValid: boolean; dirty: boolean }) => {
+        const lastState = lastStateRef.current;
 
-  const tcpSchema = Yup.object({
-    endpoint: Yup.string().required("TCP endpoint is required"),
-  });
-
-  const validateSchema = Yup.object().shape({
-    name: Yup.string().required("Name is required"),
-    protocol: Yup.string()
-      .oneOf(["grpc", "http", "tcp"])
-      .required("Protocol is required"),
-  });
-
-  const headersModificate = (values: WebCreateUpdateServiceRequest) => {
-    if (values.config?.http?.endpoints) {
-      values.config.http.endpoints.forEach((endpoint) => {
         if (
-          !endpoint.headers ||
-          (typeof endpoint.headers === "string" &&
-            (endpoint.headers as string).trim() === "")
+          state.isSubmitting !== lastState.isSubmitting ||
+          state.isValid !== lastState.isValid ||
+          state.dirty !== lastState.dirty
         ) {
-          endpoint.headers = {};
-        } else {
-          try {
-            if (typeof endpoint.headers === "string") {
-              endpoint.headers = JSON.parse(endpoint.headers);
-            }
-          } catch {
+          lastStateRef.current = state;
+          // Отложенное обновление для избежания ошибки
+          setTimeout(() => {
+            onFormStateChange?.(state);
+          }, 0);
+        }
+      },
+      [onFormStateChange]
+    );
+
+    useImperativeHandle(ref, () => ({
+      submitForm: () => formikRef.current?.submitForm(),
+      get isSubmitting() {
+        return formikRef.current?.isSubmitting || false;
+      },
+      get isValid() {
+        return formikRef.current?.isValid || false;
+      },
+      get dirty() {
+        return formikRef.current?.dirty || false;
+      },
+    }));
+    const grpcSchema = Yup.object({
+      endpoint: Yup.string().required("GRPC endpoint is required"),
+    });
+
+    const httpSchema = Yup.object({
+      endpoints: Yup.array().of(
+        Yup.object({
+          name: Yup.string().required("Endpoint name is required"),
+          url: Yup.string().required("URL is required"),
+        })
+      ),
+    });
+
+    const tcpSchema = Yup.object({
+      endpoint: Yup.string().required("TCP endpoint is required"),
+    });
+
+    const validateSchema = Yup.object().shape({
+      name: Yup.string().required("Name is required"),
+      protocol: Yup.string()
+        .oneOf(["grpc", "http", "tcp"])
+        .required("Protocol is required"),
+    });
+
+    const headersModificate = (values: WebCreateUpdateServiceRequest) => {
+      if (values.config?.http?.endpoints) {
+        values.config.http.endpoints.forEach((endpoint) => {
+          if (
+            !endpoint.headers ||
+            (typeof endpoint.headers === "string" &&
+              (endpoint.headers as string).trim() === "")
+          ) {
             endpoint.headers = {};
-          }
-        }
-      });
-    }
-  };
-
-  const configModificate = (values: WebCreateUpdateServiceRequest) => {
-    switch (values.protocol) {
-      case "http":
-        if (values.config) {
-          values.config.grpc = undefined;
-          values.config.tcp = undefined;
-        }
-        headersModificate(values);
-        break;
-      case "tcp":
-        if (values.config) {
-          values.config.grpc = undefined;
-          values.config.http = undefined;
-        }
-        break;
-      case "grpc":
-        if (values.config) {
-          values.config.http = undefined;
-          values.config.tcp = undefined;
-        }
-        break;
-    }
-    return values;
-  };
-
-  return (
-    <Formik
-      initialValues={initialValues}
-      validationSchema={validateSchema}
-      enableReinitialize
-      onSubmit={(values, { setSubmitting }) => {
-        configModificate(values);
-        onSubmit(values).finally(() => {
-          setSubmitting(false);
-        });
-      }}
-      validate={async (values) => {
-        try {
-          if (values.protocol) {
-            switch (values.protocol) {
-              case "http":
-                await httpSchema.validate(values.config?.http, {
-                  abortEarly: false,
-                });
-                break;
-              case "tcp":
-                await tcpSchema.validate(values.config?.tcp, {
-                  abortEarly: false,
-                });
-                break;
-              case "grpc":
-                await grpcSchema.validate(values.config?.grpc, {
-                  abortEarly: false,
-                });
-                break;
+          } else {
+            try {
+              if (typeof endpoint.headers === "string") {
+                endpoint.headers = JSON.parse(endpoint.headers);
+              }
+            } catch {
+              endpoint.headers = {};
             }
           }
-          return {};
-        } catch (err) {
-          if (err instanceof Yup.ValidationError) {
-            const errors: Record<string, string> = {};
-            err.inner.forEach((e) => {
-              if (e.path) {
-                errors[e.path] = e.message;
-              }
-            });
-            return errors;
+        });
+      }
+    };
+
+    const configModificate = (values: WebCreateUpdateServiceRequest) => {
+      switch (values.protocol) {
+        case "http":
+          if (values.config) {
+            values.config.grpc = undefined;
+            values.config.tcp = undefined;
           }
-          throw err;
-        }
-      }}
-    >
-      {({ isSubmitting, isValid, dirty, values, setFieldValue }) => {
-        return (
-          <Form className="flex flex-col gap-4">
-            <Card className="p-6">
+          headersModificate(values);
+          break;
+        case "tcp":
+          if (values.config) {
+            values.config.grpc = undefined;
+            values.config.http = undefined;
+          }
+          break;
+        case "grpc":
+          if (values.config) {
+            values.config.http = undefined;
+            values.config.tcp = undefined;
+          }
+          break;
+      }
+      return values;
+    };
+
+    return (
+      <Formik
+        innerRef={(formik) => {
+          formikRef.current = formik;
+        }}
+        initialValues={initialValues}
+        validationSchema={validateSchema}
+        enableReinitialize
+        onSubmit={(values, { setSubmitting }) => {
+          configModificate(values);
+          onSubmit(values).finally(() => {
+            setSubmitting(false);
+          });
+        }}
+        validate={async (values) => {
+          try {
+            if (values.protocol) {
+              switch (values.protocol) {
+                case "http":
+                  await httpSchema.validate(values.config?.http, {
+                    abortEarly: false,
+                  });
+                  break;
+                case "tcp":
+                  await tcpSchema.validate(values.config?.tcp, {
+                    abortEarly: false,
+                  });
+                  break;
+                case "grpc":
+                  await grpcSchema.validate(values.config?.grpc, {
+                    abortEarly: false,
+                  });
+                  break;
+              }
+            }
+            return {};
+          } catch (err) {
+            if (err instanceof Yup.ValidationError) {
+              const errors: Record<string, string> = {};
+              err.inner.forEach((e) => {
+                if (e.path) {
+                  errors[e.path] = e.message;
+                }
+              });
+              return errors;
+            }
+            throw err;
+          }
+        }}
+      >
+        {({ values, setFieldValue, isSubmitting, isValid, dirty }) => {
+          // Используем стабильную функцию для обновления состояния
+          updateFormState({ isSubmitting, isValid, dirty });
+
+          return (
+            <Form className="flex flex-col gap-4 px-3 md:px-6 py-3 md:py-6 text-card-foreground">
               <div className="flex flex-col gap-2">
                 <Label required>Service Name</Label>
                 <FastField name="name">
@@ -705,29 +759,20 @@ export const ServiceForm = ({
                   )}
                 </Field>
               </div>
-            </Card>
-            {/*  HTTP/HTTPS */}
-            {values.protocol === "http" && (
-              <HTTPForm values={values} setFieldValue={setFieldValue} />
-            )}
-            {/*  TCP */}
-            {values.protocol === "tcp" && <TCPForm />}
-            {/*  GRPC */}
-            {values.protocol === "grpc" && (
-              <GRPCForm setFieldValue={setFieldValue} />
-            )}
-            <hr />
-            <div className="flex justify-end">
-              <Button
-                type="submit"
-                disabled={isSubmitting || !isValid || !dirty}
-              >
-                {type === "create" ? "Create" : "Update"}
-              </Button>
-            </div>
-          </Form>
-        );
-      }}
-    </Formik>
-  );
-};
+              {/*  HTTP/HTTPS */}
+              {values.protocol === "http" && (
+                <HTTPForm values={values} setFieldValue={setFieldValue} />
+              )}
+              {/*  TCP */}
+              {values.protocol === "tcp" && <TCPForm />}
+              {/*  GRPC */}
+              {values.protocol === "grpc" && (
+                <GRPCForm setFieldValue={setFieldValue} />
+              )}
+            </Form>
+          );
+        }}
+      </Formik>
+    );
+  }
+);

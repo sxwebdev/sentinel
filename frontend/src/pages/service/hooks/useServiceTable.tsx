@@ -18,7 +18,7 @@ import {
   type ColumnDef,
 } from "@tanstack/react-table";
 import { useEffect, useMemo } from "react";
-import { Link } from "react-router";
+import { Link } from "@tanstack/react-router";
 import {
   CopyIcon,
   EllipsisIcon,
@@ -91,7 +91,7 @@ export const useServiceTable = () => {
                       size={24}
                     />
                   </TooltipTrigger>
-                  <TooltipContent>
+                  <TooltipContent className="dark" showArrow>
                     <p>
                       {row.original?.is_enabled
                         ? "Service enabled"
@@ -110,10 +110,11 @@ export const useServiceTable = () => {
         cell: ({ row }) => {
           return (
             <Link
-              to={`/service/${row.original?.id}`}
+              to="/service/$service_id"
+              params={{ service_id: row.original.id || "" }}
               className="cursor-pointer font-bold text-sm hover:underline"
             >
-              {row.original?.name}
+              {row.original.name}
             </Link>
           );
         },
@@ -197,7 +198,9 @@ export const useServiceTable = () => {
                       {row.original?.active_incidents ?? 0}
                     </Badge>
                   </TooltipTrigger>
-                  <TooltipContent>Active incidents</TooltipContent>
+                  <TooltipContent className="dark" showArrow>
+                    Active incidents
+                  </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
               {" / "}
@@ -208,7 +211,9 @@ export const useServiceTable = () => {
                       {row.original?.total_incidents ?? 0}
                     </Badge>
                   </TooltipTrigger>
-                  <TooltipContent>Total incidents</TooltipContent>
+                  <TooltipContent className="dark" showArrow>
+                    Total incidents
+                  </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
             </>

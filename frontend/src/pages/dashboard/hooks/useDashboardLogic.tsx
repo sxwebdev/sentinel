@@ -11,10 +11,6 @@ export const useDashboardLogic = () => {
     }))
   );
 
-  const onRefreshDashboard = async () => {
-    await loadStats();
-  };
-
   useEffect(() => {
     loadStats();
 
@@ -25,6 +21,5 @@ export const useDashboardLogic = () => {
 
   return {
     dashboardInfo,
-    onRefreshDashboard,
   };
 };

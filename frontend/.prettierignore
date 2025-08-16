@@ -5,3 +5,4 @@
 
 pnpm-lock.yaml
 dist
+routeTree.gen.ts
