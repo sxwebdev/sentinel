@@ -38,7 +38,6 @@ import (
 	"github.com/sxwebdev/sentinel/internal/upgrader"
 	"github.com/sxwebdev/sentinel/internal/utils"
 	"github.com/sxwebdev/sentinel/pkg/dbutils"
-	_ "github.com/sxwebdev/sentinel/pkg/dbutils"
 	"github.com/tkcrm/mx/logger"
 )
 
@@ -313,16 +312,12 @@ func (s *Server) handleFindServices(c *fiber.Ctx) error {
 		PageSize  *uint32  `query:"page_size" validate:"omitempty,gte=1,lte=100"`
 	}{}
 	if err := c.QueryParser(&params); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
-			Error: "Invalid query parameters",
-		})
+		return newErrorResponse(c, fiber.StatusBadRequest, err)
 	}
 
 	// Validate query parameters
 	if err := s.validator.Struct(params); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
-			Error: "Invalid query parameters",
-		})
+		return newErrorResponse(c, fiber.StatusBadRequest, err)
 	}
 
 	services, err := s.monitorService.FindServices(ctx, storage.FindServicesParams{
@@ -336,9 +331,7 @@ func (s *Server) handleFindServices(c *fiber.Ctx) error {
 		PageSize:  params.PageSize,
 	})
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(ErrorResponse{
-			Error: err.Error(),
-		})
+		return newErrorResponse(c, fiber.StatusInternalServerError, err)
 	}
 
 	result := dbutils.FindResponseWithCount[ServiceDTO]{
@@ -374,16 +367,12 @@ func (s *Server) handleFindServices(c *fiber.Ctx) error {
 func (s *Server) handleAPIServiceDetail(c *fiber.Ctx) error {
 	serviceID := c.Params("id")
 	if serviceID == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
-			Error: "service ID is required",
-		})
+		return newErrorResponse(c, fiber.StatusBadRequest, ErrServiceIDRequired)
 	}
 
 	targetService, err := s.monitorService.GetServiceByID(c.Context(), serviceID)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(ErrorResponse{
-			Error: err.Error(),
-		})
+		return newErrorResponse(c, fiber.StatusInternalServerError, err)
 	}
 
 	// Get service with state
@@ -420,9 +409,7 @@ func (s *Server) handleAPIServiceDetail(c *fiber.Ctx) error {
 func (s *Server) handleAPIServiceIncidents(c *fiber.Ctx) error {
 	serviceID := c.Params("id")
 	if serviceID == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
-			Error: "service ID is required",
-		})
+		return newErrorResponse(c, fiber.StatusBadRequest, ErrServiceIDRequired)
 	}
 
 	params := struct {
@@ -435,24 +422,18 @@ func (s *Server) handleAPIServiceIncidents(c *fiber.Ctx) error {
 	}{}
 
 	if err := c.QueryParser(&params); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
-			Error: "Invalid query parameters",
-		})
+		return newErrorResponse(c, fiber.StatusBadRequest, err)
 	}
 
 	// Validate query parameters
 	if err := s.validator.Struct(params); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
-			Error: "Invalid query parameters",
-		})
+		return newErrorResponse(c, fiber.StatusBadRequest, err)
 	}
 
 	// First check if service exists
 	_, err := s.monitorService.GetServiceByID(c.Context(), serviceID)
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
-			Error: "service not found: " + serviceID,
-		})
+		return newErrorResponse(c, fiber.StatusNotFound, err)
 	}
 
 	incidents, err := s.storage.FindIncidents(c.Context(), storage.FindIncidentsParams{
@@ -465,9 +446,7 @@ func (s *Server) handleAPIServiceIncidents(c *fiber.Ctx) error {
 		PageSize:  params.PageSize,
 	})
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(ErrorResponse{
-			Error: err.Error(),
-		})
+		return newErrorResponse(c, fiber.StatusInternalServerError, err)
 	}
 
 	for _, incident := range incidents.Items {
@@ -493,9 +472,7 @@ func (s *Server) handleAPIServiceIncidents(c *fiber.Ctx) error {
 func (s *Server) handleAPIServiceStats(c *fiber.Ctx) error {
 	serviceID := c.Params("id")
 	if serviceID == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
-			Error: "service ID is required",
-		})
+		return newErrorResponse(c, fiber.StatusBadRequest, ErrServiceIDRequired)
 	}
 
 	daysStr := c.Query("days", "30")
@@ -507,17 +484,13 @@ func (s *Server) handleAPIServiceStats(c *fiber.Ctx) error {
 	// First check if service exists
 	_, err = s.monitorService.GetServiceByID(c.Context(), serviceID)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(ErrorResponse{
-			Error: err.Error(),
-		})
+		return newErrorResponse(c, fiber.StatusInternalServerError, err)
 	}
 
 	since := time.Now().AddDate(0, 0, -days)
 	stats, err := s.monitorService.GetServiceStats(c.Context(), serviceID, since)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(ErrorResponse{
-			Error: err.Error(),
-		})
+		return newErrorResponse(c, fiber.StatusInternalServerError, err)
 	}
 
 	return c.JSON(stats)
@@ -539,29 +512,21 @@ func (s *Server) handleAPIServiceStats(c *fiber.Ctx) error {
 func (s *Server) handleAPIServiceCheck(c *fiber.Ctx) error {
 	serviceID := c.Params("id")
 	if serviceID == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
-			Error: "service ID is required",
-		})
+		return newErrorResponse(c, fiber.StatusBadRequest, ErrServiceIDRequired)
 	}
 
 	// First check if service exists
 	_, err := s.monitorService.GetServiceByID(c.Context(), serviceID)
 	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON(ErrorResponse{
-			Error: "service not found: " + serviceID,
-		})
+		return newErrorResponse(c, fiber.StatusNotFound, err)
 	}
 
 	err = s.monitorService.TriggerCheck(c.Context(), serviceID)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(ErrorResponse{
-			Error: err.Error(),
-		})
+		return newErrorResponse(c, fiber.StatusInternalServerError, err)
 	}
 
-	return c.JSON(SuccessResponse{
-		Message: "check triggered successfully",
-	})
+	return newSuccessResponse(c, "check triggered successfully")
 }
 
 // handleAPIServiceResolve resolves a service incident
@@ -579,21 +544,15 @@ func (s *Server) handleAPIServiceCheck(c *fiber.Ctx) error {
 func (s *Server) handleAPIServiceResolve(c *fiber.Ctx) error {
 	serviceID := c.Params("id")
 	if serviceID == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
-			Error: "service ID is required",
-		})
+		return newErrorResponse(c, fiber.StatusBadRequest, ErrServiceIDRequired)
 	}
 
 	err := s.monitorService.ForceResolveIncidents(c.Context(), serviceID)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(ErrorResponse{
-			Error: err.Error(),
-		})
+		return newErrorResponse(c, fiber.StatusInternalServerError, err)
 	}
 
-	return c.JSON(SuccessResponse{
-		Message: "incident resolved successfully",
-	})
+	return newSuccessResponse(c, "incidents resolved successfully")
 }
 
 // handleFindIncidents returns recent incidents
@@ -623,16 +582,12 @@ func (s *Server) handleFindIncidents(c *fiber.Ctx) error {
 	}{}
 
 	if err := c.QueryParser(&params); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
-			Error: "Invalid query parameters",
-		})
+		return newErrorResponse(c, fiber.StatusBadRequest, err)
 	}
 
 	// Validate query parameters
 	if err := s.validator.Struct(params); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
-			Error: "Invalid query parameters",
-		})
+		return newErrorResponse(c, fiber.StatusBadRequest, err)
 	}
 
 	incidents, err := s.storage.FindIncidents(c.Context(), storage.FindIncidentsParams{
@@ -644,9 +599,7 @@ func (s *Server) handleFindIncidents(c *fiber.Ctx) error {
 		PageSize:  params.PageSize,
 	})
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(ErrorResponse{
-			Error: err.Error(),
-		})
+		return newErrorResponse(c, fiber.StatusInternalServerError, err)
 	}
 
 	for _, incident := range incidents.Items {
@@ -675,31 +628,23 @@ func (s *Server) handleAPIDeleteIncident(c *fiber.Ctx) error {
 	incidentID := c.Params("incidentId")
 
 	if serviceID == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
-			Error: "service ID is required",
-		})
+		return newErrorResponse(c, fiber.StatusBadRequest, ErrServiceIDRequired)
 	}
 
 	if incidentID == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
-			Error: "incident ID is required",
-		})
+		return newErrorResponse(c, fiber.StatusBadRequest, ErrIncidentIDRequired)
 	}
 
 	// Check if service exists
 	_, err := s.monitorService.GetServiceByID(c.Context(), serviceID)
 	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON(ErrorResponse{
-			Error: "service not found: " + serviceID,
-		})
+		return newErrorResponse(c, fiber.StatusNotFound, err)
 	}
 
 	// Delete incident
 	err = s.monitorService.DeleteIncident(c.Context(), serviceID, incidentID)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(ErrorResponse{
-			Error: err.Error(),
-		})
+		return newErrorResponse(c, fiber.StatusInternalServerError, err)
 	}
 
 	return c.SendStatus(fiber.StatusNoContent)
@@ -780,21 +725,15 @@ func (s *Server) handleAPIGetIncidentsStats(c *fiber.Ctx) error {
 func (s *Server) handleAPICreateService(c *fiber.Ctx) error {
 	var serviceDTO CreateUpdateServiceRequest
 	if err := c.BodyParser(&serviceDTO); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
-			Error: "Invalid request body: " + err.Error(),
-		})
+		return newErrorResponse(c, fiber.StatusBadRequest, err)
 	}
 
 	// Validate required fields
 	if serviceDTO.Name == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
-			Error: "Service name is required",
-		})
+		return newErrorResponse(c, fiber.StatusBadRequest, ErrServiceNameRequired)
 	}
 	if serviceDTO.Protocol == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
-			Error: "Protocol is required",
-		})
+		return newErrorResponse(c, fiber.StatusBadRequest, ErrProtocolRequired)
 	}
 
 	// Convert to storage.Service
@@ -821,9 +760,7 @@ func (s *Server) handleAPICreateService(c *fiber.Ctx) error {
 
 	// Convert flat config to proper MonitorConfig structure
 	if err := serviceDTO.Config.Validate(serviceDTO.Protocol); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
-			Error: "Invalid config: " + err.Error(),
-		})
+		return newErrorResponse(c, fiber.StatusBadRequest, err)
 	}
 
 	createParams.Config = serviceDTO.Config.ConvertToMap()
@@ -831,16 +768,12 @@ func (s *Server) handleAPICreateService(c *fiber.Ctx) error {
 	// Add service
 	svc, err := s.monitorService.CreateService(c.Context(), createParams)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(ErrorResponse{
-			Error: err.Error(),
-		})
+		return newErrorResponse(c, fiber.StatusInternalServerError, err)
 	}
 
 	res, err := convertServiceToDTO(svc)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(ErrorResponse{
-			Error: err.Error(),
-		})
+		return newErrorResponse(c, fiber.StatusInternalServerError, err)
 	}
 
 	return c.Status(fiber.StatusCreated).JSON(res)
@@ -863,16 +796,12 @@ func (s *Server) handleAPICreateService(c *fiber.Ctx) error {
 func (s *Server) handleAPIUpdateService(c *fiber.Ctx) error {
 	id := c.Params("id")
 	if id == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
-			Error: "Service ID is required",
-		})
+		return newErrorResponse(c, fiber.StatusBadRequest, ErrServiceIDRequired)
 	}
 
 	var serviceDTO CreateUpdateServiceRequest
 	if err := c.BodyParser(&serviceDTO); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
-			Error: "Invalid request body: " + err.Error(),
-		})
+		return newErrorResponse(c, fiber.StatusBadRequest, err)
 	}
 
 	// Debug: log the received data
@@ -891,23 +820,17 @@ func (s *Server) handleAPIUpdateService(c *fiber.Ctx) error {
 
 	// Convert flat config to proper MonitorConfig structure
 	if err := serviceDTO.Config.Validate(serviceDTO.Protocol); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
-			Error: "Invalid config: " + err.Error(),
-		})
+		return newErrorResponse(c, fiber.StatusBadRequest, err)
 	}
 
 	updateParams.Config = serviceDTO.Config.ConvertToMap()
 
 	// Validate required fields
 	if updateParams.Name == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
-			Error: "Service name is required",
-		})
+		return newErrorResponse(c, fiber.StatusBadRequest, ErrServiceNameRequired)
 	}
 	if updateParams.Protocol == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
-			Error: "Protocol is required",
-		})
+		return newErrorResponse(c, fiber.StatusBadRequest, ErrProtocolRequired)
 	}
 
 	// Set default values if not provided
@@ -924,16 +847,12 @@ func (s *Server) handleAPIUpdateService(c *fiber.Ctx) error {
 	// Update service
 	svc, err := s.monitorService.UpdateService(c.Context(), id, updateParams)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(ErrorResponse{
-			Error: err.Error(),
-		})
+		return newErrorResponse(c, fiber.StatusInternalServerError, err)
 	}
 
 	res, err := convertServiceToDTO(svc)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(ErrorResponse{
-			Error: err.Error(),
-		})
+		return newErrorResponse(c, fiber.StatusInternalServerError, err)
 	}
 
 	return c.JSON(res)
@@ -954,15 +873,11 @@ func (s *Server) handleAPIUpdateService(c *fiber.Ctx) error {
 func (s *Server) handleAPIDeleteService(c *fiber.Ctx) error {
 	id := c.Params("id")
 	if id == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(ErrorResponse{
-			Error: "Service ID is required",
-		})
+		return newErrorResponse(c, fiber.StatusBadRequest, ErrServiceIDRequired)
 	}
 
 	if err := s.monitorService.DeleteService(c.Context(), id); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(ErrorResponse{
-			Error: err.Error(),
-		})
+		return newErrorResponse(c, fiber.StatusInternalServerError, err)
 	}
 
 	return c.SendStatus(fiber.StatusNoContent)

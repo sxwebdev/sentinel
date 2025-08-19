@@ -1,6 +1,11 @@
 package web
 
-import "github.com/gofiber/fiber/v2"
+import (
+	"errors"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/sxwebdev/sentinel/internal/storage"
+)
 
 // ErrorResponse represents an error response
 //
@@ -11,6 +16,18 @@ type ErrorResponse struct {
 
 // newErrorResponse creates a new ErrorResponse and sends it as a JSON response
 func newErrorResponse(c *fiber.Ctx, status int, err error) error {
+	if errors.Is(err, storage.ErrNotFound) {
+		return c.Status(fiber.StatusNotFound).JSON(ErrorResponse{
+			Error: err.Error(),
+		})
+	}
+
+	if errors.Is(err, storage.ErrAlreadyExists) {
+		return c.Status(fiber.StatusConflict).JSON(ErrorResponse{
+			Error: err.Error(),
+		})
+	}
+
 	return c.Status(status).JSON(ErrorResponse{
 		Error: err.Error(),
 	})

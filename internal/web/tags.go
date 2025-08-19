@@ -1,8 +1,6 @@
 package web
 
 import (
-	"fmt"
-
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -19,7 +17,7 @@ import (
 func (h *Server) handleGetAllTags(c *fiber.Ctx) error {
 	tags, err := h.storage.GetAllTags(c.Context())
 	if err != nil {
-		return fmt.Errorf("failed to get all tags: %w", err)
+		return newErrorResponse(c, fiber.StatusInternalServerError, err)
 	}
 	return c.JSON(tags)
 }
@@ -37,7 +35,7 @@ func (h *Server) handleGetAllTags(c *fiber.Ctx) error {
 func (h *Server) handleGetAllTagsWithCount(c *fiber.Ctx) error {
 	tagsWithCount, err := h.storage.GetAllTagsWithCount(c.Context())
 	if err != nil {
-		return fmt.Errorf("failed to get tags with count: %w", err)
+		return newErrorResponse(c, fiber.StatusInternalServerError, err)
 	}
 	return c.JSON(tagsWithCount)
 }

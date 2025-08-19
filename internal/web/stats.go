@@ -17,7 +17,7 @@ import (
 func (s *Server) handleAPIDashboardStats(c *fiber.Ctx) error {
 	stats, err := s.getDashboardStats(c.Context())
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(ErrorResponse{Error: err.Error()})
+		return newErrorResponse(c, fiber.StatusInternalServerError, err)
 	}
 
 	return c.JSON(stats)
