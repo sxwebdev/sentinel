@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 
-import { HouseIcon } from "lucide-react";
+import { HouseIcon, BookXIcon } from "lucide-react";
 
 import { Button } from "@shared/components/ui/button";
 import {
@@ -21,6 +21,7 @@ import { ServerInfo } from "@/features/apiInfo/server-info";
 // Navigation links array
 const navigationLinks = [
   { href: "/", label: "Dashboard", icon: HouseIcon, active: true },
+  { href: "/incidents", label: "Incidents", icon: BookXIcon, active: true },
   // { href: "/certificates", label: "Certificates", icon: ShieldCheck },
 ];
 
@@ -33,7 +34,7 @@ function NavigationMenuLink({
       data-slot="navigation-menu-link"
       className={cn(
         "data-[status]:focus:bg-accent data-[status]:hover:bg-accent data-[status]:bg-accent data-[status]:text-accent-foreground hover:bg-accent focus:bg-accent focus:text-accent-foreground focus-visible:ring-ring/50 [&_svg:not([class*='text-'])]:text-muted-foreground flex flex-col gap-1 rounded-sm p-2 text-sm transition-all outline-none focus-visible:ring-[3px] focus-visible:outline-1 [&_svg:not([class*='size-'])]:size-4",
-        className
+        className,
       )}
       {...props}
     />
@@ -52,8 +53,7 @@ export default function Component() {
               <Button
                 className="group size-8 md:hidden"
                 variant="ghost"
-                size="icon"
-              >
+                size="icon">
                 <svg
                   className="pointer-events-none"
                   width={16}
@@ -64,8 +64,7 @@ export default function Component() {
                   strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
+                  xmlns="http://www.w3.org/2000/svg">
                   <path
                     d="M4 12L20 12"
                     className="origin-center -translate-y-[7px] transition-all duration-300 ease-[cubic-bezier(.5,.85,.25,1.1)] group-aria-expanded:translate-x-0 group-aria-expanded:translate-y-0 group-aria-expanded:rotate-[315deg]"
@@ -90,8 +89,7 @@ export default function Component() {
                       <NavigationMenuItem key={index} className="w-full">
                         <NavigationMenuLink
                           to={link.href}
-                          className="flex-row items-center gap-2 py-1.5"
-                        >
+                          className="flex-row items-center gap-2 py-1.5">
                           <Icon
                             size={16}
                             className="text-muted-foreground/80"
@@ -116,8 +114,7 @@ export default function Component() {
                     <NavigationMenuLink
                       to={link.href}
                       className="text-foreground hover:text-primary flex-row items-center gap-2 py-1.5 font-medium"
-                      key={index}
-                    >
+                      key={index}>
                       <Icon
                         size={16}
                         className="text-muted-foreground/80"

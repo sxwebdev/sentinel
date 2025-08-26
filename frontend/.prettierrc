@@ -1,18 +1,27 @@
 {
-  "printWidth": 80,
   "tabWidth": 2,
   "useTabs": false,
-  "semi": true,
-  "singleQuote": false,
-  "quoteProps": "as-needed",
-  "jsxSingleQuote": false,
-  "trailingComma": "es5",
-  "bracketSpacing": true,
-  "bracketSameLine": false,
   "arrowParens": "always",
-  "proseWrap": "preserve",
-  "htmlWhitespaceSensitivity": "css",
-  "endOfLine": "lf",
-  "embeddedLanguageFormatting": "auto",
-  "singleAttributePerLine": false
+  "printWidth": 80,
+  "quoteProps": "consistent",
+  "endOfLine": "auto",
+  "semi": true,
+  "trailingComma": "all",
+  "singleQuote": false,
+  "jsxBracketSameLine": true,
+  "overrides": [
+    {
+      "files": ["*.json", "*.yml", "*.md"],
+      "options": {
+        "tabWidth": 2
+      }
+    },
+    {
+      "files": "*.{ts,tsx}",
+      "options": {
+        "parser": "typescript"
+      }
+    }
+  ],
+  "plugins": ["prettier-plugin-tailwindcss"]
 }
