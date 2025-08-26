@@ -13,7 +13,6 @@
     "gen-api": "rm src/shared/types/model/* && npx orval"
   },
   "dependencies": {
-    "@tailwindcss/vite": "^4.1.12",
     "@tanstack/react-router": "^1.131.28",
     "@tanstack/react-router-devtools": "^1.131.28",
     "@tanstack/react-table": "^8.21.3",
@@ -38,6 +37,7 @@
     "zustand": "^5.0.8"
   },
   "devDependencies": {
+    "@tailwindcss/vite": "^4.1.12",
     "@eslint/js": "^9.34.0",
     "@tanstack/router-plugin": "^1.131.28",
     "@types/node": "^24.3.0",

@@ -26,4 +26,43 @@ export default defineConfig({
       "@features": path.resolve(__dirname, "./src/features"),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // React and core libraries
+          react: ["react", "react-dom", "@tanstack/react-router"],
+
+          // UI libraries
+          ui: [
+            "radix-ui",
+            "class-variance-authority",
+            "clsx",
+            "tailwind-merge",
+            "sonner",
+            "cmdk",
+          ],
+
+          // Data and forms
+          forms: ["formik", "yup"],
+
+          // Charts and visualization
+          charts: ["recharts"],
+
+          // State management
+          state: ["zustand"],
+
+          // Data tables
+          tables: ["@tanstack/react-table"],
+
+          // Icons
+          icons: ["lucide-react"],
+
+          // CSS utilities
+          css: ["tw-animate-css"],
+        },
+      },
+    },
+    chunkSizeWarningLimit: 500, // Increase warning threshold to 1MB
+  },
 });

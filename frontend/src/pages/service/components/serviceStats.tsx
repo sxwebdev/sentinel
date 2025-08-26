@@ -1,9 +1,9 @@
 import { InfoCardStats } from "@/entities/infoStatsCard/infoCardStats";
-import type { WebServiceDTO, WebServiceStats } from "@/shared/types/model";
+import type { WebServiceDTO, StorageServiceStats } from "@/shared/types/model";
 
 interface ServiceStatsProps {
   serviceDetailData: WebServiceDTO;
-  serviceStatsData: WebServiceStats;
+  serviceStatsData: StorageServiceStats;
 }
 
 export const ServiceStats = ({
