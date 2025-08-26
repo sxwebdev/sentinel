@@ -8,13 +8,19 @@ import "@shared/styles/index.css";
 
 // Import the generated route tree
 import { routeTree } from "./routeTree.gen";
+import { Loader } from "@/entities/loader/loader";
+import NotFound from "@/pages/notFound/notFound";
+import ErrorRouter from "./entities/errorRouter";
 
 // Create a new router instance
 const router = createRouter({
   routeTree,
   defaultPreload: "intent",
-  defaultStaleTime: 5000,
+  defaultStaleTime: Infinity,
   scrollRestoration: true,
+  defaultPendingComponent: Loader,
+  defaultNotFoundComponent: NotFound,
+  defaultErrorComponent: ErrorRouter,
 });
 
 // Register the router instance for type safety

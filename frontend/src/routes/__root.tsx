@@ -3,7 +3,6 @@ import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import { Toaster } from "sonner";
 
 import Header from "@/app/layouts/parts/Header";
-import NotFound from "@/pages/notFound/notFound";
 
 const RootComponent = () => (
   <>
@@ -18,5 +17,4 @@ const RootComponent = () => (
 
 export const Route = createRootRoute({
   component: RootComponent,
-  notFoundComponent: NotFound,
 });
