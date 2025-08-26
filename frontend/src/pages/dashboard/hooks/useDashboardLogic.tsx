@@ -8,7 +8,7 @@ export const useDashboardLogic = () => {
       dashboardInfo: s.dashboardInfo,
       setStats: s.setStats,
       loadStats: s.loadStats,
-    }))
+    })),
   );
 
   useEffect(() => {

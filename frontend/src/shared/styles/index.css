@@ -160,17 +160,17 @@ body {
   @apply max-w-full;
 
   h1 {
-    @apply text-lg font-semibold mb-3;
+    @apply mb-3 text-lg font-semibold;
   }
 
   h2 {
-    @apply text-lg font-semibold mb-2;
+    @apply mb-2 text-lg font-semibold;
   }
 
   ul {
     @apply list-disc pl-5;
     li {
-      @apply mb-1 text-accent-foreground text-sm;
+      @apply text-accent-foreground mb-1 text-sm;
     }
   }
 

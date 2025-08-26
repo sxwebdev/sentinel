@@ -19,8 +19,8 @@ export const Search = ({
   className,
 }: SearchProps) => {
   return (
-    <div className={cn("flex items-center gap-2 relative", className)}>
-      <SearchIcon className="absolute left-2 size-4 text-muted-foreground" />
+    <div className={cn("relative flex items-center gap-2", className)}>
+      <SearchIcon className="text-muted-foreground absolute left-2 size-4" />
       <Input
         type="text"
         placeholder={placeholder}
@@ -33,9 +33,9 @@ export const Search = ({
           variant="ghost"
           size="sm"
           onClick={() => onChange?.("")}
-          className="absolute right-2 p-0 "
+          className="absolute right-2 p-0"
         >
-          <XIcon className="size-4 text-muted-foreground" />
+          <XIcon className="text-muted-foreground size-4" />
         </Button>
       )}
     </div>

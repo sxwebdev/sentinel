@@ -134,7 +134,7 @@ const GRPCForm = React.memo(
         </CardContent>
       </Card>
     );
-  }
+  },
 );
 
 const TCPForm = React.memo(() => {
@@ -196,17 +196,17 @@ const HTTPForm = React.memo(
         endpoints[index] = { ...endpoints[index], [field]: value };
         setFieldValue("config.http.endpoints", endpoints);
       },
-      [setFieldValue, values.config?.http?.endpoints]
+      [setFieldValue, values.config?.http?.endpoints],
     );
 
     const handleRemoveEndpoint = useCallback(
       (index: number) => {
         setFieldValue(
           "config.http.endpoints",
-          (values.config?.http?.endpoints || []).filter((_, i) => i !== index)
+          (values.config?.http?.endpoints || []).filter((_, i) => i !== index),
         );
       },
-      [setFieldValue, values.config?.http?.endpoints]
+      [setFieldValue, values.config?.http?.endpoints],
     );
 
     const handleAddEndpoint = useCallback(() => {
@@ -246,11 +246,11 @@ const HTTPForm = React.memo(
             <small className="text-muted-foreground text-xs">
               JavaScript condition that returns true to trigger an incident.
               Available variables:
-              <code className="text-xs font-mono">
+              <code className="font-mono text-xs">
                 results.endpoint_name.value
               </code>
               ,{" "}
-              <code className="text-xs font-mono">
+              <code className="font-mono text-xs">
                 results.endpoint_name.success
               </code>
               , etc.
@@ -268,7 +268,7 @@ const HTTPForm = React.memo(
                     if (!isNaN(Number(e.target.value))) {
                       setFieldValue(
                         "config.http.timeout",
-                        Number(e.target.value)
+                        Number(e.target.value),
                       );
                     }
                   }}
@@ -358,7 +358,7 @@ const HTTPForm = React.memo(
                             if (!isNaN(Number(e.target.value))) {
                               setFieldValue(
                                 `config.http.endpoints.${index}.expected_status`,
-                                Number(e.target.value)
+                                Number(e.target.value),
                               );
                             }
                           }}
@@ -425,11 +425,11 @@ const HTTPForm = React.memo(
                               : ""
                         }
                         onChange={(
-                          e: React.ChangeEvent<HTMLTextAreaElement>
+                          e: React.ChangeEvent<HTMLTextAreaElement>,
                         ) => {
                           setFieldValue(
                             `config.http.endpoints.${index}.headers`,
-                            e.target.value
+                            e.target.value,
                           );
                         }}
                         placeholder={'{"Content-Type": "application/json"}'}
@@ -463,7 +463,7 @@ const HTTPForm = React.memo(
         </CardContent>
       </Card>
     );
-  }
+  },
 );
 
 export const ServiceForm = forwardRef<ServiceFormRef, ServiceFormProps>(
@@ -493,7 +493,7 @@ export const ServiceForm = forwardRef<ServiceFormRef, ServiceFormProps>(
           }, 0);
         }
       },
-      [onFormStateChange]
+      [onFormStateChange],
     );
 
     useImperativeHandle(ref, () => ({
@@ -517,7 +517,7 @@ export const ServiceForm = forwardRef<ServiceFormRef, ServiceFormProps>(
         Yup.object({
           name: Yup.string().required("Endpoint name is required"),
           url: Yup.string().required("URL is required"),
-        })
+        }),
       ),
     });
 
@@ -634,7 +634,7 @@ export const ServiceForm = forwardRef<ServiceFormRef, ServiceFormProps>(
           updateFormState({ isSubmitting, isValid, dirty });
 
           return (
-            <Form className="flex flex-col gap-4 px-3 md:px-6 py-3 md:py-6 text-card-foreground">
+            <Form className="text-card-foreground flex flex-col gap-4 px-3 py-3 md:px-6 md:py-6">
               <div className="flex flex-col gap-2">
                 <Label required>Service Name</Label>
                 <FastField name="name">
@@ -739,7 +739,7 @@ export const ServiceForm = forwardRef<ServiceFormRef, ServiceFormProps>(
                           "tags",
                           typeof tags === "object"
                             ? tags.map((tag) => tag.text)
-                            : []
+                            : [],
                         );
                       }}
                     />
@@ -774,5 +774,5 @@ export const ServiceForm = forwardRef<ServiceFormRef, ServiceFormProps>(
         }}
       </Formik>
     );
-  }
+  },
 );

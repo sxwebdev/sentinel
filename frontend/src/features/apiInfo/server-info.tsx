@@ -33,12 +33,12 @@ export const ServerInfo = () => {
         <ul className="grid gap-3 text-sm">
           <li className="grid gap-0.5">
             <span className="text-muted-foreground">Sentinel version</span>
-            <span className="flex justify-between items-center font-medium">
+            <span className="flex items-center justify-between font-medium">
               {serverInfo.version}
               {serverInfo.available_update ? (
-                <Badge className="bg-rose-500 text-white ml-2">Outdated</Badge>
+                <Badge className="ml-2 bg-rose-500 text-white">Outdated</Badge>
               ) : (
-                <Badge className="bg-emerald-500 text-white ml-2">Latest</Badge>
+                <Badge className="ml-2 bg-emerald-500 text-white">Latest</Badge>
               )}
             </span>
           </li>

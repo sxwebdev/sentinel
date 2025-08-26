@@ -44,7 +44,7 @@ const ServiceCreate = () => {
           {isMobile ? "Add" : "Add Service"}
         </Button>
       </DialogTrigger>
-      <DialogContent className="flex flex-col gap-0 p-0 max-h-[85vh] sm:max-h-[min(840px,95vh)] sm:max-w-2xl [&>button:last-child]:top-3.5">
+      <DialogContent className="flex max-h-[85vh] flex-col gap-0 p-0 sm:max-h-[min(840px,95vh)] sm:max-w-2xl [&>button:last-child]:top-3.5">
         {/* Header */}
         <DialogHeader className="contents space-y-0 text-left">
           <DialogTitle className="border-b px-6 py-4 text-base">

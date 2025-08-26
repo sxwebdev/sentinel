@@ -31,7 +31,7 @@ export default function MultiSelect({
         hideClearAllButton
         hidePlaceholderWhenSelected
         emptyIndicator={
-          <p className="text-center text-sm pt-3">No results found</p>
+          <p className="pt-3 text-center text-sm">No results found</p>
         }
       />
     </div>

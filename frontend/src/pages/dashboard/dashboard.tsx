@@ -15,6 +15,10 @@ import { ServiceTable } from "../service/serviceTable";
 import { useWsLogic } from "./hooks/useWsLogic";
 import { ChartIncidentsStats } from "./incidents-stats";
 
+const formatNumber = (value: number) => {
+  return Intl.NumberFormat().format(value);
+};
+
 const infoKeysDashboard = [
   { key: "total_services", label: "Total services" },
   { key: "services_up", label: "Services up" },
@@ -23,15 +27,23 @@ const infoKeysDashboard = [
   {
     key: "avg_response_time",
     label: "Average response time (ms)",
-    valueFormatter: (value: string) => `${value}ms`,
+    valueFormatter: (value: string) => `${formatNumber(Number(value))}ms`,
   },
-  { key: "total_checks", label: "Total checks" },
+  {
+    key: "total_checks",
+    label: "Total checks",
+    valueFormatter: (value: string) => `${formatNumber(Number(value))}`,
+  },
   {
     key: "uptime_percentage",
     label: "Uptime",
     valueFormatter: (value: string) => `${Number(value).toFixed(1)}%`,
   },
-  { key: "checks_per_minute", label: "Checks per minute" },
+  {
+    key: "checks_per_minute",
+    label: "Checks per minute",
+    valueFormatter: (value: string) => `${formatNumber(Number(value))}`,
+  },
 ];
 
 const Dashboard = () => {
@@ -42,7 +54,7 @@ const Dashboard = () => {
 
   return (
     <div className="flex flex-col gap-4 lg:gap-6">
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 md:gap-6 lg:grid-cols-4">
         {infoKeysDashboard.map((item) => {
           const value =
             dashboardInfo[
@@ -63,17 +75,17 @@ const Dashboard = () => {
 
       <div className="hidden">
         <Accordion type="multiple">
-          <AccordionItem value="item-1" className="shadow-sm rounded-lg">
-            <AccordionTrigger className="bg-white flex justify-between items-center border hover:no-underline border-border cursor-pointer text-lg py-4 px-6">
+          <AccordionItem value="item-1" className="rounded-lg shadow-sm">
+            <AccordionTrigger className="border-border flex cursor-pointer items-center justify-between border bg-white px-6 py-4 text-lg hover:no-underline">
               <h3 className="no-underline">Distribution by protocol</h3>
             </AccordionTrigger>
-            <AccordionContent className="px-6 py-4 bg-white rounded-b-lg flex flex-col gap-4">
+            <AccordionContent className="flex flex-col gap-4 rounded-b-lg bg-white px-6 py-4">
               {dashboardInfo?.protocols &&
               Object.entries(dashboardInfo.protocols).length > 0 ? (
                 Object.entries(dashboardInfo.protocols).map(
                   ([protocol, count]) => {
                     const totalCount = Object.values(
-                      dashboardInfo.protocols!
+                      dashboardInfo.protocols!,
                     ).reduce((a, b) => a + b, 0);
                     const percentage =
                       totalCount > 0
@@ -83,27 +95,25 @@ const Dashboard = () => {
                     return (
                       <Card
                         key={protocol}
-                        className="p-4 flex md:flex-row justify-between items-center flex-col gap-2"
+                        className="flex flex-col items-center justify-between gap-2 p-4 md:flex-row"
                       >
                         <h3 className="text-lg font-bold">
                           {getProtocolDisplayName(protocol)}
                         </h3>
-                        <div className="flex flex-row gap-2 items-center">
-                          <p className="text-lg text-muted-foreground">
+                        <div className="flex flex-row items-center gap-2">
+                          <p className="text-muted-foreground text-lg">
                             {count}
                           </p>
                           <Progress
                             value={Number(percentage)}
-                            className="w-[100px] h-2"
+                            className="h-2 w-[100px]"
                             max={100}
                           />
-                          <p className=" text-muted-foreground">
-                            {percentage}%
-                          </p>
+                          <p className="text-muted-foreground">{percentage}%</p>
                         </div>
                       </Card>
                     );
-                  }
+                  },
                 )
               ) : (
                 <p className="text-muted-foreground text-center">

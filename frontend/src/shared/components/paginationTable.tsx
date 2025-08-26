@@ -41,7 +41,7 @@ export default function PaginationTable({
   const id = useId();
   return (
     <div className={cn("w-full px-6", className)}>
-      <div className="flex flex-col md:flex-row items-center justify-between gap-4 md:gap-8 w-full">
+      <div className="flex w-full flex-col items-center justify-between gap-4 md:flex-row md:gap-8">
         <div className="flex items-center gap-3">
           <Select
             value={selectedRows.toString()}

@@ -12,14 +12,14 @@ interface InfoCardStatsProps {
 
 export const InfoCardStats = ({ title, value }: InfoCardStatsProps) => {
   return (
-    <Card className="gap-2 flex flex-col justify-center">
+    <Card className="flex flex-col justify-center gap-2">
       <CardHeader>
-        <CardTitle className="text-xl md:text-2xl font-bold text-center">
+        <CardTitle className="text-center text-xl font-bold md:text-2xl">
           {value}
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-center text-muted-foreground">{title}</p>
+        <p className="text-muted-foreground text-center">{title}</p>
       </CardContent>
     </Card>
   );

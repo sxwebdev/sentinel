@@ -1,4 +1,7 @@
 import { useState } from "react";
+import { getIncidents } from "@/shared/api/incidents/incidents";
+import { ExpandableText } from "@/shared/components/expandableText";
+import PaginationTable from "@/shared/components/paginationTable";
 import {
   Badge,
   Button,
@@ -11,32 +14,49 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/shared/components/ui";
-import { CheckIcon, CircleAlertIcon, TrashIcon, CopyIcon } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
-import { ExpandableText } from "@/shared/components/expandableText";
-import { formatDuration } from "@/shared/utils";
-import PaginationTable from "@/shared/components/paginationTable";
 import type {
   DbutilsFindResponseWithCountStorageIncident,
-  GetServicesIdIncidentsParams,
+  GetIncidentsParams,
   StorageIncident,
+  WebErrorResponse,
 } from "@/shared/types/model";
+import { formatDuration } from "@/shared/utils/duration";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { CheckIcon, CircleAlertIcon, CopyIcon, TrashIcon } from "lucide-react";
+import { toast } from "sonner";
+import type { AxiosError } from "axios";
+
+export const Route = createFileRoute("/incidents")({
+  component: RouteComponent,
+  loaderDeps: ({
+    search: { page = 1, page_size = 10 },
+  }: {
+    search: GetIncidentsParams;
+  }) => ({
+    page,
+    page_size,
+  }),
+  loader: ({ deps: { page, page_size } }) =>
+    getIncidents().getIncidents({ page, page_size }),
+  gcTime: 0,
+});
+
+function RouteComponent() {
+  const data = Route.useLoaderData();
+
+  return <IncidentsList incidentsData={data} />;
+}
 
 interface IncidentsListProps {
   incidentsData: DbutilsFindResponseWithCountStorageIncident;
-  incidentsCount: number | null;
-  filters: GetServicesIdIncidentsParams;
-  setFilters: (filters: Partial<GetServicesIdIncidentsParams>) => void;
-  setDeleteIncident: (incident: StorageIncident) => void;
 }
 
-export const IncidentsList = ({
-  incidentsData,
-  incidentsCount,
-  filters,
-  setFilters,
-  setDeleteIncident,
-}: IncidentsListProps) => {
+export const IncidentsList = ({ incidentsData }: IncidentsListProps) => {
+  const deps = Route.useLoaderDeps();
+  const nav = Route.useNavigate();
+  const router = useRouter();
+
   // State to track copied incident IDs
   const [copiedIncidents, setCopiedIncidents] = useState<Set<string>>(
     new Set(),
@@ -54,14 +74,36 @@ export const IncidentsList = ({
         });
       }, 1500);
     } catch (err) {
-      console.error("Failed to copy incident ID: ", err);
+      toast.error("Failed to copy incident ID", {
+        description: (err as Error).message,
+      });
+    }
+  };
+
+  const handleDeleteIncident = async (
+    serviceId: string,
+    incidentId: string,
+  ) => {
+    try {
+      await getIncidents().deleteServicesIdIncidentsIncidentId(
+        serviceId,
+        incidentId,
+      );
+      router.invalidate();
+      toast.success("Incident deleted", { description: `ID: ${incidentId}` });
+    } catch (err: unknown) {
+      toast.error("Failed to delete incident", {
+        description:
+          (err as AxiosError<WebErrorResponse>)?.response?.data?.error ||
+          (err as Error).message,
+      });
     }
   };
 
   return (
-    <Card>
+    <Card className="gap-3">
       <CardHeader>
-        <CardTitle>Recent Incidents</CardTitle>
+        <CardTitle className="pb-0 text-xl">Recent Incidents</CardTitle>
       </CardHeader>
       <CardContent>
         {incidentsData.items?.length === 0 ? (
@@ -90,7 +132,7 @@ export const IncidentsList = ({
                           )}
                         />
                       </TooltipTrigger>
-                      <TooltipContent>
+                      <TooltipContent showArrow className="dark">
                         <p>
                           {incident.resolved
                             ? "Incident resolved"
@@ -134,7 +176,10 @@ export const IncidentsList = ({
                             </div>
                           </button>
                         </TooltipTrigger>
-                        <TooltipContent className="px-2 py-1 text-xs">
+                        <TooltipContent
+                          showArrow
+                          className="dark px-2 py-1 text-xs"
+                        >
                           {copiedIncidents.has(incident.id ?? "")
                             ? "Copied!"
                             : "Click to copy ID"}
@@ -199,7 +244,12 @@ export const IncidentsList = ({
                     size="sm"
                     variant="ghost"
                     className="h-8 w-8 p-0 opacity-50 hover:opacity-100"
-                    onClick={() => setDeleteIncident(incident)}
+                    onClick={() =>
+                      handleDeleteIncident(
+                        incident.service_id as string,
+                        incident.id as string,
+                      )
+                    }
                   >
                     <TrashIcon className="h-3.5 w-3.5" />
                   </Button>
@@ -207,20 +257,22 @@ export const IncidentsList = ({
               </div>
             ))}
 
-            {incidentsCount != null && (
-              <div className="pt-4">
-                <PaginationTable
-                  className="px-0"
-                  selectedRows={filters.page_size ?? 0}
-                  setSelectedRows={(value) => setFilters({ page_size: value })}
-                  selectedPage={filters.page ?? 0}
-                  setSelectedPage={(value) => setFilters({ page: value })}
-                  totalPages={Math.ceil(
-                    (incidentsCount ?? 0) / (filters.page_size ?? 0),
-                  )}
-                />
-              </div>
-            )}
+            <div className="pt-4">
+              <PaginationTable
+                className="px-0"
+                selectedRows={deps.page_size ?? 0}
+                setSelectedRows={(value) => {
+                  nav({ search: { page_size: value, page: deps.page } });
+                }}
+                selectedPage={deps.page ?? 0}
+                setSelectedPage={(value) => {
+                  nav({ search: { page_size: deps.page_size, page: value } });
+                }}
+                totalPages={Math.ceil(
+                  (incidentsData?.count ?? 0) / (deps.page_size ?? 0),
+                )}
+              />
+            </div>
           </div>
         )}
       </CardContent>

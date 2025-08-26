@@ -112,7 +112,7 @@ export const useServiceTable = () => {
             <Link
               to="/service/$service_id"
               params={{ service_id: row.original.id || "" }}
-              className="cursor-pointer font-bold text-sm hover:underline"
+              className="cursor-pointer text-sm font-bold hover:underline"
             >
               {row.original.name}
             </Link>
@@ -131,7 +131,7 @@ export const useServiceTable = () => {
                   "bg-emerald-100 text-emerald-600",
                 row.original?.status === "down" && "bg-rose-100 text-rose-600",
                 row.original?.status === "unknown" &&
-                  "bg-yellow-100 text-yellow-600"
+                  "bg-yellow-100 text-yellow-600",
               )}
             >
               {row.original?.status?.toUpperCase()}
@@ -146,12 +146,12 @@ export const useServiceTable = () => {
           if (row.original?.tags?.length === 0) {
             return (
               <div className="flex items-center justify-center">
-                <div className="h-[3px] w-4 bg-gray-300 rounded-full" />
+                <div className="h-[3px] w-4 rounded-full bg-gray-300" />
               </div>
             );
           }
           return (
-            <div className="flex items-center justify-left flex-wrap gap-2">
+            <div className="justify-left flex flex-wrap items-center gap-2">
               {row.original?.tags?.map((tag) => (
                 <Badge
                   key={tag}
@@ -180,7 +180,7 @@ export const useServiceTable = () => {
             })
           ) : (
             <div className="flex items-center justify-center">
-              <div className="h-[3px] w-4 bg-gray-300 rounded-full" />
+              <div className="h-[3px] w-4 rounded-full bg-gray-300" />
             </div>
           );
         },
@@ -250,7 +250,7 @@ export const useServiceTable = () => {
                   <DropdownMenuItem
                     onClick={() => postServicesIdCheck(row.original?.id ?? "")}
                   >
-                    <RefreshCcwIcon className="w-4 h-4" />
+                    <RefreshCcwIcon className="h-4 w-4" />
                     <span>Check</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem
@@ -278,7 +278,7 @@ export const useServiceTable = () => {
         },
       },
     ],
-    [isOpenDropdownIdAction]
+    [isOpenDropdownIdAction],
   );
 
   useEffect(() => {

@@ -18,7 +18,7 @@ export const useWsLogic = () => {
       setUpdateService: s.setUpdateService,
       setUpdateAllServices: s.setUpdateAllServices,
       addServiceInData: s.addServiceInData,
-    }))
+    })),
   );
 
   const { lastMessage } = useWebSocket(socketUrl, {

@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 
-import { HouseIcon } from "lucide-react";
+import { HouseIcon, BookXIcon } from "lucide-react";
 
 import { Button } from "@shared/components/ui/button";
 import {
@@ -21,6 +21,7 @@ import { ServerInfo } from "@/features/apiInfo/server-info";
 // Navigation links array
 const navigationLinks = [
   { href: "/", label: "Dashboard", icon: HouseIcon, active: true },
+  { href: "/incidents", label: "Incidents", icon: BookXIcon, active: true },
   // { href: "/certificates", label: "Certificates", icon: ShieldCheck },
 ];
 
@@ -33,7 +34,7 @@ function NavigationMenuLink({
       data-slot="navigation-menu-link"
       className={cn(
         "data-[status]:focus:bg-accent data-[status]:hover:bg-accent data-[status]:bg-accent data-[status]:text-accent-foreground hover:bg-accent focus:bg-accent focus:text-accent-foreground focus-visible:ring-ring/50 [&_svg:not([class*='text-'])]:text-muted-foreground flex flex-col gap-1 rounded-sm p-2 text-sm transition-all outline-none focus-visible:ring-[3px] focus-visible:outline-1 [&_svg:not([class*='size-'])]:size-4",
-        className
+        className,
       )}
       {...props}
     />

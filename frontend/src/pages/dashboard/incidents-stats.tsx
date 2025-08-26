@@ -42,11 +42,11 @@ interface IncidentStatsItem {
 
 export function ChartIncidentsStats() {
   const [chartType, setChartType] = React.useState<ChartType>(
-    ChartType.IncidentsCount
+    ChartType.IncidentsCount,
   );
   const [timeRange, setTimeRange] = React.useState("30d");
   const [incidentsData, setIncidentsData] = React.useState<IncidentStatsItem[]>(
-    []
+    [],
   );
 
   const currentChartConfig: ChartConfig = useMemo(
@@ -66,7 +66,7 @@ export function ChartIncidentsStats() {
               : "var(--chart-3)",
       },
     }),
-    [chartType]
+    [chartType],
   );
 
   useEffect(() => {
@@ -107,7 +107,7 @@ export function ChartIncidentsStats() {
       .catch((error) => {
         toast.error(
           "Error fetching incidents stats:",
-          error?.message || "Unknown error"
+          error?.message || "Unknown error",
         );
       });
   }, [timeRange]);
@@ -138,7 +138,7 @@ export function ChartIncidentsStats() {
 
   return (
     <Card className="pt-0">
-      <CardHeader className="flex md:items-center gap-2 py-6 md:py-0 space-y-0 border-b flex-col md:flex-row">
+      <CardHeader className="flex flex-col gap-2 space-y-0 border-b py-6 md:flex-row md:items-center md:py-0">
         <div className="grid flex-1 gap-1">
           <CardTitle>Incidents stats</CardTitle>
           <CardDescription>
@@ -156,7 +156,7 @@ export function ChartIncidentsStats() {
           onValueChange={(value) => setChartType(value as ChartType)}
         >
           <SelectTrigger
-            className="w-full md:w-[180px] rounded-lg md:ml-auto"
+            className="w-full rounded-lg md:ml-auto md:w-[180px]"
             aria-label="Select a chart type"
           >
             <SelectValue placeholder="Incidents count" />
@@ -182,7 +182,7 @@ export function ChartIncidentsStats() {
 
         <Select value={timeRange} onValueChange={setTimeRange}>
           <SelectTrigger
-            className="w-full md:w-[160px] rounded-lg sm:ml-auto "
+            className="w-full rounded-lg sm:ml-auto md:w-[160px]"
             aria-label="Select a value"
           >
             <SelectValue placeholder="Last 3 months" />
@@ -253,13 +253,13 @@ export function ChartIncidentsStats() {
                 if (active && payload && payload.length && label) {
                   const data = payload[0].payload;
                   return (
-                    <div className="rounded-lg border bg-background p-2 shadow-sm">
+                    <div className="bg-background rounded-lg border p-2 shadow-sm">
                       <div className="grid grid-cols-2 gap-2">
                         <div className="flex flex-col">
-                          <span className="text-[0.70rem] uppercase text-muted-foreground">
+                          <span className="text-muted-foreground text-[0.70rem] uppercase">
                             Date
                           </span>
-                          <span className="font-bold text-muted-foreground">
+                          <span className="text-muted-foreground font-bold">
                             {new Date(label).toLocaleDateString("en-US", {
                               month: "short",
                               day: "numeric",
@@ -267,7 +267,7 @@ export function ChartIncidentsStats() {
                           </span>
                         </div>
                         <div className="flex flex-col">
-                          <span className="text-[0.70rem] uppercase text-muted-foreground">
+                          <span className="text-muted-foreground text-[0.70rem] uppercase">
                             {chartType === ChartType.IncidentsCount
                               ? "Count"
                               : chartType === ChartType.IncidentsAvgDuration

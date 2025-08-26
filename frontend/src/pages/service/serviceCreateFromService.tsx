@@ -32,7 +32,7 @@ const ServiceCreateFromService = () => {
         </Button>
       </DialogTrigger>
       <DialogDescription />
-      <DialogContent className="overflow-y-auto max-h-[90vh] sm:max-w-[90%] lg:max-w-[800px]">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[90%] lg:max-w-[800px]">
         <DialogTitle>Create Service</DialogTitle>
         <hr />
         <ServiceForm

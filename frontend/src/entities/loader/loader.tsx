@@ -15,8 +15,8 @@ export const Loader = ({
   return (
     <div
       className={cn(
-        "flex justify-center items-center",
-        loaderPage && "h-screen"
+        "flex items-center justify-center",
+        loaderPage && "h-screen",
       )}
     >
       <div className={cn("animate-spin rounded-full", className)}>
