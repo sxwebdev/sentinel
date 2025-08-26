@@ -55,7 +55,7 @@ export const ExpandableText = ({ content, className }: ExpandableTextProps) => {
       {(isTruncated || isExpanded) && (
         <button
           onClick={toggleExpansion}
-          className="inline-flex items-center gap-1 mt-2 px-2 py-1 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 hover:text-blue-700 rounded-md transition-colors duration-200"
+          className="mt-2 inline-flex items-center gap-1 rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-600 transition-colors duration-200 hover:bg-blue-100 hover:text-blue-700"
         >
           {isExpanded ? (
             <>

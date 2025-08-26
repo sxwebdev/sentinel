@@ -39,7 +39,7 @@ export const IncidentsList = ({
 }: IncidentsListProps) => {
   // State to track copied incident IDs
   const [copiedIncidents, setCopiedIncidents] = useState<Set<string>>(
-    new Set()
+    new Set(),
   );
 
   const handleCopyIncidentId = async (incidentId: string) => {
@@ -65,8 +65,8 @@ export const IncidentsList = ({
       </CardHeader>
       <CardContent>
         {incidentsData.items?.length === 0 ? (
-          <div className="text-center py-12">
-            <CircleAlertIcon className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
+          <div className="py-12 text-center">
+            <CircleAlertIcon className="text-muted-foreground/50 mx-auto mb-4 h-12 w-12" />
             <p className="text-muted-foreground">No incidents found</p>
           </div>
         ) : (
@@ -74,7 +74,7 @@ export const IncidentsList = ({
             {incidentsData?.items?.map((incident: StorageIncident) => (
               <div
                 key={incident.id}
-                className="flex items-center gap-4 p-4 rounded-lg border bg-card hover:shadow-sm transition-shadow"
+                className="bg-card flex items-center gap-4 rounded-lg border p-4 transition-shadow hover:shadow-sm"
               >
                 {/* Status Indicator */}
                 <div className="flex-shrink-0">
@@ -83,8 +83,10 @@ export const IncidentsList = ({
                       <TooltipTrigger>
                         <div
                           className={cn(
-                            "w-2.5 h-2.5 rounded-full",
-                            incident.resolved ? "bg-emerald-400" : "bg-rose-400"
+                            "h-2.5 w-2.5 rounded-full",
+                            incident.resolved
+                              ? "bg-emerald-400"
+                              : "bg-rose-400",
                           )}
                         />
                       </TooltipTrigger>
@@ -100,8 +102,8 @@ export const IncidentsList = ({
                 </div>
 
                 {/* Main Content */}
-                <div className="flex-1 min-w-0 space-y-2">
-                  <div className="flex items-center gap-2 text-sm flex-wrap">
+                <div className="min-w-0 flex-1 space-y-2">
+                  <div className="flex flex-wrap items-center gap-2 text-sm">
                     <TooltipProvider delayDuration={0}>
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -109,7 +111,7 @@ export const IncidentsList = ({
                             onClick={() =>
                               handleCopyIncidentId(incident.id ?? "")
                             }
-                            className="font-medium text-foreground hover:text-blue-600 transition-colors duration-200 inline-flex items-center gap-1.5 px-1 py-0.5 rounded hover:bg-blue-50 cursor-pointer"
+                            className="text-foreground inline-flex cursor-pointer items-center gap-1.5 rounded px-1 py-0.5 font-medium transition-colors duration-200 hover:bg-blue-50 hover:text-blue-600"
                             aria-label={
                               copiedIncidents.has(incident.id ?? "")
                                 ? "Copied"
@@ -117,7 +119,7 @@ export const IncidentsList = ({
                             }
                           >
                             #{incident.id?.slice(-6)}
-                            <div className="w-3.5 h-3.5 flex items-center justify-center">
+                            <div className="flex h-3.5 w-3.5 items-center justify-center">
                               {copiedIncidents.has(incident.id ?? "") ? (
                                 <CheckIcon
                                   className="stroke-emerald-500 transition-all duration-200"
@@ -145,40 +147,40 @@ export const IncidentsList = ({
                       className={cn(
                         "text-xs font-medium",
                         incident.resolved && "bg-emerald-100 text-emerald-600",
-                        !incident.resolved && "bg-rose-100 text-rose-600"
+                        !incident.resolved && "bg-rose-100 text-rose-600",
                       )}
                     >
                       {incident.resolved ? "Resolved" : "Active"}
                     </Badge>
                   </div>
 
-                  <div className="text-sm text-muted-foreground">
+                  <div className="text-muted-foreground text-sm">
                     <ExpandableText
                       content={incident?.error ?? ""}
-                      className="text-sm text-muted-foreground"
+                      className="text-muted-foreground text-sm"
                     />
                   </div>
 
-                  <div className="flex flex-wrap gap-2 md:gap-4 text-xs text-muted-foreground">
+                  <div className="text-muted-foreground flex flex-wrap gap-2 text-xs md:gap-4">
                     <div>
                       <span className="font-medium">Started:</span>{" "}
                       {new Date(
-                        incident?.start_time ?? ""
+                        incident?.start_time ?? "",
                       ).toLocaleDateString()}{" "}
                       at{" "}
                       {new Date(
-                        incident?.start_time ?? ""
+                        incident?.start_time ?? "",
                       ).toLocaleTimeString()}
                     </div>
                     {incident?.end_time && (
                       <div>
                         <span className="font-medium">Ended:</span>{" "}
                         {new Date(
-                          incident?.end_time ?? ""
+                          incident?.end_time ?? "",
                         ).toLocaleDateString()}{" "}
                         at{" "}
                         {new Date(
-                          incident?.end_time ?? ""
+                          incident?.end_time ?? "",
                         ).toLocaleTimeString()}
                       </div>
                     )}
@@ -214,7 +216,7 @@ export const IncidentsList = ({
                   selectedPage={filters.page ?? 0}
                   setSelectedPage={(value) => setFilters({ page: value })}
                   totalPages={Math.ceil(
-                    (incidentsCount ?? 0) / (filters.page_size ?? 0)
+                    (incidentsCount ?? 0) / (filters.page_size ?? 0),
                   )}
                 />
               </div>

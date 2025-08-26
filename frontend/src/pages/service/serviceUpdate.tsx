@@ -48,8 +48,8 @@ export const ServiceUpdate = () => {
     >
       <DialogContent
         className={cn(
-          "flex flex-col gap-0 p-0 max-h-[85vh] sm:max-h-[min(840px,95vh)] sm:max-w-2xl [&>button:last-child]:top-3.5",
-          (isLoading || !serviceData) && "flex flex-col"
+          "flex max-h-[85vh] flex-col gap-0 p-0 sm:max-h-[min(840px,95vh)] sm:max-w-2xl [&>button:last-child]:top-3.5",
+          (isLoading || !serviceData) && "flex flex-col",
         )}
       >
         <DialogHeader className="contents space-y-0 text-left">
@@ -60,7 +60,7 @@ export const ServiceUpdate = () => {
         <DialogDescription asChild>
           <div className="flex-1 overflow-y-auto overscroll-contain">
             {isLoading ? (
-              <div className="flex items-center justify-center py-10 w-full">
+              <div className="flex w-full items-center justify-center py-10">
                 <Loader />
               </div>
             ) : (
@@ -74,7 +74,7 @@ export const ServiceUpdate = () => {
                     onFormStateChange={setFormState}
                   />
                 ) : (
-                  <div className="flex items-center justify-center h-full w-full">
+                  <div className="flex h-full w-full items-center justify-center">
                     <p>Service not found</p>
                   </div>
                 )}

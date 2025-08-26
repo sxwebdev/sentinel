@@ -70,7 +70,7 @@ export const useServiceDetail = (serviceID: string) => {
     return await getServicesIdIncidents(serviceID ?? "", filters).then(
       (res) => {
         setIncidentsData(res);
-      }
+      },
     );
   };
 

@@ -45,7 +45,7 @@ export const getIncidents = () => {
    */
   const getServicesIdIncidents = (
     id: string,
-    params?: GetServicesIdIncidentsParams
+    params?: GetServicesIdIncidentsParams,
   ) => {
     return customFetcher<DbutilsFindResponseWithCountStorageIncident>({
       url: `/services/${id}/incidents`,
@@ -59,7 +59,7 @@ export const getIncidents = () => {
    */
   const deleteServicesIdIncidentsIncidentId = (
     id: string,
-    incidentId: string
+    incidentId: string,
   ) => {
     return customFetcher<null>({
       url: `/services/${id}/incidents/${incidentId}`,

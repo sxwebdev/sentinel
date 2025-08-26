@@ -41,7 +41,7 @@ export function SelectWithClear({
         <button
           type="button"
           onClick={handleClear}
-          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded-sm transition-colors z-10"
+          className="absolute top-1/2 right-2 z-10 -translate-y-1/2 rounded-sm p-1 transition-colors hover:bg-gray-100"
         >
           <XIcon className="size-3 text-gray-500" />
         </button>

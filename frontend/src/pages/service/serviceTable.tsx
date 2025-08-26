@@ -53,7 +53,7 @@ export const ServiceTable = ({ protocols }: ServiceTableProps) => {
       />
       <Card>
         <CardContent className="flex flex-col gap-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 justify-between items-center w-full gap-3">
+          <div className="grid w-full grid-cols-1 items-center justify-between gap-3 md:grid-cols-2 lg:grid-cols-6">
             <Search
               className="lg:col-span-2"
               placeholder="Search"
@@ -115,9 +115,9 @@ export const ServiceTable = ({ protocols }: ServiceTableProps) => {
               <SelectItem value="down">Down</SelectItem>
             </SelectWithClear>
           </div>
-          <div className="rounded-xl overflow-hidden border border-border">
+          <div className="border-border overflow-hidden rounded-xl border">
             <Table>
-              <TableHeader className="bg-gray-100 rounded-t-lg">
+              <TableHeader className="rounded-t-lg bg-gray-100">
                 {table.getHeaderGroups().map((headerGroup) => (
                   <TableRow key={headerGroup.id}>
                     {headerGroup.headers.map((header, idx) => {
@@ -130,7 +130,7 @@ export const ServiceTable = ({ protocols }: ServiceTableProps) => {
                             ? null
                             : flexRender(
                                 header.column.columnDef.header,
-                                header.getContext()
+                                header.getContext(),
                               )}
                         </TableHead>
                       );
@@ -161,7 +161,7 @@ export const ServiceTable = ({ protocols }: ServiceTableProps) => {
                               <TableCell key={cell.id}>
                                 {flexRender(
                                   cell.column.columnDef.cell,
-                                  cell.getContext()
+                                  cell.getContext(),
                                 )}
                               </TableCell>
                             ))}

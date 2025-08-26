@@ -39,7 +39,7 @@ export const UpdateBanner = () => {
             Available new update
           </Button>
         </DialogTrigger>
-        <DialogContent className="flex flex-col gap-0 p-0 max-h-[85vh] sm:max-h-[min(840px,95vh)] sm:max-w-2xl [&>button:last-child]:top-3.5">
+        <DialogContent className="flex max-h-[85vh] flex-col gap-0 p-0 sm:max-h-[min(840px,95vh)] sm:max-w-2xl [&>button:last-child]:top-3.5">
           <DialogHeader className="contents space-y-0 text-left">
             <DialogTitle className="border-b px-6 py-4 text-base">
               🚀 Available new update
@@ -47,7 +47,7 @@ export const UpdateBanner = () => {
           </DialogHeader>
 
           <DialogDescription asChild>
-            <div className="flex-1 changelog overflow-y-auto overscroll-contain p-6">
+            <div className="changelog flex-1 overflow-y-auto overscroll-contain p-6">
               {/* Current version */}
               <div className="mb-3 text-lg font-semibold">
                 Current version:{" "}

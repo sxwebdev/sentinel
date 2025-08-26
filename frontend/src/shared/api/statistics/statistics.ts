@@ -19,7 +19,7 @@ export const getStatistics = () => {
    */
   const getServicesIdStats = (
     id: string,
-    params?: GetServicesIdStatsParams
+    params?: GetServicesIdStatsParams,
   ) => {
     return customFetcher<StorageServiceStats>({
       url: `/services/${id}/stats`,

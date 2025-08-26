@@ -32,7 +32,7 @@ export const getServices = () => {
    * @summary Create new service
    */
   const postServices = (
-    webCreateUpdateServiceRequest: WebCreateUpdateServiceRequest
+    webCreateUpdateServiceRequest: WebCreateUpdateServiceRequest,
   ) => {
     return customFetcher<WebServiceDTO>({
       url: `/services`,
@@ -57,7 +57,7 @@ export const getServices = () => {
    */
   const putServicesId = (
     id: string,
-    webCreateUpdateServiceRequest: WebCreateUpdateServiceRequest
+    webCreateUpdateServiceRequest: WebCreateUpdateServiceRequest,
   ) => {
     return customFetcher<WebServiceDTO>({
       url: `/services/${id}`,

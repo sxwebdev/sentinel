@@ -36,23 +36,23 @@ export const ServiceOverview = ({
     <>
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-3.5 md:gap-5 flex-col md:flex-row">
+          <CardTitle className="flex flex-col items-center gap-3.5 md:flex-row md:gap-5">
             <Badge
               className={cn(
-                "text-xs md:text-sm font-semibold",
+                "text-xs font-semibold md:text-sm",
                 serviceDetailData?.status === "up" &&
                   "bg-emerald-100 text-emerald-600",
                 serviceDetailData?.status === "down" &&
                   "bg-rose-100 text-rose-600",
                 serviceDetailData?.status === "unknown" &&
-                  "bg-yellow-100 text-yellow-600"
+                  "bg-yellow-100 text-yellow-600",
               )}
             >
               {serviceDetailData?.status?.toLocaleUpperCase() ?? ""}
             </Badge>
 
-            <div className="flex flex-col w-full">
-              <h3 className="text-base md:text-lg font-bold">
+            <div className="flex w-full flex-col">
+              <h3 className="text-base font-bold md:text-lg">
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger>
@@ -90,7 +90,7 @@ export const ServiceOverview = ({
                     <TooltipTrigger>
                       <Badge variant={"secondary"} className="ml-3 text-sm">
                         {new Date(
-                          serviceDetailData?.last_check ?? ""
+                          serviceDetailData?.last_check ?? "",
                         ).toLocaleString()}
                       </Badge>
                     </TooltipTrigger>
