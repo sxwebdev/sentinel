@@ -19,10 +19,13 @@ import type {
   DbutilsFindResponseWithCountStorageIncident,
   GetIncidentsParams,
   StorageIncident,
+  WebErrorResponse,
 } from "@/shared/types/model";
 import { formatDuration } from "@/shared/utils/duration";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { CheckIcon, CircleAlertIcon, CopyIcon, TrashIcon } from "lucide-react";
+import { toast } from "sonner";
+import type { AxiosError } from "axios";
 
 export const Route = createFileRoute("/incidents")({
   component: RouteComponent,
@@ -71,7 +74,9 @@ export const IncidentsList = ({ incidentsData }: IncidentsListProps) => {
         });
       }, 1500);
     } catch (err) {
-      console.error("Failed to copy incident ID: ", err);
+      toast.error("Failed to copy incident ID", {
+        description: (err as Error).message,
+      });
     }
   };
 
@@ -85,8 +90,13 @@ export const IncidentsList = ({ incidentsData }: IncidentsListProps) => {
         incidentId,
       );
       router.invalidate();
-    } catch (err) {
-      console.error("Failed to delete incident: ", err);
+      toast.success("Incident deleted", { description: `ID: ${incidentId}` });
+    } catch (err: unknown) {
+      toast.error("Failed to delete incident", {
+        description:
+          (err as AxiosError<WebErrorResponse>)?.response?.data?.error ||
+          (err as Error).message,
+      });
     }
   };
 
