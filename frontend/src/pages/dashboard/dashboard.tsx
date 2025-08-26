@@ -15,6 +15,10 @@ import { ServiceTable } from "../service/serviceTable";
 import { useWsLogic } from "./hooks/useWsLogic";
 import { ChartIncidentsStats } from "./incidents-stats";
 
+const formatNumber = (value: number) => {
+  return Intl.NumberFormat().format(value);
+};
+
 const infoKeysDashboard = [
   { key: "total_services", label: "Total services" },
   { key: "services_up", label: "Services up" },
@@ -23,15 +27,23 @@ const infoKeysDashboard = [
   {
     key: "avg_response_time",
     label: "Average response time (ms)",
-    valueFormatter: (value: string) => `${value}ms`,
+    valueFormatter: (value: string) => `${formatNumber(Number(value))}ms`,
   },
-  { key: "total_checks", label: "Total checks" },
+  {
+    key: "total_checks",
+    label: "Total checks",
+    valueFormatter: (value: string) => `${formatNumber(Number(value))}`,
+  },
   {
     key: "uptime_percentage",
     label: "Uptime",
     valueFormatter: (value: string) => `${Number(value).toFixed(1)}%`,
   },
-  { key: "checks_per_minute", label: "Checks per minute" },
+  {
+    key: "checks_per_minute",
+    label: "Checks per minute",
+    valueFormatter: (value: string) => `${formatNumber(Number(value))}`,
+  },
 ];
 
 const Dashboard = () => {
@@ -83,8 +95,7 @@ const Dashboard = () => {
                     return (
                       <Card
                         key={protocol}
-                        className="flex flex-col items-center justify-between gap-2 p-4 md:flex-row"
-                      >
+                        className="flex flex-col items-center justify-between gap-2 p-4 md:flex-row">
                         <h3 className="text-lg font-bold">
                           {getProtocolDisplayName(protocol)}
                         </h3>
