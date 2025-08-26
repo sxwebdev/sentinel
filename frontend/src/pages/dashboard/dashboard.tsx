@@ -95,7 +95,8 @@ const Dashboard = () => {
                     return (
                       <Card
                         key={protocol}
-                        className="flex flex-col items-center justify-between gap-2 p-4 md:flex-row">
+                        className="flex flex-col items-center justify-between gap-2 p-4 md:flex-row"
+                      >
                         <h3 className="text-lg font-bold">
                           {getProtocolDisplayName(protocol)}
                         </h3>

@@ -116,7 +116,8 @@ export const IncidentsList = ({ incidentsData }: IncidentsListProps) => {
             {incidentsData?.items?.map((incident: StorageIncident) => (
               <div
                 key={incident.id}
-                className="bg-card flex items-center gap-4 rounded-lg border p-4 transition-shadow hover:shadow-sm">
+                className="bg-card flex items-center gap-4 rounded-lg border p-4 transition-shadow hover:shadow-sm"
+              >
                 {/* Status Indicator */}
                 <div className="flex-shrink-0">
                   <TooltipProvider>
@@ -157,7 +158,8 @@ export const IncidentsList = ({ incidentsData }: IncidentsListProps) => {
                               copiedIncidents.has(incident.id ?? "")
                                 ? "Copied"
                                 : "Copy incident ID"
-                            }>
+                            }
+                          >
                             #{incident.id?.slice(-6)}
                             <div className="flex h-3.5 w-3.5 items-center justify-center">
                               {copiedIncidents.has(incident.id ?? "") ? (
@@ -176,7 +178,8 @@ export const IncidentsList = ({ incidentsData }: IncidentsListProps) => {
                         </TooltipTrigger>
                         <TooltipContent
                           showArrow
-                          className="dark px-2 py-1 text-xs">
+                          className="dark px-2 py-1 text-xs"
+                        >
                           {copiedIncidents.has(incident.id ?? "")
                             ? "Copied!"
                             : "Click to copy ID"}
@@ -190,7 +193,8 @@ export const IncidentsList = ({ incidentsData }: IncidentsListProps) => {
                         "text-xs font-medium",
                         incident.resolved && "bg-emerald-100 text-emerald-600",
                         !incident.resolved && "bg-rose-100 text-rose-600",
-                      )}>
+                      )}
+                    >
                       {incident.resolved ? "Resolved" : "Active"}
                     </Badge>
                   </div>
@@ -245,7 +249,8 @@ export const IncidentsList = ({ incidentsData }: IncidentsListProps) => {
                         incident.service_id as string,
                         incident.id as string,
                       )
-                    }>
+                    }
+                  >
                     <TrashIcon className="h-3.5 w-3.5" />
                   </Button>
                 </div>

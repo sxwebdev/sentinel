@@ -8,7 +8,6 @@
   "semi": true,
   "trailingComma": "all",
   "singleQuote": false,
-  "jsxBracketSameLine": true,
   "overrides": [
     {
       "files": ["*.json", "*.yml", "*.md"],
