@@ -124,6 +124,7 @@ export const ServiceOverview = ({
               dangerouslySetInnerHTML={{
                 __html: serviceDetailData.last_error,
               }}
+              className="break-all"
             />
           </AlertDescription>
         </Alert>

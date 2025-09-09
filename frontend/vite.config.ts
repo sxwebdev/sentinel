@@ -34,14 +34,18 @@ export default defineConfig({
           react: ["react", "react-dom", "@tanstack/react-router"],
 
           // UI libraries
-          ui: [
-            "radix-ui",
-            "class-variance-authority",
-            "clsx",
-            "tailwind-merge",
-            "sonner",
-            "cmdk",
-          ],
+          // ui: [
+          //   "tailwindcss",
+          //   "radix-ui",
+          //   "class-variance-authority",
+          //   "clsx",
+          //   "tailwind-merge",
+          //   "sonner",
+          //   "cmdk",
+          //   "tw-animate-css",
+          //   "remark-gfm",
+          //   "emblor",
+          // ],
 
           // Data and forms
           forms: ["formik", "yup"],
@@ -57,12 +61,9 @@ export default defineConfig({
 
           // Icons
           icons: ["lucide-react"],
-
-          // CSS utilities
-          css: ["tw-animate-css"],
         },
       },
     },
-    chunkSizeWarningLimit: 500, // Increase warning threshold to 1MB
+    chunkSizeWarningLimit: 1000, // Increase warning threshold to 1MB
   },
 });
