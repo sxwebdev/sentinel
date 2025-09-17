@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/sxwebdev/sentinel/internal/config"
+	"github.com/sxwebdev/sentinel/internal/models"
 	"github.com/sxwebdev/sentinel/internal/monitor"
 	"github.com/sxwebdev/sentinel/internal/monitors"
 	"github.com/sxwebdev/sentinel/internal/notifier"
@@ -203,7 +204,7 @@ func setupTestSuite() (*TestSuite, error) {
 	dbPath := filepath.Join(tmpDir, "test.db")
 
 	// Load config
-	cfg := &config.Config{
+	cfg := &config.ConfigHub{
 		Database: config.DatabaseConfig{
 			Path: dbPath,
 		},
@@ -249,7 +250,7 @@ func setupTestSuite() (*TestSuite, error) {
 	monitorService := monitor.NewMonitorService(stor, cfg, notif, rc)
 
 	// Create web server
-	webServer, err := web.NewServer(l, cfg, web.ServerInfo{}, monitorService, stor, rc, upgr)
+	webServer, err := web.NewServer(l, cfg, models.ServerInfo{}, monitorService, stor, rc, upgr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create web server: %w", err)
 	}

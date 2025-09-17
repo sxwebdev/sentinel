@@ -4,7 +4,8 @@
 
 # Variables
 BINARY_NAME=sentinel
-MAIN_PATH=./cmd/sentinel
+HUB_PATH=./cmd/sentinel
+AGENT_PATH=./cmd/agent
 BUILD_DIR=./build
 VERSION?=dev
 LDFLAGS=-ldflags="-w -s -X main.version=${VERSION}"
@@ -18,7 +19,10 @@ help: ## Show this help message
 
 # Development
 dev: ## Run in development mode with auto-reload
-	go run $(MAIN_PATH) start
+	go run $(HUB_PATH) start
+
+agent: ## Run in development mode with auto-reload
+	go run $(AGENT_PATH) start
 
 run: build ## Build and run the application
 	./$(BUILD_DIR)/$(BINARY_NAME)
@@ -73,12 +77,19 @@ format: ## Format code
 	go fmt ./...
 	goimports -w .
 
-docker-push: ## Build and push Docker image
+docker-push-hub: ## Build and push Docker image
 	docker buildx build --platform linux/amd64 --push \
 		--build-arg VERSION=`git describe --tags --abbrev=0 || echo "0.0.0"` \
 		--build-arg COMMIT=`git rev-parse --short HEAD` \
 		--build-arg DATE=`date -u +'%Y-%m-%dT%H:%M:%SZ'` \
 		-t sxwebdev/sentinel:latest .
+
+docker-push-agent: ## Build and push Docker image
+	docker buildx build --platform linux/amd64 --push -f Dockerfile-agent \
+		--build-arg VERSION=`git describe --tags --abbrev=0 || echo "0.0.0"` \
+		--build-arg COMMIT=`git rev-parse --short HEAD` \
+		--build-arg DATE=`date -u +'%Y-%m-%dT%H:%M:%SZ'` \
+		-t sxwebdev/sentinel-agent:latest .
 
 docker-run: ## Run Docker container
 	docker run -d \
@@ -133,3 +144,15 @@ genswagger:
 	rm -rf ./docs/*
 	swag fmt -d ./internal/web
 	swag init -o docs/docsv1 --dir ./internal/web -g handlers.go --parseDependency
+
+genenvs:
+	go run ./cmd/sentinel config genenvs
+	go run ./cmd/agent config genenvs
+
+genproto: ## Generate protobuf code
+	buf lint
+	rm -rf ./internal/agent/api/*
+	buf generate
+
+grpcui-agent:
+	grpcui --plaintext localhost:9000

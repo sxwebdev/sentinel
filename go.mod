@@ -1,29 +1,40 @@
 module github.com/sxwebdev/sentinel
 
-go 1.25.0
+go 1.25.1
 
 require (
+	connectrpc.com/connect v1.18.1
+	connectrpc.com/cors v0.1.0
 	github.com/Masterminds/semver/v3 v3.4.0
 	github.com/containrrr/shoutrrr v0.8.0
 	github.com/dop251/goja v0.0.0-20250630131328-58d95d85e994
-	github.com/dromara/carbon/v2 v2.6.11
+	github.com/dromara/carbon/v2 v2.6.12
 	github.com/go-playground/validator/v10 v10.27.0
 	github.com/goccy/go-yaml v1.18.0
 	github.com/gofiber/contrib/websocket v1.3.4
 	github.com/gofiber/fiber/v2 v2.52.9
-	github.com/huandu/go-sqlbuilder v1.36.1
+	github.com/huandu/go-sqlbuilder v1.37.0
 	github.com/oklog/ulid/v2 v2.1.1
 	github.com/puzpuzpuz/xsync/v3 v3.5.1
+	github.com/rs/cors v1.11.1
 	github.com/stretchr/testify v1.11.1
 	github.com/swaggo/fiber-swagger v1.3.0
 	github.com/swaggo/swag v1.16.6
+	github.com/sxwebdev/xconfig v0.0.0-20250917185517-9fc0b932f57a
+	github.com/sxwebdev/xconfig/decoders/xconfigdotenv v0.0.0-20250917185517-9fc0b932f57a
+	github.com/sxwebdev/xconfig/decoders/xconfigyaml v0.0.0-20250917185517-9fc0b932f57a
 	github.com/tkcrm/mx v0.2.34
+	github.com/tkcrm/mx/transport/connectrpc_transport v0.0.0-20250618055556-3f77aaa9ddbd
 	github.com/urfave/cli/v3 v3.4.1
-	google.golang.org/grpc v1.75.0
-	modernc.org/sqlite v1.38.2
+	go.akshayshah.org/connectproto v0.6.0
+	golang.org/x/net v0.44.0
+	google.golang.org/grpc v1.75.1
+	google.golang.org/protobuf v1.36.9
+	modernc.org/sqlite v1.39.0
 )
 
 require (
+	connectrpc.com/grpcreflect v1.3.0 // indirect
 	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/andybalholm/brotli v1.2.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
@@ -57,11 +68,13 @@ require (
 	github.com/go-sourcemap/sourcemap v2.1.4+incompatible // indirect
 	github.com/google/pprof v0.0.0-20250903194437-c28834ac2320 // indirect
 	github.com/google/uuid v1.6.0 // indirect
+	github.com/huandu/go-clone v1.7.3 // indirect
 	github.com/huandu/xstrings v1.5.0 // indirect
+	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/klauspost/compress v1.18.0 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
-	github.com/mailru/easyjson v0.9.0 // indirect
+	github.com/mailru/easyjson v0.9.1 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.16 // indirect
@@ -74,31 +87,28 @@ require (
 	github.com/prometheus/procfs v0.17.0 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
-	github.com/rogpeppe/go-internal v1.14.1 // indirect
 	github.com/savsgio/gotils v0.0.0-20250408102913-196191ec6287 // indirect
 	github.com/swaggo/files v1.0.1 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
-	github.com/valyala/fasthttp v1.65.0 // indirect
-	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
+	github.com/valyala/fasthttp v1.66.0 // indirect
+	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.63.0 // indirect
 	go.opentelemetry.io/otel v1.38.0 // indirect
 	go.opentelemetry.io/otel/metric v1.38.0 // indirect
 	go.opentelemetry.io/otel/trace v1.38.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
-	go.yaml.in/yaml/v2 v2.4.2 // indirect
+	go.yaml.in/yaml/v2 v2.4.3 // indirect
 	golang.org/x/crypto v0.42.0 // indirect
-	golang.org/x/exp v0.0.0-20250819193227-8b4c13bb791b // indirect
+	golang.org/x/exp v0.0.0-20250911091902-df9299821621 // indirect
 	golang.org/x/mod v0.28.0 // indirect
-	golang.org/x/net v0.43.0 // indirect
 	golang.org/x/sync v0.17.0 // indirect
 	golang.org/x/sys v0.36.0 // indirect
 	golang.org/x/text v0.29.0 // indirect
-	golang.org/x/tools v0.36.0 // indirect
+	golang.org/x/tools v0.37.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250908214217-97024824d090 // indirect
-	google.golang.org/protobuf v1.36.9 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	modernc.org/libc v1.66.8 // indirect
+	modernc.org/libc v1.66.9 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
 )

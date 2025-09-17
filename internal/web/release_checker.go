@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/Masterminds/semver/v3"
+	"github.com/sxwebdev/sentinel/internal/models"
 )
 
 // checkNewVersion checks if a new version is available from github releases
@@ -146,7 +147,7 @@ func (s *Server) checkNewVersion() error {
 
 	s.logger.Infof("Found %d newer version(s), latest: %s", len(newerReleases), latestRelease.TagName)
 
-	s.serverInfo.AvailableUpdate = &AvailableUpdate{
+	s.serverInfo.AvailableUpdate = &models.AvailableUpdate{
 		IsAvailableManual: s.config.Upgrader.IsEnabled,
 		TagName:           latestRelease.TagName,
 		URL:               "https://github.com/sxwebdev/sentinel/releases/tag/" + latestRelease.TagName,

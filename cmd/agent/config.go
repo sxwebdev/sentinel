@@ -16,8 +16,8 @@ func cfgPathsFlag() *cli.StringSliceFlag {
 	return &cli.StringSliceFlag{
 		Name:    "config",
 		Aliases: []string{"c"},
-		Value:   []string{"config.yaml"},
-		Usage:   "allows you to use your own paths to configuration files. by default it uses config.yaml",
+		Value:   []string{"config-agent.yaml"},
+		Usage:   "allows you to use your own paths to configuration files. by default it uses config-agent.yaml",
 	}
 }
 
@@ -30,7 +30,7 @@ func configCMD() *cli.Command {
 				Name:  "genenvs",
 				Usage: "generate config yaml template",
 				Action: func(_ context.Context, _ *cli.Command) error {
-					conf := new(config.ConfigHub)
+					conf := new(config.ConfigAgent)
 					_, err := xconfig.Load(conf, xconfig.WithEnvPrefix(envPrefix))
 					if err != nil {
 						return fmt.Errorf("failed to generate markdown: %w", err)
@@ -44,7 +44,7 @@ func configCMD() *cli.Command {
 						return fmt.Errorf("failed to encode yaml: %w", err)
 					}
 
-					if err := os.WriteFile("config.template.yaml", buf.Bytes(), 0o600); err != nil {
+					if err := os.WriteFile("config-agent.template.yaml", buf.Bytes(), 0o600); err != nil {
 						return fmt.Errorf("failed to write file: %w", err)
 					}
 

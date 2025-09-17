@@ -14,11 +14,11 @@ import (
 )
 
 var (
-	appName    = "sentinel"
+	appName    = "sentinel-agent"
 	version    = "local"
 	commitHash = "unknown"
 	buildDate  = "unknown"
-	envPrefix  = "SENTINEL_"
+	envPrefix  = "SENTINEL_AGENT_"
 )
 
 func getBuildVersion() string {

@@ -1,0 +1,25 @@
+syntax = "proto3";
+package sentinel.common.v1;
+
+import "google/protobuf/timestamp.proto";
+
+// AvailableUpdate represents information about an available update
+message AvailableUpdate {
+  bool is_available_manual = 1;
+  string tag_name = 2;
+  string url = 3;
+  string description = 4;
+}
+
+// ServerInfo represents information about the server
+message ServerInfo {
+  string version = 1;
+  string commit_hash = 2;
+  string build_date = 3;
+  string go_version = 4;
+  string sqlite_version = 5;
+  string os = 6;
+  string arch = 7;
+  optional AvailableUpdate available_update = 8;
+  google.protobuf.Timestamp started_at = 9;
+}

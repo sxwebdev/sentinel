@@ -32,6 +32,7 @@ import (
 	"github.com/sxwebdev/sentinel/docs/docsv1"
 	"github.com/sxwebdev/sentinel/frontend"
 	"github.com/sxwebdev/sentinel/internal/config"
+	"github.com/sxwebdev/sentinel/internal/models"
 	"github.com/sxwebdev/sentinel/internal/monitor"
 	"github.com/sxwebdev/sentinel/internal/receiver"
 	"github.com/sxwebdev/sentinel/internal/storage"
@@ -45,9 +46,9 @@ import (
 type Server struct {
 	logger logger.Logger
 
-	serverInfo ServerInfo
+	serverInfo models.ServerInfo
 
-	config        *config.Config
+	config        *config.ConfigHub
 	app           *fiber.App
 	wsConnections map[*websocket.Conn]bool
 	wsMutex       sync.Mutex
@@ -62,8 +63,8 @@ type Server struct {
 // NewServer creates a new web server
 func NewServer(
 	logger logger.Logger,
-	cfg *config.Config,
-	serverInfo ServerInfo,
+	cfg *config.ConfigHub,
+	serverInfo models.ServerInfo,
 	monitorService *monitor.MonitorService,
 	storage storage.Storage,
 	receiver *receiver.Receiver,

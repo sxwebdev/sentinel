@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/sxwebdev/sentinel/internal/config"
+	"github.com/sxwebdev/sentinel/internal/models"
 	"github.com/sxwebdev/sentinel/internal/monitor"
 	"github.com/sxwebdev/sentinel/internal/notifier"
 	"github.com/sxwebdev/sentinel/internal/receiver"
@@ -27,8 +28,8 @@ func startCMD() *cli.Command {
 		Usage: "start the server",
 		Flags: []cli.Flag{cfgPathsFlag()},
 		Action: func(ctx context.Context, cl *cli.Command) error {
-			conf, err := config.Load(cl.String("config"))
-			if err != nil {
+			conf := new(config.ConfigHub)
+			if err := config.Load(conf, envPrefix, cl.StringSlice("config")); err != nil {
 				return fmt.Errorf("failed to load config: %w", err)
 			}
 
@@ -51,6 +52,7 @@ func startCMD() *cli.Command {
 			)
 
 			// set default timezone
+			var err error
 			time.Local, err = time.LoadLocation(conf.Timezone)
 			if err != nil {
 				return fmt.Errorf("failed to set timezone: %w", err)
@@ -93,7 +95,7 @@ func startCMD() *cli.Command {
 			// Initialize scheduler
 			sched := scheduler.New(l, monitorService, rc)
 
-			webServer, err := web.NewServer(l, conf, web.ServerInfo{
+			serverInfo := models.ServerInfo{
 				Version:       version,
 				CommitHash:    commitHash,
 				BuildDate:     buildDate,
@@ -101,7 +103,9 @@ func startCMD() *cli.Command {
 				SqliteVersion: sqliteVersion,
 				OS:            runtime.GOOS,
 				Arch:          runtime.GOARCH,
-			}, monitorService, store, rc, upgr)
+			}
+
+			webServer, err := web.NewServer(l, conf, serverInfo, monitorService, store, rc, upgr)
 			if err != nil {
 				return fmt.Errorf("failed to initialize web server: %w", err)
 			}

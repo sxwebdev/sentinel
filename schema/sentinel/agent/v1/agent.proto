@@ -1,0 +1,24 @@
+syntax = "proto3";
+package sentinel.agent.v1;
+
+import "sentinel/common/v1/info.proto";
+
+// AgentService is the service for agent
+service AgentService {
+  rpc Info(InfoRequest) returns (InfoResponse) {}
+}
+
+enum AgentStatus {
+  AGENT_STATUS_UNSPECIFIED = 0;
+  AGENT_STATUS_ACTIVE = 1;
+  AGENT_STATUS_INACTIVE = 2;
+}
+
+// InfoRequest is the request for Info method
+message InfoRequest {}
+
+// InfoResponse is the response for Info method
+message InfoResponse {
+  AgentStatus status = 1;
+  common.v1.ServerInfo server_info = 2;
+}

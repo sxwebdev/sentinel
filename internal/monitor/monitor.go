@@ -18,13 +18,13 @@ import (
 // MonitorService handles service monitoring
 type MonitorService struct {
 	storage  storage.Storage
-	config   *config.Config
+	config   *config.ConfigHub
 	notifier *notifier.Notifier
 	receiver *receiver.Receiver
 }
 
 // NewMonitorService creates a new monitor service
-func NewMonitorService(storage storage.Storage, config *config.Config, notifier *notifier.Notifier, receiver *receiver.Receiver) *MonitorService {
+func NewMonitorService(storage storage.Storage, config *config.ConfigHub, notifier *notifier.Notifier, receiver *receiver.Receiver) *MonitorService {
 	return &MonitorService{
 		storage:  storage,
 		config:   config,

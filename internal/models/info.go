@@ -1,4 +1,4 @@
-package web
+package models
 
 type ServerInfo struct {
 	Version         string

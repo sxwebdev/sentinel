@@ -37,4 +37,5 @@ go.work.sum
 data
 build
 config.yaml
+config-agent.yaml
 dist

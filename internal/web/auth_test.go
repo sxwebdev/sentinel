@@ -12,7 +12,7 @@ import (
 
 func TestBasicAuth(t *testing.T) {
 	// Create test config with auth enabled
-	cfg := &config.Config{
+	cfg := &config.ConfigHub{
 		Server: config.ServerConfig{
 			Auth: config.AuthConfig{
 				Enabled: true,
@@ -96,7 +96,7 @@ func TestBasicAuth(t *testing.T) {
 
 func TestWebSocketBypass(t *testing.T) {
 	// Create test config with auth enabled
-	cfg := &config.Config{
+	cfg := &config.ConfigHub{
 		Server: config.ServerConfig{
 			Auth: config.AuthConfig{
 				Enabled: true,
