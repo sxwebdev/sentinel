@@ -26,7 +26,7 @@ type IncidentRow struct {
 }
 
 // GetIncidentByID retrieves an incident by ID
-func (o *ORMStorage) GetIncidentByID(ctx context.Context, id string) (*Incident, error) {
+func (o *Storage) GetIncidentByID(ctx context.Context, id string) (*Incident, error) {
 	if id == "" {
 		return nil, fmt.Errorf("id is required")
 	}
@@ -120,7 +120,7 @@ func findIncidentsBuilder(params FindIncidentsParams, col ...string) *sqlbuilder
 }
 
 // FindIncidents finds incidents
-func (o *ORMStorage) FindIncidents(ctx context.Context, params FindIncidentsParams) (dbutils.FindResponseWithCount[*Incident], error) {
+func (o *Storage) FindIncidents(ctx context.Context, params FindIncidentsParams) (dbutils.FindResponseWithCount[*Incident], error) {
 	sb := findIncidentsBuilder(params,
 		"i.id",
 		"i.service_id",
@@ -192,7 +192,7 @@ func (o *ORMStorage) FindIncidents(ctx context.Context, params FindIncidentsPara
 }
 
 // FindIncidents finds incidents
-func (o *ORMStorage) IncidentsCount(ctx context.Context, params FindIncidentsParams) (uint32, error) {
+func (o *Storage) IncidentsCount(ctx context.Context, params FindIncidentsParams) (uint32, error) {
 	// Get total count of incidents
 	var totalCount uint32
 	countBuilder := findIncidentsBuilder(params, "COUNT(*)")
@@ -207,7 +207,7 @@ func (o *ORMStorage) IncidentsCount(ctx context.Context, params FindIncidentsPar
 }
 
 // ResolveAllIncidents resolves all incidents for a service
-func (o *ORMStorage) ResolveAllIncidents(ctx context.Context, serviceID string) ([]*Incident, error) {
+func (o *Storage) ResolveAllIncidents(ctx context.Context, serviceID string) ([]*Incident, error) {
 	if serviceID == "" {
 		return nil, fmt.Errorf("serviceID is required")
 	}
@@ -267,14 +267,14 @@ func (o *ORMStorage) ResolveAllIncidents(ctx context.Context, serviceID string) 
 	return resolvedIncidents, nil
 }
 
-// CreateIncident creates a new incident using ORM with retry logic
-func (o *ORMStorage) CreateIncident(ctx context.Context, incident *Incident) error {
+// SaveIncident creates a new incident using ORM with retry logic
+func (o *Storage) SaveIncident(ctx context.Context, incident *Incident) error {
 	ib := sqlbuilder.NewInsertBuilder()
 	ib.InsertInto("incidents")
 	ib.Cols("id", "service_id", "start_time", "end_time", "error", "duration_ns", "resolved")
 
 	ib.Values(
-		incident.ID,
+		GenerateULID(),
 		incident.ServiceID,
 		incident.StartTime,
 		incident.EndTime,
@@ -293,7 +293,7 @@ func (o *ORMStorage) CreateIncident(ctx context.Context, incident *Incident) err
 }
 
 // UpdateIncident updates an existing incident using ORM with retry logic
-func (o *ORMStorage) UpdateIncident(ctx context.Context, incident *Incident) error {
+func (o *Storage) UpdateIncident(ctx context.Context, incident *Incident) error {
 	ub := sqlbuilder.NewUpdateBuilder()
 	ub.Update("incidents")
 	ub.Set(
@@ -317,7 +317,7 @@ func (o *ORMStorage) UpdateIncident(ctx context.Context, incident *Incident) err
 }
 
 // DeleteIncident deletes an incident by ID using ORM with retry logic
-func (o *ORMStorage) DeleteIncident(ctx context.Context, incidentID string) error {
+func (o *Storage) DeleteIncident(ctx context.Context, incidentID string) error {
 	db := sqlbuilder.NewDeleteBuilder()
 	db.DeleteFrom("incidents")
 	db.Where(db.Equal("id", incidentID))
@@ -341,7 +341,7 @@ type GetIncidentsStatsByDateRangeItem struct {
 type GetIncidentsStatsByDateRangeData []GetIncidentsStatsByDateRangeItem
 
 // GetIncidentsStatsByDateRange retrieves the stats of incidents within a specific date range
-func (o *ORMStorage) GetIncidentsStatsByDateRange(ctx context.Context, startTime, endTime time.Time) (GetIncidentsStatsByDateRangeData, error) {
+func (o *Storage) GetIncidentsStatsByDateRange(ctx context.Context, startTime, endTime time.Time) (GetIncidentsStatsByDateRangeData, error) {
 	// Generate date series for the range
 	var result GetIncidentsStatsByDateRangeData
 
@@ -391,4 +391,14 @@ func (o *ORMStorage) GetIncidentsStatsByDateRange(ctx context.Context, startTime
 	}
 
 	return result, nil
+}
+
+// GetSQLiteVersion returns the SQLite version
+func (o *Storage) GetSQLiteVersion(ctx context.Context) (string, error) {
+	var version string
+	err := o.db.QueryRowContext(ctx, "SELECT sqlite_version()").Scan(&version)
+	if err != nil {
+		return "", fmt.Errorf("failed to get SQLite version: %w", err)
+	}
+	return version, nil
 }

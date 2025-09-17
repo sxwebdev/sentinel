@@ -59,7 +59,7 @@ func startCMD() *cli.Command {
 			}
 
 			// Initialize storage
-			store, err := storage.NewStorage(storage.StorageTypeSQLite, conf.Database.Path)
+			store, err := storage.New(conf.Database.Path)
 			if err != nil {
 				return fmt.Errorf("failed to initialize storage: %w", err)
 			}

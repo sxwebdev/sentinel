@@ -14,18 +14,8 @@ import (
 	"github.com/sxwebdev/sentinel/pkg/dbutils"
 )
 
-// ORMStorage provides ORM-like functionality using go-sqlbuilder
-type ORMStorage struct {
-	db *sql.DB
-}
-
-// NewORMStorage creates a new ORM storage instance
-func NewORMStorage(db *sql.DB) *ORMStorage {
-	return &ORMStorage{db: db}
-}
-
-// GetServiceStatsWithORM calculates statistics for a service using ORM
-func (o *ORMStorage) GetServiceStatsWithORM(ctx context.Context, params FindIncidentsParams) (*ServiceStats, error) {
+// GetServiceStats calculates statistics for a service
+func (o *Storage) GetServiceStats(ctx context.Context, params FindIncidentsParams) (*ServiceStats, error) {
 	if params.ServiceID == "" || params.StartTime == nil {
 		return nil, fmt.Errorf("service ID and start time are required for stats")
 	}
@@ -122,7 +112,7 @@ func (o *ORMStorage) GetServiceStatsWithORM(ctx context.Context, params FindInci
 }
 
 // rowToIncident converts an IncidentRow to Incident
-func (o *ORMStorage) rowToIncident(row *IncidentRow) *Incident {
+func (o *Storage) rowToIncident(row *IncidentRow) *Incident {
 	incident := &Incident{
 		ID:        row.ID,
 		ServiceID: row.ServiceID,
@@ -141,7 +131,7 @@ func (o *ORMStorage) rowToIncident(row *IncidentRow) *Incident {
 }
 
 // GetServiceByID finds a service by ID using ORM
-func (o *ORMStorage) GetServiceByID(ctx context.Context, id string) (*Service, error) {
+func (o *Storage) GetServiceByID(ctx context.Context, id string) (*Service, error) {
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select(
 		"s.id",
@@ -268,7 +258,7 @@ type FindServicesParams struct {
 }
 
 // GetAllServices finds all services using ORM
-func (o *ORMStorage) FindServices(ctx context.Context, params FindServicesParams) (dbutils.FindResponseWithCount[*Service], error) {
+func (o *Storage) FindServices(ctx context.Context, params FindServicesParams) (dbutils.FindResponseWithCount[*Service], error) {
 	sb := findServicesBuilder(
 		params,
 		"s.id",
@@ -394,7 +384,7 @@ func (o *ORMStorage) FindServices(ctx context.Context, params FindServicesParams
 }
 
 // CreateService creates a new service using ORM with retry logic
-func (o *ORMStorage) CreateService(ctx context.Context, service CreateUpdateServiceRequest) (*Service, error) {
+func (o *Storage) CreateService(ctx context.Context, service CreateUpdateServiceRequest) (*Service, error) {
 	ib := sqlbuilder.NewInsertBuilder()
 	ib.InsertInto("services")
 	ib.Cols("id", "name", "protocol", "interval", "timeout", "retries", "tags", "config", "is_enabled")
@@ -456,7 +446,7 @@ func (o *ORMStorage) CreateService(ctx context.Context, service CreateUpdateServ
 }
 
 // UpdateService updates an existing service using ORM with retry logic
-func (o *ORMStorage) UpdateService(ctx context.Context, id string, service CreateUpdateServiceRequest) (*Service, error) {
+func (o *Storage) UpdateService(ctx context.Context, id string, service CreateUpdateServiceRequest) (*Service, error) {
 	ub := sqlbuilder.NewUpdateBuilder()
 	ub.Update("services")
 
@@ -506,7 +496,7 @@ func (o *ORMStorage) UpdateService(ctx context.Context, id string, service Creat
 }
 
 // DeleteService deletes a service by ID
-func (o *ORMStorage) DeleteService(ctx context.Context, id string) error {
+func (o *Storage) DeleteService(ctx context.Context, id string) error {
 	// Start transaction
 	tx, err := o.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -555,7 +545,7 @@ func (o *ORMStorage) DeleteService(ctx context.Context, id string) error {
 // Service state management methods
 
 // GetServiceState gets service state by service ID
-func (o *ORMStorage) GetServiceState(ctx context.Context, serviceID string) (*ServiceStateRecord, error) {
+func (o *Storage) GetServiceState(ctx context.Context, serviceID string) (*ServiceStateRecord, error) {
 	query := `
 		SELECT id, service_id, status, last_check, next_check, last_error, 
 		       consecutive_fails, consecutive_success, total_checks, response_time_ns,
@@ -590,7 +580,7 @@ func (o *ORMStorage) GetServiceState(ctx context.Context, serviceID string) (*Se
 }
 
 // CreateServiceState creates a new service state
-func (o *ORMStorage) CreateServiceState(ctx context.Context, tx *sql.Tx, state *ServiceStateRecord) error {
+func (o *Storage) CreateServiceState(ctx context.Context, tx *sql.Tx, state *ServiceStateRecord) error {
 	query := `
 		INSERT INTO service_states (
 			id, service_id, status, last_check, next_check, last_error,
@@ -617,7 +607,7 @@ func (o *ORMStorage) CreateServiceState(ctx context.Context, tx *sql.Tx, state *
 }
 
 // UpdateServiceState updates or creates service state
-func (o *ORMStorage) UpdateServiceState(ctx context.Context, params *ServiceStateRecord) error {
+func (o *Storage) UpdateServiceState(ctx context.Context, params *ServiceStateRecord) error {
 	ub := sqlbuilder.NewUpdateBuilder()
 	ub.Update("service_states")
 	ub.Set(
@@ -643,7 +633,7 @@ func (o *ORMStorage) UpdateServiceState(ctx context.Context, params *ServiceStat
 }
 
 // GetAllServiceStates gets all service states
-func (o *ORMStorage) GetAllServiceStates(ctx context.Context) ([]*ServiceStateRecord, error) {
+func (o *Storage) GetAllServiceStates(ctx context.Context) ([]*ServiceStateRecord, error) {
 	query := `
 		SELECT id, service_id, status, last_check, next_check, last_error,
 		       consecutive_fails, consecutive_success, total_checks, response_time_ns,
@@ -680,7 +670,7 @@ func (o *ORMStorage) GetAllServiceStates(ctx context.Context) ([]*ServiceStateRe
 }
 
 // DeleteServiceState deletes service state by service ID
-func (o *ORMStorage) DeleteServiceState(ctx context.Context, serviceID string) error {
+func (o *Storage) DeleteServiceState(ctx context.Context, serviceID string) error {
 	query := `DELETE FROM service_states WHERE service_id = ?`
 	_, err := o.db.ExecContext(ctx, query, serviceID)
 	if err != nil {
@@ -689,7 +679,7 @@ func (o *ORMStorage) DeleteServiceState(ctx context.Context, serviceID string) e
 	return nil
 }
 
-func (o *ORMStorage) GetAllTags(ctx context.Context) ([]string, error) {
+func (o *Storage) GetAllTags(ctx context.Context) ([]string, error) {
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select("DISTINCT json_each.value")
 	sb.From("services, json_each(tags)")
@@ -718,7 +708,7 @@ func (o *ORMStorage) GetAllTags(ctx context.Context) ([]string, error) {
 	return tags, nil
 }
 
-func (o *ORMStorage) GetAllTagsWithCount(ctx context.Context) (map[string]int, error) {
+func (o *Storage) GetAllTagsWithCount(ctx context.Context) (map[string]int, error) {
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select("json_each.value, COUNT(*)")
 	sb.From("services, json_each(tags)")

@@ -31,7 +31,7 @@ type TestSuite struct {
 	server       *web.Server
 	baseURL      string
 	client       *http.Client
-	stor         storage.Storage
+	stor         *storage.Storage
 	ctx          context.Context
 	services     map[string]*web.ServiceDTO
 	incidents    map[string]*web.Incident
@@ -226,7 +226,7 @@ func setupTestSuite() (*TestSuite, error) {
 	l := logger.Default()
 
 	// Initialize storage
-	stor, err := storage.NewStorage(storage.StorageTypeSQLite, dbPath)
+	stor, err := storage.New(dbPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize storage: %w", err)
 	}

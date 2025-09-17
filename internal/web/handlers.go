@@ -54,7 +54,7 @@ type Server struct {
 	wsMutex       sync.Mutex
 	validator     *validator.Validate
 
-	storage        storage.Storage
+	storage        *storage.Storage
 	monitorService *monitor.MonitorService
 	receiver       *receiver.Receiver
 	upgrader       *upgrader.Upgrader
@@ -66,7 +66,7 @@ func NewServer(
 	cfg *config.ConfigHub,
 	serverInfo models.ServerInfo,
 	monitorService *monitor.MonitorService,
-	storage storage.Storage,
+	storage *storage.Storage,
 	receiver *receiver.Receiver,
 	upgrader *upgrader.Upgrader,
 ) (*Server, error) {
