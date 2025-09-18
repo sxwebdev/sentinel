@@ -40,6 +40,7 @@ func (a *Agent) Name() string {
 // Start starts the agent
 func (a *Agent) Start(_ context.Context) error {
 	// Placeholder for starting agent logic
+	_ = a.getFingerprint()
 	return nil
 }
 

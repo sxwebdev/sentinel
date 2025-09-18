@@ -205,9 +205,6 @@ func setupTestSuite() (*TestSuite, error) {
 
 	// Load config
 	cfg := &config.ConfigHub{
-		Database: config.DatabaseConfig{
-			Path: dbPath,
-		},
 		Monitoring: config.MonitoringConfig{
 			Global: config.GlobalConfig{
 				DefaultInterval: time.Minute,

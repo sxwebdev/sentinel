@@ -1,6 +1,8 @@
 services:
   sentinel:
+    container_name: sentinel
     image: sxwebdev/sentinel:latest
+    command: ["start", "--config", "./config.yaml"]
     ports:
       - "8080:8080"
     volumes:

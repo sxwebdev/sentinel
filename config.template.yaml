@@ -42,8 +42,6 @@ monitoring:
     default_interval: 1m0s
     default_timeout: 10s
     default_retries: 10
-database:
-  path: ./data/db.sqlite
 notifications:
   enabled: false
   urls: []

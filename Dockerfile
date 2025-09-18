@@ -54,4 +54,4 @@ WORKDIR /root/
 COPY --from=backend-builder /app/bin/sentinel .
 
 # Run the binary
-CMD ["./sentinel", "start"]
+ENTRYPOINT ["./sentinel"]

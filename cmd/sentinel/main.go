@@ -14,11 +14,12 @@ import (
 )
 
 var (
-	appName    = "sentinel"
-	version    = "local"
-	commitHash = "unknown"
-	buildDate  = "unknown"
-	envPrefix  = "SENTINEL_"
+	appName        = "sentinel"
+	version        = "local"
+	commitHash     = "unknown"
+	buildDate      = "unknown"
+	envHubPrefix   = "SENTINEL_"
+	envAgentPrefix = "SENTINEL_AGENT_"
 )
 
 func getBuildVersion() string {
@@ -50,7 +51,8 @@ func main() {
 		Version: getBuildVersion(),
 		Suggest: true,
 		Commands: []*cli.Command{
-			startCMD(),
+			hubStartCMD(),
+			agentCMD(),
 			configCMD(),
 			versionCMD(),
 		},

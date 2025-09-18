@@ -10,12 +10,12 @@ import (
 
 // ConfigHub represents the main configuration structure
 type ConfigHub struct {
-	Log           logger.Config
-	Ops           ops.Config
-	DataDir       string              `yaml:"data_dir" default:"./data"`
-	Server        ServerConfig        `yaml:"server"`
-	Monitoring    MonitoringConfig    `yaml:"monitoring"`
-	Database      DatabaseConfig      `yaml:"database"`
+	Log        logger.Config
+	Ops        ops.Config
+	DataDir    string           `yaml:"data_dir" default:"./data"`
+	Server     ServerConfig     `yaml:"server"`
+	Monitoring MonitoringConfig `yaml:"monitoring"`
+	// Database      DatabaseConfig      `yaml:"database"`
 	Notifications NotificationsConfig `yaml:"notifications"`
 	Timezone      string              `yaml:"timezone" default:"UTC"`
 	Upgrader      Upgrader            `yaml:"upgrader"`
@@ -61,9 +61,9 @@ type GlobalConfig struct {
 }
 
 // DatabaseConfig holds database settings
-type DatabaseConfig struct {
-	Path string `yaml:"path" default:"./data/db.sqlite"`
-}
+// type DatabaseConfig struct {
+// 	Path string `yaml:"path" default:"./data/db.sqlite"`
+// }
 
 // NotificationsConfig holds notification settings for multiple providers
 type NotificationsConfig struct {

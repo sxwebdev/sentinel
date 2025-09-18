@@ -4,8 +4,7 @@
 
 # Variables
 BINARY_NAME=sentinel
-HUB_PATH=./cmd/sentinel
-AGENT_PATH=./cmd/agent
+SENTINEL_PATH=./cmd/sentinel
 BUILD_DIR=./build
 VERSION?=dev
 LDFLAGS=-ldflags="-w -s -X main.version=${VERSION}"
@@ -19,10 +18,10 @@ help: ## Show this help message
 
 # Development
 dev: ## Run in development mode with auto-reload
-	go run $(HUB_PATH) start
+	go run $(SENTINEL_PATH) start -c ./config.yaml
 
 agent: ## Run in development mode with auto-reload
-	go run $(AGENT_PATH) start
+	go run $(SENTINEL_PATH) agent start -c ./config-agent.yaml
 
 run: build ## Build and run the application
 	./$(BUILD_DIR)/$(BINARY_NAME)
@@ -77,19 +76,12 @@ format: ## Format code
 	go fmt ./...
 	goimports -w .
 
-docker-push-hub: ## Build and push Docker image
+docker-push: ## Build and push Docker image
 	docker buildx build --platform linux/amd64 --push \
 		--build-arg VERSION=`git describe --tags --abbrev=0 || echo "0.0.0"` \
 		--build-arg COMMIT=`git rev-parse --short HEAD` \
 		--build-arg DATE=`date -u +'%Y-%m-%dT%H:%M:%SZ'` \
 		-t sxwebdev/sentinel:latest .
-
-docker-push-agent: ## Build and push Docker image
-	docker buildx build --platform linux/amd64 --push -f Dockerfile-agent \
-		--build-arg VERSION=`git describe --tags --abbrev=0 || echo "0.0.0"` \
-		--build-arg COMMIT=`git rev-parse --short HEAD` \
-		--build-arg DATE=`date -u +'%Y-%m-%dT%H:%M:%SZ'` \
-		-t sxwebdev/sentinel-agent:latest .
 
 docker-run: ## Run Docker container
 	docker run -d \
@@ -147,7 +139,6 @@ genswagger:
 
 genenvs:
 	go run ./cmd/sentinel config genenvs
-	go run ./cmd/agent config genenvs
 
 genproto: ## Generate protobuf code
 	buf lint

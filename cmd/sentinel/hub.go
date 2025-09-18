@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/sxwebdev/sentinel/internal/config"
@@ -21,14 +23,14 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
-func startCMD() *cli.Command {
+func hubStartCMD() *cli.Command {
 	return &cli.Command{
 		Name:  "start",
 		Usage: "start the server",
 		Flags: []cli.Flag{cfgPathsFlag()},
 		Action: func(ctx context.Context, cl *cli.Command) error {
 			conf := new(config.ConfigHub)
-			if err := config.Load(conf, envPrefix, cl.StringSlice("config")); err != nil {
+			if err := config.Load(conf, envHubPrefix, cl.StringSlice("config")); err != nil {
 				return fmt.Errorf("failed to load config: %w", err)
 			}
 
@@ -50,6 +52,13 @@ func startCMD() *cli.Command {
 				launcher.WithAppStartStopLog(true),
 			)
 
+			// check if exists data dir, if not create it
+			if _, err := os.Stat(conf.DataDir); os.IsNotExist(err) {
+				if err := os.MkdirAll(conf.DataDir, 0o700); err != nil {
+					return fmt.Errorf("failed to create data dir: %w", err)
+				}
+			}
+
 			// set default timezone
 			var err error
 			time.Local, err = time.LoadLocation(conf.Timezone)
@@ -58,7 +67,7 @@ func startCMD() *cli.Command {
 			}
 
 			// Initialize storage
-			store, err := storage.New(conf.Database.Path)
+			store, err := storage.New(filepath.Join(conf.DataDir, "db.sqlite"))
 			if err != nil {
 				return fmt.Errorf("failed to initialize storage: %w", err)
 			}
