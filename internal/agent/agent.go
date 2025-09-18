@@ -4,20 +4,31 @@ import (
 	"context"
 
 	"github.com/sxwebdev/sentinel/internal/agent/agentserver"
+	"github.com/sxwebdev/sentinel/internal/config"
 	"github.com/sxwebdev/sentinel/internal/models"
 	"github.com/tkcrm/mx/logger"
 )
 
 type Agent struct {
 	logger logger.Logger
+
+	config     *config.ConfigAgent
+	systemInfo models.SystemInfo
+
 	server *agentserver.Server
 }
 
 // New creates a new Agent instance
-func New(l logger.Logger, serverInfo models.ServerInfo) *Agent {
+func New(
+	l logger.Logger,
+	config *config.ConfigAgent,
+	systemInfo models.SystemInfo,
+) *Agent {
 	return &Agent{
-		logger: l,
-		server: agentserver.New(serverInfo),
+		logger:     l,
+		config:     config,
+		systemInfo: systemInfo,
+		server:     agentserver.New(systemInfo),
 	}
 }
 

@@ -46,7 +46,7 @@ import (
 type Server struct {
 	logger logger.Logger
 
-	serverInfo models.ServerInfo
+	serverInfo models.SystemInfo
 
 	config        *config.ConfigHub
 	app           *fiber.App
@@ -64,7 +64,7 @@ type Server struct {
 func NewServer(
 	logger logger.Logger,
 	cfg *config.ConfigHub,
-	serverInfo models.ServerInfo,
+	serverInfo models.SystemInfo,
 	monitorService *monitor.MonitorService,
 	storage *storage.Storage,
 	receiver *receiver.Receiver,

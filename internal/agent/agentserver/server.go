@@ -15,14 +15,14 @@ import (
 )
 
 type Server struct {
-	info      models.ServerInfo
+	info      models.SystemInfo
 	startedAt time.Time
 
 	agentv1connect.UnimplementedAgentServiceHandler
 	connectrpc_transport.ConnectRPCService
 }
 
-func New(info models.ServerInfo) *Server {
+func New(info models.SystemInfo) *Server {
 	return &Server{
 		info:      info,
 		startedAt: time.Now(),

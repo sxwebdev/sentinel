@@ -12,6 +12,7 @@ import (
 type ConfigHub struct {
 	Log           logger.Config
 	Ops           ops.Config
+	DataDir       string              `yaml:"data_dir" default:"./data"`
 	Server        ServerConfig        `yaml:"server"`
 	Monitoring    MonitoringConfig    `yaml:"monitoring"`
 	Database      DatabaseConfig      `yaml:"database"`

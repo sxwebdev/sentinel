@@ -26,6 +26,7 @@ ops:
     path: /debug/pprof
     port: "10000"
     write_timeout: 60
+data_dir: ./data-agent
 server:
   enabled: true
   addr: :9000

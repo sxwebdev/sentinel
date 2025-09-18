@@ -250,7 +250,7 @@ func setupTestSuite() (*TestSuite, error) {
 	monitorService := monitor.NewMonitorService(stor, cfg, notif, rc)
 
 	// Create web server
-	webServer, err := web.NewServer(l, cfg, models.ServerInfo{}, monitorService, stor, rc, upgr)
+	webServer, err := web.NewServer(l, cfg, models.SystemInfo{}, monitorService, stor, rc, upgr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create web server: %w", err)
 	}

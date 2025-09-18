@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"runtime"
 	"time"
 
 	"github.com/sxwebdev/sentinel/internal/config"
@@ -95,15 +94,8 @@ func startCMD() *cli.Command {
 			// Initialize scheduler
 			sched := scheduler.New(l, monitorService, rc)
 
-			serverInfo := models.ServerInfo{
-				Version:       version,
-				CommitHash:    commitHash,
-				BuildDate:     buildDate,
-				GoVersion:     runtime.Version(),
-				SqliteVersion: sqliteVersion,
-				OS:            runtime.GOOS,
-				Arch:          runtime.GOARCH,
-			}
+			serverInfo := models.GetSystemInfo(version, commitHash, buildDate)
+			serverInfo.SqliteVersion = sqliteVersion
 
 			webServer, err := web.NewServer(l, conf, serverInfo, monitorService, store, rc, upgr)
 			if err != nil {

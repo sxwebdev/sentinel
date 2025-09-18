@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"runtime"
 
 	"connectrpc.com/connect"
 	"github.com/sxwebdev/sentinel/internal/agent"
@@ -53,17 +52,10 @@ func startCMD() *cli.Command {
 				launcher.WithAppStartStopLog(true),
 			)
 
-			serverInfo := models.ServerInfo{
-				Version:    version,
-				CommitHash: commitHash,
-				BuildDate:  buildDate,
-				GoVersion:  runtime.Version(),
-				OS:         runtime.GOOS,
-				Arch:       runtime.GOARCH,
-			}
+			serverInfo := models.GetSystemInfo(version, commitHash, buildDate)
 
 			// init agent service
-			ag := agent.New(l, serverInfo)
+			ag := agent.New(l, conf, serverInfo)
 
 			// init agent rpc server
 			agentServer := agentserver.New(serverInfo)
