@@ -223,7 +223,7 @@ func setupTestSuite() (*TestSuite, error) {
 	l := logger.Default()
 
 	// Initialize storage
-	stor, err := storage.New(dbPath)
+	stor, err := storage.New(l, dbPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize storage: %w", err)
 	}

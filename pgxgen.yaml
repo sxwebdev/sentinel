@@ -1,0 +1,105 @@
+version: 1
+sqlc:
+  - schema_dir: sql/migrations
+    models:
+      replace_sqlc_nullable_types: true
+      move:
+        output_dir: internal/models
+        output_file_name: models_gen.go
+        package_name: models
+        package_path: github.com/sxwebdev/sentinel/internal/models
+        imports:
+          - path: github.com/sxwebdev/sentinel/internal/models
+            go_type: ServiceProtocolType
+          - path: github.com/sxwebdev/sentinel/internal/models
+            go_type: ServiceStatus
+    crud:
+      auto_remove_generated_files: true
+      exclude_table_name_from_methods: true
+      tables:
+        # Services
+        services:
+          output_dir: sql/queries/services
+          primary_column: id
+          methods:
+            create:
+              skip_columns:
+                - created_at
+                - updated_at
+              returning: "*"
+              column_values:
+                created_at: now()
+            delete:
+            get:
+              name: GetByID
+
+        # service_states
+        service_states:
+          output_dir: sql/queries/service_states
+          primary_column: id
+          methods:
+            create:
+              skip_columns:
+                - created_at
+                - updated_at
+              returning: "*"
+              column_values:
+                created_at: now()
+            delete:
+            get:
+              name: GetByID
+
+        # incidents
+        incidents:
+          output_dir: sql/queries/incidents
+          primary_column: id
+          methods:
+            create:
+              skip_columns:
+                - created_at
+                - updated_at
+              returning: "*"
+              column_values:
+                created_at: now()
+            delete:
+            get:
+              name: GetByID
+            find:
+              name: GetAll
+
+        # agents
+        agents:
+          output_dir: sql/queries/agents
+          primary_column: id
+          methods:
+            create:
+              skip_columns:
+                - fingerprint
+                - is_active
+                - system_info
+                - last_seen_at
+                - created_at
+                - updated_at
+              returning: "*"
+              column_values:
+                created_at: now()
+            delete:
+            get:
+              name: GetByID
+            find:
+              name: GetAll
+
+    constants:
+      tables:
+        services:
+          output_dir: internal/store/repos/repo_services
+          include_column_names: true
+        service_states:
+          output_dir: internal/store/repos/repo_service_states
+          include_column_names: true
+        incidents:
+          output_dir: internal/store/repos/repo_incidents
+          include_column_names: true
+        agents:
+          output_dir: internal/store/repos/repo_agents
+          include_column_names: true

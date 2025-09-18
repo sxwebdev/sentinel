@@ -57,7 +57,7 @@ type MonitoringConfig struct {
 type GlobalConfig struct {
 	DefaultInterval time.Duration `yaml:"default_interval" default:"1m"`
 	DefaultTimeout  time.Duration `yaml:"default_timeout" default:"10s"`
-	DefaultRetries  int           `yaml:"default_retries" default:"10"`
+	DefaultRetries  int64         `yaml:"default_retries" default:"10"`
 }
 
 // DatabaseConfig holds database settings

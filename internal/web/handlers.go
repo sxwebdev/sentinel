@@ -15,6 +15,7 @@ package web
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	goHTML "html"
@@ -35,7 +36,10 @@ import (
 	"github.com/sxwebdev/sentinel/internal/models"
 	"github.com/sxwebdev/sentinel/internal/monitor"
 	"github.com/sxwebdev/sentinel/internal/receiver"
+	"github.com/sxwebdev/sentinel/internal/services/baseservices"
+	"github.com/sxwebdev/sentinel/internal/services/service"
 	"github.com/sxwebdev/sentinel/internal/storage"
+	"github.com/sxwebdev/sentinel/internal/store/storecmn"
 	"github.com/sxwebdev/sentinel/internal/upgrader"
 	"github.com/sxwebdev/sentinel/internal/utils"
 	"github.com/sxwebdev/sentinel/pkg/dbutils"
@@ -55,6 +59,7 @@ type Server struct {
 	validator     *validator.Validate
 
 	storage        *storage.Storage
+	baseServices   *baseservices.BaseServices
 	monitorService *monitor.MonitorService
 	receiver       *receiver.Receiver
 	upgrader       *upgrader.Upgrader
@@ -65,6 +70,7 @@ func NewServer(
 	logger logger.Logger,
 	cfg *config.ConfigHub,
 	serverInfo models.SystemInfo,
+	baseServices *baseservices.BaseServices,
 	monitorService *monitor.MonitorService,
 	storage *storage.Storage,
 	receiver *receiver.Receiver,
@@ -86,6 +92,7 @@ func NewServer(
 		receiver:       receiver,
 		config:         cfg,
 		app:            app,
+		baseServices:   baseServices,
 		wsConnections:  make(map[*websocket.Conn]bool),
 		validator:      validator.New(),
 		upgrader:       upgrader,
@@ -116,6 +123,9 @@ func (s *Server) Start(ctx context.Context) error {
 
 	go func() {
 		addr := fmt.Sprintf("%s:%d", s.config.Server.Host, s.config.Server.Port)
+
+		s.logger.Infof("ui available on http://%s", s.config.Server.BaseHost)
+
 		if err := s.App().Listen(addr); err != nil {
 			errChan <- fmt.Errorf("failed to start Fiber server: %w", err)
 		}
@@ -321,7 +331,7 @@ func (s *Server) handleFindServices(c *fiber.Ctx) error {
 		return newErrorResponse(c, fiber.StatusBadRequest, err)
 	}
 
-	services, err := s.monitorService.FindServices(ctx, storage.FindServicesParams{
+	services, err := s.baseServices.Services().FindView(ctx, service.FindParams{
 		Name:      params.Name,
 		Tags:      params.Tags,
 		Status:    params.Status,
@@ -371,7 +381,7 @@ func (s *Server) handleAPIServiceDetail(c *fiber.Ctx) error {
 		return newErrorResponse(c, fiber.StatusBadRequest, ErrServiceIDRequired)
 	}
 
-	targetService, err := s.monitorService.GetServiceByID(c.Context(), serviceID)
+	targetService, err := s.baseServices.Services().GetViewByID(c.Context(), serviceID)
 	if err != nil {
 		return newErrorResponse(c, fiber.StatusInternalServerError, err)
 	}
@@ -432,9 +442,13 @@ func (s *Server) handleAPIServiceIncidents(c *fiber.Ctx) error {
 	}
 
 	// First check if service exists
-	_, err := s.monitorService.GetServiceByID(c.Context(), serviceID)
+	exists, err := s.baseServices.Services().Exists(c.Context(), serviceID)
 	if err != nil {
-		return newErrorResponse(c, fiber.StatusNotFound, err)
+		return newErrorResponse(c, fiber.StatusInternalServerError, err)
+	}
+
+	if !exists {
+		return newErrorResponse(c, fiber.StatusNotFound, storecmn.ErrNotFound)
 	}
 
 	incidents, err := s.storage.FindIncidents(c.Context(), storage.FindIncidentsParams{
@@ -483,9 +497,13 @@ func (s *Server) handleAPIServiceStats(c *fiber.Ctx) error {
 	}
 
 	// First check if service exists
-	_, err = s.monitorService.GetServiceByID(c.Context(), serviceID)
+	exists, err := s.baseServices.Services().Exists(c.Context(), serviceID)
 	if err != nil {
 		return newErrorResponse(c, fiber.StatusInternalServerError, err)
+	}
+
+	if !exists {
+		return newErrorResponse(c, fiber.StatusNotFound, storecmn.ErrNotFound)
 	}
 
 	since := time.Now().AddDate(0, 0, -days)
@@ -517,9 +535,13 @@ func (s *Server) handleAPIServiceCheck(c *fiber.Ctx) error {
 	}
 
 	// First check if service exists
-	_, err := s.monitorService.GetServiceByID(c.Context(), serviceID)
+	exists, err := s.baseServices.Services().Exists(c.Context(), serviceID)
 	if err != nil {
-		return newErrorResponse(c, fiber.StatusNotFound, err)
+		return newErrorResponse(c, fiber.StatusInternalServerError, err)
+	}
+
+	if !exists {
+		return newErrorResponse(c, fiber.StatusNotFound, storecmn.ErrNotFound)
 	}
 
 	err = s.monitorService.TriggerCheck(c.Context(), serviceID)
@@ -637,9 +659,13 @@ func (s *Server) handleAPIDeleteIncident(c *fiber.Ctx) error {
 	}
 
 	// Check if service exists
-	_, err := s.monitorService.GetServiceByID(c.Context(), serviceID)
+	exists, err := s.baseServices.Services().Exists(c.Context(), serviceID)
 	if err != nil {
-		return newErrorResponse(c, fiber.StatusNotFound, err)
+		return newErrorResponse(c, fiber.StatusInternalServerError, err)
+	}
+
+	if !exists {
+		return newErrorResponse(c, fiber.StatusNotFound, storecmn.ErrNotFound)
 	}
 
 	// Delete incident
@@ -737,24 +763,41 @@ func (s *Server) handleAPICreateService(c *fiber.Ctx) error {
 		return newErrorResponse(c, fiber.StatusBadRequest, ErrProtocolRequired)
 	}
 
+	// convert tags to jsonRawMessage
+	tags := make(json.RawMessage, 0)
+	if len(serviceDTO.Tags) > 0 {
+		tagsBytes, err := json.Marshal(serviceDTO.Tags)
+		if err != nil {
+			return newErrorResponse(c, fiber.StatusBadRequest, fmt.Errorf("failed to parse tags: %w", err))
+		}
+		tags = tagsBytes
+	} else {
+		tags = json.RawMessage("[]")
+	}
+
+	interval := time.Millisecond * time.Duration(serviceDTO.Interval)
+	timeout := time.Millisecond * time.Duration(serviceDTO.Timeout)
+
 	// Convert to storage.Service
-	createParams := storage.CreateUpdateServiceRequest{
+	createParams := service.CreateParams{
 		Name:      serviceDTO.Name,
 		Protocol:  serviceDTO.Protocol,
-		Interval:  time.Millisecond * time.Duration(serviceDTO.Interval),
-		Timeout:   time.Millisecond * time.Duration(serviceDTO.Timeout),
+		Interval:  dbutils.Duration(interval),
+		Timeout:   dbutils.Duration(timeout),
 		Retries:   serviceDTO.Retries,
-		Tags:      serviceDTO.Tags,
+		Tags:      dbutils.JSONField(tags),
 		IsEnabled: serviceDTO.IsEnabled,
 	}
 
 	// Set default values
-	if createParams.Interval == 0 {
-		createParams.Interval = s.config.Monitoring.Global.DefaultInterval
+	if interval == 0 {
+		createParams.Interval = dbutils.Duration(s.config.Monitoring.Global.DefaultInterval)
 	}
-	if createParams.Timeout == 0 {
-		createParams.Timeout = s.config.Monitoring.Global.DefaultTimeout
+
+	if timeout == 0 {
+		createParams.Timeout = dbutils.Duration(s.config.Monitoring.Global.DefaultTimeout)
 	}
+
 	if createParams.Retries == 0 {
 		createParams.Retries = s.config.Monitoring.Global.DefaultRetries
 	}
@@ -764,10 +807,15 @@ func (s *Server) handleAPICreateService(c *fiber.Ctx) error {
 		return newErrorResponse(c, fiber.StatusBadRequest, err)
 	}
 
-	createParams.Config = serviceDTO.Config.ConvertToMap()
+	rawMessage, err := serviceDTO.Config.ConvertToJSONRawMessage()
+	if err != nil {
+		return newErrorResponse(c, fiber.StatusInternalServerError, err)
+	}
+
+	createParams.Config = dbutils.JSONField(rawMessage)
 
 	// Add service
-	svc, err := s.monitorService.CreateService(c.Context(), createParams)
+	svc, err := s.baseServices.Services().Create(c.Context(), createParams)
 	if err != nil {
 		return newErrorResponse(c, fiber.StatusInternalServerError, err)
 	}
@@ -809,7 +857,7 @@ func (s *Server) handleAPIUpdateService(c *fiber.Ctx) error {
 	s.logger.Debugf("update service request: %+v", serviceDTO)
 
 	// Convert to storage.Service
-	updateParams := storage.CreateUpdateServiceRequest{
+	updateParams := service.UpdateParams{
 		Name:      serviceDTO.Name,
 		Protocol:  serviceDTO.Protocol,
 		Interval:  time.Millisecond * time.Duration(serviceDTO.Interval),
@@ -846,7 +894,7 @@ func (s *Server) handleAPIUpdateService(c *fiber.Ctx) error {
 	}
 
 	// Update service
-	svc, err := s.monitorService.UpdateService(c.Context(), id, updateParams)
+	svc, err := s.baseServices.Services().Update(c.Context(), id, updateParams)
 	if err != nil {
 		return newErrorResponse(c, fiber.StatusInternalServerError, err)
 	}
@@ -877,7 +925,7 @@ func (s *Server) handleAPIDeleteService(c *fiber.Ctx) error {
 		return newErrorResponse(c, fiber.StatusBadRequest, ErrServiceIDRequired)
 	}
 
-	if err := s.monitorService.DeleteService(c.Context(), id); err != nil {
+	if err := s.baseServices.Services().Delete(c.Context(), id); err != nil {
 		return newErrorResponse(c, fiber.StatusInternalServerError, err)
 	}
 

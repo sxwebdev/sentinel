@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/dop251/goja"
-	"github.com/sxwebdev/sentinel/internal/storage"
+	"github.com/sxwebdev/sentinel/internal/models"
 )
 
 // HTTPConfig represents configuration for HTTP monitoring
@@ -49,20 +49,25 @@ type EndpointResult struct {
 type HTTPMonitor struct {
 	BaseMonitor
 	conf    HTTPConfig
-	retries int
+	retries int64
 }
 
 // NewHTTPMonitor creates a new HTTP monitor
-func NewHTTPMonitor(cfg storage.Service) (*HTTPMonitor, error) {
-	conf, err := GetConfig[HTTPConfig](cfg.Config, storage.ServiceProtocolTypeHTTP)
+func NewHTTPMonitor(svc *models.Service) (*HTTPMonitor, error) {
+	svcConfig, err := svc.GetConfig()
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse service config: %w", err)
+	}
+
+	conf, err := GetConfig[HTTPConfig](svcConfig, models.ServiceProtocolTypeHTTP)
 	if err != nil {
 		return nil, fmt.Errorf("HTTP config not found")
 	}
 
 	monitor := &HTTPMonitor{
-		BaseMonitor: NewBaseMonitor(cfg),
+		BaseMonitor: NewBaseMonitor(svc),
 		conf:        conf,
-		retries:     cfg.Retries,
+		retries:     svc.Retries,
 	}
 
 	return monitor, nil
@@ -146,7 +151,7 @@ func (h *HTTPMonitor) checkEndpoint(ctx context.Context, endpoint EndpointConfig
 	start := time.Now()
 
 	client := &http.Client{}
-	client.Timeout = h.config.Timeout
+	client.Timeout = h.config.Timeout.ToDuration()
 
 	req, err := http.NewRequestWithContext(ctx, endpoint.Method, endpoint.URL, strings.NewReader(endpoint.Body))
 	if err != nil {

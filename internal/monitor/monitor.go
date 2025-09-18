@@ -4,19 +4,19 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"slices"
 	"time"
 
 	"github.com/sxwebdev/sentinel/internal/config"
 	"github.com/sxwebdev/sentinel/internal/notifier"
 	"github.com/sxwebdev/sentinel/internal/receiver"
 	"github.com/sxwebdev/sentinel/internal/storage"
+	"github.com/sxwebdev/sentinel/internal/store"
 	"github.com/sxwebdev/sentinel/internal/utils"
-	"github.com/sxwebdev/sentinel/pkg/dbutils"
 )
 
 // MonitorService handles service monitoring
 type MonitorService struct {
+	store    *store.Store
 	storage  *storage.Storage
 	config   *config.ConfigHub
 	notifier *notifier.Notifier
@@ -24,8 +24,9 @@ type MonitorService struct {
 }
 
 // NewMonitorService creates a new monitor service
-func NewMonitorService(storage *storage.Storage, config *config.ConfigHub, notifier *notifier.Notifier, receiver *receiver.Receiver) *MonitorService {
+func NewMonitorService(store *store.Store, storage *storage.Storage, config *config.ConfigHub, notifier *notifier.Notifier, receiver *receiver.Receiver) *MonitorService {
 	return &MonitorService{
+		store:    store,
 		storage:  storage,
 		config:   config,
 		notifier: notifier,
@@ -34,75 +35,81 @@ func NewMonitorService(storage *storage.Storage, config *config.ConfigHub, notif
 }
 
 // FindServices loads all enabled services from storage and initializes monitoring
-func (m *MonitorService) FindServices(ctx context.Context, params storage.FindServicesParams) (dbutils.FindResponseWithCount[*storage.Service], error) {
-	return m.storage.FindServices(ctx, params)
-}
+// func (m *MonitorService) FindServices(ctx context.Context, params storage.FindServicesParams) (dbutils.FindResponseWithCount[*storage.Service], error) {
+// 	return m.storage.FindServices(ctx, params)
+// }
 
 // CreateService adds a new service and starts monitoring it
-func (m *MonitorService) CreateService(ctx context.Context, params storage.CreateUpdateServiceRequest) (*storage.Service, error) {
-	if len(params.Tags) > 0 {
-		slices.Sort(params.Tags)
-	}
+// func (m *MonitorService) CreateService(ctx context.Context, params storage.CreateUpdateServiceRequest) (*storage.Service, error) {
+// 	if len(params.Tags) > 0 {
+// 		slices.Sort(params.Tags)
+// 	}
 
-	// Save to storage
-	svc, err := m.storage.CreateService(ctx, params)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create service: %w", err)
-	}
+// 	// Save to storage
+// 	svc, err := m.storage.CreateService(ctx, params)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to create service: %w", err)
+// 	}
 
-	m.receiver.TriggerService().Publish(*receiver.NewTriggerServiceData(
-		receiver.TriggerServiceEventTypeCreated,
-		svc,
-	))
+// 	m.receiver.TriggerService().Publish(*receiver.NewTriggerServiceData(
+// 		receiver.TriggerServiceEventTypeCreated,
+// 		svc,
+// 	))
 
-	return svc, nil
-}
+// 	return svc, nil
+// }
 
 // UpdateService updates an existing service
-func (m *MonitorService) UpdateService(ctx context.Context, id string, params storage.CreateUpdateServiceRequest) (*storage.Service, error) {
-	if len(params.Tags) > 0 {
-		slices.Sort(params.Tags)
-	}
+// func (m *MonitorService) UpdateService(ctx context.Context, id string, params storage.CreateUpdateServiceRequest) (*models.ServiceFullView, error) {
+// 	if len(params.Tags) > 0 {
+// 		slices.Sort(params.Tags)
+// 	}
 
-	// Update in storage
-	svc, err := m.storage.UpdateService(ctx, id, params)
-	if err != nil {
-		return nil, fmt.Errorf("failed to update service: %w", err)
-	}
+// 	// Update in storage
+// 	var err error
+// 	_, err = m.storage.UpdateService(ctx, id, params)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to update service: %w", err)
+// 	}
 
-	m.receiver.TriggerService().Publish(*receiver.NewTriggerServiceData(
-		receiver.TriggerServiceEventTypeUpdated,
-		svc,
-	))
+// 	svc, err := m.store.Services().GetViewByID(ctx, id)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to get service: %w", err)
+// 	}
 
-	return svc, nil
-}
+// 	m.receiver.TriggerService().Publish(*receiver.NewTriggerServiceData(
+// 		receiver.TriggerServiceEventTypeUpdated,
+// 		svc,
+// 	))
+
+// 	return svc, nil
+// }
 
 // DeleteService removes a service and stops monitoring it
-func (m *MonitorService) DeleteService(ctx context.Context, id string) error {
-	// Get service to find name for scheduler cleanup
-	svc, err := m.storage.GetServiceByID(ctx, id)
-	if err != nil {
-		return fmt.Errorf("failed to get service: %w", err)
-	}
+// func (m *MonitorService) DeleteService(ctx context.Context, id string) error {
+// 	// Get service to find name for scheduler cleanup
+// 	svc, err := m.store.Services().GetViewByID(ctx, id)
+// 	if err != nil {
+// 		return fmt.Errorf("failed to get service: %w", err)
+// 	}
 
-	m.receiver.TriggerService().Publish(*receiver.NewTriggerServiceData(
-		receiver.TriggerServiceEventTypeDeleted,
-		svc,
-	))
+// 	m.receiver.TriggerService().Publish(*receiver.NewTriggerServiceData(
+// 		receiver.TriggerServiceEventTypeDeleted,
+// 		svc,
+// 	))
 
-	// Delete from storage
-	if err := m.storage.DeleteService(ctx, id); err != nil {
-		return fmt.Errorf("failed to delete service: %w", err)
-	}
+// 	// Delete from storage
+// 	if err := m.storage.DeleteService(ctx, id); err != nil {
+// 		return fmt.Errorf("failed to delete service: %w", err)
+// 	}
 
-	return nil
-}
+// 	return nil
+// }
 
 // GetServiceByID gets a service by ID
-func (m *MonitorService) GetServiceByID(ctx context.Context, id string) (*storage.Service, error) {
-	return m.storage.GetServiceByID(ctx, id)
-}
+// func (m *MonitorService) GetServiceByID(ctx context.Context, id string) (*storage.Service, error) {
+// 	return m.storage.GetServiceByID(ctx, id)
+// }
 
 // RecordSuccess records a successful check for a service
 func (m *MonitorService) RecordSuccess(ctx context.Context, serviceID string, responseTime time.Duration) error {
@@ -185,7 +192,7 @@ func (m *MonitorService) RecordFailure(ctx context.Context, serviceID string, ch
 // createIncident creates a new incident when a service goes down
 func (m *MonitorService) createIncident(ctx context.Context, svc *storage.Service, err error) error {
 	incident := &storage.Incident{
-		ID:        storage.GenerateULID(),
+		ID:        utils.GenerateULID(),
 		ServiceID: svc.ID,
 		StartTime: time.Now(),
 		Error:     err.Error(),
@@ -258,11 +265,11 @@ func (m *MonitorService) GetServiceStats(ctx context.Context, serviceID string, 
 }
 
 // TriggerCheck triggers a manual check for a service
-func (m *MonitorService) TriggerCheck(ctx context.Context, serviceID string) error {
+func (m *MonitorService) TriggerCheck(ctx context.Context, id string) error {
 	// Get service to check if it exists
-	svc, err := m.GetServiceByID(ctx, serviceID)
+	svc, err := m.store.Services().GetViewByID(ctx, id)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get service: %w", err)
 	}
 
 	m.receiver.TriggerService().Publish(*receiver.NewTriggerServiceData(
@@ -294,7 +301,7 @@ func (m *MonitorService) CheckService(ctx context.Context, service *storage.Serv
 	// Initialize state if not exists
 	if serviceState == nil {
 		serviceState = &storage.ServiceStateRecord{
-			ID:                 storage.GenerateULID(),
+			ID:                 utils.GenerateULID(),
 			ServiceID:          service.ID,
 			Status:             storage.StatusUnknown,
 			ConsecutiveFails:   0,

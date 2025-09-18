@@ -9,7 +9,9 @@ require (
 	github.com/containrrr/shoutrrr v0.8.0
 	github.com/dop251/goja v0.0.0-20250630131328-58d95d85e994
 	github.com/dromara/carbon/v2 v2.6.12
+	github.com/georgysavva/scany/v2 v2.1.4
 	github.com/go-playground/validator/v10 v10.27.0
+	github.com/gobeam/stringy v0.0.7
 	github.com/goccy/go-yaml v1.18.0
 	github.com/gofiber/contrib/websocket v1.3.4
 	github.com/gofiber/fiber/v2 v2.52.9

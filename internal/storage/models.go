@@ -2,8 +2,6 @@ package storage
 
 import (
 	"time"
-
-	"github.com/oklog/ulid/v2"
 )
 
 type ServiceProtocolType string
@@ -120,9 +118,4 @@ type ServiceStateRecord struct {
 	ResponseTimeNS     *int64        `json:"response_time_ns,omitempty"`
 	CreatedAt          time.Time     `json:"created_at"`
 	UpdatedAt          time.Time     `json:"updated_at"`
-}
-
-// GenerateULID generates a new ULID
-func GenerateULID() string {
-	return ulid.Make().String()
 }

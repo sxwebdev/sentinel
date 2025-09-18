@@ -5,13 +5,15 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/sxwebdev/sentinel/internal/models"
 	"github.com/sxwebdev/sentinel/internal/monitors"
+	"github.com/sxwebdev/sentinel/internal/services/service"
 	"github.com/sxwebdev/sentinel/internal/storage"
 	"github.com/sxwebdev/sentinel/internal/utils"
 )
 
-// convertServiceToDTO converts a storage.Service to ServiceDTO
-func convertServiceToDTO(service *storage.Service) (ServiceDTO, error) {
+// convertServiceToDTO converts a models.Service to ServiceDTO
+func convertServiceToDTO(service *models.ServiceFullView) (ServiceDTO, error) {
 	config := monitors.Config{}
 	if service.Config != nil {
 		var err error
@@ -52,7 +54,7 @@ func convertServiceToDTO(service *storage.Service) (ServiceDTO, error) {
 // getDashboardStats calculates dashboard statistics
 func (s *Server) getDashboardStats(ctx context.Context) (*DashboardStats, error) {
 	// Get all services with their states
-	services, err := s.monitorService.FindServices(ctx, storage.FindServicesParams{})
+	services, err := s.baseServices.Services().FindView(ctx, service.FindParams{})
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +91,7 @@ func (s *Server) getDashboardStats(ctx context.Context) (*DashboardStats, error)
 		ActiveIncidents:  0,
 		LastCheckTime:    nil,
 		ChecksPerMinute:  0,
-		Protocols:        make(map[storage.ServiceProtocolType]int),
+		Protocols:        make(map[models.ServiceProtocolType]int),
 	}
 
 	// Calculate statistics
@@ -139,7 +141,9 @@ func (s *Server) getDashboardStats(ctx context.Context) (*DashboardStats, error)
 		if protocol == "" {
 			protocol = "unknown"
 		}
-		stats.Protocols[protocol]++
+
+		// TODO: fix this when remove storage.ServiceProtocolType
+		stats.Protocols[models.ServiceProtocolType(protocol)]++
 	}
 
 	// Calculate averages

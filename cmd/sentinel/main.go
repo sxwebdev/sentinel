@@ -20,6 +20,7 @@ var (
 	buildDate      = "unknown"
 	envHubPrefix   = "SENTINEL_"
 	envAgentPrefix = "SENTINEL_AGENT_"
+	sqliteDBFile   = "db.sqlite"
 )
 
 func getBuildVersion() string {
@@ -54,6 +55,7 @@ func main() {
 			hubStartCMD(),
 			agentCMD(),
 			configCMD(),
+			migrationsCMD(),
 			versionCMD(),
 		},
 	}

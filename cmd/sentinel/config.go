@@ -32,7 +32,7 @@ func configCMD() *cli.Command {
 					data := []struct {
 						fileName  string
 						envPrefix string
-						conf      interface{}
+						conf      any
 					}{
 						{
 							fileName:  "config.template.yaml",

@@ -399,7 +399,7 @@ func (o *Storage) CreateService(ctx context.Context, service CreateUpdateService
 		return nil, fmt.Errorf("failed to marshal config: %w", err)
 	}
 
-	serviceID := GenerateULID()
+	serviceID := utils.GenerateULID()
 
 	ib.Values(
 		serviceID,
@@ -427,7 +427,7 @@ func (o *Storage) CreateService(ctx context.Context, service CreateUpdateService
 
 	nextCheck := time.Now().Add(service.Interval)
 	serviceState := &ServiceStateRecord{
-		ID:        GenerateULID(),
+		ID:        utils.GenerateULID(),
 		ServiceID: serviceID,
 		Status:    StatusUnknown,
 		NextCheck: &nextCheck,

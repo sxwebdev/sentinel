@@ -274,7 +274,7 @@ func (o *Storage) SaveIncident(ctx context.Context, incident *Incident) error {
 	ib.Cols("id", "service_id", "start_time", "end_time", "error", "duration_ns", "resolved")
 
 	ib.Values(
-		GenerateULID(),
+		utils.GenerateULID(),
 		incident.ServiceID,
 		incident.StartTime,
 		incident.EndTime,

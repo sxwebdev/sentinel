@@ -5,14 +5,15 @@ import (
 	"errors"
 	"fmt"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/puzpuzpuz/xsync/v3"
+	"github.com/sxwebdev/sentinel/internal/models"
 	"github.com/sxwebdev/sentinel/internal/monitor"
 	"github.com/sxwebdev/sentinel/internal/monitors"
 	"github.com/sxwebdev/sentinel/internal/receiver"
-	"github.com/sxwebdev/sentinel/internal/storage"
+	"github.com/sxwebdev/sentinel/internal/services/baseservices"
+	"github.com/sxwebdev/sentinel/internal/services/service"
 	"github.com/tkcrm/mx/logger"
 )
 
@@ -23,26 +24,12 @@ var ErrServiceNotFound = fmt.Errorf("service not found")
 type Scheduler struct {
 	logger logger.Logger
 
-	receiver   *receiver.Receiver
-	monitorSvc *monitor.MonitorService
+	receiver     *receiver.Receiver
+	monitorSvc   *monitor.MonitorService
+	baseServices *baseservices.BaseServices
 
 	jobs *xsync.MapOf[string, *job]
 	wg   sync.WaitGroup
-}
-
-// job represents a scheduled monitoring job for a service
-type job struct {
-	serviceID   string
-	serviceName string
-	interval    time.Duration
-	timeout     time.Duration
-	retries     int
-	ticker      *time.Ticker
-	stopChan    chan struct{}
-	inProgress  atomic.Bool
-	// Context and cancel function for canceling ongoing checks
-	checkCtx    context.Context
-	checkCancel context.CancelFunc
 }
 
 // New creates a new scheduler
@@ -50,12 +37,14 @@ func New(
 	l logger.Logger,
 	monitorService *monitor.MonitorService,
 	receiver *receiver.Receiver,
+	baseServices *baseservices.BaseServices,
 ) *Scheduler {
 	return &Scheduler{
-		logger:     l,
-		monitorSvc: monitorService,
-		receiver:   receiver,
-		jobs:       xsync.NewMapOf[string, *job](),
+		logger:       l,
+		monitorSvc:   monitorService,
+		receiver:     receiver,
+		baseServices: baseServices,
+		jobs:         xsync.NewMapOf[string, *job](),
 	}
 }
 
@@ -66,7 +55,7 @@ func (s *Scheduler) Name() string { return "scheduler" }
 func (s *Scheduler) Start(ctx context.Context) error {
 	// Load enabled services from storage
 	isEnabled := true
-	services, err := s.monitorSvc.FindServices(ctx, storage.FindServicesParams{
+	services, err := s.baseServices.Services().FindView(ctx, service.FindParams{
 		IsEnabled: &isEnabled,
 	})
 	if err != nil {
@@ -120,7 +109,7 @@ func (s *Scheduler) stopAll() {
 }
 
 // addService adds a service to be monitored
-func (s *Scheduler) addService(ctx context.Context, svc *storage.Service) {
+func (s *Scheduler) addService(ctx context.Context, svc *models.ServiceFullView) {
 	// Only add enabled services to monitoring
 	if !svc.IsEnabled {
 		s.logger.Warnf("Skipping disabled service: %s (ID: %s)", svc.Name, svc.ID)
@@ -217,13 +206,13 @@ func (s *Scheduler) performCheck(job *job) error {
 	serviceName := job.serviceName
 
 	// Get current service configuration from database
-	service, err := s.monitorSvc.GetServiceByID(job.checkCtx, job.serviceID)
+	service, err := s.baseServices.Services().GetByID(job.checkCtx, job.serviceID)
 	if err != nil {
-		return fmt.Errorf("failed to get service config for %s: %w", serviceName, err)
+		return fmt.Errorf("failed to get service %s: %w", serviceName, err)
 	}
 
 	// Create monitor for this check
-	monitor, err := monitors.NewMonitor(*service)
+	monitor, err := monitors.NewMonitor(service)
 	if err != nil {
 		return fmt.Errorf("failed to create monitor for %s: %w", serviceName, err)
 	}
@@ -266,15 +255,15 @@ func (s *Scheduler) performCheck(job *job) error {
 				s.logger.Debugf("service %s check successful (attempt %d/%d) in %v", serviceName, attempt, job.retries, attemptResponseTime)
 			}
 
-			service, err := s.monitorSvc.GetServiceByID(job.checkCtx, job.serviceID)
+			svc, err := s.baseServices.Services().GetViewByID(job.checkCtx, job.serviceID)
 			if err != nil {
-				return fmt.Errorf("failed to get service config for %s: %w", serviceName, err)
+				return fmt.Errorf("failed to get service view for %s: %w", serviceName, err)
 			}
 
 			// Publish update to receiver
 			s.receiver.TriggerService().Publish(*receiver.NewTriggerServiceData(
 				receiver.TriggerServiceEventTypeUpdatedState,
-				service,
+				svc,
 			))
 
 			return nil
@@ -302,15 +291,15 @@ func (s *Scheduler) performCheck(job *job) error {
 		return fmt.Errorf("failed to record failure for %s: %w", serviceName, err)
 	}
 
-	service, err = s.monitorSvc.GetServiceByID(job.checkCtx, job.serviceID)
+	svc, err := s.baseServices.Services().GetViewByID(job.checkCtx, job.serviceID)
 	if err != nil {
-		return fmt.Errorf("failed to get service config for %s: %w", serviceName, err)
+		return fmt.Errorf("failed to get service view for %s: %w", serviceName, err)
 	}
 
 	// Publish update to receiver
 	s.receiver.TriggerService().Publish(*receiver.NewTriggerServiceData(
 		receiver.TriggerServiceEventTypeUpdatedState,
-		service,
+		svc,
 	))
 
 	return nil
@@ -356,7 +345,7 @@ func (s *Scheduler) removeJob(serviceID string) error {
 }
 
 // updateJob updates a service configuration dynamically
-func (s *Scheduler) updateJob(ctx context.Context, svc *storage.Service) error {
+func (s *Scheduler) updateJob(ctx context.Context, svc *models.ServiceFullView) error {
 	s.addService(ctx, svc)
 
 	return nil

@@ -7,8 +7,8 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/sxwebdev/sentinel/internal/models"
 	"github.com/sxwebdev/sentinel/internal/monitors"
-	"github.com/sxwebdev/sentinel/internal/storage"
 	"github.com/sxwebdev/sentinel/internal/web"
 	"github.com/sxwebdev/sentinel/pkg/dbutils"
 )
@@ -55,7 +55,7 @@ func testAdvancedServiceFilters(s *TestSuite) error {
 	}
 
 	for _, service := range result.Items {
-		if service.Status != storage.StatusUp {
+		if service.Status != models.StatusUp {
 			return fmt.Errorf("service %s status is not 'up'", service.Name)
 		}
 	}
@@ -82,7 +82,7 @@ func testServiceCRUDCompleteFlow(s *TestSuite) error {
 	// Create a new service with complex HTTP config
 	complexHTTPService := web.CreateUpdateServiceRequest{
 		Name:     "Complex HTTP Service",
-		Protocol: storage.ServiceProtocolTypeHTTP,
+		Protocol: models.ServiceProtocolTypeHTTP,
 		Interval: 15000, // 15s
 		Timeout:  10000, // 10s
 		Retries:  2,
@@ -277,7 +277,7 @@ func testAdvancedIncidentManagement(s *TestSuite) error {
 	// Create a dedicated service for incident testing
 	testService := web.CreateUpdateServiceRequest{
 		Name:     "Incident Management Test Service",
-		Protocol: storage.ServiceProtocolTypeHTTP,
+		Protocol: models.ServiceProtocolTypeHTTP,
 		Interval: 30000,
 		Timeout:  5000,
 		Retries:  3,
@@ -434,7 +434,7 @@ func testCompleteProtocolConfigurations(s *TestSuite) error {
 	// Test TCP service with advanced configuration
 	tcpService := web.CreateUpdateServiceRequest{
 		Name:     "Advanced TCP Service",
-		Protocol: storage.ServiceProtocolTypeTCP,
+		Protocol: models.ServiceProtocolTypeTCP,
 		Interval: 20000,
 		Timeout:  8000,
 		Retries:  2,
@@ -474,7 +474,7 @@ func testCompleteProtocolConfigurations(s *TestSuite) error {
 	// Test gRPC service with advanced configuration
 	grpcService := web.CreateUpdateServiceRequest{
 		Name:     "Advanced gRPC Service",
-		Protocol: storage.ServiceProtocolTypeGRPC,
+		Protocol: models.ServiceProtocolTypeGRPC,
 		Interval: 25000,
 		Timeout:  10000,
 		Retries:  3,
@@ -519,10 +519,10 @@ func testCompleteProtocolConfigurations(s *TestSuite) error {
 	// Test both services individually
 	services := []struct {
 		id       string
-		protocol storage.ServiceProtocolType
+		protocol models.ServiceProtocolType
 	}{
-		{tcpServiceID, storage.ServiceProtocolTypeTCP},
-		{grpcServiceID, storage.ServiceProtocolTypeGRPC},
+		{tcpServiceID, models.ServiceProtocolTypeTCP},
+		{grpcServiceID, models.ServiceProtocolTypeGRPC},
 	}
 
 	for _, svc := range services {
@@ -589,7 +589,7 @@ func testAdvancedPaginationAndSorting(s *TestSuite) error {
 	for i := 0; i < 10; i++ {
 		service := web.CreateUpdateServiceRequest{
 			Name:     fmt.Sprintf("Pagination Test Service %02d", i),
-			Protocol: storage.ServiceProtocolTypeHTTP,
+			Protocol: models.ServiceProtocolTypeHTTP,
 			Interval: 30000,
 			Timeout:  5000,
 			Retries:  3,
@@ -786,7 +786,7 @@ func testAdvancedErrorScenarios(s *TestSuite) error {
 	// UPDATE non-existent service
 	updateReq := web.CreateUpdateServiceRequest{
 		Name:     "Updated Service",
-		Protocol: storage.ServiceProtocolTypeHTTP,
+		Protocol: models.ServiceProtocolTypeHTTP,
 		Interval: 60000,
 		Timeout:  10000,
 		Retries:  3,
@@ -872,7 +872,7 @@ func testStatsWithDifferentParameters(s *TestSuite) error {
 	// Create a dedicated service for stats testing
 	testService := web.CreateUpdateServiceRequest{
 		Name:     "Stats Test Service",
-		Protocol: storage.ServiceProtocolTypeHTTP,
+		Protocol: models.ServiceProtocolTypeHTTP,
 		Interval: 30000,
 		Timeout:  5000,
 		Retries:  3,

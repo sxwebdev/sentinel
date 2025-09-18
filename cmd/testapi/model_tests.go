@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/sxwebdev/sentinel/internal/models"
 	"github.com/sxwebdev/sentinel/internal/monitors"
-	"github.com/sxwebdev/sentinel/internal/storage"
 	"github.com/sxwebdev/sentinel/internal/web"
 	"github.com/sxwebdev/sentinel/pkg/dbutils"
 )
@@ -37,7 +37,7 @@ func testModelsValidation(s *TestSuite) error {
 		},
 	}
 
-	if err := httpConfig.Validate(storage.ServiceProtocolTypeHTTP); err != nil {
+	if err := httpConfig.Validate(models.ServiceProtocolTypeHTTP); err != nil {
 		return fmt.Errorf("valid HTTP config should not fail validation: %w", err)
 	}
 
@@ -49,7 +49,7 @@ func testModelsValidation(s *TestSuite) error {
 		},
 	}
 
-	if err := invalidHTTPConfig.Validate(storage.ServiceProtocolTypeHTTP); err == nil {
+	if err := invalidHTTPConfig.Validate(models.ServiceProtocolTypeHTTP); err == nil {
 		return fmt.Errorf("HTTP config with empty endpoints should fail validation")
 	}
 
@@ -68,7 +68,7 @@ func testModelsValidation(s *TestSuite) error {
 		},
 	}
 
-	if err := invalidEndpointConfig.Validate(storage.ServiceProtocolTypeHTTP); err == nil {
+	if err := invalidEndpointConfig.Validate(models.ServiceProtocolTypeHTTP); err == nil {
 		return fmt.Errorf("HTTP config with invalid endpoint should fail validation")
 	}
 
@@ -81,7 +81,7 @@ func testModelsValidation(s *TestSuite) error {
 		},
 	}
 
-	if err := tcpConfig.Validate(storage.ServiceProtocolTypeTCP); err != nil {
+	if err := tcpConfig.Validate(models.ServiceProtocolTypeTCP); err != nil {
 		return fmt.Errorf("valid TCP config should not fail validation: %w", err)
 	}
 
@@ -92,7 +92,7 @@ func testModelsValidation(s *TestSuite) error {
 		},
 	}
 
-	if err := invalidTCPConfig.Validate(storage.ServiceProtocolTypeTCP); err == nil {
+	if err := invalidTCPConfig.Validate(models.ServiceProtocolTypeTCP); err == nil {
 		return fmt.Errorf("TCP config with empty endpoint should fail validation")
 	}
 
@@ -107,7 +107,7 @@ func testModelsValidation(s *TestSuite) error {
 		},
 	}
 
-	if err := grpcConfig.Validate(storage.ServiceProtocolTypeGRPC); err != nil {
+	if err := grpcConfig.Validate(models.ServiceProtocolTypeGRPC); err != nil {
 		return fmt.Errorf("valid gRPC config should not fail validation: %w", err)
 	}
 
@@ -119,7 +119,7 @@ func testModelsValidation(s *TestSuite) error {
 		},
 	}
 
-	if err := invalidGRPCConfig.Validate(storage.ServiceProtocolTypeGRPC); err == nil {
+	if err := invalidGRPCConfig.Validate(models.ServiceProtocolTypeGRPC); err == nil {
 		return fmt.Errorf("gRPC config with empty endpoint should fail validation")
 	}
 
@@ -138,7 +138,7 @@ func testModelsValidation(s *TestSuite) error {
 		},
 	}
 
-	if err := httpConfigForTCP.Validate(storage.ServiceProtocolTypeTCP); err == nil {
+	if err := httpConfigForTCP.Validate(models.ServiceProtocolTypeTCP); err == nil {
 		return fmt.Errorf("HTTP config should fail validation for TCP protocol")
 	}
 
@@ -149,7 +149,7 @@ func testServiceDTOFields(s *TestSuite) error {
 	// Create a test service to validate DTO conversion
 	testService := web.CreateUpdateServiceRequest{
 		Name:     "DTO Test Service",
-		Protocol: storage.ServiceProtocolTypeHTTP,
+		Protocol: models.ServiceProtocolTypeHTTP,
 		Interval: 30000,
 		Timeout:  5000,
 		Retries:  3,
@@ -252,11 +252,11 @@ func testServiceDTOFields(s *TestSuite) error {
 	}
 
 	// Status should be one of the valid values
-	validStatuses := []storage.ServiceStatus{
-		storage.StatusUnknown,
-		storage.StatusUp,
-		storage.StatusDown,
-		storage.StatusMaintenance,
+	validStatuses := []models.ServiceStatus{
+		models.StatusUnknown,
+		models.StatusUp,
+		models.StatusDown,
+		models.StatusMaintenance,
 	}
 	isValidStatus := false
 	for _, validStatus := range validStatuses {
@@ -353,7 +353,7 @@ func testResponseModels(s *TestSuite) error {
 	// Create a test service first to ensure we have a valid service ID
 	createReq := web.CreateUpdateServiceRequest{
 		Name:     "Test Service for Response Models",
-		Protocol: storage.ServiceProtocolTypeHTTP,
+		Protocol: models.ServiceProtocolTypeHTTP,
 		Interval: 60000,
 		Timeout:  10000,
 		Retries:  3,
@@ -446,10 +446,10 @@ func testResponseModels(s *TestSuite) error {
 
 	// Protocols map should contain valid protocols
 	for protocol, count := range stats.Protocols {
-		validProtocols := []storage.ServiceProtocolType{
-			storage.ServiceProtocolTypeHTTP,
-			storage.ServiceProtocolTypeTCP,
-			storage.ServiceProtocolTypeGRPC,
+		validProtocols := []models.ServiceProtocolType{
+			models.ServiceProtocolTypeHTTP,
+			models.ServiceProtocolTypeTCP,
+			models.ServiceProtocolTypeGRPC,
 		}
 		isValid := false
 		for _, validProtocol := range validProtocols {
@@ -473,7 +473,7 @@ func testServiceStatsModel(s *TestSuite) error {
 	// Create a dedicated service for stats model testing
 	testService := web.CreateUpdateServiceRequest{
 		Name:     "Stats Model Test Service",
-		Protocol: storage.ServiceProtocolTypeHTTP,
+		Protocol: models.ServiceProtocolTypeHTTP,
 		Interval: 30000,
 		Timeout:  5000,
 		Retries:  3,

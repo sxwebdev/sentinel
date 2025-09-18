@@ -8,7 +8,11 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/sxwebdev/sentinel/pkg/migrations"
+	"github.com/tkcrm/mx/logger"
 	_ "modernc.org/sqlite"
+
+	emsql "github.com/sxwebdev/sentinel/sql"
 )
 
 // Storage implements Storage interface using SQLite
@@ -17,11 +21,17 @@ type Storage struct {
 }
 
 // New creates a new SQLite storage instance
-func New(dbPath string) (*Storage, error) {
+func New(l logger.Logger, dbPath string) (*Storage, error) {
 	// Ensure directory exists
 	dir := filepath.Dir(dbPath)
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return nil, fmt.Errorf("failed to create database directory: %w", err)
+	}
+
+	// Run migrations
+	m := migrations.New(l, emsql.MigrationsFS, emsql.MigrationsPath)
+	if err := m.MigrateUpAll(dbPath); err != nil {
+		return nil, fmt.Errorf("failed to migrate database: %w", err)
 	}
 
 	// Open SQLite database with proper settings for concurrent access
@@ -40,11 +50,6 @@ func New(dbPath string) (*Storage, error) {
 		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
 
-	if err := runMigrations(db); err != nil {
-		db.Close()
-		return nil, fmt.Errorf("failed to migrate database: %w", err)
-	}
-
 	return &Storage{
 		db: db,
 	}, nil
@@ -52,13 +57,13 @@ func New(dbPath string) (*Storage, error) {
 
 // Name returns the storage type
 func (s *Storage) Name() string {
-	return "storage_sqlite"
+	return "store"
 }
 
 // Start initializes the storage
 func (s *Storage) Start(_ context.Context) error {
 	if s.db == nil {
-		return fmt.Errorf("storage not initialized")
+		return fmt.Errorf("sqlite not initialized")
 	}
 	return nil
 }
@@ -67,9 +72,14 @@ func (s *Storage) Start(_ context.Context) error {
 func (s *Storage) Stop(_ context.Context) error {
 	if s.db != nil {
 		if err := s.db.Close(); err != nil {
-			return fmt.Errorf("failed to close database: %w", err)
+			return fmt.Errorf("failed to close sqlite database: %w", err)
 		}
 		s.db = nil
 	}
 	return nil
+}
+
+// SQLiteDB returns the underlying sql.DB instance
+func (s *Storage) SQLiteDB() *sql.DB {
+	return s.db
 }

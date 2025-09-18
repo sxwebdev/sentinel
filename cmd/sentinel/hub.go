@@ -13,9 +13,12 @@ import (
 	"github.com/sxwebdev/sentinel/internal/notifier"
 	"github.com/sxwebdev/sentinel/internal/receiver"
 	"github.com/sxwebdev/sentinel/internal/scheduler"
+	"github.com/sxwebdev/sentinel/internal/services/baseservices"
 	"github.com/sxwebdev/sentinel/internal/storage"
+	"github.com/sxwebdev/sentinel/internal/store"
 	"github.com/sxwebdev/sentinel/internal/upgrader"
 	"github.com/sxwebdev/sentinel/internal/web"
+	"github.com/sxwebdev/sentinel/pkg/sqlite"
 	"github.com/tkcrm/mx/launcher"
 	"github.com/tkcrm/mx/logger"
 	"github.com/tkcrm/mx/service"
@@ -66,14 +69,27 @@ func hubStartCMD() *cli.Command {
 				return fmt.Errorf("failed to set timezone: %w", err)
 			}
 
+			dbPath := filepath.Join(conf.DataDir, sqliteDBFile)
+
+			// init sqlite
+			db, err := sqlite.New(ctx, dbPath)
+			if err != nil {
+				return fmt.Errorf("failed to initialize sqlite: %w", err)
+			}
+
+			st, err := store.New(db.DB)
+			if err != nil {
+				return fmt.Errorf("failed to initialize store: %w", err)
+			}
+
 			// Initialize storage
-			store, err := storage.New(filepath.Join(conf.DataDir, "db.sqlite"))
+			storage, err := storage.New(l, dbPath)
 			if err != nil {
 				return fmt.Errorf("failed to initialize storage: %w", err)
 			}
 
 			// Print SQLite version if using SQLite storage
-			sqliteVersion, err := store.GetSQLiteVersion(ctx)
+			sqliteVersion, err := db.GetSQLiteVersion(ctx)
 			if err != nil {
 				return fmt.Errorf("failed to get SQLite version: %w", err)
 			}
@@ -97,16 +113,18 @@ func hubStartCMD() *cli.Command {
 				return fmt.Errorf("failed to initialize upgrader: %w", err)
 			}
 
+			baseServices := baseservices.New(st, rc)
+
 			// Create monitor service
-			monitorService := monitor.NewMonitorService(store, conf, notif, rc)
+			monitorService := monitor.NewMonitorService(st, storage, conf, notif, rc)
 
 			// Initialize scheduler
-			sched := scheduler.New(l, monitorService, rc)
+			sched := scheduler.New(l, monitorService, rc, baseServices)
 
 			serverInfo := models.GetSystemInfo(version, commitHash, buildDate)
 			serverInfo.SqliteVersion = sqliteVersion
 
-			webServer, err := web.NewServer(l, conf, serverInfo, monitorService, store, rc, upgr)
+			webServer, err := web.NewServer(l, conf, serverInfo, baseServices, monitorService, storage, rc, upgr)
 			if err != nil {
 				return fmt.Errorf("failed to initialize web server: %w", err)
 			}
@@ -114,7 +132,8 @@ func hubStartCMD() *cli.Command {
 			// register services
 			ln.ServicesRunner().Register(
 				service.New(service.WithService(pingpong.New(l))),
-				service.New(service.WithService(store)),
+				service.New(service.WithService(db)),
+				service.New(service.WithService(storage)),
 				service.New(service.WithService(rc)),
 				service.New(service.WithService(sched)),
 				service.New(service.WithService(webServer)),

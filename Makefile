@@ -8,6 +8,7 @@ SENTINEL_PATH=./cmd/sentinel
 BUILD_DIR=./build
 VERSION?=dev
 LDFLAGS=-ldflags="-w -s -X main.version=${VERSION}"
+MIGRATIONS_DIR	 = ./sql/migrations/
 
 # Default target
 help: ## Show this help message
@@ -122,6 +123,12 @@ clean: ## Clean build artifacts
 init-db: ## Initialize database directory
 	mkdir -p data
 
+# db-create-migration:
+# 	migrate create -ext sql -format unix -dir "$(MIGRATIONS_DIR)" $(filter-out $@,$(MAKECMDGOALS))
+
+db-create-migration:
+	go run ./cmd/sentinel migrations create -path ./sql/migrations -name $(filter-out $@,$(MAKECMDGOALS))
+
 # Configuration
 init-config: ## Copy example configuration
 	cp config.yaml.example config.yaml || echo "config.yaml already exists"
@@ -140,6 +147,10 @@ genswagger:
 genenvs:
 	go run ./cmd/sentinel config genenvs
 
+gensql:
+	pgxgen crud
+	pgxgen sqlc generate
+
 genproto: ## Generate protobuf code
 	buf lint
 	rm -rf ./internal/agent/api/*
@@ -147,3 +158,6 @@ genproto: ## Generate protobuf code
 
 grpcui-agent:
 	grpcui --plaintext localhost:9000
+
+%:
+	@:
