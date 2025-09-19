@@ -6,7 +6,6 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/sxwebdev/sentinel/internal/models"
-	"github.com/sxwebdev/sentinel/internal/storage"
 )
 
 type Config struct {
@@ -84,9 +83,9 @@ func GetConfig[T any](cfg map[string]any, protocol models.ServiceProtocolType) (
 // ConvertToMap converts the config to a map[string]any
 func (c *Config) ConvertToMap() map[string]any {
 	return map[string]any{
-		string(storage.ServiceProtocolTypeHTTP): c.HTTP,
-		string(storage.ServiceProtocolTypeTCP):  c.TCP,
-		string(storage.ServiceProtocolTypeGRPC): c.GRPC,
+		string(models.ServiceProtocolTypeHTTP): c.HTTP,
+		string(models.ServiceProtocolTypeTCP):  c.TCP,
+		string(models.ServiceProtocolTypeGRPC): c.GRPC,
 	}
 }
 

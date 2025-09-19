@@ -69,7 +69,7 @@ type ServiceDTO struct {
 	Protocol           models.ServiceProtocolType `json:"protocol" example:"http"`
 	Interval           uint32                     `json:"interval" swaggertype:"primitive,integer" example:"60000"`
 	Timeout            uint32                     `json:"timeout" swaggertype:"primitive,integer" example:"10000"`
-	Retries            int                        `json:"retries" example:"5"`
+	Retries            int64                      `json:"retries" example:"5"`
 	Tags               []string                   `json:"tags" example:"web,production"`
 	Config             monitors.Config            `json:"config"`
 	IsEnabled          bool                       `json:"is_enabled" example:"true"`

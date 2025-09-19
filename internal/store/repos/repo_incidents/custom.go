@@ -3,6 +3,7 @@ package repo_incidents
 import (
 	"context"
 	"database/sql"
+	"time"
 
 	"github.com/sxwebdev/sentinel/internal/models"
 	"github.com/sxwebdev/sentinel/internal/store/storecmn"
@@ -11,6 +12,7 @@ import (
 type ICustomQuerier interface {
 	Querier
 	Find(ctx context.Context, params FindParams) (*storecmn.FindResponseWithCount[*models.Incident], error)
+	StatsByDateRange(ctx context.Context, startTime, endTime time.Time) (StatsByDateRangeData, error)
 }
 
 type CustomQueries struct {

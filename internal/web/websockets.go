@@ -75,10 +75,6 @@ func (s *Server) handleWebSocket(c *websocket.Conn) {
 
 // BroadcastServiceUpdate sends service updates to all connected WebSocket clients
 func (s *Server) broadcastServiceTriggered(data receiver.TriggerServiceData) error {
-	if s.storage == nil {
-		return nil
-	}
-
 	svc := ServiceDTO{
 		ID: data.Svc.ID,
 	}
@@ -131,10 +127,6 @@ func (s *Server) broadcastServiceTriggered(data receiver.TriggerServiceData) err
 
 // broadcastStatsUpdate sends dashboard statistics updates to all connected WebSocket clients
 func (s *Server) broadcastStatsUpdate(ctx context.Context) error {
-	if s.storage == nil {
-		return nil
-	}
-
 	stats, err := s.getDashboardStats(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get dashboard stats: %w", err)
@@ -205,8 +197,7 @@ func (s *Server) subscribeEvents(ctx context.Context) error {
 			// reset ticker
 			ticker.Reset(30 * time.Second)
 
-			if s.storage == nil ||
-				data.EventType == receiver.TriggerServiceEventTypeCheck ||
+			if data.EventType == receiver.TriggerServiceEventTypeCheck ||
 				data.EventType == receiver.TriggerServiceEventTypeUnknown {
 				continue
 			}

@@ -33,7 +33,7 @@ type ServiceFullView struct {
 	Protocol           ServiceProtocolType `json:"protocol"`
 	Interval           time.Duration       `json:"interval" swaggertype:"primitive,integer"`
 	Timeout            time.Duration       `json:"timeout" swaggertype:"primitive,integer"`
-	Retries            int                 `json:"retries"`
+	Retries            int64               `json:"retries"`
 	Tags               []string            `json:"tags"`
 	Config             map[string]any      `json:"config"`
 	IsEnabled          bool                `json:"is_enabled"`

@@ -20,10 +20,12 @@ import (
 	"github.com/sxwebdev/sentinel/internal/monitors"
 	"github.com/sxwebdev/sentinel/internal/notifier"
 	"github.com/sxwebdev/sentinel/internal/receiver"
-	"github.com/sxwebdev/sentinel/internal/storage"
+	"github.com/sxwebdev/sentinel/internal/services/baseservices"
+	"github.com/sxwebdev/sentinel/internal/store"
 	"github.com/sxwebdev/sentinel/internal/store/storecmn"
 	"github.com/sxwebdev/sentinel/internal/upgrader"
 	"github.com/sxwebdev/sentinel/internal/web"
+	"github.com/sxwebdev/sentinel/pkg/sqlite"
 	"github.com/tkcrm/mx/logger"
 )
 
@@ -31,7 +33,7 @@ type TestSuite struct {
 	server       *web.Server
 	baseURL      string
 	client       *http.Client
-	stor         *storage.Storage
+	stor         *store.Store
 	ctx          context.Context
 	services     map[string]*web.ServiceDTO
 	incidents    map[string]*web.Incident
@@ -40,7 +42,7 @@ type TestSuite struct {
 
 type TestService struct {
 	Name     string
-	Protocol storage.ServiceProtocolType
+	Protocol models.ServiceProtocolType
 	Tags     []string
 	Config   monitors.Config
 	Enabled  bool
@@ -49,7 +51,7 @@ type TestService struct {
 var testServices = []TestService{
 	{
 		Name:     "HTTP Test Service 1",
-		Protocol: storage.ServiceProtocolTypeHTTP,
+		Protocol: models.ServiceProtocolTypeHTTP,
 		Tags:     []string{"http", "production", "api"},
 		Config: monitors.Config{
 			HTTP: &monitors.HTTPConfig{
@@ -68,7 +70,7 @@ var testServices = []TestService{
 	},
 	{
 		Name:     "HTTP Test Service 2",
-		Protocol: storage.ServiceProtocolTypeHTTP,
+		Protocol: models.ServiceProtocolTypeHTTP,
 		Tags:     []string{"http", "staging", "web"},
 		Config: monitors.Config{
 			HTTP: &monitors.HTTPConfig{
@@ -87,7 +89,7 @@ var testServices = []TestService{
 	},
 	{
 		Name:     "TCP Test Service",
-		Protocol: storage.ServiceProtocolTypeTCP,
+		Protocol: models.ServiceProtocolTypeTCP,
 		Tags:     []string{"tcp", "database", "production"},
 		Config: monitors.Config{
 			TCP: &monitors.TCPConfig{
@@ -98,7 +100,7 @@ var testServices = []TestService{
 	},
 	{
 		Name:     "gRPC Test Service",
-		Protocol: storage.ServiceProtocolTypeGRPC,
+		Protocol: models.ServiceProtocolTypeGRPC,
 		Tags:     []string{"grpc", "api", "microservice"},
 		Config: monitors.Config{
 			GRPC: &monitors.GRPCConfig{
@@ -111,7 +113,7 @@ var testServices = []TestService{
 	},
 	{
 		Name:     "Disabled Service",
-		Protocol: storage.ServiceProtocolTypeHTTP,
+		Protocol: models.ServiceProtocolTypeHTTP,
 		Tags:     []string{"disabled", "test"},
 		Config: monitors.Config{
 			HTTP: &monitors.HTTPConfig{
@@ -222,12 +224,6 @@ func setupTestSuite() (*TestSuite, error) {
 
 	l := logger.Default()
 
-	// Initialize storage
-	stor, err := storage.New(l, dbPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to initialize storage: %w", err)
-	}
-
 	// Initialize notifier (disabled for tests)
 	var notif *notifier.Notifier
 
@@ -243,11 +239,24 @@ func setupTestSuite() (*TestSuite, error) {
 		return nil, fmt.Errorf("failed to initialize upgrader: %w", err)
 	}
 
+	// init sqlite
+	db, err := sqlite.New(ctx, dbPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize sqlite: %w", err)
+	}
+
+	st, err := store.New(db.DB)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize store: %w", err)
+	}
+
+	baseServices := baseservices.New(st, rc)
+
 	// Create monitor service
-	monitorService := monitor.NewMonitorService(stor, cfg, notif, rc)
+	monitorService := monitor.NewMonitorService(l, st, cfg, notif, rc, baseServices)
 
 	// Create web server
-	webServer, err := web.NewServer(l, cfg, models.SystemInfo{}, monitorService, stor, rc, upgr)
+	webServer, err := web.NewServer(l, cfg, models.SystemInfo{}, baseServices, monitorService, rc, upgr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create web server: %w", err)
 	}
@@ -266,7 +275,7 @@ func setupTestSuite() (*TestSuite, error) {
 		server:       webServer,
 		baseURL:      fmt.Sprintf("http://%s:%d", cfg.Server.Host, cfg.Server.Port),
 		client:       &http.Client{Timeout: 10 * time.Second},
-		stor:         stor,
+		stor:         st,
 		ctx:          ctx,
 		services:     make(map[string]*web.ServiceDTO),
 		incidents:    make(map[string]*web.Incident),
@@ -278,7 +287,7 @@ func setupTestSuite() (*TestSuite, error) {
 
 func (s *TestSuite) cleanup() {
 	if s.stor != nil {
-		s.stor.Stop(context.Background())
+		s.stor.SQLite().Close()
 	}
 }
 
@@ -456,7 +465,7 @@ func testServiceFilters(s *TestSuite) error {
 
 	expectedHTTPServices := 0
 	for _, svc := range s.testServices {
-		if svc.Protocol == storage.ServiceProtocolTypeHTTP {
+		if svc.Protocol == models.ServiceProtocolTypeHTTP {
 			expectedHTTPServices++
 		}
 	}
@@ -539,7 +548,7 @@ func testServiceFilters(s *TestSuite) error {
 
 	// Validate each service matches all filters
 	for _, item := range result.Items {
-		if item.Protocol != storage.ServiceProtocolTypeHTTP {
+		if item.Protocol != models.ServiceProtocolTypeHTTP {
 			return fmt.Errorf("multiple filters: service %s doesn't match protocol filter", item.Name)
 		}
 		if !item.IsEnabled {
@@ -886,7 +895,7 @@ func testErrorHandling(s *TestSuite) error {
 	// Test invalid service creation
 	invalidService := web.CreateUpdateServiceRequest{
 		Name:     "", // Empty name should fail
-		Protocol: storage.ServiceProtocolTypeHTTP,
+		Protocol: models.ServiceProtocolTypeHTTP,
 	}
 
 	resp, err := s.makeRequest("POST", "/api/v1/services", invalidService)

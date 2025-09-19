@@ -38,7 +38,6 @@ import (
 	"github.com/sxwebdev/sentinel/internal/services/baseservices"
 	"github.com/sxwebdev/sentinel/internal/services/incidents"
 	"github.com/sxwebdev/sentinel/internal/services/service"
-	"github.com/sxwebdev/sentinel/internal/storage"
 	"github.com/sxwebdev/sentinel/internal/store/storecmn"
 	"github.com/sxwebdev/sentinel/internal/upgrader"
 	"github.com/sxwebdev/sentinel/internal/utils"
@@ -57,7 +56,6 @@ type Server struct {
 	wsMutex       sync.Mutex
 	validator     *validator.Validate
 
-	storage        *storage.Storage
 	baseServices   *baseservices.BaseServices
 	monitorService *monitor.MonitorService
 	receiver       *receiver.Receiver
@@ -71,7 +69,6 @@ func NewServer(
 	serverInfo models.SystemInfo,
 	baseServices *baseservices.BaseServices,
 	monitorService *monitor.MonitorService,
-	storage *storage.Storage,
 	receiver *receiver.Receiver,
 	upgrader *upgrader.Upgrader,
 ) (*Server, error) {
@@ -87,7 +84,6 @@ func NewServer(
 		logger:         logger,
 		serverInfo:     serverInfo,
 		monitorService: monitorService,
-		storage:        storage,
 		receiver:       receiver,
 		config:         cfg,
 		app:            app,
@@ -672,7 +668,7 @@ func (s *Server) handleAPIGetIncidentsStats(c *fiber.Ctx) error {
 		return newErrorResponse(c, fiber.StatusBadRequest, errors.New("end_time must be after start_time"))
 	}
 
-	stats, err := s.storage.GetIncidentsStatsByDateRange(c.Context(), startTime, endTime)
+	stats, err := s.baseServices.Incidents().StatsByDateRange(c.Context(), startTime, endTime)
 	if err != nil {
 		return newErrorResponse(c, fiber.StatusInternalServerError, errors.New("failed to get incidents stats: "+err.Error()))
 	}
@@ -683,10 +679,10 @@ func (s *Server) handleAPIGetIncidentsStats(c *fiber.Ctx) error {
 		response = append(response, getIncidentsStatsItem{
 			Date:               item.Date,
 			Count:              item.Count,
-			AvgDuration:        uint32(item.AvgDuration.Seconds()),
-			AvgDurationHuman:   item.AvgDuration.Round(time.Second).String(),
-			TotalDuration:      uint32(item.TotalDuration.Seconds()),
-			TotalDurationHuman: item.TotalDuration.Round(time.Second).String(),
+			AvgDuration:        uint32(item.AvgDuration),
+			AvgDurationHuman:   (time.Duration(item.AvgDuration) * time.Millisecond).Round(time.Second).String(),
+			TotalDuration:      uint32(item.TotalDuration),
+			TotalDurationHuman: (time.Duration(item.TotalDuration) * time.Millisecond).Round(time.Second).String(),
 		})
 	}
 

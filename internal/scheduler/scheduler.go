@@ -230,7 +230,7 @@ func (s *Scheduler) performCheck(job *job) error {
 	var lastErr error
 	var lastAttemptResponseTime time.Duration
 
-	for attempt := 1; attempt <= job.retries; attempt++ {
+	for attempt := int64(1); attempt <= job.retries; attempt++ {
 		// Create context with timeout for this specific check
 		attemptCtx, cancel := context.WithTimeout(job.checkCtx, job.timeout)
 

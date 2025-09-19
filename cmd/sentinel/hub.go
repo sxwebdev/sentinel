@@ -14,7 +14,6 @@ import (
 	"github.com/sxwebdev/sentinel/internal/receiver"
 	"github.com/sxwebdev/sentinel/internal/scheduler"
 	"github.com/sxwebdev/sentinel/internal/services/baseservices"
-	"github.com/sxwebdev/sentinel/internal/storage"
 	"github.com/sxwebdev/sentinel/internal/store"
 	"github.com/sxwebdev/sentinel/internal/upgrader"
 	"github.com/sxwebdev/sentinel/internal/web"
@@ -82,12 +81,6 @@ func hubStartCMD() *cli.Command {
 				return fmt.Errorf("failed to initialize store: %w", err)
 			}
 
-			// Initialize storage
-			storage, err := storage.New(l, dbPath)
-			if err != nil {
-				return fmt.Errorf("failed to initialize storage: %w", err)
-			}
-
 			// Print SQLite version if using SQLite storage
 			sqliteVersion, err := db.GetSQLiteVersion(ctx)
 			if err != nil {
@@ -116,7 +109,7 @@ func hubStartCMD() *cli.Command {
 			baseServices := baseservices.New(st, rc)
 
 			// Create monitor service
-			monitorService := monitor.NewMonitorService(l, storage, conf, notif, rc, baseServices)
+			monitorService := monitor.NewMonitorService(l, st, conf, notif, rc, baseServices)
 
 			// Initialize scheduler
 			sched := scheduler.New(l, monitorService, rc, baseServices)
@@ -124,7 +117,7 @@ func hubStartCMD() *cli.Command {
 			serverInfo := models.GetSystemInfo(version, commitHash, buildDate)
 			serverInfo.SqliteVersion = sqliteVersion
 
-			webServer, err := web.NewServer(l, conf, serverInfo, baseServices, monitorService, storage, rc, upgr)
+			webServer, err := web.NewServer(l, conf, serverInfo, baseServices, monitorService, rc, upgr)
 			if err != nil {
 				return fmt.Errorf("failed to initialize web server: %w", err)
 			}
@@ -133,7 +126,6 @@ func hubStartCMD() *cli.Command {
 			ln.ServicesRunner().Register(
 				service.New(service.WithService(pingpong.New(l))),
 				service.New(service.WithService(db)),
-				service.New(service.WithService(storage)),
 				service.New(service.WithService(rc)),
 				service.New(service.WithService(sched)),
 				service.New(service.WithService(webServer)),

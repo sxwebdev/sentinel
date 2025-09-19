@@ -12,7 +12,7 @@ type job struct {
 	serviceName string
 	interval    time.Duration
 	timeout     time.Duration
-	retries     int
+	retries     int64
 	ticker      *time.Ticker
 	stopChan    chan struct{}
 	inProgress  atomic.Bool

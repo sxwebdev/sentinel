@@ -15,7 +15,7 @@ type itemViewRow struct {
 	Protocol           string
 	Interval           string
 	Timeout            string
-	Retries            int
+	Retries            int64
 	Tags               string
 	Config             string
 	IsEnabled          bool

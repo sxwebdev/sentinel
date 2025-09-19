@@ -14,7 +14,7 @@ import (
 	"github.com/sxwebdev/sentinel/internal/services/baseservices"
 	"github.com/sxwebdev/sentinel/internal/services/incidents"
 	"github.com/sxwebdev/sentinel/internal/services/servicestate"
-	"github.com/sxwebdev/sentinel/internal/storage"
+	"github.com/sxwebdev/sentinel/internal/store"
 	"github.com/sxwebdev/sentinel/internal/store/repos/repo_service_states"
 	"github.com/sxwebdev/sentinel/internal/store/storecmn"
 	"github.com/sxwebdev/sentinel/internal/utils"
@@ -25,7 +25,7 @@ import (
 // MonitorService handles service monitoring
 type MonitorService struct {
 	logger       logger.Logger
-	storage      *storage.Storage
+	store        *store.Store
 	config       *config.ConfigHub
 	notifier     *notifier.Notifier
 	receiver     *receiver.Receiver
@@ -35,7 +35,7 @@ type MonitorService struct {
 // NewMonitorService creates a new monitor service
 func NewMonitorService(
 	logger logger.Logger,
-	storage *storage.Storage,
+	store *store.Store,
 	config *config.ConfigHub,
 	notifier *notifier.Notifier,
 	receiver *receiver.Receiver,
@@ -43,7 +43,7 @@ func NewMonitorService(
 ) *MonitorService {
 	return &MonitorService{
 		logger:       logger,
-		storage:      storage,
+		store:        store,
 		config:       config,
 		notifier:     notifier,
 		receiver:     receiver,
@@ -186,7 +186,7 @@ func (m *MonitorService) resolveActiveIncidents(ctx context.Context, serviceID s
 		return fmt.Errorf("failed to resolve incidents: %w", err)
 	}
 
-	err = storecmn.WrapTx(ctx, m.storage.SQLiteDB(), func(txCtx *sql.Tx) error {
+	err = storecmn.WrapTx(ctx, m.store.SQLite(), func(txCtx *sql.Tx) error {
 		for _, incident := range incidents {
 			resolverIncident, err := m.baseservices.Incidents().ResolveByID(ctx, incident.ID)
 			if err != nil {
@@ -205,73 +205,6 @@ func (m *MonitorService) resolveActiveIncidents(ctx context.Context, serviceID s
 	})
 	if err != nil {
 		return fmt.Errorf("failed to resolve incidents in transaction: %w", err)
-	}
-
-	return nil
-}
-
-// resolveAllActiveIncidents resolves all active incidents for a service
-// func (m *MonitorService) resolveAllActiveIncidents(ctx context.Context, serviceID string) error {
-// 	return m.resolveActiveIncidents(ctx, serviceID)
-// }
-
-// // ForceResolveIncidents manually resolves all active incidents for a service
-// func (m *MonitorService) ForceResolveIncidents(ctx context.Context, serviceID string) error {
-// 	return m.resolveAllActiveIncidents(ctx, serviceID)
-// }
-
-// CheckService performs a health check on a service
-func (m *MonitorService) CheckService(ctx context.Context, service *storage.Service) error {
-	// Get current service state
-	serviceState, err := m.baseservices.ServiceStates().GetByServiceID(ctx, service.ID)
-	if err != nil {
-		return fmt.Errorf("failed to get service state: %w", err)
-	}
-
-	// Perform the check (simplified - just record success/failure)
-	startTime := time.Now()
-	responseTime := time.Since(startTime)
-	now := time.Now()
-
-	// For now, just record success (this should be replaced with actual check logic)
-	wasDown := serviceState.Status == models.StatusDown
-
-	updateParams := servicestate.UpdateParams{
-		ServiceState: models.ServiceState{
-			Status:             models.StatusUp,
-			LastCheck:          &now,
-			ResponseTime:       utils.Pointer(responseTime.Milliseconds()),
-			ConsecutiveFails:   0,
-			ConsecutiveSuccess: serviceState.ConsecutiveSuccess + 1,
-			TotalChecks:        serviceState.TotalChecks + 1,
-			LastError:          nil,
-		},
-		FieldMask: dbutils.FieldMask[repo_service_states.ColumnName]{
-			repo_service_states.ColumnNameServiceStatesStatus,
-			repo_service_states.ColumnNameServiceStatesLastCheck,
-			repo_service_states.ColumnNameServiceStatesResponseTime,
-			repo_service_states.ColumnNameServiceStatesConsecutiveFails,
-			repo_service_states.ColumnNameServiceStatesConsecutiveSuccess,
-			repo_service_states.ColumnNameServiceStatesTotalChecks,
-			repo_service_states.ColumnNameServiceStatesLastError,
-		},
-	}
-
-	// Save to database
-	if _, err := m.baseservices.ServiceStates().Update(ctx, serviceState.ID, updateParams); err != nil {
-		return fmt.Errorf("failed to update service state: %w", err)
-	}
-
-	// Resolve incident if service was down before
-	if wasDown {
-		if err := m.resolveActiveIncidents(ctx, service.ID); err != nil {
-			return fmt.Errorf("failed to resolve incident: %w", err)
-		}
-	}
-
-	// Update service state
-	if _, err := m.baseservices.ServiceStates().Update(ctx, serviceState.ID, updateParams); err != nil {
-		return fmt.Errorf("failed to update service state: %w", err)
 	}
 
 	return nil

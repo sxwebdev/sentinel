@@ -4,7 +4,7 @@ import (
 	"errors"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/sxwebdev/sentinel/internal/storage"
+	"github.com/sxwebdev/sentinel/internal/store/storecmn"
 )
 
 // ErrorResponse represents an error response
@@ -16,13 +16,13 @@ type ErrorResponse struct {
 
 // newErrorResponse creates a new ErrorResponse and sends it as a JSON response
 func newErrorResponse(c *fiber.Ctx, status int, err error) error {
-	if errors.Is(err, storage.ErrNotFound) {
+	if errors.Is(err, storecmn.ErrNotFound) {
 		return c.Status(fiber.StatusNotFound).JSON(ErrorResponse{
 			Error: err.Error(),
 		})
 	}
 
-	if errors.Is(err, storage.ErrAlreadyExists) {
+	if errors.Is(err, storecmn.ErrAlreadyExists) {
 		return c.Status(fiber.StatusConflict).JSON(ErrorResponse{
 			Error: err.Error(),
 		})
