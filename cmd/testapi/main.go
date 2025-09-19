@@ -253,7 +253,7 @@ func setupTestSuite() (*TestSuite, error) {
 	baseServices := baseservices.New(st, rc)
 
 	// Create monitor service
-	monitorService := monitor.NewMonitorService(l, st, cfg, notif, rc, baseServices)
+	monitorService := monitor.NewMonitorService(l, st, notif, baseServices)
 
 	// Create web server
 	webServer, err := web.NewServer(l, cfg, models.SystemInfo{}, baseServices, monitorService, rc, upgr)

@@ -7,10 +7,8 @@ import (
 	"log"
 	"time"
 
-	"github.com/sxwebdev/sentinel/internal/config"
 	"github.com/sxwebdev/sentinel/internal/models"
 	"github.com/sxwebdev/sentinel/internal/notifier"
-	"github.com/sxwebdev/sentinel/internal/receiver"
 	"github.com/sxwebdev/sentinel/internal/services/baseservices"
 	"github.com/sxwebdev/sentinel/internal/services/incidents"
 	"github.com/sxwebdev/sentinel/internal/services/servicestate"
@@ -26,9 +24,7 @@ import (
 type MonitorService struct {
 	logger       logger.Logger
 	store        *store.Store
-	config       *config.ConfigHub
 	notifier     *notifier.Notifier
-	receiver     *receiver.Receiver
 	baseservices *baseservices.BaseServices
 }
 
@@ -36,17 +32,13 @@ type MonitorService struct {
 func NewMonitorService(
 	logger logger.Logger,
 	store *store.Store,
-	config *config.ConfigHub,
 	notifier *notifier.Notifier,
-	receiver *receiver.Receiver,
 	baseservices *baseservices.BaseServices,
 ) *MonitorService {
 	return &MonitorService{
 		logger:       logger,
 		store:        store,
-		config:       config,
 		notifier:     notifier,
-		receiver:     receiver,
 		baseservices: baseservices,
 	}
 }

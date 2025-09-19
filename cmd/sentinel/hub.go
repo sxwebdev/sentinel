@@ -109,7 +109,7 @@ func hubStartCMD() *cli.Command {
 			baseServices := baseservices.New(st, rc)
 
 			// Create monitor service
-			monitorService := monitor.NewMonitorService(l, st, conf, notif, rc, baseServices)
+			monitorService := monitor.NewMonitorService(l, st, notif, baseServices)
 
 			// Initialize scheduler
 			sched := scheduler.New(l, monitorService, rc, baseServices)
