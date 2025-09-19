@@ -9,7 +9,6 @@ import (
 
 	"github.com/sxwebdev/sentinel/internal/config"
 	"github.com/sxwebdev/sentinel/internal/models"
-	"github.com/sxwebdev/sentinel/internal/monitor"
 	"github.com/sxwebdev/sentinel/internal/notifier"
 	"github.com/sxwebdev/sentinel/internal/receiver"
 	"github.com/sxwebdev/sentinel/internal/scheduler"
@@ -108,16 +107,13 @@ func hubStartCMD() *cli.Command {
 
 			baseServices := baseservices.New(st, rc)
 
-			// Create monitor service
-			monitorService := monitor.NewMonitorService(l, st, notif, baseServices)
-
 			// Initialize scheduler
-			sched := scheduler.New(l, monitorService, rc, baseServices)
+			sched := scheduler.New(l, st, notif, rc, baseServices)
 
 			serverInfo := models.GetSystemInfo(version, commitHash, buildDate)
 			serverInfo.SqliteVersion = sqliteVersion
 
-			webServer, err := web.NewServer(l, conf, serverInfo, baseServices, monitorService, rc, upgr)
+			webServer, err := web.NewServer(l, conf, serverInfo, baseServices, rc, upgr)
 			if err != nil {
 				return fmt.Errorf("failed to initialize web server: %w", err)
 			}

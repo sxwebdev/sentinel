@@ -33,7 +33,6 @@ import (
 	"github.com/sxwebdev/sentinel/frontend"
 	"github.com/sxwebdev/sentinel/internal/config"
 	"github.com/sxwebdev/sentinel/internal/models"
-	"github.com/sxwebdev/sentinel/internal/monitor"
 	"github.com/sxwebdev/sentinel/internal/receiver"
 	"github.com/sxwebdev/sentinel/internal/services/baseservices"
 	"github.com/sxwebdev/sentinel/internal/services/incidents"
@@ -56,10 +55,9 @@ type Server struct {
 	wsMutex       sync.Mutex
 	validator     *validator.Validate
 
-	baseServices   *baseservices.BaseServices
-	monitorService *monitor.MonitorService
-	receiver       *receiver.Receiver
-	upgrader       *upgrader.Upgrader
+	baseServices *baseservices.BaseServices
+	receiver     *receiver.Receiver
+	upgrader     *upgrader.Upgrader
 }
 
 // NewServer creates a new web server
@@ -68,7 +66,6 @@ func NewServer(
 	cfg *config.ConfigHub,
 	serverInfo models.SystemInfo,
 	baseServices *baseservices.BaseServices,
-	monitorService *monitor.MonitorService,
 	receiver *receiver.Receiver,
 	upgrader *upgrader.Upgrader,
 ) (*Server, error) {
@@ -81,16 +78,15 @@ func NewServer(
 	app.Use(cors.New())
 
 	server := &Server{
-		logger:         logger,
-		serverInfo:     serverInfo,
-		monitorService: monitorService,
-		receiver:       receiver,
-		config:         cfg,
-		app:            app,
-		baseServices:   baseServices,
-		wsConnections:  make(map[*websocket.Conn]bool),
-		validator:      validator.New(),
-		upgrader:       upgrader,
+		logger:        logger,
+		serverInfo:    serverInfo,
+		receiver:      receiver,
+		config:        cfg,
+		app:           app,
+		baseServices:  baseServices,
+		wsConnections: make(map[*websocket.Conn]bool),
+		validator:     validator.New(),
+		upgrader:      upgrader,
 	}
 
 	// Setup basic auth if enabled

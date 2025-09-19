@@ -16,9 +16,7 @@ import (
 
 	"github.com/sxwebdev/sentinel/internal/config"
 	"github.com/sxwebdev/sentinel/internal/models"
-	"github.com/sxwebdev/sentinel/internal/monitor"
 	"github.com/sxwebdev/sentinel/internal/monitors"
-	"github.com/sxwebdev/sentinel/internal/notifier"
 	"github.com/sxwebdev/sentinel/internal/receiver"
 	"github.com/sxwebdev/sentinel/internal/services/baseservices"
 	"github.com/sxwebdev/sentinel/internal/store"
@@ -224,9 +222,6 @@ func setupTestSuite() (*TestSuite, error) {
 
 	l := logger.Default()
 
-	// Initialize notifier (disabled for tests)
-	var notif *notifier.Notifier
-
 	// Initialize receiver
 	rc := receiver.New()
 	if err := rc.Start(ctx); err != nil {
@@ -252,11 +247,8 @@ func setupTestSuite() (*TestSuite, error) {
 
 	baseServices := baseservices.New(st, rc)
 
-	// Create monitor service
-	monitorService := monitor.NewMonitorService(l, st, notif, baseServices)
-
 	// Create web server
-	webServer, err := web.NewServer(l, cfg, models.SystemInfo{}, baseServices, monitorService, rc, upgr)
+	webServer, err := web.NewServer(l, cfg, models.SystemInfo{}, baseServices, rc, upgr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create web server: %w", err)
 	}
