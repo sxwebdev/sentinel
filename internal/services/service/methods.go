@@ -18,28 +18,59 @@ import (
 	"github.com/sxwebdev/sentinel/pkg/dbutils"
 )
 
-type CreateParams = repo_services.CreateParams
+type CreateUpdateParams struct {
+	Name      string
+	Protocol  models.ServiceProtocolType
+	Interval  time.Duration
+	Timeout   time.Duration
+	Retries   int64
+	Tags      []string
+	Config    map[string]any
+	IsEnabled bool
+}
 
 // Create new service
-func (s *Service) Create(ctx context.Context, params CreateParams) (*models.ServiceFullView, error) {
+func (s *Service) Create(ctx context.Context, params CreateUpdateParams) (*models.ServiceFullView, error) {
 	if len(params.Tags) > 0 {
 		slices.Sort(params.Tags)
 	}
 
-	params.ID = utils.GenerateULID()
+	// Convert tags to JSONField
+	tags := dbutils.JSONField("[]")
+	if err := tags.UnmarshalAny(params.Tags); err != nil {
+		return nil, fmt.Errorf("failed to convert tags to json raw message: %w", err)
+	}
+
+	// Convert config to JSONField
+	config := dbutils.JSONField("{}")
+	if err := config.UnmarshalAny(params.Config); err != nil {
+		return nil, fmt.Errorf("failed to convert config to json raw message: %w", err)
+	}
+
+	createParams := repo_services.CreateParams{
+		ID:        utils.GenerateULID(),
+		Name:      params.Name,
+		Protocol:  params.Protocol,
+		Interval:  dbutils.Duration(params.Interval),
+		Timeout:   dbutils.Duration(params.Timeout),
+		Retries:   params.Retries,
+		Tags:      tags,
+		Config:    config,
+		IsEnabled: params.IsEnabled,
+	}
 
 	err := dbutils.WrapTx(ctx, s.store.SQLite(), func(tx *sql.Tx) error {
 		// Create service
-		_, err := s.store.Services(repos.WithTx(tx)).Create(ctx, params)
+		_, err := s.store.Services(repos.WithTx(tx)).Create(ctx, createParams)
 		if err != nil {
 			return fmt.Errorf("failed to create service: %w", err)
 		}
 
 		// Create initial service state
-		nextCheck := time.Now().Add(params.Interval.ToDuration())
+		nextCheck := time.Now().Add(params.Interval)
 		serviceState := &repo_service_states.CreateParams{
 			ID:        utils.GenerateULID(),
-			ServiceID: params.ID,
+			ServiceID: createParams.ID,
 			Status:    models.StatusUnknown,
 			NextCheck: &nextCheck,
 		}
@@ -55,7 +86,7 @@ func (s *Service) Create(ctx context.Context, params CreateParams) (*models.Serv
 		return nil, fmt.Errorf("failed to create service in transaction: %w", err)
 	}
 
-	svcView, err := s.GetViewByID(ctx, params.ID)
+	svcView, err := s.GetViewByID(ctx, createParams.ID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get created service: %w", err)
 	}
@@ -68,11 +99,36 @@ func (s *Service) Create(ctx context.Context, params CreateParams) (*models.Serv
 	return svcView, nil
 }
 
-type UpdateParams = repo_services.UpdateServiceRequest
-
 // Update service
-func (s *Service) Update(ctx context.Context, id string, params UpdateParams) (*models.ServiceFullView, error) {
-	item, err := s.store.Services().Update(ctx, id, params)
+func (s *Service) Update(ctx context.Context, id string, params CreateUpdateParams) (*models.ServiceFullView, error) {
+	if len(params.Tags) > 0 {
+		slices.Sort(params.Tags)
+	}
+
+	// Convert tags to JSONField
+	tags := dbutils.JSONField("[]")
+	if err := tags.UnmarshalAny(params.Tags); err != nil {
+		return nil, fmt.Errorf("failed to convert tags to json raw message: %w", err)
+	}
+
+	// Convert config to JSONField
+	config := dbutils.JSONField("{}")
+	if err := config.UnmarshalAny(params.Config); err != nil {
+		return nil, fmt.Errorf("failed to convert config to json raw message: %w", err)
+	}
+
+	updateParams := repo_services.UpdateServiceRequest{
+		Name:      params.Name,
+		Protocol:  params.Protocol,
+		Interval:  dbutils.Duration(params.Interval),
+		Timeout:   dbutils.Duration(params.Timeout),
+		Retries:   params.Retries,
+		Tags:      tags,
+		Config:    config,
+		IsEnabled: params.IsEnabled,
+	}
+
+	item, err := s.store.Services().Update(ctx, id, updateParams)
 	if err != nil {
 		return nil, err
 	}

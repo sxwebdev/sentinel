@@ -15,7 +15,6 @@ package web
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	goHTML "html"
@@ -763,56 +762,35 @@ func (s *Server) handleAPICreateService(c *fiber.Ctx) error {
 		return newErrorResponse(c, fiber.StatusBadRequest, ErrProtocolRequired)
 	}
 
-	// convert tags to jsonRawMessage
-	tags := make(json.RawMessage, 0)
-	if len(serviceDTO.Tags) > 0 {
-		tagsBytes, err := json.Marshal(serviceDTO.Tags)
-		if err != nil {
-			return newErrorResponse(c, fiber.StatusBadRequest, fmt.Errorf("failed to parse tags: %w", err))
-		}
-		tags = tagsBytes
-	} else {
-		tags = json.RawMessage("[]")
+	// Validate config based on protocol
+	if err := serviceDTO.Config.Validate(serviceDTO.Protocol); err != nil {
+		return newErrorResponse(c, fiber.StatusBadRequest, err)
 	}
 
-	interval := time.Millisecond * time.Duration(serviceDTO.Interval)
-	timeout := time.Millisecond * time.Duration(serviceDTO.Timeout)
-
 	// Convert to storage.Service
-	createParams := service.CreateParams{
+	createParams := service.CreateUpdateParams{
 		Name:      serviceDTO.Name,
 		Protocol:  serviceDTO.Protocol,
-		Interval:  dbutils.Duration(interval),
-		Timeout:   dbutils.Duration(timeout),
+		Interval:  time.Millisecond * time.Duration(serviceDTO.Interval),
+		Timeout:   time.Millisecond * time.Duration(serviceDTO.Timeout),
 		Retries:   serviceDTO.Retries,
-		Tags:      dbutils.JSONField(tags),
+		Tags:      serviceDTO.Tags,
+		Config:    serviceDTO.Config.ConvertToMap(),
 		IsEnabled: serviceDTO.IsEnabled,
 	}
 
 	// Set default values
-	if interval == 0 {
-		createParams.Interval = dbutils.Duration(s.config.Monitoring.Global.DefaultInterval)
+	if createParams.Interval == 0 {
+		createParams.Interval = s.config.Monitoring.Global.DefaultInterval
 	}
 
-	if timeout == 0 {
-		createParams.Timeout = dbutils.Duration(s.config.Monitoring.Global.DefaultTimeout)
+	if createParams.Timeout == 0 {
+		createParams.Timeout = s.config.Monitoring.Global.DefaultTimeout
 	}
 
 	if createParams.Retries == 0 {
 		createParams.Retries = s.config.Monitoring.Global.DefaultRetries
 	}
-
-	// Convert flat config to proper MonitorConfig structure
-	if err := serviceDTO.Config.Validate(serviceDTO.Protocol); err != nil {
-		return newErrorResponse(c, fiber.StatusBadRequest, err)
-	}
-
-	rawMessage, err := serviceDTO.Config.ConvertToJSONRawMessage()
-	if err != nil {
-		return newErrorResponse(c, fiber.StatusInternalServerError, err)
-	}
-
-	createParams.Config = dbutils.JSONField(rawMessage)
 
 	// Add service
 	svc, err := s.baseServices.Services().Create(c.Context(), createParams)
@@ -857,7 +835,7 @@ func (s *Server) handleAPIUpdateService(c *fiber.Ctx) error {
 	s.logger.Debugf("update service request: %+v", serviceDTO)
 
 	// Convert to storage.Service
-	updateParams := service.UpdateParams{
+	updateParams := service.CreateUpdateParams{
 		Name:      serviceDTO.Name,
 		Protocol:  serviceDTO.Protocol,
 		Interval:  time.Millisecond * time.Duration(serviceDTO.Interval),

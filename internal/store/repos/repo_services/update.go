@@ -8,16 +8,17 @@ import (
 
 	"github.com/huandu/go-sqlbuilder"
 	"github.com/sxwebdev/sentinel/internal/models"
+	"github.com/sxwebdev/sentinel/pkg/dbutils"
 )
 
 type UpdateServiceRequest struct {
 	Name      string                     `json:"name" yaml:"name"`
 	Protocol  models.ServiceProtocolType `json:"protocol" yaml:"protocol"`
-	Interval  time.Duration              `json:"interval" yaml:"interval" swaggertype:"primitive,integer"`
-	Timeout   time.Duration              `json:"timeout" yaml:"timeout" swaggertype:"primitive,integer"`
+	Interval  dbutils.Duration           `json:"interval" yaml:"interval" swaggertype:"primitive,integer"`
+	Timeout   dbutils.Duration           `json:"timeout" yaml:"timeout" swaggertype:"primitive,integer"`
 	Retries   int64                      `json:"retries" yaml:"retries"`
-	Tags      []string                   `json:"tags" yaml:"tags"`
-	Config    map[string]any             `json:"config" yaml:"config"`
+	Tags      dbutils.JSONField          `json:"tags" yaml:"tags"`
+	Config    dbutils.JSONField          `json:"config" yaml:"config"`
 	IsEnabled bool                       `json:"is_enabled" yaml:"is_enabled"`
 }
 
