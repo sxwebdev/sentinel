@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "format": "prettier --config .prettierrc --write .",
     "format-check": "prettier --config .prettierrc --check .",
-    "gen-api": "rm src/shared/types/model/* && npx orval"
+    "genapi": "rm src/shared/types/model/* && npx orval"
   },
   "dependencies": {
     "@tanstack/react-router": "^1.131.36",

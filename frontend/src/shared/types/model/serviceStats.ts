@@ -6,11 +6,13 @@
  * OpenAPI spec version: 1.0
  */
 
-export interface StorageServiceStats {
+export interface ServiceStats {
   avg_response_time?: number;
   period?: number;
+  resolved_incidents?: number;
   service_id?: string;
   total_downtime?: number;
   total_incidents?: number;
+  unresolved_incidents?: number;
   uptime_percentage?: number;
 }

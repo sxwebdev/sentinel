@@ -6,8 +6,8 @@
  * OpenAPI spec version: 1.0
  */
 import type {
-  DbutilsFindResponseWithCountWebServiceDTO,
   GetServicesParams,
+  StorecmnFindResponseWithCountWebServiceDTO,
   WebCreateUpdateServiceRequest,
   WebServiceDTO,
   WebSuccessResponse,
@@ -21,7 +21,7 @@ export const getServices = () => {
    * @summary Get all services
    */
   const getServices = (params?: GetServicesParams) => {
-    return customFetcher<DbutilsFindResponseWithCountWebServiceDTO>({
+    return customFetcher<StorecmnFindResponseWithCountWebServiceDTO>({
       url: `/services`,
       method: "GET",
       params,

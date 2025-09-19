@@ -764,7 +764,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Service statistics",
                         "schema": {
-                            "$ref": "#/definitions/storage.ServiceStats"
+                            "$ref": "#/definitions/service.Stats"
                         }
                     },
                     "400": {
@@ -1029,6 +1029,35 @@ const docTemplate = `{
                 }
             }
         },
+        "service.Stats": {
+            "type": "object",
+            "properties": {
+                "avg_response_time": {
+                    "type": "integer"
+                },
+                "period": {
+                    "type": "integer"
+                },
+                "resolved_incidents": {
+                    "type": "integer"
+                },
+                "service_id": {
+                    "type": "string"
+                },
+                "total_downtime": {
+                    "type": "integer"
+                },
+                "total_incidents": {
+                    "type": "integer"
+                },
+                "unresolved_incidents": {
+                    "type": "integer"
+                },
+                "uptime_percentage": {
+                    "type": "number"
+                }
+            }
+        },
         "storage.Incident": {
             "type": "object",
             "properties": {
@@ -1052,29 +1081,6 @@ const docTemplate = `{
                 },
                 "start_time": {
                     "type": "string"
-                }
-            }
-        },
-        "storage.ServiceStats": {
-            "type": "object",
-            "properties": {
-                "avg_response_time": {
-                    "type": "integer"
-                },
-                "period": {
-                    "type": "integer"
-                },
-                "service_id": {
-                    "type": "string"
-                },
-                "total_downtime": {
-                    "type": "integer"
-                },
-                "total_incidents": {
-                    "type": "integer"
-                },
-                "uptime_percentage": {
-                    "type": "number"
                 }
             }
         },

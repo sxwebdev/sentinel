@@ -7,6 +7,8 @@ package repo_service_states
 
 import (
 	"context"
+
+	"github.com/sxwebdev/sentinel/internal/models"
 )
 
 const deleteByServiceID = `-- name: DeleteByServiceID :exec
@@ -16,4 +18,28 @@ DELETE FROM service_states WHERE service_id=?
 func (q *Queries) DeleteByServiceID(ctx context.Context, serviceID string) error {
 	_, err := q.db.ExecContext(ctx, deleteByServiceID, serviceID)
 	return err
+}
+
+const getByServiceID = `-- name: GetByServiceID :one
+SELECT id, service_id, status, last_check, next_check, last_error, consecutive_fails, consecutive_success, total_checks, response_time_ns, created_at, updated_at FROM service_states WHERE service_id=? LIMIT 1
+`
+
+func (q *Queries) GetByServiceID(ctx context.Context, serviceID string) (*models.ServiceState, error) {
+	row := q.db.QueryRowContext(ctx, getByServiceID, serviceID)
+	var i models.ServiceState
+	err := row.Scan(
+		&i.ID,
+		&i.ServiceID,
+		&i.Status,
+		&i.LastCheck,
+		&i.NextCheck,
+		&i.LastError,
+		&i.ConsecutiveFails,
+		&i.ConsecutiveSuccess,
+		&i.TotalChecks,
+		&i.ResponseTimeNs,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return &i, err
 }

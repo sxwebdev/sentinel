@@ -62,43 +62,6 @@ func (q *Queries) Delete(ctx context.Context, id string) error {
 	return err
 }
 
-const getAll = `-- name: GetAll :many
-SELECT id, service_id, start_time, end_time, error, duration_ns, resolved, created_at, updated_at FROM incidents
-`
-
-func (q *Queries) GetAll(ctx context.Context) ([]*models.Incident, error) {
-	rows, err := q.db.QueryContext(ctx, getAll)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []*models.Incident{}
-	for rows.Next() {
-		var i models.Incident
-		if err := rows.Scan(
-			&i.ID,
-			&i.ServiceID,
-			&i.StartTime,
-			&i.EndTime,
-			&i.Error,
-			&i.DurationNs,
-			&i.Resolved,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const getByID = `-- name: GetByID :one
 SELECT id, service_id, start_time, end_time, error, duration_ns, resolved, created_at, updated_at FROM incidents WHERE id=? LIMIT 1
 `

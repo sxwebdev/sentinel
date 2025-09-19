@@ -5,10 +5,7 @@
  * API for service monitoring and incident management
  * OpenAPI spec version: 1.0
  */
-import type {
-  GetServicesIdStatsParams,
-  StorageServiceStats,
-} from "../../types/model";
+import type { GetServicesIdStatsParams, ServiceStats } from "../../types/model";
 
 import { customFetcher } from ".././baseApi";
 
@@ -21,7 +18,7 @@ export const getStatistics = () => {
     id: string,
     params?: GetServicesIdStatsParams,
   ) => {
-    return customFetcher<StorageServiceStats>({
+    return customFetcher<ServiceStats>({
       url: `/services/${id}/stats`,
       method: "GET",
       params,

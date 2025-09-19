@@ -7,7 +7,7 @@
  */
 import type { WebServiceDTO } from "./webServiceDTO";
 
-export interface DbutilsFindResponseWithCountWebServiceDTO {
+export interface StorecmnFindResponseWithCountWebServiceDTO {
   count?: number;
   items?: WebServiceDTO[];
 }

@@ -6,7 +6,7 @@
  * OpenAPI spec version: 1.0
  */
 
-export interface WebAvailableUpdate {
+export interface ModelsAvailableUpdate {
   description?: string;
   is_available_manual?: boolean;
   tag_name?: string;

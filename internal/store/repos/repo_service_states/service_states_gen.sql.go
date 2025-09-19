@@ -71,6 +71,46 @@ func (q *Queries) Delete(ctx context.Context, id string) error {
 	return err
 }
 
+const getAll = `-- name: GetAll :many
+SELECT id, service_id, status, last_check, next_check, last_error, consecutive_fails, consecutive_success, total_checks, response_time_ns, created_at, updated_at FROM service_states
+`
+
+func (q *Queries) GetAll(ctx context.Context) ([]*models.ServiceState, error) {
+	rows, err := q.db.QueryContext(ctx, getAll)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*models.ServiceState{}
+	for rows.Next() {
+		var i models.ServiceState
+		if err := rows.Scan(
+			&i.ID,
+			&i.ServiceID,
+			&i.Status,
+			&i.LastCheck,
+			&i.NextCheck,
+			&i.LastError,
+			&i.ConsecutiveFails,
+			&i.ConsecutiveSuccess,
+			&i.TotalChecks,
+			&i.ResponseTimeNs,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getByID = `-- name: GetByID :one
 SELECT id, service_id, status, last_check, next_check, last_error, consecutive_fails, consecutive_success, total_checks, response_time_ns, created_at, updated_at FROM service_states WHERE id=? LIMIT 1
 `

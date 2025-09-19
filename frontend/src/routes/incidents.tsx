@@ -16,7 +16,7 @@ import {
 } from "@/shared/components/ui";
 import { cn } from "@/shared/lib/utils";
 import type {
-  DbutilsFindResponseWithCountStorageIncident,
+  StorecmnFindResponseWithCountStorageIncident,
   GetIncidentsParams,
   StorageIncident,
   WebErrorResponse,
@@ -49,7 +49,7 @@ function RouteComponent() {
 }
 
 interface IncidentsListProps {
-  incidentsData: DbutilsFindResponseWithCountStorageIncident;
+  incidentsData: StorecmnFindResponseWithCountStorageIncident;
 }
 
 export const IncidentsList = ({ incidentsData }: IncidentsListProps) => {

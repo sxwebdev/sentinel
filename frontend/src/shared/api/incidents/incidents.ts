@@ -6,10 +6,10 @@
  * OpenAPI spec version: 1.0
  */
 import type {
-  DbutilsFindResponseWithCountStorageIncident,
   GetIncidentsParams,
   GetIncidentsStatsParams,
   GetServicesIdIncidentsParams,
+  StorecmnFindResponseWithCountStorageIncident,
   WebGetIncidentsStatsItem,
   WebSuccessResponse,
 } from "../../types/model";
@@ -22,7 +22,7 @@ export const getIncidents = () => {
    * @summary Get recent incidents
    */
   const getIncidents = (params?: GetIncidentsParams) => {
-    return customFetcher<DbutilsFindResponseWithCountStorageIncident>({
+    return customFetcher<StorecmnFindResponseWithCountStorageIncident>({
       url: `/incidents`,
       method: "GET",
       params,
@@ -47,7 +47,7 @@ export const getIncidents = () => {
     id: string,
     params?: GetServicesIdIncidentsParams,
   ) => {
-    return customFetcher<DbutilsFindResponseWithCountStorageIncident>({
+    return customFetcher<StorecmnFindResponseWithCountStorageIncident>({
       url: `/services/${id}/incidents`,
       method: "GET",
       params,

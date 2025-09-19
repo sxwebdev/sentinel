@@ -1,9 +1,9 @@
 import type {
-  DbutilsFindResponseWithCountStorageIncident,
+  StorecmnFindResponseWithCountStorageIncident,
   GetServicesIdIncidentsParams,
   StorageIncident,
   WebServiceDTO,
-  StorageServiceStats,
+  ServiceStats,
 } from "@/shared/types/model";
 import { create } from "zustand";
 
@@ -11,20 +11,18 @@ interface ServiceDetailStore {
   deleteIncident: StorageIncident | null;
   serviceDetailData: WebServiceDTO | null;
   resolveIncident: boolean;
-  incidentsData: DbutilsFindResponseWithCountStorageIncident | null;
+  incidentsData: StorecmnFindResponseWithCountStorageIncident | null;
   filters: GetServicesIdIncidentsParams;
-  serviceStatsData: StorageServiceStats | null;
+  serviceStatsData: ServiceStats | null;
   setFilters: (value: Partial<ServiceDetailStore["filters"]>) => void;
   setDeleteIncident: (deleteIncident: StorageIncident | null) => void;
   setResolveIncident: (resolveIncident: boolean) => void;
   setServiceDetailData: (serviceDetailData: WebServiceDTO | null) => void;
   setIncidentsData: (
-    incidentsData: DbutilsFindResponseWithCountStorageIncident | null,
+    incidentsData: StorecmnFindResponseWithCountStorageIncident | null,
   ) => void;
-  setServiceStatsData: (serviceStatsData: StorageServiceStats | null) => void;
-  setUpdateServiceStatsData: (
-    serviceStatsData: StorageServiceStats | null,
-  ) => void;
+  setServiceStatsData: (serviceStatsData: ServiceStats | null) => void;
+  setUpdateServiceStatsData: (serviceStatsData: ServiceStats | null) => void;
 }
 
 const initialState = {

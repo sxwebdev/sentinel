@@ -1,4 +1,4 @@
-package repo_agents
+package repo_service_states
 
 import (
 	"context"
@@ -14,20 +14,20 @@ import (
 	"github.com/tkcrm/modules/pkg/utils"
 )
 
-var availableUpdateColumns = lo.Filter(AgentsColumnNames(), func(item ColumnName, _ int) bool {
+var availableUpdateColumns = lo.Filter(ServiceStatesColumnNames(), func(item ColumnName, _ int) bool {
 	return !slices.Contains([]ColumnName{
-		ColumnNameAgentsId,
-		ColumnNameAgentsCreatedAt,
-		ColumnNameAgentsUpdatedAt,
+		ColumnNameServiceStatesId,
+		ColumnNameServiceStatesCreatedAt,
+		ColumnNameServiceStatesUpdatedAt,
 	}, item)
 })
 
 type UpdateRequest struct {
-	models.Agent
+	models.ServiceState
 	FieldMask dbutils.FieldMask[ColumnName]
 }
 
-func (s *CustomQueries) Update(ctx context.Context, id string, params UpdateRequest) (*models.Agent, error) {
+func (s *CustomQueries) Update(ctx context.Context, id string, params UpdateRequest) (*models.ServiceState, error) {
 	if id == "" {
 		return nil, storecmn.ErrEmptyID
 	}
@@ -39,17 +39,17 @@ func (s *CustomQueries) Update(ctx context.Context, id string, params UpdateRequ
 	}
 
 	ub := sqlbuilder.NewUpdateBuilder()
-	ub.Update(TableNameAgents.String()).
+	ub.Update(TableNameServiceStates.String()).
 		Where(ub.Equal("id", id)).
-		Set(ub.Assign(ColumnNameAgentsUpdatedAt.String(), time.Now()))
+		Set(ub.Assign(ColumnNameServiceStatesUpdatedAt.String(), time.Now()))
 
-	values, err := utils.StructToMap(params.Agent, "json")
+	values, err := utils.StructToMap(params.ServiceState, "json")
 	if err != nil {
 		return nil, err
 	}
 
 	for _, path := range params.FieldMask {
-		idx := slices.IndexFunc(AgentsColumnNames(), func(i ColumnName) bool {
+		idx := slices.IndexFunc(ServiceStatesColumnNames(), func(i ColumnName) bool {
 			return path == i
 		})
 

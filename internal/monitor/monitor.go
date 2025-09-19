@@ -7,30 +7,44 @@ import (
 	"time"
 
 	"github.com/sxwebdev/sentinel/internal/config"
+	"github.com/sxwebdev/sentinel/internal/models"
 	"github.com/sxwebdev/sentinel/internal/notifier"
 	"github.com/sxwebdev/sentinel/internal/receiver"
+	"github.com/sxwebdev/sentinel/internal/services/baseservices"
+	"github.com/sxwebdev/sentinel/internal/services/servicestate"
 	"github.com/sxwebdev/sentinel/internal/storage"
 	"github.com/sxwebdev/sentinel/internal/store"
+	"github.com/sxwebdev/sentinel/internal/store/repos/repo_service_states"
 	"github.com/sxwebdev/sentinel/internal/utils"
+	"github.com/tkcrm/modules/pkg/db/dbutils"
 )
 
 // MonitorService handles service monitoring
 type MonitorService struct {
-	store    *store.Store
-	storage  *storage.Storage
-	config   *config.ConfigHub
-	notifier *notifier.Notifier
-	receiver *receiver.Receiver
+	store        *store.Store
+	storage      *storage.Storage
+	config       *config.ConfigHub
+	notifier     *notifier.Notifier
+	receiver     *receiver.Receiver
+	baseservices *baseservices.BaseServices
 }
 
 // NewMonitorService creates a new monitor service
-func NewMonitorService(store *store.Store, storage *storage.Storage, config *config.ConfigHub, notifier *notifier.Notifier, receiver *receiver.Receiver) *MonitorService {
+func NewMonitorService(
+	store *store.Store,
+	storage *storage.Storage,
+	config *config.ConfigHub,
+	notifier *notifier.Notifier,
+	receiver *receiver.Receiver,
+	baseservices *baseservices.BaseServices,
+) *MonitorService {
 	return &MonitorService{
-		store:    store,
-		storage:  storage,
-		config:   config,
-		notifier: notifier,
-		receiver: receiver,
+		store:        store,
+		storage:      storage,
+		config:       config,
+		notifier:     notifier,
+		receiver:     receiver,
+		baseservices: baseservices,
 	}
 }
 
@@ -113,31 +127,38 @@ func NewMonitorService(store *store.Store, storage *storage.Storage, config *con
 
 // RecordSuccess records a successful check for a service
 func (m *MonitorService) RecordSuccess(ctx context.Context, serviceID string, responseTime time.Duration) error {
-	// Get current service from database
-	service, err := m.storage.GetServiceByID(ctx, serviceID)
-	if err != nil {
-		return fmt.Errorf("service %s not found in database: %w", serviceID, err)
-	}
-
 	// Get current service state
-	serviceState, err := m.storage.GetServiceState(ctx, serviceID)
+	serviceState, err := m.baseservices.ServiceStates().GetByServiceID(ctx, serviceID)
 	if err != nil {
 		return fmt.Errorf("failed to get service state: %w", err)
 	}
 
 	// Update state
 	now := time.Now()
-	serviceState.Status = storage.StatusUp
-	serviceState.LastCheck = &now
-	serviceState.ResponseTimeNS = utils.Pointer(responseTime.Nanoseconds())
-	serviceState.ConsecutiveFails = 0
-	serviceState.ConsecutiveSuccess++
-	serviceState.TotalChecks++
-	serviceState.LastError = nil
+	updateParams := servicestate.UpdateParams{
+		ServiceState: models.ServiceState{
+			Status:             models.StatusUp,
+			LastCheck:          &now,
+			ResponseTimeNs:     utils.Pointer(responseTime.Nanoseconds()),
+			ConsecutiveFails:   0,
+			ConsecutiveSuccess: serviceState.ConsecutiveSuccess + 1,
+			TotalChecks:        serviceState.TotalChecks + 1,
+			LastError:          nil,
+		},
+		FieldMask: dbutils.FieldMask[repo_service_states.ColumnName]{
+			repo_service_states.ColumnNameServiceStatesStatus,
+			repo_service_states.ColumnNameServiceStatesLastCheck,
+			repo_service_states.ColumnNameServiceStatesResponseTimeNs,
+			repo_service_states.ColumnNameServiceStatesConsecutiveFails,
+			repo_service_states.ColumnNameServiceStatesConsecutiveSuccess,
+			repo_service_states.ColumnNameServiceStatesTotalChecks,
+			repo_service_states.ColumnNameServiceStatesLastError,
+		},
+	}
 
 	// Save to database
-	if err := m.storage.UpdateServiceState(ctx, serviceState); err != nil {
-		return fmt.Errorf("failed to update service state for %s: %w", service.Name, err)
+	if _, err := m.baseservices.ServiceStates().Update(ctx, serviceState.ID, updateParams); err != nil {
+		return fmt.Errorf("failed to update service state: %w", err)
 	}
 
 	// Resolve any active incidents
@@ -151,31 +172,44 @@ func (m *MonitorService) RecordSuccess(ctx context.Context, serviceID string, re
 // RecordFailure records a failed check for a service
 func (m *MonitorService) RecordFailure(ctx context.Context, serviceID string, checkErr error, responseTime time.Duration) error {
 	// Get current service from database
-	service, err := m.storage.GetServiceByID(ctx, serviceID)
+	service, err := m.store.Services().GetViewByID(ctx, serviceID)
 	if err != nil {
 		return fmt.Errorf("service %s not found in database: %w", serviceID, err)
 	}
 
 	// Get current service state
-	serviceState, err := m.storage.GetServiceState(ctx, serviceID)
+	serviceState, err := m.baseservices.ServiceStates().GetByServiceID(ctx, serviceID)
 	if err != nil {
 		return fmt.Errorf("failed to get service state: %w", err)
 	}
 
 	// Update state
 	now := time.Now()
-	wasUp := serviceState.Status == storage.StatusUp || serviceState.Status == storage.StatusUnknown
+	wasUp := serviceState.Status == models.StatusUp || serviceState.Status == models.StatusUnknown
 
-	serviceState.Status = storage.StatusDown
-	serviceState.LastCheck = &now
-	serviceState.ResponseTimeNS = &[]int64{responseTime.Nanoseconds()}[0]
-	serviceState.ConsecutiveFails++
-	serviceState.ConsecutiveSuccess = 0
-	serviceState.TotalChecks++
-	serviceState.LastError = utils.Pointer(checkErr.Error())
+	updateParams := servicestate.UpdateParams{
+		ServiceState: models.ServiceState{
+			Status:             models.StatusDown,
+			LastCheck:          &now,
+			ResponseTimeNs:     utils.Pointer(responseTime.Nanoseconds()),
+			ConsecutiveFails:   serviceState.ConsecutiveFails + 1,
+			ConsecutiveSuccess: 0,
+			TotalChecks:        serviceState.TotalChecks + 1,
+			LastError:          utils.Pointer(checkErr.Error()),
+		},
+		FieldMask: dbutils.FieldMask[repo_service_states.ColumnName]{
+			repo_service_states.ColumnNameServiceStatesStatus,
+			repo_service_states.ColumnNameServiceStatesLastCheck,
+			repo_service_states.ColumnNameServiceStatesResponseTimeNs,
+			repo_service_states.ColumnNameServiceStatesConsecutiveFails,
+			repo_service_states.ColumnNameServiceStatesConsecutiveSuccess,
+			repo_service_states.ColumnNameServiceStatesTotalChecks,
+			repo_service_states.ColumnNameServiceStatesLastError,
+		},
+	}
 
 	// Save to database
-	if err := m.storage.UpdateServiceState(ctx, serviceState); err != nil {
+	if _, err := m.baseservices.ServiceStates().Update(ctx, serviceState.ID, updateParams); err != nil {
 		return fmt.Errorf("failed to update service state for %s: %w", service.Name, err)
 	}
 
@@ -190,7 +224,7 @@ func (m *MonitorService) RecordFailure(ctx context.Context, serviceID string, ch
 }
 
 // createIncident creates a new incident when a service goes down
-func (m *MonitorService) createIncident(ctx context.Context, svc *storage.Service, err error) error {
+func (m *MonitorService) createIncident(ctx context.Context, svc *models.ServiceFullView, err error) error {
 	incident := &storage.Incident{
 		ID:        utils.GenerateULID(),
 		ServiceID: svc.ID,
@@ -219,7 +253,7 @@ func (m *MonitorService) createIncident(ctx context.Context, svc *storage.Servic
 // resolveActiveIncidents resolves the active incident when a service recovers
 func (m *MonitorService) resolveActiveIncidents(ctx context.Context, serviceID string) error {
 	// Get service
-	svc, err := m.storage.GetServiceByID(ctx, serviceID)
+	svc, err := m.store.Services().GetViewByID(ctx, serviceID)
 	if err != nil {
 		return fmt.Errorf("failed to get service: %w", err)
 	}
@@ -254,16 +288,6 @@ func (m *MonitorService) DeleteIncident(ctx context.Context, serviceID, incident
 	return nil
 }
 
-// GetServiceStats gets statistics for a service
-func (m *MonitorService) GetServiceStats(ctx context.Context, serviceID string, since time.Time) (*storage.ServiceStats, error) {
-	params := storage.FindIncidentsParams{
-		ServiceID: serviceID,
-		StartTime: utils.Pointer(since),
-	}
-
-	return m.storage.GetServiceStats(ctx, params)
-}
-
 // TriggerCheck triggers a manual check for a service
 func (m *MonitorService) TriggerCheck(ctx context.Context, id string) error {
 	// Get service to check if it exists
@@ -293,21 +317,9 @@ func (m *MonitorService) ForceResolveIncidents(ctx context.Context, serviceID st
 // CheckService performs a health check on a service
 func (m *MonitorService) CheckService(ctx context.Context, service *storage.Service) error {
 	// Get current service state
-	serviceState, err := m.storage.GetServiceState(ctx, service.ID)
+	serviceState, err := m.baseservices.ServiceStates().GetByServiceID(ctx, service.ID)
 	if err != nil {
 		return fmt.Errorf("failed to get service state: %w", err)
-	}
-
-	// Initialize state if not exists
-	if serviceState == nil {
-		serviceState = &storage.ServiceStateRecord{
-			ID:                 utils.GenerateULID(),
-			ServiceID:          service.ID,
-			Status:             storage.StatusUnknown,
-			ConsecutiveFails:   0,
-			ConsecutiveSuccess: 0,
-			TotalChecks:        0,
-		}
 	}
 
 	// Perform the check (simplified - just record success/failure)
@@ -316,15 +328,33 @@ func (m *MonitorService) CheckService(ctx context.Context, service *storage.Serv
 	now := time.Now()
 
 	// For now, just record success (this should be replaced with actual check logic)
-	wasDown := serviceState.Status == storage.StatusDown
+	wasDown := serviceState.Status == models.StatusDown
 
-	serviceState.Status = storage.StatusUp
-	serviceState.LastCheck = &now
-	serviceState.ResponseTimeNS = &[]int64{responseTime.Nanoseconds()}[0]
-	serviceState.ConsecutiveFails = 0
-	serviceState.ConsecutiveSuccess++
-	serviceState.TotalChecks++
-	serviceState.LastError = nil
+	updateParams := servicestate.UpdateParams{
+		ServiceState: models.ServiceState{
+			Status:             models.StatusUp,
+			LastCheck:          &now,
+			ResponseTimeNs:     utils.Pointer(responseTime.Nanoseconds()),
+			ConsecutiveFails:   0,
+			ConsecutiveSuccess: serviceState.ConsecutiveSuccess + 1,
+			TotalChecks:        serviceState.TotalChecks + 1,
+			LastError:          nil,
+		},
+		FieldMask: dbutils.FieldMask[repo_service_states.ColumnName]{
+			repo_service_states.ColumnNameServiceStatesStatus,
+			repo_service_states.ColumnNameServiceStatesLastCheck,
+			repo_service_states.ColumnNameServiceStatesResponseTimeNs,
+			repo_service_states.ColumnNameServiceStatesConsecutiveFails,
+			repo_service_states.ColumnNameServiceStatesConsecutiveSuccess,
+			repo_service_states.ColumnNameServiceStatesTotalChecks,
+			repo_service_states.ColumnNameServiceStatesLastError,
+		},
+	}
+
+	// Save to database
+	if _, err := m.baseservices.ServiceStates().Update(ctx, serviceState.ID, updateParams); err != nil {
+		return fmt.Errorf("failed to update service state: %w", err)
+	}
 
 	// Resolve incident if service was down before
 	if wasDown {
@@ -334,7 +364,7 @@ func (m *MonitorService) CheckService(ctx context.Context, service *storage.Serv
 	}
 
 	// Update service state
-	if err := m.storage.UpdateServiceState(ctx, serviceState); err != nil {
+	if _, err := m.baseservices.ServiceStates().Update(ctx, serviceState.ID, updateParams); err != nil {
 		return fmt.Errorf("failed to update service state: %w", err)
 	}
 

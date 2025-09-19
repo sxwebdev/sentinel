@@ -17,13 +17,13 @@ import { ExpandableText } from "@/shared/components/expandableText";
 import { formatDuration } from "@/shared/utils";
 import PaginationTable from "@/shared/components/paginationTable";
 import type {
-  DbutilsFindResponseWithCountStorageIncident,
+  StorecmnFindResponseWithCountStorageIncident,
   GetServicesIdIncidentsParams,
   StorageIncident,
 } from "@/shared/types/model";
 
 interface IncidentsListProps {
-  incidentsData: DbutilsFindResponseWithCountStorageIncident;
+  incidentsData: StorecmnFindResponseWithCountStorageIncident;
   incidentsCount: number | null;
   filters: GetServicesIdIncidentsParams;
   setFilters: (filters: Partial<GetServicesIdIncidentsParams>) => void;

@@ -6,8 +6,8 @@
  * OpenAPI spec version: 1.0
  */
 import type { MonitorsConfig } from "./monitorsConfig";
-import type { StorageServiceProtocolType } from "./storageServiceProtocolType";
-import type { StorageServiceStatus } from "./storageServiceStatus";
+import type { ModelsServiceProtocolType } from "./modelsServiceProtocolType";
+import type { ModelsServiceStatus } from "./modelsServiceStatus";
 
 export interface WebServiceDTO {
   active_incidents?: number;
@@ -21,10 +21,10 @@ export interface WebServiceDTO {
   last_error?: string;
   name?: string;
   next_check?: string;
-  protocol?: StorageServiceProtocolType;
+  protocol?: ModelsServiceProtocolType;
   response_time?: number;
   retries?: number;
-  status?: StorageServiceStatus;
+  status?: ModelsServiceStatus;
   tags?: string[];
   timeout?: number;
   total_checks?: number;

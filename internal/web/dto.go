@@ -18,7 +18,7 @@ type DashboardStats struct {
 	Protocols        map[models.ServiceProtocolType]int `json:"protocols"`
 	ActiveIncidents  int                                `json:"active_incidents" example:"2"`
 	AvgResponseTime  int64                              `json:"avg_response_time" example:"150"`
-	TotalChecks      int                                `json:"total_checks" example:"1000"`
+	TotalChecks      int64                              `json:"total_checks" example:"1000"`
 	UptimePercentage float64                            `json:"uptime_percentage" example:"95.5"`
 	LastCheckTime    *time.Time                         `json:"last_check_time"`
 	ChecksPerMinute  int                                `json:"checks_per_minute" example:"60"`

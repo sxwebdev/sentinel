@@ -13,8 +13,8 @@ import (
 )
 
 const create = `-- name: Create :one
-INSERT INTO agents (id, name, description, host, port, token_ct, token_nonce, token_hint, status, is_enabled, tags, config)
-	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+INSERT INTO agents (id, name, description, host, port, token_ct, token_nonce, token_hint, tags, config)
+	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	RETURNING id, name, description, host, port, token_ct, token_nonce, token_hint, fingerprint, status, is_enabled, json(tags), json(config), json(system_info), last_seen_at, created_at, updated_at
 `
 
@@ -27,8 +27,6 @@ type CreateParams struct {
 	TokenCt     []byte             `db:"token_ct" json:"token_ct"`
 	TokenNonce  []byte             `db:"token_nonce" json:"token_nonce"`
 	TokenHint   string             `db:"token_hint" json:"token_hint"`
-	Status      string             `db:"status" json:"status"`
-	IsEnabled   bool               `db:"is_enabled" json:"is_enabled"`
 	Tags        storecmn.JSONField `db:"tags" json:"tags"`
 	Config      storecmn.JSONField `db:"config" json:"config"`
 }
@@ -43,8 +41,6 @@ func (q *Queries) Create(ctx context.Context, arg CreateParams) (*models.Agent, 
 		arg.TokenCt,
 		arg.TokenNonce,
 		arg.TokenHint,
-		arg.Status,
-		arg.IsEnabled,
 		arg.Tags,
 		arg.Config,
 	)
@@ -78,51 +74,6 @@ DELETE FROM agents WHERE id=?
 func (q *Queries) Delete(ctx context.Context, id string) error {
 	_, err := q.db.ExecContext(ctx, delete, id)
 	return err
-}
-
-const getAll = `-- name: GetAll :many
-SELECT id, name, description, host, port, token_ct, token_nonce, token_hint, fingerprint, status, is_enabled, json(tags), json(config), json(system_info), last_seen_at, created_at, updated_at FROM agents
-`
-
-func (q *Queries) GetAll(ctx context.Context) ([]*models.Agent, error) {
-	rows, err := q.db.QueryContext(ctx, getAll)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []*models.Agent{}
-	for rows.Next() {
-		var i models.Agent
-		if err := rows.Scan(
-			&i.ID,
-			&i.Name,
-			&i.Description,
-			&i.Host,
-			&i.Port,
-			&i.TokenCt,
-			&i.TokenNonce,
-			&i.TokenHint,
-			&i.Fingerprint,
-			&i.Status,
-			&i.IsEnabled,
-			&i.Tags,
-			&i.Config,
-			&i.SystemInfo,
-			&i.LastSeenAt,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
 }
 
 const getByID = `-- name: GetByID :one

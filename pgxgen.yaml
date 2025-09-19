@@ -17,6 +17,27 @@ sqlc:
       auto_remove_generated_files: true
       exclude_table_name_from_methods: true
       tables:
+        # agents
+        agents:
+          output_dir: sql/queries/agents
+          primary_column: id
+          methods:
+            create:
+              skip_columns:
+                - fingerprint
+                - is_enabled
+                - status
+                - system_info
+                - last_seen_at
+                - created_at
+                - updated_at
+              returning: "*"
+              column_values:
+                created_at: now()
+            delete:
+            get:
+              name: GetByID
+
         # Services
         services:
           output_dir: sql/queries/services
@@ -48,6 +69,8 @@ sqlc:
             delete:
             get:
               name: GetByID
+            find:
+              name: GetAll
 
         # incidents
         incidents:
@@ -64,30 +87,6 @@ sqlc:
             delete:
             get:
               name: GetByID
-            find:
-              name: GetAll
-
-        # agents
-        agents:
-          output_dir: sql/queries/agents
-          primary_column: id
-          methods:
-            create:
-              skip_columns:
-                - fingerprint
-                - is_active
-                - system_info
-                - last_seen_at
-                - created_at
-                - updated_at
-              returning: "*"
-              column_values:
-                created_at: now()
-            delete:
-            get:
-              name: GetByID
-            find:
-              name: GetAll
 
     constants:
       tables:

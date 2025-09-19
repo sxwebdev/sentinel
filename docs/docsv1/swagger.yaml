@@ -128,6 +128,25 @@ definitions:
     required:
     - endpoint
     type: object
+  service.Stats:
+    properties:
+      avg_response_time:
+        type: integer
+      period:
+        type: integer
+      resolved_incidents:
+        type: integer
+      service_id:
+        type: string
+      total_downtime:
+        type: integer
+      total_incidents:
+        type: integer
+      unresolved_incidents:
+        type: integer
+      uptime_percentage:
+        type: number
+    type: object
   storage.Incident:
     properties:
       duration:
@@ -144,21 +163,6 @@ definitions:
         type: string
       start_time:
         type: string
-    type: object
-  storage.ServiceStats:
-    properties:
-      avg_response_time:
-        type: integer
-      period:
-        type: integer
-      service_id:
-        type: string
-      total_downtime:
-        type: integer
-      total_incidents:
-        type: integer
-      uptime_percentage:
-        type: number
     type: object
   storecmn.FindResponseWithCount-storage_Incident:
     properties:
@@ -874,7 +878,7 @@ paths:
         "200":
           description: Service statistics
           schema:
-            $ref: '#/definitions/storage.ServiceStats'
+            $ref: '#/definitions/service.Stats'
         "400":
           description: Bad request
           schema:

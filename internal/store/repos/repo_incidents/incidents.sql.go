@@ -7,6 +7,7 @@ package repo_incidents
 
 import (
 	"context"
+	"time"
 )
 
 const deleteByServiceID = `-- name: DeleteByServiceID :exec
@@ -16,4 +17,36 @@ DELETE FROM incidents WHERE service_id=?
 func (q *Queries) DeleteByServiceID(ctx context.Context, serviceID string) error {
 	_, err := q.db.ExecContext(ctx, deleteByServiceID, serviceID)
 	return err
+}
+
+const statsByServiceID = `-- name: StatsByServiceID :one
+SELECT
+ 	COUNT(*) AS total_incidents,
+ 	SUM(duration_ns) AS total_downtime,
+  AVG(duration_ns) AS avg_downtime,
+  SUM(CASE WHEN resolved THEN 1 ELSE 0 END) AS resolved_incidents,
+  SUM(CASE WHEN NOT resolved THEN 1 ELSE 0 END) AS unresolved_incidents
+FROM incidents
+WHERE service_id=? AND start_time >= ?
+`
+
+type StatsByServiceIDRow struct {
+	TotalIncidents      int64    `db:"total_incidents" json:"total_incidents"`
+	TotalDowntime       *float64 `db:"total_downtime" json:"total_downtime"`
+	AvgDowntime         *float64 `db:"avg_downtime" json:"avg_downtime"`
+	ResolvedIncidents   *float64 `db:"resolved_incidents" json:"resolved_incidents"`
+	UnresolvedIncidents *float64 `db:"unresolved_incidents" json:"unresolved_incidents"`
+}
+
+func (q *Queries) StatsByServiceID(ctx context.Context, serviceID string, startTime time.Time) (*StatsByServiceIDRow, error) {
+	row := q.db.QueryRowContext(ctx, statsByServiceID, serviceID, startTime)
+	var i StatsByServiceIDRow
+	err := row.Scan(
+		&i.TotalIncidents,
+		&i.TotalDowntime,
+		&i.AvgDowntime,
+		&i.ResolvedIncidents,
+		&i.UnresolvedIncidents,
+	)
+	return &i, err
 }

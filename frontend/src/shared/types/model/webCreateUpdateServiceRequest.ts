@@ -6,14 +6,14 @@
  * OpenAPI spec version: 1.0
  */
 import type { MonitorsConfig } from "./monitorsConfig";
-import type { StorageServiceProtocolType } from "./storageServiceProtocolType";
+import type { ModelsServiceProtocolType } from "./modelsServiceProtocolType";
 
 export interface WebCreateUpdateServiceRequest {
   config?: MonitorsConfig;
   interval?: number;
   is_enabled?: boolean;
   name?: string;
-  protocol?: StorageServiceProtocolType;
+  protocol?: ModelsServiceProtocolType;
   retries?: number;
   tags?: string[];
   timeout?: number;

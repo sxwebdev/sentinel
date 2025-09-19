@@ -6,6 +6,7 @@ package repo_incidents
 
 import (
 	"context"
+	"time"
 
 	"github.com/sxwebdev/sentinel/internal/models"
 )
@@ -14,8 +15,8 @@ type Querier interface {
 	Create(ctx context.Context, arg CreateParams) (*models.Incident, error)
 	Delete(ctx context.Context, id string) error
 	DeleteByServiceID(ctx context.Context, serviceID string) error
-	GetAll(ctx context.Context) ([]*models.Incident, error)
 	GetByID(ctx context.Context, id string) (*models.Incident, error)
+	StatsByServiceID(ctx context.Context, serviceID string, startTime time.Time) (*StatsByServiceIDRow, error)
 }
 
 var _ Querier = (*Queries)(nil)

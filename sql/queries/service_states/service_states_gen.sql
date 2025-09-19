@@ -6,6 +6,9 @@ INSERT INTO service_states (id, service_id, status, last_check, next_check, last
 -- name: Delete :exec
 DELETE FROM service_states WHERE id=?;
 
+-- name: GetAll :many
+SELECT * FROM service_states;
+
 -- name: GetByID :one
 SELECT * FROM service_states WHERE id=? LIMIT 1;
 

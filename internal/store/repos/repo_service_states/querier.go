@@ -14,7 +14,9 @@ type Querier interface {
 	Create(ctx context.Context, arg CreateParams) (*models.ServiceState, error)
 	Delete(ctx context.Context, id string) error
 	DeleteByServiceID(ctx context.Context, serviceID string) error
+	GetAll(ctx context.Context) ([]*models.ServiceState, error)
 	GetByID(ctx context.Context, id string) (*models.ServiceState, error)
+	GetByServiceID(ctx context.Context, serviceID string) (*models.ServiceState, error)
 }
 
 var _ Querier = (*Queries)(nil)

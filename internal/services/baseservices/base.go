@@ -5,13 +5,15 @@ import (
 	"github.com/sxwebdev/sentinel/internal/services/agents"
 	"github.com/sxwebdev/sentinel/internal/services/incidents"
 	"github.com/sxwebdev/sentinel/internal/services/service"
+	"github.com/sxwebdev/sentinel/internal/services/servicestate"
 	"github.com/sxwebdev/sentinel/internal/store"
 )
 
 type BaseServices struct {
-	agentsService    *agents.Service
-	servicesService  *service.Service
-	incidentsService *incidents.Service
+	agentsService       *agents.Service
+	servicesService     *service.Service
+	serviceStateService *servicestate.Service
+	incidentsService    *incidents.Service
 }
 
 func New(
@@ -20,12 +22,14 @@ func New(
 ) *BaseServices {
 	agentsService := agents.New(st)
 	servicesService := service.New(st, receiver)
+	serviceStateService := servicestate.New(st)
 	incidentsService := incidents.New(st)
 
 	return &BaseServices{
-		agentsService:    agentsService,
-		servicesService:  servicesService,
-		incidentsService: incidentsService,
+		agentsService:       agentsService,
+		servicesService:     servicesService,
+		serviceStateService: serviceStateService,
+		incidentsService:    incidentsService,
 	}
 }
 
@@ -37,6 +41,11 @@ func (b *BaseServices) Agents() *agents.Service {
 // Services returns services service
 func (b *BaseServices) Services() *service.Service {
 	return b.servicesService
+}
+
+// ServiceStates returns service states service
+func (b *BaseServices) ServiceStates() *servicestate.Service {
+	return b.serviceStateService
 }
 
 // Incidents returns incidents service

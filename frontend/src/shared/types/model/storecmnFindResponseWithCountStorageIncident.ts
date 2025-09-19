@@ -7,7 +7,7 @@
  */
 import type { StorageIncident } from "./storageIncident";
 
-export interface DbutilsFindResponseWithCountStorageIncident {
+export interface StorecmnFindResponseWithCountStorageIncident {
   count?: number;
   items?: StorageIncident[];
 }

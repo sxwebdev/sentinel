@@ -68,13 +68,13 @@ func (s *Server) getDashboardStats(ctx context.Context) (*DashboardStats, error)
 	}
 
 	// Get all service states
-	serviceStates, err := s.storage.GetAllServiceStates(ctx)
+	serviceStates, err := s.baseServices.ServiceStates().GetAll(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	// Create a map for quick lookup of service states by service ID
-	stateMap := make(map[string]*storage.ServiceStateRecord)
+	stateMap := make(map[string]*models.ServiceState)
 	for _, state := range serviceStates {
 		stateMap[state.ServiceID] = state
 	}
@@ -95,7 +95,7 @@ func (s *Server) getDashboardStats(ctx context.Context) (*DashboardStats, error)
 	}
 
 	// Calculate statistics
-	totalChecks := 0
+	var totalChecks int64
 	upServices := 0
 	var lastCheckTime *time.Time
 	var totalResponseTimeMs int64
@@ -112,18 +112,18 @@ func (s *Server) getDashboardStats(ctx context.Context) (*DashboardStats, error)
 		// Count by status
 		if serviceState != nil {
 			switch serviceState.Status {
-			case storage.StatusUp:
+			case models.StatusUp:
 				stats.ServicesUp++
 				upServices++
-			case storage.StatusDown:
+			case models.StatusDown:
 				stats.ServicesDown++
-			case storage.StatusUnknown:
+			case models.StatusUnknown:
 				stats.ServicesUnknown++
 			}
 
 			// Add response time to total (only from services that have response time data)
-			if serviceState.ResponseTimeNS != nil && *serviceState.ResponseTimeNS > 0 {
-				totalResponseTimeMs += *serviceState.ResponseTimeNS / 1000000 // Convert to milliseconds
+			if serviceState.ResponseTimeNs != nil && *serviceState.ResponseTimeNs > 0 {
+				totalResponseTimeMs += *serviceState.ResponseTimeNs / 1000000 // Convert to milliseconds
 				responseTimeCount++
 			}
 			totalChecks += serviceState.TotalChecks

@@ -476,11 +476,11 @@ func (s *Server) handleAPIServiceIncidents(c *fiber.Ctx) error {
 //	@Tags			statistics
 //	@Accept			json
 //	@Produce		json
-//	@Param			id		path		string					true	"Service ID"
-//	@Param			days	query		int						false	"Number of days (default 30)"
-//	@Success		200		{object}	storage.ServiceStats	"Service statistics"
-//	@Failure		400		{object}	ErrorResponse			"Bad request"
-//	@Failure		500		{object}	ErrorResponse			"Internal server error"
+//	@Param			id		path		string			true	"Service ID"
+//	@Param			days	query		int				false	"Number of days (default 30)"
+//	@Success		200		{object}	service.Stats	"Service statistics"
+//	@Failure		400		{object}	ErrorResponse	"Bad request"
+//	@Failure		500		{object}	ErrorResponse	"Internal server error"
 //	@Router			/services/{id}/stats [get]
 func (s *Server) handleAPIServiceStats(c *fiber.Ctx) error {
 	serviceID := c.Params("id")
@@ -505,7 +505,7 @@ func (s *Server) handleAPIServiceStats(c *fiber.Ctx) error {
 	}
 
 	since := time.Now().AddDate(0, 0, -days)
-	stats, err := s.monitorService.GetServiceStats(c.Context(), serviceID, since)
+	stats, err := s.baseServices.Services().Stats(c.Context(), serviceID, since)
 	if err != nil {
 		return newErrorResponse(c, fiber.StatusInternalServerError, err)
 	}
