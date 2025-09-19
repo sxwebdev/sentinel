@@ -2,9 +2,12 @@ package incidents
 
 import (
 	"context"
+	"fmt"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/sxwebdev/sentinel/internal/models"
+	"github.com/sxwebdev/sentinel/internal/store/repos/repo_incidents"
 	"github.com/sxwebdev/sentinel/internal/store/storecmn"
 	"github.com/sxwebdev/sentinel/internal/utils"
 )
@@ -61,4 +64,29 @@ func (s *Service) Create(ctx context.Context, params CreateParams) (*models.Inci
 	}
 
 	return s.store.Incidents().Create(ctx, utils.GenerateULID(), params.ServiceID, params.Error)
+}
+
+type FindParams = repo_incidents.FindParams
+
+// Find retrieves a list of incidents based on the provided filtering parameters.
+func (s *Service) Find(ctx context.Context, params FindParams) (*storecmn.FindResponseWithCount[*models.Incident], error) {
+	return s.store.Incidents().Find(ctx, params)
+}
+
+// Stats retrieves aggregated statistics about incidents.
+func (s *Service) Stats(ctx context.Context) (*repo_incidents.StatsRow, error) {
+	return s.store.Incidents().Stats(ctx)
+}
+
+// StatsByServiceID retrieves statistics about incidents for a specific service within a given time frame.
+func (s *Service) StatsByServiceID(ctx context.Context, serviceID string, startTime time.Time) (*repo_incidents.StatsByServiceIDRow, error) {
+	if serviceID == "" {
+		return nil, storecmn.ErrEmptyID
+	}
+
+	if startTime.IsZero() {
+		return nil, fmt.Errorf("start time is required")
+	}
+
+	return s.store.Incidents().StatsByServiceID(ctx, serviceID, startTime)
 }

@@ -17,6 +17,7 @@ type Querier interface {
 	GetAll(ctx context.Context) ([]*models.ServiceState, error)
 	GetByID(ctx context.Context, id string) (*models.ServiceState, error)
 	GetByServiceID(ctx context.Context, serviceID string) (*models.ServiceState, error)
+	Stats(ctx context.Context) (*StatsRow, error)
 }
 
 var _ Querier = (*Queries)(nil)

@@ -75,13 +75,45 @@ func (q *Queries) ResolveByID(ctx context.Context, id string) error {
 	return err
 }
 
-const statsByServiceID = `-- name: StatsByServiceID :one
+const stats = `-- name: Stats :one
 SELECT
  	COUNT(*) AS total_incidents,
  	SUM(duration) AS total_downtime,
   AVG(duration) AS avg_downtime,
   SUM(CASE WHEN resolved THEN 1 ELSE 0 END) AS resolved_incidents,
   SUM(CASE WHEN NOT resolved THEN 1 ELSE 0 END) AS unresolved_incidents
+FROM incidents
+`
+
+type StatsRow struct {
+	TotalIncidents      int64    `db:"total_incidents" json:"total_incidents"`
+	TotalDowntime       *float64 `db:"total_downtime" json:"total_downtime"`
+	AvgDowntime         *float64 `db:"avg_downtime" json:"avg_downtime"`
+	ResolvedIncidents   *float64 `db:"resolved_incidents" json:"resolved_incidents"`
+	UnresolvedIncidents *float64 `db:"unresolved_incidents" json:"unresolved_incidents"`
+}
+
+func (q *Queries) Stats(ctx context.Context) (*StatsRow, error) {
+	row := q.db.QueryRowContext(ctx, stats)
+	var i StatsRow
+	err := row.Scan(
+		&i.TotalIncidents,
+		&i.TotalDowntime,
+		&i.AvgDowntime,
+		&i.ResolvedIncidents,
+		&i.UnresolvedIncidents,
+	)
+	return &i, err
+}
+
+const statsByServiceID = `-- name: StatsByServiceID :one
+SELECT
+ 	COUNT(*) AS total_incidents,
+ 	SUM(duration) AS total_downtime,
+  AVG(duration) AS avg_downtime,
+  SUM(CASE WHEN resolved THEN 1 ELSE 0 END) AS resolved_incidents,
+  SUM(CASE WHEN NOT resolved THEN 1 ELSE 0 END) AS unresolved_incidents,
+  ROUND(100.0 - (COALESCE(SUM(duration), 0) * 100.0 / (30 * 24 * 60 * 60 * 1000)), 3) AS uptime_percentage_30d
 FROM incidents
 WHERE service_id=? AND start_time >= ?
 `
@@ -92,6 +124,7 @@ type StatsByServiceIDRow struct {
 	AvgDowntime         *float64 `db:"avg_downtime" json:"avg_downtime"`
 	ResolvedIncidents   *float64 `db:"resolved_incidents" json:"resolved_incidents"`
 	UnresolvedIncidents *float64 `db:"unresolved_incidents" json:"unresolved_incidents"`
+	UptimePercentage30d float64  `db:"uptime_percentage_30d" json:"uptime_percentage_30d"`
 }
 
 func (q *Queries) StatsByServiceID(ctx context.Context, serviceID string, startTime time.Time) (*StatsByServiceIDRow, error) {
@@ -103,6 +136,7 @@ func (q *Queries) StatsByServiceID(ctx context.Context, serviceID string, startT
 		&i.AvgDowntime,
 		&i.ResolvedIncidents,
 		&i.UnresolvedIncidents,
+		&i.UptimePercentage30d,
 	)
 	return &i, err
 }

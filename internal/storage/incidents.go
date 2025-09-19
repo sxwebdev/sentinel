@@ -8,8 +8,6 @@ import (
 	"time"
 
 	"github.com/huandu/go-sqlbuilder"
-	"github.com/sxwebdev/sentinel/internal/store/storecmn"
-	"github.com/sxwebdev/sentinel/internal/utils"
 )
 
 // IncidentRow represents a database row for incidents
@@ -71,201 +69,201 @@ func (o *Storage) GetIncidentByID(ctx context.Context, id string) (*Incident, er
 	return o.rowToIncident(&incidentRow), nil
 }
 
-type FindIncidentsParams struct {
-	// Search by service id or incident id
-	Search    string
-	ID        string
-	ServiceID string
-	Resolved  *bool
-	StartTime *time.Time
-	EndTime   *time.Time
-	Page      *uint32
-	PageSize  *uint32
-}
+// type FindIncidentsParams struct {
+// 	// Search by service id or incident id
+// 	Search    string
+// 	ID        string
+// 	ServiceID string
+// 	Resolved  *bool
+// 	StartTime *time.Time
+// 	EndTime   *time.Time
+// 	Page      *uint32
+// 	PageSize  *uint32
+// }
 
-func findIncidentsBuilder(params FindIncidentsParams, col ...string) *sqlbuilder.SelectBuilder {
-	sb := sqlbuilder.NewSelectBuilder()
-	sb.Select(col...)
-	sb.From("incidents i")
+// func findIncidentsBuilder(params FindIncidentsParams, col ...string) *sqlbuilder.SelectBuilder {
+// 	sb := sqlbuilder.NewSelectBuilder()
+// 	sb.Select(col...)
+// 	sb.From("incidents i")
 
-	if params.ID != "" {
-		sb.Where(sb.Equal("i.id", params.ID))
-	}
+// 	if params.ID != "" {
+// 		sb.Where(sb.Equal("i.id", params.ID))
+// 	}
 
-	if params.ServiceID != "" {
-		sb.Where(sb.Equal("i.service_id", params.ServiceID))
-	}
+// 	if params.ServiceID != "" {
+// 		sb.Where(sb.Equal("i.service_id", params.ServiceID))
+// 	}
 
-	if params.Search != "" {
-		likeCondition := fmt.Sprintf("%%%s%%", params.Search)
-		sb.Where(sb.Or(
-			sb.Like("i.id", likeCondition),
-			sb.Like("i.service_id", likeCondition),
-		))
-	}
+// 	if params.Search != "" {
+// 		likeCondition := fmt.Sprintf("%%%s%%", params.Search)
+// 		sb.Where(sb.Or(
+// 			sb.Like("i.id", likeCondition),
+// 			sb.Like("i.service_id", likeCondition),
+// 		))
+// 	}
 
-	if params.Resolved != nil {
-		sb.Where(sb.Equal("i.resolved", *params.Resolved))
-	}
+// 	if params.Resolved != nil {
+// 		sb.Where(sb.Equal("i.resolved", *params.Resolved))
+// 	}
 
-	if params.StartTime != nil {
-		sb.Where(sb.GreaterEqualThan("i.start_time", *params.StartTime))
-	}
+// 	if params.StartTime != nil {
+// 		sb.Where(sb.GreaterEqualThan("i.start_time", *params.StartTime))
+// 	}
 
-	if params.EndTime != nil {
-		sb.Where(sb.LessEqualThan("i.end_time", *params.EndTime))
-	}
+// 	if params.EndTime != nil {
+// 		sb.Where(sb.LessEqualThan("i.end_time", *params.EndTime))
+// 	}
 
-	return sb
-}
+// 	return sb
+// }
+
+// // FindIncidents finds incidents
+// func (o *Storage) FindIncidents(ctx context.Context, params FindIncidentsParams) (storecmn.FindResponseWithCount[*Incident], error) {
+// 	sb := findIncidentsBuilder(params,
+// 		"i.id",
+// 		"i.service_id",
+// 		"i.start_time",
+// 		"i.end_time",
+// 		"i.error",
+// 		"i.duration",
+// 		"i.resolved",
+// 		"i.created_at",
+// 		"i.updated_at",
+// 	)
+// 	sb.OrderBy("i.start_time").Desc()
+
+// 	res := storecmn.FindResponseWithCount[*Incident]{}
+
+// 	limit, offset, err := storecmn.Pagination(params.Page, params.PageSize)
+// 	if err != nil {
+// 		return res, fmt.Errorf("failed to apply pagination: %w", err)
+// 	}
+
+// 	sb.Limit(int(limit)).Offset(int(offset))
+
+// 	sql, args := sb.Build()
+// 	rows, err := o.db.QueryContext(ctx, sql, args...)
+// 	if err != nil {
+// 		return res, fmt.Errorf("failed to query incidents: %w", err)
+// 	}
+// 	defer rows.Close()
+
+// 	incidents := []*Incident{}
+// 	for rows.Next() {
+// 		var incidentRow IncidentRow
+// 		err := rows.Scan(
+// 			&incidentRow.ID,
+// 			&incidentRow.ServiceID,
+// 			&incidentRow.StartTime,
+// 			&incidentRow.EndTime,
+// 			&incidentRow.Error,
+// 			&incidentRow.DurationNS,
+// 			&incidentRow.Resolved,
+// 			&incidentRow.CreatedAt,
+// 			&incidentRow.UpdatedAt,
+// 		)
+// 		if err != nil {
+// 			return res, fmt.Errorf("failed to scan incident: %w", err)
+// 		}
+
+// 		incidents = append(incidents, o.rowToIncident(&incidentRow))
+// 	}
+
+// 	if err := rows.Err(); err != nil {
+// 		return res, fmt.Errorf("error iterating rows: %w", err)
+// 	}
+
+// 	// Get total count of incidents
+// 	var totalCount uint32
+// 	countBuilder := findIncidentsBuilder(params, "COUNT(*)")
+
+// 	countQuery, countArgs := countBuilder.Build()
+// 	err = o.db.QueryRowContext(ctx, countQuery, countArgs...).Scan(&totalCount)
+// 	if err != nil {
+// 		return res, fmt.Errorf("failed to count incidents: %w", err)
+// 	}
+
+// 	res.Count = totalCount
+// 	res.Items = incidents
+
+// 	return res, nil
+// }
 
 // FindIncidents finds incidents
-func (o *Storage) FindIncidents(ctx context.Context, params FindIncidentsParams) (storecmn.FindResponseWithCount[*Incident], error) {
-	sb := findIncidentsBuilder(params,
-		"i.id",
-		"i.service_id",
-		"i.start_time",
-		"i.end_time",
-		"i.error",
-		"i.duration",
-		"i.resolved",
-		"i.created_at",
-		"i.updated_at",
-	)
-	sb.OrderBy("i.start_time").Desc()
+// func (o *Storage) IncidentsCount(ctx context.Context, params FindIncidentsParams) (uint32, error) {
+// 	// Get total count of incidents
+// 	var totalCount uint32
+// 	countBuilder := findIncidentsBuilder(params, "COUNT(*)")
 
-	res := storecmn.FindResponseWithCount[*Incident]{}
+// 	countQuery, countArgs := countBuilder.Build()
+// 	err := o.db.QueryRowContext(ctx, countQuery, countArgs...).Scan(&totalCount)
+// 	if err != nil {
+// 		return 0, fmt.Errorf("failed to count incidents: %w", err)
+// 	}
 
-	limit, offset, err := storecmn.Pagination(params.Page, params.PageSize)
-	if err != nil {
-		return res, fmt.Errorf("failed to apply pagination: %w", err)
-	}
+// 	return totalCount, nil
+// }
 
-	sb.Limit(int(limit)).Offset(int(offset))
+// // ResolveAllIncidents resolves all incidents for a service
+// func (o *Storage) ResolveAllIncidents(ctx context.Context, serviceID string) ([]*Incident, error) {
+// 	if serviceID == "" {
+// 		return nil, fmt.Errorf("serviceID is required")
+// 	}
 
-	sql, args := sb.Build()
-	rows, err := o.db.QueryContext(ctx, sql, args...)
-	if err != nil {
-		return res, fmt.Errorf("failed to query incidents: %w", err)
-	}
-	defer rows.Close()
+// 	items, err := o.FindIncidents(ctx, FindIncidentsParams{
+// 		ServiceID: serviceID,
+// 		Resolved:  utils.Pointer(false),
+// 	})
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to find incidents: %w", err)
+// 	}
 
-	incidents := []*Incident{}
-	for rows.Next() {
-		var incidentRow IncidentRow
-		err := rows.Scan(
-			&incidentRow.ID,
-			&incidentRow.ServiceID,
-			&incidentRow.StartTime,
-			&incidentRow.EndTime,
-			&incidentRow.Error,
-			&incidentRow.DurationNS,
-			&incidentRow.Resolved,
-			&incidentRow.CreatedAt,
-			&incidentRow.UpdatedAt,
-		)
-		if err != nil {
-			return res, fmt.Errorf("failed to scan incident: %w", err)
-		}
+// 	tx, err := o.db.BeginTx(ctx, nil)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to begin transaction: %w", err)
+// 	}
+// 	defer tx.Rollback()
 
-		incidents = append(incidents, o.rowToIncident(&incidentRow))
-	}
+// 	for _, item := range items.Items {
+// 		now := time.Now()
 
-	if err := rows.Err(); err != nil {
-		return res, fmt.Errorf("error iterating rows: %w", err)
-	}
+// 		// Update all incidents for the service to resolved
+// 		ub := sqlbuilder.NewUpdateBuilder()
 
-	// Get total count of incidents
-	var totalCount uint32
-	countBuilder := findIncidentsBuilder(params, "COUNT(*)")
+// 		ub.Update("incidents").
+// 			Set(
+// 				ub.Assign("resolved", true),
+// 				ub.Assign("end_time", now),
+// 				ub.Assign("duration", now.Sub(item.StartTime)),
+// 				ub.Assign("updated_at", now),
+// 			).
+// 			Where(
+// 				ub.Equal("id", item.ID),
+// 			)
 
-	countQuery, countArgs := countBuilder.Build()
-	err = o.db.QueryRowContext(ctx, countQuery, countArgs...).Scan(&totalCount)
-	if err != nil {
-		return res, fmt.Errorf("failed to count incidents: %w", err)
-	}
+// 		sql, args := ub.Build()
+// 		if _, err := tx.ExecContext(ctx, sql, args...); err != nil {
+// 			return nil, fmt.Errorf("failed to resolve incidents: %w", err)
+// 		}
+// 	}
 
-	res.Count = totalCount
-	res.Items = incidents
+// 	// Commit transaction
+// 	if err := tx.Commit(); err != nil {
+// 		return nil, fmt.Errorf("failed to commit transaction: %w", err)
+// 	}
 
-	return res, nil
-}
+// 	resolvedIncidents := []*Incident{}
+// 	for _, item := range items.Items {
+// 		incident, err := o.GetIncidentByID(ctx, item.ID)
+// 		if err != nil {
+// 			return nil, fmt.Errorf("failed to get incident by ID: %w", err)
+// 		}
 
-// FindIncidents finds incidents
-func (o *Storage) IncidentsCount(ctx context.Context, params FindIncidentsParams) (uint32, error) {
-	// Get total count of incidents
-	var totalCount uint32
-	countBuilder := findIncidentsBuilder(params, "COUNT(*)")
+// 		resolvedIncidents = append(resolvedIncidents, incident)
+// 	}
 
-	countQuery, countArgs := countBuilder.Build()
-	err := o.db.QueryRowContext(ctx, countQuery, countArgs...).Scan(&totalCount)
-	if err != nil {
-		return 0, fmt.Errorf("failed to count incidents: %w", err)
-	}
-
-	return totalCount, nil
-}
-
-// ResolveAllIncidents resolves all incidents for a service
-func (o *Storage) ResolveAllIncidents(ctx context.Context, serviceID string) ([]*Incident, error) {
-	if serviceID == "" {
-		return nil, fmt.Errorf("serviceID is required")
-	}
-
-	items, err := o.FindIncidents(ctx, FindIncidentsParams{
-		ServiceID: serviceID,
-		Resolved:  utils.Pointer(false),
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to find incidents: %w", err)
-	}
-
-	tx, err := o.db.BeginTx(ctx, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to begin transaction: %w", err)
-	}
-	defer tx.Rollback()
-
-	for _, item := range items.Items {
-		now := time.Now()
-
-		// Update all incidents for the service to resolved
-		ub := sqlbuilder.NewUpdateBuilder()
-
-		ub.Update("incidents").
-			Set(
-				ub.Assign("resolved", true),
-				ub.Assign("end_time", now),
-				ub.Assign("duration", now.Sub(item.StartTime)),
-				ub.Assign("updated_at", now),
-			).
-			Where(
-				ub.Equal("id", item.ID),
-			)
-
-		sql, args := ub.Build()
-		if _, err := tx.ExecContext(ctx, sql, args...); err != nil {
-			return nil, fmt.Errorf("failed to resolve incidents: %w", err)
-		}
-	}
-
-	// Commit transaction
-	if err := tx.Commit(); err != nil {
-		return nil, fmt.Errorf("failed to commit transaction: %w", err)
-	}
-
-	resolvedIncidents := []*Incident{}
-	for _, item := range items.Items {
-		incident, err := o.GetIncidentByID(ctx, item.ID)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get incident by ID: %w", err)
-		}
-
-		resolvedIncidents = append(resolvedIncidents, incident)
-	}
-
-	return resolvedIncidents, nil
-}
+// 	return resolvedIncidents, nil
+// }
 
 // SaveIncident creates a new incident using ORM with retry logic
 // func (o *Storage) SaveIncident(ctx context.Context, incident *Incident) error {

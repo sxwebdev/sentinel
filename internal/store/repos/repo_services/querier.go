@@ -14,6 +14,7 @@ type Querier interface {
 	Create(ctx context.Context, arg CreateParams) (*models.Service, error)
 	Delete(ctx context.Context, id string) error
 	Exist(ctx context.Context, id string) (int64, error)
+	GetAllEnabled(ctx context.Context) ([]*models.Service, error)
 	GetByID(ctx context.Context, id string) (*models.Service, error)
 }
 

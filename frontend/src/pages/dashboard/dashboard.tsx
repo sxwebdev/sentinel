@@ -36,7 +36,7 @@ const infoKeysDashboard = [
   },
   {
     key: "uptime_percentage",
-    label: "Uptime",
+    label: "Uptime (last 30 days)",
     valueFormatter: (value: string) => `${Number(value).toFixed(1)}%`,
   },
   {

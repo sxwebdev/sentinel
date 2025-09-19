@@ -7,6 +7,8 @@ package repo_services
 
 import (
 	"context"
+
+	"github.com/sxwebdev/sentinel/internal/models"
 )
 
 const exist = `-- name: Exist :one
@@ -18,4 +20,43 @@ func (q *Queries) Exist(ctx context.Context, id string) (int64, error) {
 	var column_1 int64
 	err := row.Scan(&column_1)
 	return column_1, err
+}
+
+const getAllEnabled = `-- name: GetAllEnabled :many
+SELECT id, name, protocol, interval, timeout, retries, json(tags), json(config), is_enabled, created_at, updated_at FROM services WHERE is_enabled=TRUE ORDER BY name
+`
+
+func (q *Queries) GetAllEnabled(ctx context.Context) ([]*models.Service, error) {
+	rows, err := q.db.QueryContext(ctx, getAllEnabled)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*models.Service{}
+	for rows.Next() {
+		var i models.Service
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Protocol,
+			&i.Interval,
+			&i.Timeout,
+			&i.Retries,
+			&i.Tags,
+			&i.Config,
+			&i.IsEnabled,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }

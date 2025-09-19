@@ -23,3 +23,8 @@ type UpdateParams = repo_service_states.UpdateRequest
 func (s *Service) Update(ctx context.Context, id string, params UpdateParams) (*models.ServiceState, error) {
 	return s.store.ServiceStates().Update(ctx, id, params)
 }
+
+// Stats represents aggregated statistics about service states
+func (s *Service) Stats(ctx context.Context) (*repo_service_states.StatsRow, error) {
+	return s.store.ServiceStates().Stats(ctx)
+}

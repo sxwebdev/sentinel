@@ -43,3 +43,37 @@ func (q *Queries) GetByServiceID(ctx context.Context, serviceID string) (*models
 	)
 	return &i, err
 }
+
+const stats = `-- name: Stats :one
+SELECT
+ 	COUNT(*) AS total_services,
+ 	SUM(CASE WHEN status='up' THEN 1 ELSE 0 END) AS services_up,
+ 	SUM(CASE WHEN status='down' THEN 1 ELSE 0 END) AS services_down,
+ 	SUM(CASE WHEN status='unknown' THEN 1 ELSE 0 END) AS services_unknown,
+ 	AVG(response_time) AS avg_response_time,
+ 	SUM(total_checks) AS total_checks           
+FROM service_states
+`
+
+type StatsRow struct {
+	TotalServices   int64    `db:"total_services" json:"total_services"`
+	ServicesUp      *float64 `db:"services_up" json:"services_up"`
+	ServicesDown    *float64 `db:"services_down" json:"services_down"`
+	ServicesUnknown *float64 `db:"services_unknown" json:"services_unknown"`
+	AvgResponseTime *float64 `db:"avg_response_time" json:"avg_response_time"`
+	TotalChecks     *float64 `db:"total_checks" json:"total_checks"`
+}
+
+func (q *Queries) Stats(ctx context.Context) (*StatsRow, error) {
+	row := q.db.QueryRowContext(ctx, stats)
+	var i StatsRow
+	err := row.Scan(
+		&i.TotalServices,
+		&i.ServicesUp,
+		&i.ServicesDown,
+		&i.ServicesUnknown,
+		&i.AvgResponseTime,
+		&i.TotalChecks,
+	)
+	return &i, err
+}

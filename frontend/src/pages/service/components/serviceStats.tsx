@@ -32,7 +32,7 @@ export const ServiceStats = ({
     {
       value: `${(serviceStatsData?.uptime_percentage ?? 0).toFixed(1)}%`,
       key: "uptime",
-      description: "Uptime",
+      description: "Uptime (last 30 days)",
     },
     {
       value: serviceDetailData?.consecutive_success,
@@ -47,7 +47,7 @@ export const ServiceStats = ({
   ];
 
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
       {cardStats.map((stat) => (
         <InfoCardStats
           key={stat.key}

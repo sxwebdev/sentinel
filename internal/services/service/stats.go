@@ -29,16 +29,6 @@ func (s *Service) Stats(ctx context.Context, serviceID string, since time.Time) 
 
 	incidentsStatsDomain := incidentsStats.ToDomain()
 
-	// Calculate uptime percentage
-	period := time.Since(since)
-	uptimePercentage := 100.0
-	if period > 0 {
-		uptimePercentage = 100.0 - (float64(incidentsStatsDomain.TotalDowntime) / float64(period) * 100.0)
-		if uptimePercentage < 0 {
-			uptimePercentage = 0
-		}
-	}
-
 	// Get average response time from service state
 	var avgResponseTime int64
 	serviceState, err := s.store.ServiceStates().GetByServiceID(ctx, serviceID)
@@ -52,10 +42,10 @@ func (s *Service) Stats(ctx context.Context, serviceID string, since time.Time) 
 
 	return &Stats{
 		ServiceID:           serviceID,
-		Period:              period,
+		Period:              time.Since(since),
 		TotalIncidents:      incidentsStatsDomain.TotalIncidents,
 		TotalDowntime:       incidentsStatsDomain.TotalDowntime,
-		UptimePercentage:    uptimePercentage,
+		UptimePercentage:    incidentsStats.UptimePercentage30d,
 		AvgResponseTime:     avgResponseTime,
 		ResolvedIncidents:   incidentsStatsDomain.ResolvedIncidents,
 		UnresolvedIncidents: incidentsStatsDomain.UnresolvedIncidents,

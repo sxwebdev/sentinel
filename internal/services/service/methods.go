@@ -158,6 +158,11 @@ func (s *Service) GetByID(ctx context.Context, id string) (*models.Service, erro
 	return svc, nil
 }
 
+// GetAllEnabled returns all enabled services
+func (s *Service) GetAllEnabled(ctx context.Context) ([]*models.Service, error) {
+	return s.store.Services().GetAllEnabled(ctx)
+}
+
 // GetViewByID returns service view by ID
 func (s *Service) GetViewByID(ctx context.Context, id string) (*models.ServiceFullView, error) {
 	return s.store.Services().GetViewByID(ctx, id)

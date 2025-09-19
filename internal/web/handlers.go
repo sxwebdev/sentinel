@@ -36,6 +36,7 @@ import (
 	"github.com/sxwebdev/sentinel/internal/monitor"
 	"github.com/sxwebdev/sentinel/internal/receiver"
 	"github.com/sxwebdev/sentinel/internal/services/baseservices"
+	"github.com/sxwebdev/sentinel/internal/services/incidents"
 	"github.com/sxwebdev/sentinel/internal/services/service"
 	"github.com/sxwebdev/sentinel/internal/storage"
 	"github.com/sxwebdev/sentinel/internal/store/storecmn"
@@ -448,7 +449,7 @@ func (s *Server) handleAPIServiceIncidents(c *fiber.Ctx) error {
 		return newErrorResponse(c, fiber.StatusNotFound, storecmn.ErrNotFound)
 	}
 
-	incidents, err := s.storage.FindIncidents(c.Context(), storage.FindIncidentsParams{
+	incidents, err := s.baseServices.Incidents().Find(c.Context(), incidents.FindParams{
 		ID:        params.IncidentID,
 		ServiceID: serviceID,
 		Resolved:  params.Resolved,
@@ -584,7 +585,7 @@ func (s *Server) handleFindIncidents(c *fiber.Ctx) error {
 		return newErrorResponse(c, fiber.StatusBadRequest, err)
 	}
 
-	incidents, err := s.storage.FindIncidents(c.Context(), storage.FindIncidentsParams{
+	incidents, err := s.baseServices.Incidents().Find(c.Context(), incidents.FindParams{
 		Search:    params.Search,
 		Resolved:  params.Resolved,
 		StartTime: params.StartTime,
