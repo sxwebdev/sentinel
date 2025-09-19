@@ -41,7 +41,6 @@ import (
 	"github.com/sxwebdev/sentinel/internal/store/storecmn"
 	"github.com/sxwebdev/sentinel/internal/upgrader"
 	"github.com/sxwebdev/sentinel/internal/utils"
-	"github.com/sxwebdev/sentinel/pkg/dbutils"
 	"github.com/tkcrm/mx/logger"
 )
 
@@ -304,7 +303,7 @@ func (s *Server) handleSPA(c *fiber.Ctx) error {
 //	@Param			order_by	query		string										false	"Order by field"		ENUM("name", "created_at")
 //	@Param			page		query		uint32										false	"Page number (for pagination)"
 //	@Param			page_size	query		uint32										false	"Number of items per page (default 20)"
-//	@Success		200			{object}	dbutils.FindResponseWithCount[ServiceDTO]	"List of services with states"
+//	@Success		200			{object}	storecmn.FindResponseWithCount[ServiceDTO]	"List of services with states"
 //	@Failure		500			{object}	ErrorResponse								"Internal server error"
 //	@Router			/services [get]
 func (s *Server) handleFindServices(c *fiber.Ctx) error {
@@ -344,7 +343,7 @@ func (s *Server) handleFindServices(c *fiber.Ctx) error {
 		return newErrorResponse(c, fiber.StatusInternalServerError, err)
 	}
 
-	result := dbutils.FindResponseWithCount[ServiceDTO]{
+	result := storecmn.FindResponseWithCount[ServiceDTO]{
 		Items: make([]ServiceDTO, 0, len(services.Items)),
 		Count: services.Count,
 	}
@@ -405,16 +404,16 @@ func (s *Server) handleAPIServiceDetail(c *fiber.Ctx) error {
 //	@Tags			incidents
 //	@Accept			json
 //	@Produce		json
-//	@Param			id			path		string											true	"Service ID"
-//	@Param			incident_id	query		string											false	"Filter by incident ID"
-//	@Param			resolved	query		bool											false	"Filter by resolved status"
-//	@Param			start_time	query		time.Time										false	"Filter by start time (RFC3339 format)"
-//	@Param			end_time	query		time.Time										false	"Filter by end time (RFC3339 format)"
-//	@Param			page		query		uint32											false	"Page number (for pagination)"
-//	@Param			page_size	query		uint32											false	"Number of items per page (default 20)"
-//	@Success		200			{object}	dbutils.FindResponseWithCount[storage.Incident]	"List of incidents"
-//	@Failure		400			{object}	ErrorResponse									"Bad request"
-//	@Failure		500			{object}	ErrorResponse									"Internal server error"
+//	@Param			id			path		string												true	"Service ID"
+//	@Param			incident_id	query		string												false	"Filter by incident ID"
+//	@Param			resolved	query		bool												false	"Filter by resolved status"
+//	@Param			start_time	query		time.Time											false	"Filter by start time (RFC3339 format)"
+//	@Param			end_time	query		time.Time											false	"Filter by end time (RFC3339 format)"
+//	@Param			page		query		uint32												false	"Page number (for pagination)"
+//	@Param			page_size	query		uint32												false	"Number of items per page (default 20)"
+//	@Success		200			{object}	storecmn.FindResponseWithCount[storage.Incident]	"List of incidents"
+//	@Failure		400			{object}	ErrorResponse										"Bad request"
+//	@Failure		500			{object}	ErrorResponse										"Internal server error"
 //	@Router			/services/{id}/incidents [get]
 func (s *Server) handleAPIServiceIncidents(c *fiber.Ctx) error {
 	serviceID := c.Params("id")
@@ -584,14 +583,14 @@ func (s *Server) handleAPIServiceResolve(c *fiber.Ctx) error {
 //	@Tags			incidents
 //	@Accept			json
 //	@Produce		json
-//	@Param			search		query		string											false	"Filter by service ID or incident ID"
-//	@Param			resolved	query		bool											false	"Filter by resolved status"
-//	@Param			start_time	query		time.Time										false	"Start time for filtering (RFC3339 format)"
-//	@Param			end_time	query		time.Time										false	"End time for filtering (RFC3339 format)"
-//	@Param			page		query		uint32											false	"Page number (default 1)"
-//	@Param			page_size	query		uint32											false	"Number of items per page (default 100)"
-//	@Success		200			{object}	dbutils.FindResponseWithCount[storage.Incident]	"List of incidents"
-//	@Failure		500			{object}	ErrorResponse									"Internal server error"
+//	@Param			search		query		string												false	"Filter by service ID or incident ID"
+//	@Param			resolved	query		bool												false	"Filter by resolved status"
+//	@Param			start_time	query		time.Time											false	"Start time for filtering (RFC3339 format)"
+//	@Param			end_time	query		time.Time											false	"End time for filtering (RFC3339 format)"
+//	@Param			page		query		uint32												false	"Page number (default 1)"
+//	@Param			page_size	query		uint32												false	"Number of items per page (default 100)"
+//	@Success		200			{object}	storecmn.FindResponseWithCount[storage.Incident]	"List of incidents"
+//	@Failure		500			{object}	ErrorResponse										"Internal server error"
 //	@Router			/incidents [get]
 func (s *Server) handleFindIncidents(c *fiber.Ctx) error {
 	params := struct {

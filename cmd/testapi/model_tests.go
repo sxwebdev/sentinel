@@ -6,8 +6,8 @@ import (
 
 	"github.com/sxwebdev/sentinel/internal/models"
 	"github.com/sxwebdev/sentinel/internal/monitors"
+	"github.com/sxwebdev/sentinel/internal/store/storecmn"
 	"github.com/sxwebdev/sentinel/internal/web"
-	"github.com/sxwebdev/sentinel/pkg/dbutils"
 )
 
 // Model validation tests
@@ -284,7 +284,7 @@ func testIncidentFields(s *TestSuite) error {
 		return fmt.Errorf("get incidents for validation: %w", err)
 	}
 
-	var incidents dbutils.FindResponseWithCount[web.Incident]
+	var incidents storecmn.FindResponseWithCount[web.Incident]
 	if err := s.decodeResponse(resp, &incidents); err != nil {
 		return fmt.Errorf("decode incidents for validation: %w", err)
 	}
@@ -552,7 +552,7 @@ func testPaginationResponseModel(s *TestSuite) error {
 		return fmt.Errorf("get paginated services: %w", err)
 	}
 
-	var result dbutils.FindResponseWithCount[web.ServiceDTO]
+	var result storecmn.FindResponseWithCount[web.ServiceDTO]
 	if err := s.decodeResponse(resp, &result); err != nil {
 		return fmt.Errorf("decode paginated services: %w", err)
 	}
@@ -569,7 +569,7 @@ func testPaginationResponseModel(s *TestSuite) error {
 		return fmt.Errorf("get paginated incidents: %w", err)
 	}
 
-	var incidentResult dbutils.FindResponseWithCount[web.Incident]
+	var incidentResult storecmn.FindResponseWithCount[web.Incident]
 	if err := s.decodeResponse(resp, &incidentResult); err != nil {
 		return fmt.Errorf("decode paginated incidents: %w", err)
 	}

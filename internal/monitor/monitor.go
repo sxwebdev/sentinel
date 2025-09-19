@@ -35,7 +35,7 @@ func NewMonitorService(store *store.Store, storage *storage.Storage, config *con
 }
 
 // FindServices loads all enabled services from storage and initializes monitoring
-// func (m *MonitorService) FindServices(ctx context.Context, params storage.FindServicesParams) (dbutils.FindResponseWithCount[*storage.Service], error) {
+// func (m *MonitorService) FindServices(ctx context.Context, params storage.FindServicesParams) (storecmn.FindResponseWithCount[*storage.Service], error) {
 // 	return m.storage.FindServices(ctx, params)
 // }
 

@@ -9,7 +9,7 @@ import (
 	"context"
 
 	"github.com/sxwebdev/sentinel/internal/models"
-	"github.com/sxwebdev/sentinel/pkg/dbutils"
+	"github.com/sxwebdev/sentinel/internal/store/storecmn"
 )
 
 const create = `-- name: Create :one
@@ -22,11 +22,11 @@ type CreateParams struct {
 	ID        string                     `db:"id" json:"id"`
 	Name      string                     `db:"name" json:"name"`
 	Protocol  models.ServiceProtocolType `db:"protocol" json:"protocol"`
-	Interval  dbutils.Duration           `db:"interval" json:"interval"`
-	Timeout   dbutils.Duration           `db:"timeout" json:"timeout"`
+	Interval  storecmn.Duration          `db:"interval" json:"interval"`
+	Timeout   storecmn.Duration          `db:"timeout" json:"timeout"`
 	Retries   int64                      `db:"retries" json:"retries"`
-	Tags      dbutils.JSONField          `db:"tags" json:"tags"`
-	Config    dbutils.JSONField          `db:"config" json:"config"`
+	Tags      storecmn.JSONField         `db:"tags" json:"tags"`
+	Config    storecmn.JSONField         `db:"config" json:"config"`
 	IsEnabled bool                       `db:"is_enabled" json:"is_enabled"`
 }
 

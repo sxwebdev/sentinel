@@ -9,7 +9,7 @@ import (
 	"github.com/sxwebdev/sentinel/internal/utils"
 )
 
-type serviceViewRow struct {
+type itemViewRow struct {
 	ID                 string
 	Name               string
 	Protocol           string
@@ -33,8 +33,8 @@ type serviceViewRow struct {
 	ResponseTimeNS     *int64
 }
 
-// rowToService converts a ServiceRow to Service
-func rowToService(row *serviceViewRow) (*models.ServiceFullView, error) {
+// rowToModel converts a ServiceRow to Service
+func rowToModel(row *itemViewRow) (*models.ServiceFullView, error) {
 	interval, err := time.ParseDuration(row.Interval)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse interval: %w", err)

@@ -15,7 +15,6 @@ import (
 	"github.com/sxwebdev/sentinel/internal/store/repos/repo_services"
 	"github.com/sxwebdev/sentinel/internal/store/storecmn"
 	"github.com/sxwebdev/sentinel/internal/utils"
-	"github.com/sxwebdev/sentinel/pkg/dbutils"
 )
 
 type CreateUpdateParams struct {
@@ -36,13 +35,13 @@ func (s *Service) Create(ctx context.Context, params CreateUpdateParams) (*model
 	}
 
 	// Convert tags to JSONField
-	tags := dbutils.JSONField("[]")
+	tags := storecmn.JSONField("[]")
 	if err := tags.UnmarshalAny(params.Tags); err != nil {
 		return nil, fmt.Errorf("failed to convert tags to json raw message: %w", err)
 	}
 
 	// Convert config to JSONField
-	config := dbutils.JSONField("{}")
+	config := storecmn.JSONField("{}")
 	if err := config.UnmarshalAny(params.Config); err != nil {
 		return nil, fmt.Errorf("failed to convert config to json raw message: %w", err)
 	}
@@ -51,15 +50,15 @@ func (s *Service) Create(ctx context.Context, params CreateUpdateParams) (*model
 		ID:        utils.GenerateULID(),
 		Name:      params.Name,
 		Protocol:  params.Protocol,
-		Interval:  dbutils.Duration(params.Interval),
-		Timeout:   dbutils.Duration(params.Timeout),
+		Interval:  storecmn.Duration(params.Interval),
+		Timeout:   storecmn.Duration(params.Timeout),
 		Retries:   params.Retries,
 		Tags:      tags,
 		Config:    config,
 		IsEnabled: params.IsEnabled,
 	}
 
-	err := dbutils.WrapTx(ctx, s.store.SQLite(), func(tx *sql.Tx) error {
+	err := storecmn.WrapTx(ctx, s.store.SQLite(), func(tx *sql.Tx) error {
 		// Create service
 		_, err := s.store.Services(repos.WithTx(tx)).Create(ctx, createParams)
 		if err != nil {
@@ -106,13 +105,13 @@ func (s *Service) Update(ctx context.Context, id string, params CreateUpdatePara
 	}
 
 	// Convert tags to JSONField
-	tags := dbutils.JSONField("[]")
+	tags := storecmn.JSONField("[]")
 	if err := tags.UnmarshalAny(params.Tags); err != nil {
 		return nil, fmt.Errorf("failed to convert tags to json raw message: %w", err)
 	}
 
 	// Convert config to JSONField
-	config := dbutils.JSONField("{}")
+	config := storecmn.JSONField("{}")
 	if err := config.UnmarshalAny(params.Config); err != nil {
 		return nil, fmt.Errorf("failed to convert config to json raw message: %w", err)
 	}
@@ -120,8 +119,8 @@ func (s *Service) Update(ctx context.Context, id string, params CreateUpdatePara
 	updateParams := repo_services.UpdateServiceRequest{
 		Name:      params.Name,
 		Protocol:  params.Protocol,
-		Interval:  dbutils.Duration(params.Interval),
-		Timeout:   dbutils.Duration(params.Timeout),
+		Interval:  storecmn.Duration(params.Interval),
+		Timeout:   storecmn.Duration(params.Timeout),
 		Retries:   params.Retries,
 		Tags:      tags,
 		Config:    config,
@@ -162,7 +161,7 @@ func (s *Service) GetViewByID(ctx context.Context, id string) (*models.ServiceFu
 type FindParams = repo_services.FindParams
 
 // FindView services by params
-func (s *Service) FindView(ctx context.Context, params FindParams) (*dbutils.FindResponseWithCount[*models.ServiceFullView], error) {
+func (s *Service) FindView(ctx context.Context, params FindParams) (*storecmn.FindResponseWithCount[*models.ServiceFullView], error) {
 	return s.store.Services().FindView(ctx, params)
 }
 
@@ -175,7 +174,7 @@ func (s *Service) Delete(ctx context.Context, id string) error {
 	}
 
 	// Delete service and related data in a transaction
-	err = dbutils.WrapTx(ctx, s.store.SQLite(), func(tx *sql.Tx) error {
+	err = storecmn.WrapTx(ctx, s.store.SQLite(), func(tx *sql.Tx) error {
 		if err := s.store.ServiceStates(repos.WithTx(tx)).DeleteByServiceID(ctx, id); err != nil {
 			return fmt.Errorf("failed to delete service states: %w", err)
 		}

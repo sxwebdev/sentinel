@@ -1,23 +1,38 @@
 basePath: /api/v1
 definitions:
-  dbutils.FindResponseWithCount-storage_Incident:
+  models.AvailableUpdate:
     properties:
-      count:
-        type: integer
-      items:
-        items:
-          $ref: '#/definitions/storage.Incident'
-        type: array
+      description:
+        type: string
+      is_available_manual:
+        type: boolean
+      tag_name:
+        type: string
+      url:
+        type: string
     type: object
-  dbutils.FindResponseWithCount-web_ServiceDTO:
-    properties:
-      count:
-        type: integer
-      items:
-        items:
-          $ref: '#/definitions/web.ServiceDTO'
-        type: array
-    type: object
+  models.ServiceProtocolType:
+    enum:
+    - http
+    - tcp
+    - grpc
+    type: string
+    x-enum-varnames:
+    - ServiceProtocolTypeHTTP
+    - ServiceProtocolTypeTCP
+    - ServiceProtocolTypeGRPC
+  models.ServiceStatus:
+    enum:
+    - unknown
+    - up
+    - down
+    - maintenance
+    type: string
+    x-enum-varnames:
+    - StatusUnknown
+    - StatusUp
+    - StatusDown
+    - StatusMaintenance
   monitors.Config:
     properties:
       grpc:
@@ -130,16 +145,6 @@ definitions:
       start_time:
         type: string
     type: object
-  storage.ServiceProtocolType:
-    enum:
-    - http
-    - tcp
-    - grpc
-    type: string
-    x-enum-varnames:
-    - ServiceProtocolTypeHTTP
-    - ServiceProtocolTypeTCP
-    - ServiceProtocolTypeGRPC
   storage.ServiceStats:
     properties:
       avg_response_time:
@@ -155,28 +160,23 @@ definitions:
       uptime_percentage:
         type: number
     type: object
-  storage.ServiceStatus:
-    enum:
-    - unknown
-    - up
-    - down
-    - maintenance
-    type: string
-    x-enum-varnames:
-    - StatusUnknown
-    - StatusUp
-    - StatusDown
-    - StatusMaintenance
-  web.AvailableUpdate:
+  storecmn.FindResponseWithCount-storage_Incident:
     properties:
-      description:
-        type: string
-      is_available_manual:
-        type: boolean
-      tag_name:
-        type: string
-      url:
-        type: string
+      count:
+        type: integer
+      items:
+        items:
+          $ref: '#/definitions/storage.Incident'
+        type: array
+    type: object
+  storecmn.FindResponseWithCount-web_ServiceDTO:
+    properties:
+      count:
+        type: integer
+      items:
+        items:
+          $ref: '#/definitions/web.ServiceDTO'
+        type: array
     type: object
   web.CreateUpdateServiceRequest:
     properties:
@@ -193,7 +193,7 @@ definitions:
         type: string
       protocol:
         allOf:
-        - $ref: '#/definitions/storage.ServiceProtocolType'
+        - $ref: '#/definitions/models.ServiceProtocolType'
         example: http
       retries:
         example: 5
@@ -259,7 +259,7 @@ definitions:
         example: amd64
         type: string
       available_update:
-        $ref: '#/definitions/web.AvailableUpdate'
+        $ref: '#/definitions/models.AvailableUpdate'
       build_date:
         example: "2023-10-01T12:00:00Z"
         type: string
@@ -315,7 +315,7 @@ definitions:
         type: string
       protocol:
         allOf:
-        - $ref: '#/definitions/storage.ServiceProtocolType'
+        - $ref: '#/definitions/models.ServiceProtocolType'
         example: http
       response_time:
         example: 150000000
@@ -325,7 +325,7 @@ definitions:
         type: integer
       status:
         allOf:
-        - $ref: '#/definitions/storage.ServiceStatus'
+        - $ref: '#/definitions/models.ServiceStatus'
         example: up / down / unknown
       tags:
         example:
@@ -432,7 +432,7 @@ paths:
         "200":
           description: List of incidents
           schema:
-            $ref: '#/definitions/dbutils.FindResponseWithCount-storage_Incident'
+            $ref: '#/definitions/storecmn.FindResponseWithCount-storage_Incident'
         "500":
           description: Internal server error
           schema:
@@ -580,7 +580,7 @@ paths:
         "200":
           description: List of services with states
           schema:
-            $ref: '#/definitions/dbutils.FindResponseWithCount-web_ServiceDTO'
+            $ref: '#/definitions/storecmn.FindResponseWithCount-web_ServiceDTO'
         "500":
           description: Internal server error
           schema:
@@ -776,7 +776,7 @@ paths:
         "200":
           description: List of incidents
           schema:
-            $ref: '#/definitions/dbutils.FindResponseWithCount-storage_Incident'
+            $ref: '#/definitions/storecmn.FindResponseWithCount-storage_Incident'
         "400":
           description: Bad request
           schema:

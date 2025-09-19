@@ -7,24 +7,27 @@ package models
 import (
 	"time"
 
-	"github.com/sxwebdev/sentinel/pkg/dbutils"
+	"github.com/sxwebdev/sentinel/internal/store/storecmn"
 )
 
 type Agent struct {
-	ID          string            `db:"id" json:"id"`
-	Name        string            `db:"name" json:"name"`
-	Description *string           `db:"description" json:"description"`
-	Host        *string           `db:"host" json:"host"`
-	Port        *int64            `db:"port" json:"port"`
-	TokenCt     []byte            `db:"token_ct" json:"token_ct"`
-	TokenNonce  []byte            `db:"token_nonce" json:"token_nonce"`
-	TokenHint   *string           `db:"token_hint" json:"token_hint"`
-	Fingerprint *string           `db:"fingerprint" json:"fingerprint"`
-	IsActive    bool              `db:"is_active" json:"is_active"`
-	SystemInfo  dbutils.JSONField `db:"system_info" json:"system_info"`
-	LastSeenAt  *time.Time        `db:"last_seen_at" json:"last_seen_at"`
-	CreatedAt   *time.Time        `db:"created_at" json:"created_at"`
-	UpdatedAt   *time.Time        `db:"updated_at" json:"updated_at"`
+	ID          string             `db:"id" json:"id"`
+	Name        string             `db:"name" json:"name"`
+	Description *string            `db:"description" json:"description"`
+	Host        string             `db:"host" json:"host"`
+	Port        int64              `db:"port" json:"port"`
+	TokenCt     []byte             `db:"token_ct" json:"token_ct"`
+	TokenNonce  []byte             `db:"token_nonce" json:"token_nonce"`
+	TokenHint   string             `db:"token_hint" json:"token_hint"`
+	Fingerprint *string            `db:"fingerprint" json:"fingerprint"`
+	Status      string             `db:"status" json:"status"`
+	IsEnabled   bool               `db:"is_enabled" json:"is_enabled"`
+	Tags        storecmn.JSONField `db:"tags" json:"tags"`
+	Config      storecmn.JSONField `db:"config" json:"config"`
+	SystemInfo  storecmn.JSONField `db:"system_info" json:"system_info"`
+	LastSeenAt  *time.Time         `db:"last_seen_at" json:"last_seen_at"`
+	CreatedAt   *time.Time         `db:"created_at" json:"created_at"`
+	UpdatedAt   *time.Time         `db:"updated_at" json:"updated_at"`
 }
 
 type Incident struct {
@@ -43,11 +46,11 @@ type Service struct {
 	ID        string              `db:"id" json:"id"`
 	Name      string              `db:"name" json:"name"`
 	Protocol  ServiceProtocolType `db:"protocol" json:"protocol"`
-	Interval  dbutils.Duration    `db:"interval" json:"interval"`
-	Timeout   dbutils.Duration    `db:"timeout" json:"timeout"`
+	Interval  storecmn.Duration   `db:"interval" json:"interval"`
+	Timeout   storecmn.Duration   `db:"timeout" json:"timeout"`
 	Retries   int64               `db:"retries" json:"retries"`
-	Tags      dbutils.JSONField   `db:"tags" json:"tags"`
-	Config    dbutils.JSONField   `db:"config" json:"config"`
+	Tags      storecmn.JSONField  `db:"tags" json:"tags"`
+	Config    storecmn.JSONField  `db:"config" json:"config"`
 	IsEnabled bool                `db:"is_enabled" json:"is_enabled"`
 	CreatedAt *time.Time          `db:"created_at" json:"created_at"`
 	UpdatedAt *time.Time          `db:"updated_at" json:"updated_at"`

@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/huandu/go-sqlbuilder"
+	"github.com/sxwebdev/sentinel/internal/store/storecmn"
 	"github.com/sxwebdev/sentinel/internal/utils"
-	"github.com/sxwebdev/sentinel/pkg/dbutils"
 )
 
 // GetServiceStats calculates statistics for a service
@@ -258,7 +258,7 @@ type FindServicesParams struct {
 }
 
 // GetAllServices finds all services using ORM
-func (o *Storage) FindServices(ctx context.Context, params FindServicesParams) (dbutils.FindResponseWithCount[*Service], error) {
+func (o *Storage) FindServices(ctx context.Context, params FindServicesParams) (storecmn.FindResponseWithCount[*Service], error) {
 	sb := findServicesBuilder(
 		params,
 		"s.id",
@@ -309,9 +309,9 @@ func (o *Storage) FindServices(ctx context.Context, params FindServicesParams) (
 		sb.OrderBy("s.name")
 	}
 
-	res := dbutils.FindResponseWithCount[*Service]{}
+	res := storecmn.FindResponseWithCount[*Service]{}
 
-	limit, offset, err := dbutils.Pagination(params.Page, params.PageSize)
+	limit, offset, err := storecmn.Pagination(params.Page, params.PageSize)
 	if err != nil {
 		return res, err
 	}

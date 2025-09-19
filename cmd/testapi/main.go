@@ -21,9 +21,9 @@ import (
 	"github.com/sxwebdev/sentinel/internal/notifier"
 	"github.com/sxwebdev/sentinel/internal/receiver"
 	"github.com/sxwebdev/sentinel/internal/storage"
+	"github.com/sxwebdev/sentinel/internal/store/storecmn"
 	"github.com/sxwebdev/sentinel/internal/upgrader"
 	"github.com/sxwebdev/sentinel/internal/web"
-	"github.com/sxwebdev/sentinel/pkg/dbutils"
 	"github.com/tkcrm/mx/logger"
 )
 
@@ -409,7 +409,7 @@ func testGetServices(s *TestSuite) error {
 		return err
 	}
 
-	var result dbutils.FindResponseWithCount[web.ServiceDTO]
+	var result storecmn.FindResponseWithCount[web.ServiceDTO]
 	if err := s.decodeResponse(resp, &result); err != nil {
 		return err
 	}
@@ -432,7 +432,7 @@ func testServiceFilters(s *TestSuite) error {
 		return err
 	}
 
-	var result dbutils.FindResponseWithCount[web.ServiceDTO]
+	var result storecmn.FindResponseWithCount[web.ServiceDTO]
 	if err := s.decodeResponse(resp, &result); err != nil {
 		return err
 	}
@@ -714,7 +714,7 @@ func testIncidents(s *TestSuite) error {
 		return err
 	}
 
-	var incidents dbutils.FindResponseWithCount[web.Incident]
+	var incidents storecmn.FindResponseWithCount[web.Incident]
 	if err := s.decodeResponse(resp, &incidents); err != nil {
 		return err
 	}
@@ -732,7 +732,7 @@ func testIncidents(s *TestSuite) error {
 		return err
 	}
 
-	var serviceIncidents dbutils.FindResponseWithCount[web.Incident]
+	var serviceIncidents storecmn.FindResponseWithCount[web.Incident]
 	if err := s.decodeResponse(resp, &serviceIncidents); err != nil {
 		return err
 	}
@@ -761,7 +761,7 @@ func testIncidentFilters(s *TestSuite) error {
 		return err
 	}
 
-	var incidents dbutils.FindResponseWithCount[web.Incident]
+	var incidents storecmn.FindResponseWithCount[web.Incident]
 	if err := s.decodeResponse(resp, &incidents); err != nil {
 		return err
 	}
@@ -848,7 +848,7 @@ func testPagination(s *TestSuite) error {
 		return err
 	}
 
-	var result dbutils.FindResponseWithCount[web.ServiceDTO]
+	var result storecmn.FindResponseWithCount[web.ServiceDTO]
 	if err := s.decodeResponse(resp, &result); err != nil {
 		return err
 	}
@@ -863,7 +863,7 @@ func testPagination(s *TestSuite) error {
 		return err
 	}
 
-	var result2 dbutils.FindResponseWithCount[web.ServiceDTO]
+	var result2 storecmn.FindResponseWithCount[web.ServiceDTO]
 	if err := s.decodeResponse(resp, &result2); err != nil {
 		return err
 	}

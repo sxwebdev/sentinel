@@ -8,7 +8,7 @@ import (
 	"github.com/georgysavva/scany/v2/sqlscan"
 	"github.com/huandu/go-sqlbuilder"
 	"github.com/sxwebdev/sentinel/internal/models"
-	"github.com/sxwebdev/sentinel/pkg/dbutils"
+	"github.com/sxwebdev/sentinel/internal/store/storecmn"
 )
 
 func findServicesBuilder(params FindParams, col ...string) *sqlbuilder.SelectBuilder {
@@ -64,8 +64,8 @@ type FindParams struct {
 	PageSize  *uint32
 }
 
-// GetAllServices finds all services using ORM
-func (s *CustomQueries) FindView(ctx context.Context, params FindParams) (*dbutils.FindResponseWithCount[*models.ServiceFullView], error) {
+// FindView returns list of services with their states and incidents by given filters with pagination
+func (s *CustomQueries) FindView(ctx context.Context, params FindParams) (*storecmn.FindResponseWithCount[*models.ServiceFullView], error) {
 	sb := findServicesBuilder(
 		params,
 		"s.id",
@@ -116,13 +116,13 @@ func (s *CustomQueries) FindView(ctx context.Context, params FindParams) (*dbuti
 		sb.OrderBy("s.name")
 	}
 
-	limit, offset, err := dbutils.Pagination(params.Page, params.PageSize)
+	limit, offset, err := storecmn.Pagination(params.Page, params.PageSize)
 	if err != nil {
 		return nil, err
 	}
 	sb.Limit(int(limit)).Offset(int(offset))
 
-	itemsRows := []serviceViewRow{}
+	itemsRows := []itemViewRow{}
 	sql, args := sb.Build()
 	if err := sqlscan.Select(ctx, s.db, &itemsRows, sql, args...); err != nil {
 		return nil, err
@@ -140,14 +140,14 @@ func (s *CustomQueries) FindView(ctx context.Context, params FindParams) (*dbuti
 
 	items := make([]*models.ServiceFullView, 0, len(itemsRows))
 	for i := range itemsRows {
-		item, err := rowToService(&itemsRows[i])
+		item, err := rowToModel(&itemsRows[i])
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert row to service: %w", err)
 		}
 		items = append(items, item)
 	}
 
-	return &dbutils.FindResponseWithCount[*models.ServiceFullView]{
+	return &storecmn.FindResponseWithCount[*models.ServiceFullView]{
 		Count: totalCount,
 		Items: items,
 	}, nil

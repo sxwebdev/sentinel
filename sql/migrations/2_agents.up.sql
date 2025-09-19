@@ -3,13 +3,16 @@ CREATE TABLE IF NOT EXISTS agents (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
   description TEXT,
-  host TEXT,
-  port INT,
+  host TEXT NOT NULL,
+  port INT NOT NULL,
   token_ct BLOB,
   token_nonce BLOB,
-  token_hint TEXT,
+  token_hint TEXT NOT NULL,
   fingerprint TEXT,
-  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  "status" TEXT NOT NULL DEFAULT 'unknown',
+  is_enabled BOOLEAN NOT NULL DEFAULT TRUE,
+  tags jsonb NOT NULL DEFAULT '[]',
+  config jsonb NOT NULL DEFAULT '{}',
   system_info jsonb NOT NULL DEFAULT '{}',
   last_seen_at DATETIME,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -20,4 +23,4 @@ CREATE TABLE IF NOT EXISTS agents (
 
 -- Create indexes for performance
 CREATE INDEX IF NOT EXISTS idx_agents_name ON agents(name); 
-CREATE INDEX IF NOT EXISTS idx_agents_active ON agents(is_active);
+CREATE INDEX IF NOT EXISTS idx_agents_enabled ON agents(is_enabled);

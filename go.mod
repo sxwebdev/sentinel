@@ -19,6 +19,7 @@ require (
 	github.com/oklog/ulid/v2 v2.1.1
 	github.com/puzpuzpuz/xsync/v3 v3.5.1
 	github.com/rs/cors v1.11.1
+	github.com/samber/lo v1.51.0
 	github.com/shirou/gopsutil/v4 v4.25.8
 	github.com/stretchr/testify v1.11.1
 	github.com/swaggo/fiber-swagger v1.3.0
@@ -26,6 +27,7 @@ require (
 	github.com/sxwebdev/xconfig v0.0.0-20250917185517-9fc0b932f57a
 	github.com/sxwebdev/xconfig/decoders/xconfigdotenv v0.0.0-20250917185517-9fc0b932f57a
 	github.com/sxwebdev/xconfig/decoders/xconfigyaml v0.0.0-20250917185517-9fc0b932f57a
+	github.com/tkcrm/modules v0.0.0-20250909093305-a0b86c209cc5
 	github.com/tkcrm/mx v0.2.34
 	github.com/tkcrm/mx/transport/connectrpc_transport v0.0.0-20250618055556-3f77aaa9ddbd
 	github.com/urfave/cli/v3 v3.4.1
@@ -71,6 +73,7 @@ require (
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-sourcemap/sourcemap v2.1.4+incompatible // indirect
+	github.com/goccy/go-json v0.10.5 // indirect
 	github.com/google/pprof v0.0.0-20250903194437-c28834ac2320 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/huandu/go-clone v1.7.3 // indirect

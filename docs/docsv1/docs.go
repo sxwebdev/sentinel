@@ -96,7 +96,7 @@ const docTemplate = `{
                     "200": {
                         "description": "List of incidents",
                         "schema": {
-                            "$ref": "#/definitions/dbutils.FindResponseWithCount-storage_Incident"
+                            "$ref": "#/definitions/storecmn.FindResponseWithCount-storage_Incident"
                         }
                     },
                     "500": {
@@ -320,7 +320,7 @@ const docTemplate = `{
                     "200": {
                         "description": "List of services with states",
                         "schema": {
-                            "$ref": "#/definitions/dbutils.FindResponseWithCount-web_ServiceDTO"
+                            "$ref": "#/definitions/storecmn.FindResponseWithCount-web_ServiceDTO"
                         }
                     },
                     "500": {
@@ -616,7 +616,7 @@ const docTemplate = `{
                     "200": {
                         "description": "List of incidents",
                         "schema": {
-                            "$ref": "#/definitions/dbutils.FindResponseWithCount-storage_Incident"
+                            "$ref": "#/definitions/storecmn.FindResponseWithCount-storage_Incident"
                         }
                     },
                     "400": {
@@ -848,33 +848,50 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "dbutils.FindResponseWithCount-storage_Incident": {
+        "models.AvailableUpdate": {
             "type": "object",
             "properties": {
-                "count": {
-                    "type": "integer"
+                "description": {
+                    "type": "string"
                 },
-                "items": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/storage.Incident"
-                    }
+                "is_available_manual": {
+                    "type": "boolean"
+                },
+                "tag_name": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
                 }
             }
         },
-        "dbutils.FindResponseWithCount-web_ServiceDTO": {
-            "type": "object",
-            "properties": {
-                "count": {
-                    "type": "integer"
-                },
-                "items": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/web.ServiceDTO"
-                    }
-                }
-            }
+        "models.ServiceProtocolType": {
+            "type": "string",
+            "enum": [
+                "http",
+                "tcp",
+                "grpc"
+            ],
+            "x-enum-varnames": [
+                "ServiceProtocolTypeHTTP",
+                "ServiceProtocolTypeTCP",
+                "ServiceProtocolTypeGRPC"
+            ]
+        },
+        "models.ServiceStatus": {
+            "type": "string",
+            "enum": [
+                "unknown",
+                "up",
+                "down",
+                "maintenance"
+            ],
+            "x-enum-varnames": [
+                "StatusUnknown",
+                "StatusUp",
+                "StatusDown",
+                "StatusMaintenance"
+            ]
         },
         "monitors.Config": {
             "type": "object",
@@ -1038,19 +1055,6 @@ const docTemplate = `{
                 }
             }
         },
-        "storage.ServiceProtocolType": {
-            "type": "string",
-            "enum": [
-                "http",
-                "tcp",
-                "grpc"
-            ],
-            "x-enum-varnames": [
-                "ServiceProtocolTypeHTTP",
-                "ServiceProtocolTypeTCP",
-                "ServiceProtocolTypeGRPC"
-            ]
-        },
         "storage.ServiceStats": {
             "type": "object",
             "properties": {
@@ -1074,35 +1078,31 @@ const docTemplate = `{
                 }
             }
         },
-        "storage.ServiceStatus": {
-            "type": "string",
-            "enum": [
-                "unknown",
-                "up",
-                "down",
-                "maintenance"
-            ],
-            "x-enum-varnames": [
-                "StatusUnknown",
-                "StatusUp",
-                "StatusDown",
-                "StatusMaintenance"
-            ]
-        },
-        "web.AvailableUpdate": {
+        "storecmn.FindResponseWithCount-storage_Incident": {
             "type": "object",
             "properties": {
-                "description": {
-                    "type": "string"
+                "count": {
+                    "type": "integer"
                 },
-                "is_available_manual": {
-                    "type": "boolean"
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/storage.Incident"
+                    }
+                }
+            }
+        },
+        "storecmn.FindResponseWithCount-web_ServiceDTO": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
                 },
-                "tag_name": {
-                    "type": "string"
-                },
-                "url": {
-                    "type": "string"
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/web.ServiceDTO"
+                    }
                 }
             }
         },
@@ -1127,7 +1127,7 @@ const docTemplate = `{
                 "protocol": {
                     "allOf": [
                         {
-                            "$ref": "#/definitions/storage.ServiceProtocolType"
+                            "$ref": "#/definitions/models.ServiceProtocolType"
                         }
                     ],
                     "example": "http"
@@ -1221,7 +1221,7 @@ const docTemplate = `{
                     "example": "amd64"
                 },
                 "available_update": {
-                    "$ref": "#/definitions/web.AvailableUpdate"
+                    "$ref": "#/definitions/models.AvailableUpdate"
                 },
                 "build_date": {
                     "type": "string",
@@ -1298,7 +1298,7 @@ const docTemplate = `{
                 "protocol": {
                     "allOf": [
                         {
-                            "$ref": "#/definitions/storage.ServiceProtocolType"
+                            "$ref": "#/definitions/models.ServiceProtocolType"
                         }
                     ],
                     "example": "http"
@@ -1314,7 +1314,7 @@ const docTemplate = `{
                 "status": {
                     "allOf": [
                         {
-                            "$ref": "#/definitions/storage.ServiceStatus"
+                            "$ref": "#/definitions/models.ServiceStatus"
                         }
                     ],
                     "example": "up / down / unknown"

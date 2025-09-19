@@ -9,23 +9,28 @@ import (
 	"context"
 
 	"github.com/sxwebdev/sentinel/internal/models"
+	"github.com/sxwebdev/sentinel/internal/store/storecmn"
 )
 
 const create = `-- name: Create :one
-INSERT INTO agents (id, name, description, host, port, token_ct, token_nonce, token_hint)
-	VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-	RETURNING id, name, description, host, port, token_ct, token_nonce, token_hint, fingerprint, is_active, json(system_info), last_seen_at, created_at, updated_at
+INSERT INTO agents (id, name, description, host, port, token_ct, token_nonce, token_hint, status, is_enabled, tags, config)
+	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+	RETURNING id, name, description, host, port, token_ct, token_nonce, token_hint, fingerprint, status, is_enabled, json(tags), json(config), json(system_info), last_seen_at, created_at, updated_at
 `
 
 type CreateParams struct {
-	ID          string  `db:"id" json:"id"`
-	Name        string  `db:"name" json:"name"`
-	Description *string `db:"description" json:"description"`
-	Host        *string `db:"host" json:"host"`
-	Port        *int64  `db:"port" json:"port"`
-	TokenCt     []byte  `db:"token_ct" json:"token_ct"`
-	TokenNonce  []byte  `db:"token_nonce" json:"token_nonce"`
-	TokenHint   *string `db:"token_hint" json:"token_hint"`
+	ID          string             `db:"id" json:"id"`
+	Name        string             `db:"name" json:"name"`
+	Description *string            `db:"description" json:"description"`
+	Host        string             `db:"host" json:"host"`
+	Port        int64              `db:"port" json:"port"`
+	TokenCt     []byte             `db:"token_ct" json:"token_ct"`
+	TokenNonce  []byte             `db:"token_nonce" json:"token_nonce"`
+	TokenHint   string             `db:"token_hint" json:"token_hint"`
+	Status      string             `db:"status" json:"status"`
+	IsEnabled   bool               `db:"is_enabled" json:"is_enabled"`
+	Tags        storecmn.JSONField `db:"tags" json:"tags"`
+	Config      storecmn.JSONField `db:"config" json:"config"`
 }
 
 func (q *Queries) Create(ctx context.Context, arg CreateParams) (*models.Agent, error) {
@@ -38,6 +43,10 @@ func (q *Queries) Create(ctx context.Context, arg CreateParams) (*models.Agent, 
 		arg.TokenCt,
 		arg.TokenNonce,
 		arg.TokenHint,
+		arg.Status,
+		arg.IsEnabled,
+		arg.Tags,
+		arg.Config,
 	)
 	var i models.Agent
 	err := row.Scan(
@@ -50,7 +59,10 @@ func (q *Queries) Create(ctx context.Context, arg CreateParams) (*models.Agent, 
 		&i.TokenNonce,
 		&i.TokenHint,
 		&i.Fingerprint,
-		&i.IsActive,
+		&i.Status,
+		&i.IsEnabled,
+		&i.Tags,
+		&i.Config,
 		&i.SystemInfo,
 		&i.LastSeenAt,
 		&i.CreatedAt,
@@ -69,7 +81,7 @@ func (q *Queries) Delete(ctx context.Context, id string) error {
 }
 
 const getAll = `-- name: GetAll :many
-SELECT id, name, description, host, port, token_ct, token_nonce, token_hint, fingerprint, is_active, json(system_info), last_seen_at, created_at, updated_at FROM agents
+SELECT id, name, description, host, port, token_ct, token_nonce, token_hint, fingerprint, status, is_enabled, json(tags), json(config), json(system_info), last_seen_at, created_at, updated_at FROM agents
 `
 
 func (q *Queries) GetAll(ctx context.Context) ([]*models.Agent, error) {
@@ -91,7 +103,10 @@ func (q *Queries) GetAll(ctx context.Context) ([]*models.Agent, error) {
 			&i.TokenNonce,
 			&i.TokenHint,
 			&i.Fingerprint,
-			&i.IsActive,
+			&i.Status,
+			&i.IsEnabled,
+			&i.Tags,
+			&i.Config,
 			&i.SystemInfo,
 			&i.LastSeenAt,
 			&i.CreatedAt,
@@ -111,7 +126,7 @@ func (q *Queries) GetAll(ctx context.Context) ([]*models.Agent, error) {
 }
 
 const getByID = `-- name: GetByID :one
-SELECT id, name, description, host, port, token_ct, token_nonce, token_hint, fingerprint, is_active, json(system_info), last_seen_at, created_at, updated_at FROM agents WHERE id=? LIMIT 1
+SELECT id, name, description, host, port, token_ct, token_nonce, token_hint, fingerprint, status, is_enabled, json(tags), json(config), json(system_info), last_seen_at, created_at, updated_at FROM agents WHERE id=? LIMIT 1
 `
 
 func (q *Queries) GetByID(ctx context.Context, id string) (*models.Agent, error) {
@@ -127,7 +142,10 @@ func (q *Queries) GetByID(ctx context.Context, id string) (*models.Agent, error)
 		&i.TokenNonce,
 		&i.TokenHint,
 		&i.Fingerprint,
-		&i.IsActive,
+		&i.Status,
+		&i.IsEnabled,
+		&i.Tags,
+		&i.Config,
 		&i.SystemInfo,
 		&i.LastSeenAt,
 		&i.CreatedAt,

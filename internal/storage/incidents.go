@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/huandu/go-sqlbuilder"
+	"github.com/sxwebdev/sentinel/internal/store/storecmn"
 	"github.com/sxwebdev/sentinel/internal/utils"
-	"github.com/sxwebdev/sentinel/pkg/dbutils"
 )
 
 // IncidentRow represents a database row for incidents
@@ -120,7 +120,7 @@ func findIncidentsBuilder(params FindIncidentsParams, col ...string) *sqlbuilder
 }
 
 // FindIncidents finds incidents
-func (o *Storage) FindIncidents(ctx context.Context, params FindIncidentsParams) (dbutils.FindResponseWithCount[*Incident], error) {
+func (o *Storage) FindIncidents(ctx context.Context, params FindIncidentsParams) (storecmn.FindResponseWithCount[*Incident], error) {
 	sb := findIncidentsBuilder(params,
 		"i.id",
 		"i.service_id",
@@ -134,9 +134,9 @@ func (o *Storage) FindIncidents(ctx context.Context, params FindIncidentsParams)
 	)
 	sb.OrderBy("i.start_time").Desc()
 
-	res := dbutils.FindResponseWithCount[*Incident]{}
+	res := storecmn.FindResponseWithCount[*Incident]{}
 
-	limit, offset, err := dbutils.Pagination(params.Page, params.PageSize)
+	limit, offset, err := storecmn.Pagination(params.Page, params.PageSize)
 	if err != nil {
 		return res, fmt.Errorf("failed to apply pagination: %w", err)
 	}

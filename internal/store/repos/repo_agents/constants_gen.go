@@ -48,7 +48,10 @@ const (
 	ColumnNameAgentsTokenNonce  ColumnName = "token_nonce"
 	ColumnNameAgentsTokenHint   ColumnName = "token_hint"
 	ColumnNameAgentsFingerprint ColumnName = "fingerprint"
-	ColumnNameAgentsIsActive    ColumnName = "is_active"
+	ColumnNameAgentsStatus      ColumnName = "status"
+	ColumnNameAgentsIsEnabled   ColumnName = "is_enabled"
+	ColumnNameAgentsTags        ColumnName = "tags"
+	ColumnNameAgentsConfig      ColumnName = "config"
 	ColumnNameAgentsSystemInfo  ColumnName = "system_info"
 	ColumnNameAgentsLastSeenAt  ColumnName = "last_seen_at"
 	ColumnNameAgentsCreatedAt   ColumnName = "created_at"
@@ -66,7 +69,10 @@ func AgentsColumnNames() ColumnNames {
 		ColumnNameAgentsTokenNonce,
 		ColumnNameAgentsTokenHint,
 		ColumnNameAgentsFingerprint,
-		ColumnNameAgentsIsActive,
+		ColumnNameAgentsStatus,
+		ColumnNameAgentsIsEnabled,
+		ColumnNameAgentsTags,
+		ColumnNameAgentsConfig,
 		ColumnNameAgentsSystemInfo,
 		ColumnNameAgentsLastSeenAt,
 		ColumnNameAgentsCreatedAt,

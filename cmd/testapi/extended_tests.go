@@ -9,8 +9,8 @@ import (
 
 	"github.com/sxwebdev/sentinel/internal/models"
 	"github.com/sxwebdev/sentinel/internal/monitors"
+	"github.com/sxwebdev/sentinel/internal/store/storecmn"
 	"github.com/sxwebdev/sentinel/internal/web"
-	"github.com/sxwebdev/sentinel/pkg/dbutils"
 )
 
 // Extended tests for comprehensive API coverage
@@ -22,7 +22,7 @@ func testAdvancedServiceFilters(s *TestSuite) error {
 		return err
 	}
 
-	var result dbutils.FindResponseWithCount[web.ServiceDTO]
+	var result storecmn.FindResponseWithCount[web.ServiceDTO]
 	if err := s.decodeResponse(resp, &result); err != nil {
 		return err
 	}
@@ -238,7 +238,7 @@ func testServiceCRUDCompleteFlow(s *TestSuite) error {
 		return fmt.Errorf("get service incidents: %w", err)
 	}
 
-	var incidents dbutils.FindResponseWithCount[web.Incident]
+	var incidents storecmn.FindResponseWithCount[web.Incident]
 	if err := s.decodeResponse(resp, &incidents); err != nil {
 		return fmt.Errorf("decode service incidents: %w", err)
 	}
@@ -322,7 +322,7 @@ func testAdvancedIncidentManagement(s *TestSuite) error {
 		return err
 	}
 
-	var unresolvedIncidents dbutils.FindResponseWithCount[web.Incident]
+	var unresolvedIncidents storecmn.FindResponseWithCount[web.Incident]
 	if err := s.decodeResponse(resp, &unresolvedIncidents); err != nil {
 		return err
 	}
@@ -340,7 +340,7 @@ func testAdvancedIncidentManagement(s *TestSuite) error {
 		return err
 	}
 
-	var resolvedIncidents dbutils.FindResponseWithCount[web.Incident]
+	var resolvedIncidents storecmn.FindResponseWithCount[web.Incident]
 	if err := s.decodeResponse(resp, &resolvedIncidents); err != nil {
 		return err
 	}
@@ -367,7 +367,7 @@ func testAdvancedIncidentManagement(s *TestSuite) error {
 		return err
 	}
 
-	var timeFilteredIncidents dbutils.FindResponseWithCount[web.Incident]
+	var timeFilteredIncidents storecmn.FindResponseWithCount[web.Incident]
 	if err := s.decodeResponse(resp, &timeFilteredIncidents); err != nil {
 		return err
 	}
@@ -378,7 +378,7 @@ func testAdvancedIncidentManagement(s *TestSuite) error {
 		return err
 	}
 
-	var paginatedIncidents dbutils.FindResponseWithCount[web.Incident]
+	var paginatedIncidents storecmn.FindResponseWithCount[web.Incident]
 	if err := s.decodeResponse(resp, &paginatedIncidents); err != nil {
 		return err
 	}
@@ -408,7 +408,7 @@ func testAdvancedIncidentManagement(s *TestSuite) error {
 		return err
 	}
 
-	var searchResults dbutils.FindResponseWithCount[web.Incident]
+	var searchResults storecmn.FindResponseWithCount[web.Incident]
 	if err := s.decodeResponse(resp, &searchResults); err != nil {
 		return err
 	}
@@ -642,7 +642,7 @@ func testAdvancedPaginationAndSorting(s *TestSuite) error {
 				return fmt.Errorf("pagination test page %d size %d: %w", page, pageSize, err)
 			}
 
-			var result dbutils.FindResponseWithCount[web.ServiceDTO]
+			var result storecmn.FindResponseWithCount[web.ServiceDTO]
 			if err := s.decodeResponse(resp, &result); err != nil {
 				return fmt.Errorf("decode pagination test page %d size %d: %w", page, pageSize, err)
 			}
@@ -684,7 +684,7 @@ func testAdvancedPaginationAndSorting(s *TestSuite) error {
 		return fmt.Errorf("order by created_at test: %w", err)
 	}
 
-	var orderedResult dbutils.FindResponseWithCount[web.ServiceDTO]
+	var orderedResult storecmn.FindResponseWithCount[web.ServiceDTO]
 	if err := s.decodeResponse(resp, &orderedResult); err != nil {
 		return fmt.Errorf("decode order by created_at test: %w", err)
 	}

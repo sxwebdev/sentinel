@@ -1,4 +1,4 @@
-package dbutils
+package storecmn
 
 import (
 	"database/sql/driver"

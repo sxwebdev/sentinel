@@ -10,7 +10,7 @@ import (
 )
 
 type Repos struct {
-	agents        *repo_agents.Queries
+	agents        *repo_agents.CustomQueries
 	services      *repo_services.CustomQueries
 	serviceStates *repo_service_states.Queries
 	incidents     *repo_incidents.Queries
@@ -18,7 +18,7 @@ type Repos struct {
 
 func New(sqlite *sql.DB) *Repos {
 	return &Repos{
-		agents:        repo_agents.New(sqlite),
+		agents:        repo_agents.NewCustom(sqlite),
 		services:      repo_services.NewCustom(sqlite),
 		serviceStates: repo_service_states.New(sqlite),
 		incidents:     repo_incidents.New(sqlite),
@@ -26,7 +26,7 @@ func New(sqlite *sql.DB) *Repos {
 }
 
 // Agents returns repo for agents
-func (s *Repos) Agents(opts ...Option) repo_agents.Querier {
+func (s *Repos) Agents(opts ...Option) repo_agents.ICustomQuerier {
 	options := parseOptions(opts...)
 
 	if options.Tx != nil {

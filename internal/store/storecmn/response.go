@@ -1,4 +1,4 @@
-package dbutils
+package storecmn
 
 type FindResponseWithCount[T any] struct {
 	Items []T    `json:"items"`

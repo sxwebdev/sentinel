@@ -1,4 +1,4 @@
-package repo_services
+package repo_agents
 
 import (
 	"context"
@@ -10,9 +10,8 @@ import (
 
 type ICustomQuerier interface {
 	Querier
-	GetViewByID(ctx context.Context, id string) (*models.ServiceFullView, error)
-	Update(ctx context.Context, id string, service UpdateServiceRequest) (*models.ServiceFullView, error)
-	FindView(ctx context.Context, params FindParams) (*storecmn.FindResponseWithCount[*models.ServiceFullView], error)
+	Update(ctx context.Context, id string, params UpdateRequest) (*models.Agent, error)
+	Find(ctx context.Context, params FindParams) (*storecmn.FindResponseWithCount[*models.Agent], error)
 }
 
 type CustomQueries struct {

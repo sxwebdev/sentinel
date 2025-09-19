@@ -44,7 +44,7 @@ func (s *CustomQueries) GetViewByID(ctx context.Context, id string) (*models.Ser
 	sb.Where(sb.Equal("s.id", id))
 	sb.GroupBy("s.id")
 
-	var itemRow serviceViewRow
+	var itemRow itemViewRow
 	query, args := sb.Build()
 	if err := sqlscan.Get(ctx, s.db, &itemRow, query, args...); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -53,7 +53,7 @@ func (s *CustomQueries) GetViewByID(ctx context.Context, id string) (*models.Ser
 		return nil, fmt.Errorf("failed to scan service: %w", err)
 	}
 
-	item, err := rowToService(&itemRow)
+	item, err := rowToModel(&itemRow)
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert row to service: %w", err)
 	}
