@@ -5,9 +5,9 @@
  * API for service monitoring and incident management
  * OpenAPI spec version: 1.0
  */
-import type { WebDashboardStats } from "../../types/model";
+import type { WebDashboardStats } from "../../../types/model";
 
-import { customFetcher } from ".././baseApi";
+import { customFetcher } from "../../baseApi";
 
 export const getDashboard = () => {
   /**

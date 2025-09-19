@@ -12,31 +12,6 @@ const (
 	ServiceProtocolTypeGRPC ServiceProtocolType = "grpc"
 )
 
-// serviceRow represents a database row for services
-type serviceRow struct {
-	ID                 string
-	Name               string
-	Protocol           string
-	Interval           string
-	Timeout            string
-	Retries            int
-	Tags               string
-	Config             string
-	IsEnabled          bool
-	CreatedAt          time.Time
-	UpdatedAt          time.Time
-	ActiveIncidents    int
-	TotalIncidents     int
-	Status             ServiceStatus
-	LastCheck          *time.Time
-	NextCheck          *time.Time
-	LastError          *string
-	ConsecutiveFails   int
-	ConsecutiveSuccess int
-	TotalChecks        int
-	ResponseTimeNS     *int64
-}
-
 // Service represents a monitored service
 type Service struct {
 	ID                 string              `json:"id"`
@@ -85,37 +60,4 @@ type Incident struct {
 	Error     string         `json:"error"`
 	Duration  *time.Duration `json:"duration,omitempty" swaggertype:"primitive,integer"`
 	Resolved  bool           `json:"resolved"`
-}
-
-// ServiceStats holds statistics for a service
-type ServiceStats struct {
-	ServiceID        string        `json:"service_id"`
-	TotalIncidents   int           `json:"total_incidents"`
-	TotalDowntime    time.Duration `json:"total_downtime" swaggertype:"primitive,integer"`
-	UptimePercentage float64       `json:"uptime_percentage"`
-	Period           time.Duration `json:"period" swaggertype:"primitive,integer"`
-	AvgResponseTime  time.Duration `json:"avg_response_time" swaggertype:"primitive,integer"`
-}
-
-// ServiceIncidentStats holds incident statistics for a service
-type ServiceIncidentStats struct {
-	ServiceID       string `json:"service_id"`
-	ActiveIncidents int    `json:"active_incidents"`
-	TotalIncidents  int    `json:"total_incidents"`
-}
-
-// ServiceStateRecord represents a service state record in the database
-type ServiceStateRecord struct {
-	ID                 string        `json:"id"`
-	ServiceID          string        `json:"service_id"`
-	Status             ServiceStatus `json:"status"` // "up", "down", "unknown"
-	LastCheck          *time.Time    `json:"last_check,omitempty"`
-	NextCheck          *time.Time    `json:"next_check,omitempty"`
-	LastError          *string       `json:"last_error,omitempty"`
-	ConsecutiveFails   int           `json:"consecutive_fails"`
-	ConsecutiveSuccess int           `json:"consecutive_success"`
-	TotalChecks        int           `json:"total_checks"`
-	ResponseTimeNS     *int64        `json:"response_time_ns,omitempty"`
-	CreatedAt          time.Time     `json:"created_at"`
-	UpdatedAt          time.Time     `json:"updated_at"`
 }

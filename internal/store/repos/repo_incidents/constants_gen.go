@@ -39,15 +39,15 @@ func (s ColumnNames) Strings() []string {
 }
 
 const (
-	ColumnNameIncidentsId         ColumnName = "id"
-	ColumnNameIncidentsServiceId  ColumnName = "service_id"
-	ColumnNameIncidentsStartTime  ColumnName = "start_time"
-	ColumnNameIncidentsEndTime    ColumnName = "end_time"
-	ColumnNameIncidentsError      ColumnName = "error"
-	ColumnNameIncidentsDurationNs ColumnName = "duration_ns"
-	ColumnNameIncidentsResolved   ColumnName = "resolved"
-	ColumnNameIncidentsCreatedAt  ColumnName = "created_at"
-	ColumnNameIncidentsUpdatedAt  ColumnName = "updated_at"
+	ColumnNameIncidentsId        ColumnName = "id"
+	ColumnNameIncidentsServiceId ColumnName = "service_id"
+	ColumnNameIncidentsStartTime ColumnName = "start_time"
+	ColumnNameIncidentsEndTime   ColumnName = "end_time"
+	ColumnNameIncidentsError     ColumnName = "error"
+	ColumnNameIncidentsDuration  ColumnName = "duration"
+	ColumnNameIncidentsResolved  ColumnName = "resolved"
+	ColumnNameIncidentsCreatedAt ColumnName = "created_at"
+	ColumnNameIncidentsUpdatedAt ColumnName = "updated_at"
 )
 
 func IncidentsColumnNames() ColumnNames {
@@ -57,7 +57,7 @@ func IncidentsColumnNames() ColumnNames {
 		ColumnNameIncidentsStartTime,
 		ColumnNameIncidentsEndTime,
 		ColumnNameIncidentsError,
-		ColumnNameIncidentsDurationNs,
+		ColumnNameIncidentsDuration,
 		ColumnNameIncidentsResolved,
 		ColumnNameIncidentsCreatedAt,
 		ColumnNameIncidentsUpdatedAt,

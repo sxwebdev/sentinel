@@ -3,9 +3,9 @@ import { useEffect } from "react";
 import { toast } from "sonner";
 import { useServiceDetailStore } from "../store/useServiceDeteilStore";
 import useWebSocket from "react-use-websocket";
-import { getServices } from "@/shared/api/services/services";
-import { getIncidents } from "@/shared/api/incidents/incidents";
-import { getStatistics } from "@/shared/api/statistics/statistics";
+import { getServices } from "@/shared/api/gen/services/services";
+import { getIncidents } from "@/shared/api/gen/incidents/incidents";
+import { getStatistics } from "@/shared/api/gen/statistics/statistics";
 
 export const useServiceDetail = (serviceID: string) => {
   const {
@@ -13,7 +13,6 @@ export const useServiceDetail = (serviceID: string) => {
     serviceDetailData,
     incidentsData,
     serviceStatsData,
-    resolveIncident,
     filters,
     setDeleteIncident,
     setServiceDetailData,
@@ -21,16 +20,12 @@ export const useServiceDetail = (serviceID: string) => {
     setServiceStatsData,
     setFilters,
     setUpdateServiceStatsData,
-    setResolveIncident,
   } = useServiceDetailStore();
 
   const { postServicesIdCheck, getServicesId } = getServices();
   const { getServicesIdStats } = getStatistics();
-  const {
-    getServicesIdIncidents,
-    deleteServicesIdIncidentsIncidentId,
-    postServicesIdResolve,
-  } = getIncidents();
+  const { getServicesIdIncidents, deleteServicesIdIncidentsIncidentId } =
+    getIncidents();
 
   // Get service
   const getServiceDetail = async () => {
@@ -91,23 +86,6 @@ export const useServiceDetail = (serviceID: string) => {
       });
   };
 
-  // Resolve incident
-  const onResolveIncident = async () => {
-    await postServicesIdResolve(serviceID ?? "")
-      .then(() => {
-        getServiceDetail();
-        getAllIncidents();
-        getServiceStats();
-        toast.success("Incident resolved");
-      })
-      .catch((err) => {
-        toast.error(err.response.data.error);
-      })
-      .finally(() => {
-        setResolveIncident(false);
-      });
-  };
-
   // WebSocket connection to update service stats
   const { lastMessage } = useWebSocket(socketUrl, {
     shouldReconnect: () => true,
@@ -147,13 +125,10 @@ export const useServiceDetail = (serviceID: string) => {
     serviceDetailData,
     incidentsData,
     serviceStatsData,
-    resolveIncident,
     filters,
     onCheckService,
     onDeleteIncident,
-    onResolveIncident,
     setFilters,
     setDeleteIncident,
-    setResolveIncident,
   };
 };

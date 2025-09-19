@@ -23,7 +23,6 @@ import type { WebServiceDTO } from "@/shared/types/model";
 interface ServiceOverviewProps {
   serviceDetailData: WebServiceDTO;
   onCheckService: (serviceId: string) => void;
-  setResolveIncident: (value: boolean) => void;
 }
 
 export const ServiceOverview = ({

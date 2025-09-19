@@ -7,37 +7,18 @@ package repo_incidents
 
 import (
 	"context"
-	"time"
 
 	"github.com/sxwebdev/sentinel/internal/models"
 )
 
 const create = `-- name: Create :one
-INSERT INTO incidents (id, service_id, start_time, end_time, error, duration_ns, resolved)
-	VALUES (?, ?, ?, ?, ?, ?, ?)
-	RETURNING id, service_id, start_time, end_time, error, duration_ns, resolved, created_at, updated_at
+INSERT INTO incidents (id, service_id, start_time, error)
+	VALUES (?, ?, CURRENT_TIMESTAMP, ?3)
+	RETURNING id, service_id, start_time, end_time, error, duration, resolved, created_at, updated_at
 `
 
-type CreateParams struct {
-	ID         string     `db:"id" json:"id"`
-	ServiceID  string     `db:"service_id" json:"service_id"`
-	StartTime  time.Time  `db:"start_time" json:"start_time"`
-	EndTime    *time.Time `db:"end_time" json:"end_time"`
-	Error      string     `db:"error" json:"error"`
-	DurationNs *int64     `db:"duration_ns" json:"duration_ns"`
-	Resolved   bool       `db:"resolved" json:"resolved"`
-}
-
-func (q *Queries) Create(ctx context.Context, arg CreateParams) (*models.Incident, error) {
-	row := q.db.QueryRowContext(ctx, create,
-		arg.ID,
-		arg.ServiceID,
-		arg.StartTime,
-		arg.EndTime,
-		arg.Error,
-		arg.DurationNs,
-		arg.Resolved,
-	)
+func (q *Queries) Create(ctx context.Context, iD string, serviceID string, incidentError string) (*models.Incident, error) {
+	row := q.db.QueryRowContext(ctx, create, iD, serviceID, incidentError)
 	var i models.Incident
 	err := row.Scan(
 		&i.ID,
@@ -45,7 +26,7 @@ func (q *Queries) Create(ctx context.Context, arg CreateParams) (*models.Inciden
 		&i.StartTime,
 		&i.EndTime,
 		&i.Error,
-		&i.DurationNs,
+		&i.Duration,
 		&i.Resolved,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -63,7 +44,7 @@ func (q *Queries) Delete(ctx context.Context, id string) error {
 }
 
 const getByID = `-- name: GetByID :one
-SELECT id, service_id, start_time, end_time, error, duration_ns, resolved, created_at, updated_at FROM incidents WHERE id=? LIMIT 1
+SELECT id, service_id, start_time, end_time, error, duration, resolved, created_at, updated_at FROM incidents WHERE id=? LIMIT 1
 `
 
 func (q *Queries) GetByID(ctx context.Context, id string) (*models.Incident, error) {
@@ -75,7 +56,7 @@ func (q *Queries) GetByID(ctx context.Context, id string) (*models.Incident, err
 		&i.StartTime,
 		&i.EndTime,
 		&i.Error,
-		&i.DurationNs,
+		&i.Duration,
 		&i.Resolved,
 		&i.CreatedAt,
 		&i.UpdatedAt,

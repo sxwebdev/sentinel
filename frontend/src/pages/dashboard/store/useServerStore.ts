@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import type { WebServerInfoResponse } from "@/shared/types/model";
-import { getServer } from "@/shared/api/server/server";
+import { getServer } from "@/shared/api/gen/server/server";
 import { toast } from "sonner";
 
 interface ServerStore {

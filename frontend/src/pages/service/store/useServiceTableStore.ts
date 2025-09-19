@@ -1,6 +1,9 @@
 import { create } from "zustand";
-import type { GetTagsCountResult, GetTagsResult } from "@/shared/api/tags/tags";
-import type { GetServicesResult } from "@/shared/api/services/services";
+import type {
+  GetTagsCountResult,
+  GetTagsResult,
+} from "@/shared/api/gen/tags/tags";
+import type { GetServicesResult } from "@/shared/api/gen/services/services";
 import type { WebServiceDTO } from "@/shared/types/model";
 
 interface ServiceTableStore {

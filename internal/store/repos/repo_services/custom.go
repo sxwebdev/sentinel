@@ -13,6 +13,8 @@ type ICustomQuerier interface {
 	GetViewByID(ctx context.Context, id string) (*models.ServiceFullView, error)
 	Update(ctx context.Context, id string, service UpdateServiceRequest) (*models.ServiceFullView, error)
 	FindView(ctx context.Context, params FindParams) (*storecmn.FindResponseWithCount[*models.ServiceFullView], error)
+	GetAllTags(ctx context.Context) ([]string, error)
+	GetAllTagsWithCount(ctx context.Context) (map[string]int, error)
 }
 
 type CustomQueries struct {

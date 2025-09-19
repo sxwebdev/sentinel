@@ -2,7 +2,7 @@ import { create } from "zustand";
 import {
   type GetDashboardStatsResult,
   getDashboard,
-} from "@/shared/api/dashboard/dashboard";
+} from "@/shared/api/gen/dashboard/dashboard";
 
 interface DashboardStore {
   dashboardInfo: GetDashboardStatsResult | null;

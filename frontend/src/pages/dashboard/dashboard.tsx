@@ -9,7 +9,7 @@ import {
 import { useDashboardLogic } from "./hooks/useDashboardLogic";
 import { InfoCardStats } from "@/entities/infoStatsCard/infoCardStats";
 import { Loader } from "@/entities/loader/loader";
-import type { GetDashboardStatsResult } from "@/shared/api/dashboard/dashboard";
+import type { GetDashboardStatsResult } from "@/shared/api/gen/dashboard/dashboard";
 import { getProtocolDisplayName } from "@/shared/lib/getProtocolDisplayName";
 import { ServiceTable } from "../service/serviceTable";
 import { useWsLogic } from "./hooks/useWsLogic";

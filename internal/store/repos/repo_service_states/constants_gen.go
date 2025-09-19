@@ -48,7 +48,7 @@ const (
 	ColumnNameServiceStatesConsecutiveFails   ColumnName = "consecutive_fails"
 	ColumnNameServiceStatesConsecutiveSuccess ColumnName = "consecutive_success"
 	ColumnNameServiceStatesTotalChecks        ColumnName = "total_checks"
-	ColumnNameServiceStatesResponseTimeNs     ColumnName = "response_time_ns"
+	ColumnNameServiceStatesResponseTime       ColumnName = "response_time"
 	ColumnNameServiceStatesCreatedAt          ColumnName = "created_at"
 	ColumnNameServiceStatesUpdatedAt          ColumnName = "updated_at"
 )
@@ -64,7 +64,7 @@ func ServiceStatesColumnNames() ColumnNames {
 		ColumnNameServiceStatesConsecutiveFails,
 		ColumnNameServiceStatesConsecutiveSuccess,
 		ColumnNameServiceStatesTotalChecks,
-		ColumnNameServiceStatesResponseTimeNs,
+		ColumnNameServiceStatesResponseTime,
 		ColumnNameServiceStatesCreatedAt,
 		ColumnNameServiceStatesUpdatedAt,
 	}

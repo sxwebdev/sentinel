@@ -21,7 +21,7 @@ func (q *Queries) DeleteByServiceID(ctx context.Context, serviceID string) error
 }
 
 const getByServiceID = `-- name: GetByServiceID :one
-SELECT id, service_id, status, last_check, next_check, last_error, consecutive_fails, consecutive_success, total_checks, response_time_ns, created_at, updated_at FROM service_states WHERE service_id=? LIMIT 1
+SELECT id, service_id, status, last_check, next_check, last_error, consecutive_fails, consecutive_success, total_checks, response_time, created_at, updated_at FROM service_states WHERE service_id=? LIMIT 1
 `
 
 func (q *Queries) GetByServiceID(ctx context.Context, serviceID string) (*models.ServiceState, error) {
@@ -37,7 +37,7 @@ func (q *Queries) GetByServiceID(ctx context.Context, serviceID string) (*models
 		&i.ConsecutiveFails,
 		&i.ConsecutiveSuccess,
 		&i.TotalChecks,
-		&i.ResponseTimeNs,
+		&i.ResponseTime,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

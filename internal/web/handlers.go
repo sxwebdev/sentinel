@@ -178,7 +178,6 @@ func (s *Server) setupRoutes() {
 	api.Put("/services/:id", s.handleAPIUpdateService)
 	api.Delete("/services/:id", s.handleAPIDeleteService)
 	api.Post("/services/:id/check", s.handleAPIServiceCheck)
-	api.Post("/services/:id/resolve", s.handleAPIServiceResolve)
 
 	// Service detail API
 	api.Get("/services/:id", s.handleAPIServiceDetail)
@@ -542,38 +541,12 @@ func (s *Server) handleAPIServiceCheck(c *fiber.Ctx) error {
 		return newErrorResponse(c, fiber.StatusNotFound, storecmn.ErrNotFound)
 	}
 
-	err = s.monitorService.TriggerCheck(c.Context(), serviceID)
+	err = s.baseServices.Services().TriggerCheck(c.Context(), serviceID)
 	if err != nil {
 		return newErrorResponse(c, fiber.StatusInternalServerError, err)
 	}
 
 	return newSuccessResponse(c, "check triggered successfully")
-}
-
-// handleAPIServiceResolve resolves a service incident
-//
-//	@Summary		Resolve service incidents
-//	@Description	Forcefully resolves all active incidents for a service
-//	@Tags			incidents
-//	@Accept			json
-//	@Produce		json
-//	@Param			id	path		string			true	"Service ID"
-//	@Success		200	{object}	SuccessResponse	"Incidents resolved successfully"
-//	@Failure		400	{object}	ErrorResponse	"Bad request"
-//	@Failure		500	{object}	ErrorResponse	"Internal server error"
-//	@Router			/services/{id}/resolve [post]
-func (s *Server) handleAPIServiceResolve(c *fiber.Ctx) error {
-	serviceID := c.Params("id")
-	if serviceID == "" {
-		return newErrorResponse(c, fiber.StatusBadRequest, ErrServiceIDRequired)
-	}
-
-	err := s.monitorService.ForceResolveIncidents(c.Context(), serviceID)
-	if err != nil {
-		return newErrorResponse(c, fiber.StatusInternalServerError, err)
-	}
-
-	return newSuccessResponse(c, "incidents resolved successfully")
 }
 
 // handleFindIncidents returns recent incidents
@@ -645,29 +618,13 @@ func (s *Server) handleFindIncidents(c *fiber.Ctx) error {
 //	@Failure		500			{object}	ErrorResponse	"Internal server error"
 //	@Router			/services/{id}/incidents/{incidentId} [delete]
 func (s *Server) handleAPIDeleteIncident(c *fiber.Ctx) error {
-	serviceID := c.Params("id")
 	incidentID := c.Params("incidentId")
-
-	if serviceID == "" {
-		return newErrorResponse(c, fiber.StatusBadRequest, ErrServiceIDRequired)
-	}
-
 	if incidentID == "" {
 		return newErrorResponse(c, fiber.StatusBadRequest, ErrIncidentIDRequired)
 	}
 
-	// Check if service exists
-	exists, err := s.baseServices.Services().Exists(c.Context(), serviceID)
-	if err != nil {
-		return newErrorResponse(c, fiber.StatusInternalServerError, err)
-	}
-
-	if !exists {
-		return newErrorResponse(c, fiber.StatusNotFound, storecmn.ErrNotFound)
-	}
-
 	// Delete incident
-	err = s.monitorService.DeleteIncident(c.Context(), serviceID, incidentID)
+	err := s.baseServices.Incidents().Delete(c.Context(), incidentID)
 	if err != nil {
 		return newErrorResponse(c, fiber.StatusInternalServerError, err)
 	}

@@ -10,9 +10,9 @@ type Stats struct {
 	ServiceID           string        `json:"service_id"`
 	Period              time.Duration `json:"period" swaggertype:"primitive,integer"`
 	TotalIncidents      int64         `json:"total_incidents"`
-	TotalDowntime       time.Duration `json:"total_downtime" swaggertype:"primitive,integer"`
+	TotalDowntime       int64         `json:"total_downtime" swaggertype:"primitive,integer"`
 	UptimePercentage    float64       `json:"uptime_percentage"`
-	AvgResponseTime     time.Duration `json:"avg_response_time" swaggertype:"primitive,integer"`
+	AvgResponseTime     int64         `json:"avg_response_time" swaggertype:"primitive,integer"`
 	ResolvedIncidents   int64         `json:"resolved_incidents"`
 	UnresolvedIncidents int64         `json:"unresolved_incidents"`
 }
@@ -40,14 +40,14 @@ func (s *Service) Stats(ctx context.Context, serviceID string, since time.Time) 
 	}
 
 	// Get average response time from service state
-	var avgResponseTime time.Duration
+	var avgResponseTime int64
 	serviceState, err := s.store.ServiceStates().GetByServiceID(ctx, serviceID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get service state: %w", err)
 	}
 
-	if serviceState.ResponseTimeNs != nil {
-		avgResponseTime = time.Duration(*serviceState.ResponseTimeNs)
+	if serviceState.ResponseTime != nil {
+		avgResponseTime = *serviceState.ResponseTime
 	}
 
 	return &Stats{

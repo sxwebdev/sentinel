@@ -80,10 +80,14 @@ sqlc:
             create:
               skip_columns:
                 - created_at
+                - end_time
+                - duration
+                - resolved
                 - updated_at
               returning: "*"
               column_values:
-                created_at: now()
+                start_time: CURRENT_TIMESTAMP
+                error: sqlc.arg(incident_error)
             delete:
             get:
               name: GetByID

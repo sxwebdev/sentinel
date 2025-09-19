@@ -681,50 +681,6 @@
                 }
             }
         },
-        "/services/{id}/resolve": {
-            "post": {
-                "description": "Forcefully resolves all active incidents for a service",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "incidents"
-                ],
-                "summary": "Resolve service incidents",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Service ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Incidents resolved successfully",
-                        "schema": {
-                            "$ref": "#/definitions/web.SuccessResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request",
-                        "schema": {
-                            "$ref": "#/definitions/web.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/web.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
         "/services/{id}/stats": {
             "get": {
                 "description": "Returns service statistics for the specified period",

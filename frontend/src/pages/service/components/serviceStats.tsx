@@ -25,7 +25,7 @@ export const ServiceStats = ({
       description: "Total Checks",
     },
     {
-      value: `${((serviceStatsData?.avg_response_time ?? 0) / 1000000).toFixed(1)} ms`,
+      value: `${(serviceStatsData?.avg_response_time ?? 0).toFixed(1)} ms`,
       key: "avg_response_time",
       description: "Avg Response Time",
     },

@@ -11,10 +11,9 @@ import type {
   GetServicesIdIncidentsParams,
   StorecmnFindResponseWithCountStorageIncident,
   WebGetIncidentsStatsItem,
-  WebSuccessResponse,
-} from "../../types/model";
+} from "../../../types/model";
 
-import { customFetcher } from ".././baseApi";
+import { customFetcher } from "../../baseApi";
 
 export const getIncidents = () => {
   /**
@@ -66,22 +65,11 @@ export const getIncidents = () => {
       method: "DELETE",
     });
   };
-  /**
-   * Forcefully resolves all active incidents for a service
-   * @summary Resolve service incidents
-   */
-  const postServicesIdResolve = (id: string) => {
-    return customFetcher<WebSuccessResponse>({
-      url: `/services/${id}/resolve`,
-      method: "POST",
-    });
-  };
   return {
     getIncidents,
     getIncidentsStats,
     getServicesIdIncidents,
     deleteServicesIdIncidentsIncidentId,
-    postServicesIdResolve,
   };
 };
 export type GetIncidentsResult = NonNullable<
@@ -99,7 +87,4 @@ export type DeleteServicesIdIncidentsIncidentIdResult = NonNullable<
       ReturnType<typeof getIncidents>["deleteServicesIdIncidentsIncidentId"]
     >
   >
->;
-export type PostServicesIdResolveResult = NonNullable<
-  Awaited<ReturnType<ReturnType<typeof getIncidents>["postServicesIdResolve"]>>
 >;

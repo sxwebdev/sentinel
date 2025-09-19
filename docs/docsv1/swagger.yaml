@@ -828,35 +828,6 @@ paths:
       summary: Delete incident
       tags:
       - incidents
-  /services/{id}/resolve:
-    post:
-      consumes:
-      - application/json
-      description: Forcefully resolves all active incidents for a service
-      parameters:
-      - description: Service ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Incidents resolved successfully
-          schema:
-            $ref: '#/definitions/web.SuccessResponse'
-        "400":
-          description: Bad request
-          schema:
-            $ref: '#/definitions/web.ErrorResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/web.ErrorResponse'
-      summary: Resolve service incidents
-      tags:
-      - incidents
   /services/{id}/stats:
     get:
       consumes:

@@ -14,15 +14,12 @@ const ServiceDetail = ({ serviceID }: ServiceDetailProps) => {
     filters,
     incidentsData,
     deleteIncident,
-    resolveIncident,
     serviceDetailData,
     serviceStatsData,
     setFilters,
     onCheckService,
     setDeleteIncident,
     onDeleteIncident,
-    setResolveIncident,
-    onResolveIncident,
   } = useServiceDetail(serviceID);
 
   if (!serviceDetailData || !incidentsData || !serviceStatsData)
@@ -30,14 +27,6 @@ const ServiceDetail = ({ serviceID }: ServiceDetailProps) => {
 
   return (
     <>
-      <ConfirmDialog
-        open={resolveIncident}
-        setOpen={() => setResolveIncident(false)}
-        onSubmit={onResolveIncident}
-        title="Resolve Incident"
-        description="Are you sure you want to resolve this incident?"
-        type="default"
-      />
       <ConfirmDialog
         open={!!deleteIncident}
         setOpen={() => setDeleteIncident(null)}
@@ -51,7 +40,6 @@ const ServiceDetail = ({ serviceID }: ServiceDetailProps) => {
         <ServiceOverview
           serviceDetailData={serviceDetailData}
           onCheckService={onCheckService}
-          setResolveIncident={setResolveIncident}
         />
 
         <ServiceStats

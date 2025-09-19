@@ -1,6 +1,6 @@
-// Helper function to format duration from nanoseconds to human readable format
-export const formatDuration = (nanoseconds: number) => {
-  const seconds = Math.floor(nanoseconds / 1000000000);
+// Helper function to format duration from milliseconds to human readable format
+export const formatDuration = (milliseconds: number) => {
+  const seconds = Math.floor(milliseconds / 1000);
   const minutes = Math.floor(seconds / 60);
   const hours = Math.floor(minutes / 60);
   const days = Math.floor(hours / 24);
@@ -16,7 +16,9 @@ export const formatDuration = (nanoseconds: number) => {
   } else if (minutes > 0) {
     const remainingSeconds = seconds % 60;
     return `${minutes}m ${remainingSeconds}s`;
-  } else {
+  } else if (seconds > 0) {
     return `${seconds}s`;
+  } else {
+    return `${milliseconds}ms`;
   }
 };

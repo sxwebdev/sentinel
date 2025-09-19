@@ -11,9 +11,9 @@ import type {
   WebCreateUpdateServiceRequest,
   WebServiceDTO,
   WebSuccessResponse,
-} from "../../types/model";
+} from "../../../types/model";
 
-import { customFetcher } from ".././baseApi";
+import { customFetcher } from "../../baseApi";
 
 export const getServices = () => {
   /**

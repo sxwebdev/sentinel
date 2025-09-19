@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/shared/components/ui/select";
-import { getIncidents } from "@/shared/api/incidents/incidents";
+import { getIncidents } from "@/shared/api/gen/incidents/incidents";
 import { useEffect, useMemo } from "react";
 import { toast } from "sonner";
 

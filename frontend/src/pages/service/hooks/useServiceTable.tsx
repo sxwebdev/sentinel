@@ -29,8 +29,8 @@ import {
 import { toast } from "sonner";
 import { useServiceTableStore } from "../store/useServiceTableStore";
 import { ActivityIndicatorSVG } from "@/entities/ActivityIndicatorSVG/ActivityIndicatorSVG";
-import { getServices } from "@/shared/api/services/services";
-import { getTags } from "@/shared/api/tags/tags";
+import { getServices } from "@/shared/api/gen/services/services";
+import { getTags } from "@/shared/api/gen/tags/tags";
 import type { WebServiceDTO } from "@/shared/types/model";
 
 export const useServiceTable = () => {

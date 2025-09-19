@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { getIncidents } from "@/shared/api/incidents/incidents";
+import { getIncidents } from "@/shared/api/gen/incidents/incidents";
 import { ExpandableText } from "@/shared/components/expandableText";
 import PaginationTable from "@/shared/components/paginationTable";
 import {

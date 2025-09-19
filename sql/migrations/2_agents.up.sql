@@ -24,3 +24,11 @@ CREATE TABLE IF NOT EXISTS agents (
 -- Create indexes for performance
 CREATE INDEX IF NOT EXISTS idx_agents_name ON agents(name); 
 CREATE INDEX IF NOT EXISTS idx_agents_enabled ON agents(is_enabled);
+
+-- Update incidents duration. Converting from nanoseconds to milliseconds and renaming the column to duration
+UPDATE incidents SET duration_ns = duration_ns / 1000000 WHERE duration_ns IS NOT NULL AND duration_ns > 0;
+ALTER TABLE incidents RENAME COLUMN duration_ns TO duration;
+
+-- Update service_states response_time_ns to response_time (from nanoseconds to milliseconds)
+UPDATE service_states SET response_time_ns = response_time_ns / 1000000 WHERE response_time_ns IS NOT NULL AND response_time_ns > 0;
+ALTER TABLE service_states RENAME COLUMN response_time_ns TO response_time;

@@ -9,9 +9,9 @@ import type {
   WebHealthCheckResponse,
   WebServerInfoResponse,
   WebSuccessResponse,
-} from "../../types/model";
+} from "../../../types/model";
 
-import { customFetcher } from ".././baseApi";
+import { customFetcher } from "../../baseApi";
 
 export const getServer = () => {
   /**

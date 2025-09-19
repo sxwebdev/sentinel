@@ -88,7 +88,7 @@ func (s *CustomQueries) FindView(ctx context.Context, params FindParams) (*store
 		"ss.consecutive_fails",
 		"ss.consecutive_success",
 		"ss.total_checks",
-		"ss.response_time_ns",
+		"ss.response_time",
 	)
 	sb.JoinWithOption(sqlbuilder.LeftJoin, "incidents", "s.id = incidents.service_id")
 	sb.JoinWithOption(sqlbuilder.LeftJoin, "service_states ss", "s.id = ss.service_id")

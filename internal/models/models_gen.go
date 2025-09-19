@@ -31,15 +31,15 @@ type Agent struct {
 }
 
 type Incident struct {
-	ID         string     `db:"id" json:"id"`
-	ServiceID  string     `db:"service_id" json:"service_id"`
-	StartTime  time.Time  `db:"start_time" json:"start_time"`
-	EndTime    *time.Time `db:"end_time" json:"end_time"`
-	Error      string     `db:"error" json:"error"`
-	DurationNs *int64     `db:"duration_ns" json:"duration_ns"`
-	Resolved   bool       `db:"resolved" json:"resolved"`
-	CreatedAt  *time.Time `db:"created_at" json:"created_at"`
-	UpdatedAt  *time.Time `db:"updated_at" json:"updated_at"`
+	ID        string     `db:"id" json:"id"`
+	ServiceID string     `db:"service_id" json:"service_id"`
+	StartTime time.Time  `db:"start_time" json:"start_time"`
+	EndTime   *time.Time `db:"end_time" json:"end_time"`
+	Error     string     `db:"error" json:"error"`
+	Duration  *int64     `db:"duration" json:"duration"`
+	Resolved  bool       `db:"resolved" json:"resolved"`
+	CreatedAt *time.Time `db:"created_at" json:"created_at"`
+	UpdatedAt *time.Time `db:"updated_at" json:"updated_at"`
 }
 
 type Service struct {
@@ -66,7 +66,7 @@ type ServiceState struct {
 	ConsecutiveFails   int64         `db:"consecutive_fails" json:"consecutive_fails"`
 	ConsecutiveSuccess int64         `db:"consecutive_success" json:"consecutive_success"`
 	TotalChecks        int64         `db:"total_checks" json:"total_checks"`
-	ResponseTimeNs     *int64        `db:"response_time_ns" json:"response_time_ns"`
+	ResponseTime       *int64        `db:"response_time" json:"response_time"`
 	CreatedAt          *time.Time    `db:"created_at" json:"created_at"`
 	UpdatedAt          *time.Time    `db:"updated_at" json:"updated_at"`
 }

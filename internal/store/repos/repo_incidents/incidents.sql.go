@@ -8,6 +8,8 @@ package repo_incidents
 import (
 	"context"
 	"time"
+
+	"github.com/sxwebdev/sentinel/internal/models"
 )
 
 const deleteByServiceID = `-- name: DeleteByServiceID :exec
@@ -19,11 +21,65 @@ func (q *Queries) DeleteByServiceID(ctx context.Context, serviceID string) error
 	return err
 }
 
+const getAllUnresolvedByServiceID = `-- name: GetAllUnresolvedByServiceID :many
+SELECT id, service_id, start_time, end_time, error, duration, resolved, created_at, updated_at FROM incidents
+WHERE service_id=? AND NOT resolved
+ORDER BY start_time DESC
+`
+
+func (q *Queries) GetAllUnresolvedByServiceID(ctx context.Context, serviceID string) ([]*models.Incident, error) {
+	rows, err := q.db.QueryContext(ctx, getAllUnresolvedByServiceID, serviceID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*models.Incident{}
+	for rows.Next() {
+		var i models.Incident
+		if err := rows.Scan(
+			&i.ID,
+			&i.ServiceID,
+			&i.StartTime,
+			&i.EndTime,
+			&i.Error,
+			&i.Duration,
+			&i.Resolved,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const resolveByID = `-- name: ResolveByID :exec
+UPDATE incidents
+SET
+  resolved = TRUE,
+  end_time = CURRENT_TIMESTAMP,
+  duration = CAST((julianday('now') - julianday(start_time)) * 86400000 AS INTEGER),
+  updated_at = CURRENT_TIMESTAMP
+WHERE id=? AND NOT resolved
+`
+
+func (q *Queries) ResolveByID(ctx context.Context, id string) error {
+	_, err := q.db.ExecContext(ctx, resolveByID, id)
+	return err
+}
+
 const statsByServiceID = `-- name: StatsByServiceID :one
 SELECT
  	COUNT(*) AS total_incidents,
- 	SUM(duration_ns) AS total_downtime,
-  AVG(duration_ns) AS avg_downtime,
+ 	SUM(duration) AS total_downtime,
+  AVG(duration) AS avg_downtime,
   SUM(CASE WHEN resolved THEN 1 ELSE 0 END) AS resolved_incidents,
   SUM(CASE WHEN NOT resolved THEN 1 ELSE 0 END) AS unresolved_incidents
 FROM incidents

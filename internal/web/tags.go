@@ -15,7 +15,7 @@ import (
 //	@Failure		500	{object}	ErrorResponse	"Internal server error"
 //	@Router			/tags [get]
 func (h *Server) handleGetAllTags(c *fiber.Ctx) error {
-	tags, err := h.storage.GetAllTags(c.Context())
+	tags, err := h.baseServices.Services().GetAllTags(c.Context())
 	if err != nil {
 		return newErrorResponse(c, fiber.StatusInternalServerError, err)
 	}
@@ -33,7 +33,7 @@ func (h *Server) handleGetAllTags(c *fiber.Ctx) error {
 //	@Failure		500	{object}	ErrorResponse	"Internal server error"
 //	@Router			/tags/count [get]
 func (h *Server) handleGetAllTagsWithCount(c *fiber.Ctx) error {
-	tagsWithCount, err := h.storage.GetAllTagsWithCount(c.Context())
+	tagsWithCount, err := h.baseServices.Services().GetAllTagsWithCount(c.Context())
 	if err != nil {
 		return newErrorResponse(c, fiber.StatusInternalServerError, err)
 	}

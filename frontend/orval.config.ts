@@ -5,7 +5,7 @@ export default defineConfig({
     input: "../docs/docsv1/swagger.json", // путь к Swagger JSON
     output: {
       mode: "tags-split", // или 'split' / 'single'
-      target: "./src/shared/api/generated.ts", // куда будет сгенерировано
+      target: "./src/shared/api/gen", // куда будет сгенерировано
       schemas: "./src/shared/types/model", // типы
       client: "axios",
       override: {

@@ -1,24 +1,22 @@
 package repo_incidents
 
-import "time"
-
 type StatsByServiceID struct {
 	TotalIncidents      int64
-	TotalDowntime       time.Duration
-	AvgDowntime         time.Duration
+	TotalDowntime       int64
+	AvgDowntime         int64
 	ResolvedIncidents   int64
 	UnresolvedIncidents int64
 }
 
 func (s StatsByServiceIDRow) ToDomain() *StatsByServiceID {
-	var totalDowntime time.Duration
+	var totalDowntime int64
 	if s.TotalDowntime != nil {
-		totalDowntime = time.Duration(*s.TotalDowntime)
+		totalDowntime = int64(*s.TotalDowntime)
 	}
 
-	var avgDowntime time.Duration
+	var avgDowntime int64
 	if s.AvgDowntime != nil {
-		avgDowntime = time.Duration(*s.AvgDowntime)
+		avgDowntime = int64(*s.AvgDowntime)
 	}
 
 	var resolvedIncidents int64

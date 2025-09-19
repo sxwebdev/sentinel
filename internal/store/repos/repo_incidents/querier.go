@@ -12,10 +12,12 @@ import (
 )
 
 type Querier interface {
-	Create(ctx context.Context, arg CreateParams) (*models.Incident, error)
+	Create(ctx context.Context, iD string, serviceID string, incidentError string) (*models.Incident, error)
 	Delete(ctx context.Context, id string) error
 	DeleteByServiceID(ctx context.Context, serviceID string) error
+	GetAllUnresolvedByServiceID(ctx context.Context, serviceID string) ([]*models.Incident, error)
 	GetByID(ctx context.Context, id string) (*models.Incident, error)
+	ResolveByID(ctx context.Context, id string) error
 	StatsByServiceID(ctx context.Context, serviceID string, startTime time.Time) (*StatsByServiceIDRow, error)
 }
 

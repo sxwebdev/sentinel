@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import type { WebCreateUpdateServiceRequest } from "@/shared/types/model";
-import { getServices } from "@/shared/api/services/services";
+import { getServices } from "@/shared/api/gen/services/services";
 
 export const useServiceCreate = () => {
   const [isOpenModal, setIsOpenModal] = useState(false);

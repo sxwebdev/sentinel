@@ -36,7 +36,7 @@ func (s *CustomQueries) GetViewByID(ctx context.Context, id string) (*models.Ser
 		"ss.consecutive_fails",
 		"ss.consecutive_success",
 		"ss.total_checks",
-		"ss.response_time_ns",
+		"ss.response_time",
 	)
 	sb.From("services s")
 	sb.JoinWithOption(sqlbuilder.LeftJoin, "incidents", "s.id = incidents.service_id")

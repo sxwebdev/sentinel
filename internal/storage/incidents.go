@@ -19,7 +19,7 @@ type IncidentRow struct {
 	StartTime  time.Time  `db:"start_time"`
 	EndTime    *time.Time `db:"end_time"`
 	Error      string     `db:"error"`
-	DurationNS *int64     `db:"duration_ns"`
+	DurationNS *int64     `db:"duration"`
 	Resolved   bool       `db:"resolved"`
 	CreatedAt  time.Time  `db:"created_at"`
 	UpdatedAt  time.Time  `db:"updated_at"`
@@ -38,7 +38,7 @@ func (o *Storage) GetIncidentByID(ctx context.Context, id string) (*Incident, er
 		"i.start_time",
 		"i.end_time",
 		"i.error",
-		"i.duration_ns",
+		"i.duration",
 		"i.resolved",
 		"i.created_at",
 		"i.updated_at",
@@ -127,7 +127,7 @@ func (o *Storage) FindIncidents(ctx context.Context, params FindIncidentsParams)
 		"i.start_time",
 		"i.end_time",
 		"i.error",
-		"i.duration_ns",
+		"i.duration",
 		"i.resolved",
 		"i.created_at",
 		"i.updated_at",
@@ -236,7 +236,7 @@ func (o *Storage) ResolveAllIncidents(ctx context.Context, serviceID string) ([]
 			Set(
 				ub.Assign("resolved", true),
 				ub.Assign("end_time", now),
-				ub.Assign("duration_ns", now.Sub(item.StartTime)),
+				ub.Assign("duration", now.Sub(item.StartTime)),
 				ub.Assign("updated_at", now),
 			).
 			Where(
@@ -268,29 +268,29 @@ func (o *Storage) ResolveAllIncidents(ctx context.Context, serviceID string) ([]
 }
 
 // SaveIncident creates a new incident using ORM with retry logic
-func (o *Storage) SaveIncident(ctx context.Context, incident *Incident) error {
-	ib := sqlbuilder.NewInsertBuilder()
-	ib.InsertInto("incidents")
-	ib.Cols("id", "service_id", "start_time", "end_time", "error", "duration_ns", "resolved")
+// func (o *Storage) SaveIncident(ctx context.Context, incident *Incident) error {
+// 	ib := sqlbuilder.NewInsertBuilder()
+// 	ib.InsertInto("incidents")
+// 	ib.Cols("id", "service_id", "start_time", "end_time", "error", "duration", "resolved")
 
-	ib.Values(
-		utils.GenerateULID(),
-		incident.ServiceID,
-		incident.StartTime,
-		incident.EndTime,
-		incident.Error,
-		durationToNS(incident.Duration),
-		incident.Resolved,
-	)
+// 	ib.Values(
+// 		utils.GenerateULID(),
+// 		incident.ServiceID,
+// 		incident.StartTime,
+// 		incident.EndTime,
+// 		incident.Error,
+// 		durationToNS(incident.Duration),
+// 		incident.Resolved,
+// 	)
 
-	sql, args := ib.Build()
-	_, err := o.db.ExecContext(ctx, sql, args...)
-	if err != nil {
-		return fmt.Errorf("failed to create incident: %w", err)
-	}
+// 	sql, args := ib.Build()
+// 	_, err := o.db.ExecContext(ctx, sql, args...)
+// 	if err != nil {
+// 		return fmt.Errorf("failed to create incident: %w", err)
+// 	}
 
-	return nil
-}
+// 	return nil
+// }
 
 // UpdateIncident updates an existing incident using ORM with retry logic
 func (o *Storage) UpdateIncident(ctx context.Context, incident *Incident) error {
@@ -301,7 +301,7 @@ func (o *Storage) UpdateIncident(ctx context.Context, incident *Incident) error 
 		ub.Assign("start_time", incident.StartTime),
 		ub.Assign("end_time", incident.EndTime),
 		ub.Assign("error", incident.Error),
-		ub.Assign("duration_ns", durationToNS(incident.Duration)),
+		ub.Assign("duration", durationToNS(incident.Duration)),
 		ub.Assign("resolved", incident.Resolved),
 		ub.Assign("updated_at", time.Now()),
 	)
@@ -317,19 +317,19 @@ func (o *Storage) UpdateIncident(ctx context.Context, incident *Incident) error 
 }
 
 // DeleteIncident deletes an incident by ID using ORM with retry logic
-func (o *Storage) DeleteIncident(ctx context.Context, incidentID string) error {
-	db := sqlbuilder.NewDeleteBuilder()
-	db.DeleteFrom("incidents")
-	db.Where(db.Equal("id", incidentID))
+// func (o *Storage) DeleteIncident(ctx context.Context, incidentID string) error {
+// 	db := sqlbuilder.NewDeleteBuilder()
+// 	db.DeleteFrom("incidents")
+// 	db.Where(db.Equal("id", incidentID))
 
-	sql, args := db.Build()
-	_, err := o.db.ExecContext(ctx, sql, args...)
-	if err != nil {
-		return fmt.Errorf("failed to delete incident: %w", err)
-	}
+// 	sql, args := db.Build()
+// 	_, err := o.db.ExecContext(ctx, sql, args...)
+// 	if err != nil {
+// 		return fmt.Errorf("failed to delete incident: %w", err)
+// 	}
 
-	return nil
-}
+// 	return nil
+// }
 
 type GetIncidentsStatsByDateRangeItem struct {
 	Date          time.Time     `json:"date"`
@@ -355,8 +355,8 @@ func (o *Storage) GetIncidentsStatsByDateRange(ctx context.Context, startTime, e
 		sb := sqlbuilder.NewSelectBuilder()
 		sb.Select(
 			"COUNT(*) as count",
-			"AVG(CASE WHEN resolved = true THEN duration_ns ELSE (strftime('%s', 'now') - strftime('%s', start_time)) * 1000000000 END) as avg_duration",
-			"SUM(CASE WHEN resolved = true THEN duration_ns ELSE (strftime('%s', 'now') - strftime('%s', start_time)) * 1000000000 END) as total_duration",
+			"AVG(CASE WHEN resolved = true THEN duration ELSE (strftime('%s', 'now') - strftime('%s', start_time)) * 1000 END) as avg_duration",
+			"SUM(CASE WHEN resolved = true THEN duration ELSE (strftime('%s', 'now') - strftime('%s', start_time)) * 1000 END) as total_duration",
 		)
 		sb.From("incidents")
 		sb.Where(sb.GreaterEqualThan("start_time", dayStart))
@@ -393,12 +393,30 @@ func (o *Storage) GetIncidentsStatsByDateRange(ctx context.Context, startTime, e
 	return result, nil
 }
 
-// GetSQLiteVersion returns the SQLite version
-func (o *Storage) GetSQLiteVersion(ctx context.Context) (string, error) {
-	var version string
-	err := o.db.QueryRowContext(ctx, "SELECT sqlite_version()").Scan(&version)
-	if err != nil {
-		return "", fmt.Errorf("failed to get SQLite version: %w", err)
+// rowToIncident converts an IncidentRow to Incident
+func (o *Storage) rowToIncident(row *IncidentRow) *Incident {
+	incident := &Incident{
+		ID:        row.ID,
+		ServiceID: row.ServiceID,
+		StartTime: row.StartTime,
+		EndTime:   row.EndTime,
+		Error:     row.Error,
+		Resolved:  row.Resolved,
 	}
-	return version, nil
+
+	if row.DurationNS != nil {
+		duration := time.Duration(*row.DurationNS)
+		incident.Duration = &duration
+	}
+
+	return incident
+}
+
+// durationToNS converts a duration pointer to nanoseconds
+func durationToNS(d *time.Duration) *int64 {
+	if d == nil {
+		return nil
+	}
+	ns := d.Nanoseconds()
+	return &ns
 }

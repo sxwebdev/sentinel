@@ -9,7 +9,6 @@ import (
 
 	"github.com/containrrr/shoutrrr"
 	"github.com/sxwebdev/sentinel/internal/models"
-	"github.com/sxwebdev/sentinel/internal/storage"
 	"github.com/tkcrm/mx/logger"
 )
 
@@ -149,7 +148,7 @@ func (s *Notifier) processNotification(req *notificationRequest) {
 }
 
 // SendAlert sends an alert notification when a service goes down
-func (s *Notifier) SendAlert(service *models.ServiceFullView, incident *storage.Incident) error {
+func (s *Notifier) SendAlert(service *models.ServiceFullView, incident *models.Incident) error {
 	s.mu.RLock()
 	if !s.isStarted {
 		s.mu.RUnlock()
@@ -162,7 +161,7 @@ func (s *Notifier) SendAlert(service *models.ServiceFullView, incident *storage.
 }
 
 // SendRecovery sends a recovery notification when a service comes back up
-func (s *Notifier) SendRecovery(service *models.ServiceFullView, incident *storage.Incident) error {
+func (s *Notifier) SendRecovery(service *models.ServiceFullView, incident *models.Incident) error {
 	s.mu.RLock()
 	if !s.isStarted {
 		s.mu.RUnlock()
@@ -273,7 +272,7 @@ func (s *Notifier) sendMessageSync(message string) error {
 }
 
 // formatAlertMessage formats an alert message
-func (s *Notifier) formatAlertMessage(service *models.ServiceFullView, incident *storage.Incident) string {
+func (s *Notifier) formatAlertMessage(service *models.ServiceFullView, incident *models.Incident) string {
 	tags := "-"
 	if len(service.Tags) > 0 {
 		tags = strings.Join(service.Tags, ", ")
@@ -296,10 +295,10 @@ func (s *Notifier) formatAlertMessage(service *models.ServiceFullView, incident 
 }
 
 // formatRecoveryMessage formats a recovery message
-func (s *Notifier) formatRecoveryMessage(service *models.ServiceFullView, incident *storage.Incident) string {
+func (s *Notifier) formatRecoveryMessage(service *models.ServiceFullView, incident *models.Incident) string {
 	var duration string
 	if incident.Duration != nil {
-		duration = formatDuration(*incident.Duration)
+		duration = formatDuration(time.Duration(*incident.Duration) * time.Millisecond)
 	} else {
 		duration = formatDuration(time.Since(incident.StartTime))
 	}

@@ -6,7 +6,7 @@ import type {
   WebCreateUpdateServiceRequest,
   WebServiceDTO,
 } from "@/shared/types/model";
-import { getServices } from "@/shared/api/services/services";
+import { getServices } from "@/shared/api/gen/services/services";
 
 export const useServiceUpdate = () => {
   const [serviceData, setServiceData] = useState<WebServiceDTO | null>(null);

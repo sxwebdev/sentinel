@@ -122,8 +122,8 @@ func (s *Server) getDashboardStats(ctx context.Context) (*DashboardStats, error)
 			}
 
 			// Add response time to total (only from services that have response time data)
-			if serviceState.ResponseTimeNs != nil && *serviceState.ResponseTimeNs > 0 {
-				totalResponseTimeMs += *serviceState.ResponseTimeNs / 1000000 // Convert to milliseconds
+			if serviceState.ResponseTime != nil && *serviceState.ResponseTime > 0 {
+				totalResponseTimeMs += *serviceState.ResponseTime
 				responseTimeCount++
 			}
 			totalChecks += serviceState.TotalChecks

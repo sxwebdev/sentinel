@@ -30,7 +30,7 @@ type itemViewRow struct {
 	ConsecutiveFails   int
 	ConsecutiveSuccess int
 	TotalChecks        int
-	ResponseTimeNS     *int64
+	ResponseTime       *int64
 }
 
 // rowToModel converts a ServiceRow to Service
@@ -78,8 +78,8 @@ func rowToModel(row *itemViewRow) (*models.ServiceFullView, error) {
 		TotalChecks:        row.TotalChecks,
 	}
 
-	if row.ResponseTimeNS != nil {
-		svc.ResponseTime = utils.Pointer(time.Duration(*row.ResponseTimeNS))
+	if row.ResponseTime != nil {
+		svc.ResponseTime = utils.Pointer(time.Duration(*row.ResponseTime))
 	}
 
 	return svc, nil
