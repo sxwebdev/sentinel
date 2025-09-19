@@ -8,6 +8,7 @@ import (
 	"slices"
 	"time"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/sxwebdev/sentinel/internal/models"
 	"github.com/sxwebdev/sentinel/internal/receiver"
 	"github.com/sxwebdev/sentinel/internal/store/repos"
@@ -18,11 +19,11 @@ import (
 )
 
 type CreateUpdateParams struct {
-	Name      string
-	Protocol  models.ServiceProtocolType
-	Interval  time.Duration
-	Timeout   time.Duration
-	Retries   int64
+	Name      string                     `validate:"required"`
+	Protocol  models.ServiceProtocolType `validate:"required"`
+	Interval  time.Duration              `validate:"required"`
+	Timeout   time.Duration              `validate:"required"`
+	Retries   int64                      `validate:"required,gte=0"`
 	Tags      []string
 	Config    map[string]any
 	IsEnabled bool
@@ -30,6 +31,10 @@ type CreateUpdateParams struct {
 
 // Create new service
 func (s *Service) Create(ctx context.Context, params CreateUpdateParams) (*models.ServiceFullView, error) {
+	if err := validator.New().Struct(params); err != nil {
+		return nil, fmt.Errorf("validation error: %w", err)
+	}
+
 	if len(params.Tags) > 0 {
 		slices.Sort(params.Tags)
 	}
