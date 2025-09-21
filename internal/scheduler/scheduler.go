@@ -2,7 +2,6 @@ package scheduler
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"log"
@@ -20,7 +19,6 @@ import (
 	"github.com/sxwebdev/sentinel/internal/services/servicestate"
 	"github.com/sxwebdev/sentinel/internal/store"
 	"github.com/sxwebdev/sentinel/internal/store/repos/repo_service_states"
-	"github.com/sxwebdev/sentinel/internal/store/storecmn"
 	"github.com/sxwebdev/sentinel/internal/utils"
 	"github.com/tkcrm/modules/pkg/db/dbutils"
 	"github.com/tkcrm/mx/logger"
@@ -74,6 +72,8 @@ func (s *Scheduler) Start(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to load services: %w", err)
 	}
+
+	s.logger.Infof("starting scheduler with %d enabled services", len(services.Items))
 
 	// Get all services under read lock
 	for _, svc := range services.Items {
@@ -541,25 +541,23 @@ func (m *Scheduler) resolveActiveIncidents(ctx context.Context, serviceID string
 		return fmt.Errorf("failed to resolve incidents: %w", err)
 	}
 
-	err = storecmn.WrapTx(ctx, m.store.SQLite(), func(txCtx *sql.Tx) error {
-		for _, incident := range incidents {
-			resolverIncident, err := m.baseservices.Incidents().ResolveByID(ctx, incident.ID)
-			if err != nil {
-				return fmt.Errorf("failed to resolve incident %s: %w", incident.ID, err)
-			}
+	if len(incidents) == 0 {
+		// No active incidents to resolve
+		return nil
+	}
 
-			if m.notifier != nil {
-				if err := m.notifier.SendRecovery(svc, resolverIncident); err != nil {
-					m.logger.Errorf("failed to send recovery notification for %s: %v", svc.Name, err)
-					return nil
-				}
-			}
+	for _, incident := range incidents {
+		resolverIncident, err := m.baseservices.Incidents().ResolveByID(ctx, incident.ID)
+		if err != nil {
+			return fmt.Errorf("failed to resolve incident %s: %w", incident.ID, err)
 		}
 
-		return nil
-	})
-	if err != nil {
-		return fmt.Errorf("failed to resolve incidents in transaction: %w", err)
+		if m.notifier != nil {
+			if err := m.notifier.SendRecovery(svc, resolverIncident); err != nil {
+				m.logger.Errorf("failed to send recovery notification for %s: %v", svc.Name, err)
+				return nil
+			}
+		}
 	}
 
 	return nil

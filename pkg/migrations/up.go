@@ -6,7 +6,7 @@ import (
 
 // MigrateUpAll runs all pending database migrations
 func (m *Migrations) MigrateUpAll(dbPath string) error {
-	m.info("run all migrations")
+	m.info("applying all migrations")
 
 	migrations, err := m.loadFromFS()
 	if err != nil {

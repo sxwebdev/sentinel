@@ -16,7 +16,9 @@ import (
 	"github.com/sxwebdev/sentinel/internal/store"
 	"github.com/sxwebdev/sentinel/internal/upgrader"
 	"github.com/sxwebdev/sentinel/internal/web"
+	"github.com/sxwebdev/sentinel/pkg/migrations"
 	"github.com/sxwebdev/sentinel/pkg/sqlite"
+	"github.com/sxwebdev/sentinel/sql"
 	"github.com/tkcrm/mx/launcher"
 	"github.com/tkcrm/mx/logger"
 	"github.com/tkcrm/mx/service"
@@ -75,17 +77,23 @@ func hubStartCMD() *cli.Command {
 				return fmt.Errorf("failed to initialize sqlite: %w", err)
 			}
 
-			st, err := store.New(db.DB)
-			if err != nil {
-				return fmt.Errorf("failed to initialize store: %w", err)
-			}
-
 			// Print SQLite version if using SQLite storage
 			sqliteVersion, err := db.GetSQLiteVersion(ctx)
 			if err != nil {
 				return fmt.Errorf("failed to get SQLite version: %w", err)
 			}
 			l.Infof("SQLite version: %s", sqliteVersion)
+
+			// check and run migrations
+			m := migrations.New(l, sql.MigrationsFS, sql.MigrationsPath)
+			if err := m.MigrateUpAll(dbPath); err != nil {
+				return fmt.Errorf("failed to run migrations: %w", err)
+			}
+
+			st, err := store.New(db.DB)
+			if err != nil {
+				return fmt.Errorf("failed to initialize store: %w", err)
+			}
 
 			// Initialize notifier
 			var notif *notifier.Notifier

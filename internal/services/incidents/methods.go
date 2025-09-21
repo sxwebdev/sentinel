@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/sxwebdev/sentinel/internal/models"
+	"github.com/sxwebdev/sentinel/internal/store/repos"
 	"github.com/sxwebdev/sentinel/internal/store/repos/repo_incidents"
 	"github.com/sxwebdev/sentinel/internal/store/storecmn"
 	"github.com/sxwebdev/sentinel/internal/utils"
@@ -40,16 +41,21 @@ func (s *Service) GetAllUnresolvedByServiceID(ctx context.Context, serviceID str
 }
 
 // ResolveByID resolves a specific incident by its ID.
-func (s *Service) ResolveByID(ctx context.Context, id string) (*models.Incident, error) {
+func (s *Service) ResolveByID(ctx context.Context, id string, opts ...repos.Option) (*models.Incident, error) {
 	if id == "" {
 		return nil, storecmn.ErrEmptyID
 	}
 
-	if err := s.store.Incidents().ResolveByID(ctx, id); err != nil {
+	if err := s.store.Incidents(opts...).ResolveByID(ctx, id); err != nil {
 		return nil, err
 	}
 
-	return s.GetByID(ctx, id)
+	item, err := s.store.Incidents().GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	return item, nil
 }
 
 type CreateParams struct {

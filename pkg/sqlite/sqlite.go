@@ -20,8 +20,6 @@ func New(ctx context.Context, dbPath string) (*SQLite, error) {
 		return nil, fmt.Errorf("database path is empty")
 	}
 
-	instance := &SQLite{}
-
 	dir := filepath.Dir(dbPath)
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return nil, fmt.Errorf("failed to create database directory: %w", err)
@@ -43,7 +41,9 @@ func New(ctx context.Context, dbPath string) (*SQLite, error) {
 		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
 
-	instance.DB = db
+	instance := &SQLite{
+		DB: db,
+	}
 
 	return instance, nil
 }
