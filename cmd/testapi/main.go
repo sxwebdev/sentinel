@@ -245,7 +245,7 @@ func setupTestSuite() (*TestSuite, error) {
 		return nil, fmt.Errorf("failed to initialize store: %w", err)
 	}
 
-	baseServices := baseservices.New(st, rc)
+	baseServices := baseservices.New(l, st, rc)
 
 	// Create web server
 	webServer, err := web.NewServer(l, cfg, models.SystemInfo{}, baseServices, rc, upgr)

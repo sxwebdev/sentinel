@@ -2,11 +2,12 @@ version: "2"
 overrides:
   go:
     overrides:
-      # Services
       - db_type: jsonb
         go_type:
           type: JSONField
           import: github.com/sxwebdev/sentinel/internal/store/storecmn
+
+      # Services
       - column: services.protocol
         go_type:
           type: ServiceProtocolType
@@ -24,10 +25,20 @@ overrides:
         go_type:
           type: ServiceStatus
 
+      # notification_providers
+      - column: notification_providers.provider_type
+        go_type:
+          type: NotificationProviderType
+      - column: notification_providers.config
+        go_type:
+          type: JSONField
+          import: github.com/sxwebdev/sentinel/internal/store/storecmn
+
       # notification_history
       - column: notification_history.incident_id
         go_type:
           type: "*string"
+
 sql:
   # Services
   - schema: sql/migrations
@@ -147,7 +158,7 @@ sql:
         emit_params_struct_pointers: false
         emit_enum_valid_method: true
         emit_all_enum_values: true
-        query_parameter_limit: 3
+        query_parameter_limit: 2
 
   # notification_history
   - schema: sql/migrations
@@ -167,4 +178,4 @@ sql:
         emit_params_struct_pointers: false
         emit_enum_valid_method: true
         emit_all_enum_values: true
-        query_parameter_limit: 3
+        query_parameter_limit: 2

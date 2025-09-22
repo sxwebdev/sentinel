@@ -39,13 +39,18 @@ func (s ColumnNames) Strings() []string {
 }
 
 const (
-	ColumnNameNotificationHistoryId           ColumnName = "id"
-	ColumnNameNotificationHistoryProviderId   ColumnName = "provider_id"
-	ColumnNameNotificationHistoryIncidentId   ColumnName = "incident_id"
-	ColumnNameNotificationHistoryMessage      ColumnName = "message"
-	ColumnNameNotificationHistoryStatus       ColumnName = "status"
-	ColumnNameNotificationHistoryErrorMessage ColumnName = "error_message"
-	ColumnNameNotificationHistoryCreatedAt    ColumnName = "created_at"
+	ColumnNameNotificationHistoryId            ColumnName = "id"
+	ColumnNameNotificationHistoryProviderId    ColumnName = "provider_id"
+	ColumnNameNotificationHistoryIncidentId    ColumnName = "incident_id"
+	ColumnNameNotificationHistoryMessage       ColumnName = "message"
+	ColumnNameNotificationHistoryStatus        ColumnName = "status"
+	ColumnNameNotificationHistoryResponse      ColumnName = "response"
+	ColumnNameNotificationHistoryAttempts      ColumnName = "attempts"
+	ColumnNameNotificationHistoryErrorMessage  ColumnName = "error_message"
+	ColumnNameNotificationHistoryLastAttemptAt ColumnName = "last_attempt_at"
+	ColumnNameNotificationHistorySentAt        ColumnName = "sent_at"
+	ColumnNameNotificationHistoryCreatedAt     ColumnName = "created_at"
+	ColumnNameNotificationHistoryUpdatedAt     ColumnName = "updated_at"
 )
 
 func NotificationHistoryColumnNames() ColumnNames {
@@ -55,7 +60,12 @@ func NotificationHistoryColumnNames() ColumnNames {
 		ColumnNameNotificationHistoryIncidentId,
 		ColumnNameNotificationHistoryMessage,
 		ColumnNameNotificationHistoryStatus,
+		ColumnNameNotificationHistoryResponse,
+		ColumnNameNotificationHistoryAttempts,
 		ColumnNameNotificationHistoryErrorMessage,
+		ColumnNameNotificationHistoryLastAttemptAt,
+		ColumnNameNotificationHistorySentAt,
 		ColumnNameNotificationHistoryCreatedAt,
+		ColumnNameNotificationHistoryUpdatedAt,
 	}
 }

@@ -12,9 +12,9 @@ import (
 )
 
 const create = `-- name: Create :one
-INSERT INTO notification_history (id, provider_id, incident_id, message, status, error_message)
-	VALUES (?, ?, ?, ?, ?, ?)
-	RETURNING id, provider_id, incident_id, message, status, error_message, created_at
+INSERT INTO notification_history (id, provider_id, incident_id, message, error_message)
+	VALUES (?, ?, ?, ?, ?)
+	RETURNING id, provider_id, incident_id, message, status, response, attempts, error_message, last_attempt_at, sent_at, created_at, updated_at
 `
 
 type CreateParams struct {
@@ -22,7 +22,6 @@ type CreateParams struct {
 	ProviderID   string  `db:"provider_id" json:"provider_id"`
 	IncidentID   *string `db:"incident_id" json:"incident_id"`
 	Message      string  `db:"message" json:"message"`
-	Status       string  `db:"status" json:"status"`
 	ErrorMessage *string `db:"error_message" json:"error_message"`
 }
 
@@ -32,7 +31,6 @@ func (q *Queries) Create(ctx context.Context, arg CreateParams) (*models.Notific
 		arg.ProviderID,
 		arg.IncidentID,
 		arg.Message,
-		arg.Status,
 		arg.ErrorMessage,
 	)
 	var i models.NotificationHistory
@@ -42,8 +40,13 @@ func (q *Queries) Create(ctx context.Context, arg CreateParams) (*models.Notific
 		&i.IncidentID,
 		&i.Message,
 		&i.Status,
+		&i.Response,
+		&i.Attempts,
 		&i.ErrorMessage,
+		&i.LastAttemptAt,
+		&i.SentAt,
 		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return &i, err
 }
@@ -55,23 +58,4 @@ DELETE FROM notification_history WHERE id=?
 func (q *Queries) Delete(ctx context.Context, id string) error {
 	_, err := q.db.ExecContext(ctx, delete, id)
 	return err
-}
-
-const getByID = `-- name: GetByID :one
-SELECT id, provider_id, incident_id, message, status, error_message, created_at FROM notification_history WHERE id=? LIMIT 1
-`
-
-func (q *Queries) GetByID(ctx context.Context, id string) (*models.NotificationHistory, error) {
-	row := q.db.QueryRowContext(ctx, getByID, id)
-	var i models.NotificationHistory
-	err := row.Scan(
-		&i.ID,
-		&i.ProviderID,
-		&i.IncidentID,
-		&i.Message,
-		&i.Status,
-		&i.ErrorMessage,
-		&i.CreatedAt,
-	)
-	return &i, err
 }

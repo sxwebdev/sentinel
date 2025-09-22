@@ -11,6 +11,48 @@ definitions:
       url:
         type: string
     type: object
+  models.Incident:
+    properties:
+      created_at:
+        type: string
+      duration:
+        type: integer
+      end_time:
+        type: string
+      error:
+        type: string
+      id:
+        type: string
+      resolved:
+        type: boolean
+      service_id:
+        type: string
+      start_time:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  models.NotificationProvider:
+    properties:
+      config:
+        $ref: '#/definitions/storecmn.JSONField'
+      created_at:
+        type: string
+      id:
+        type: string
+      is_enabled:
+        type: boolean
+      provider_type:
+        $ref: '#/definitions/models.NotificationProviderType'
+      updated_at:
+        type: string
+    type: object
+  models.NotificationProviderType:
+    enum:
+    - shoutrrr
+    type: string
+    x-enum-varnames:
+    - NotificationProviderTypeShoutrrr
   models.ServiceProtocolType:
     enum:
     - http
@@ -128,6 +170,17 @@ definitions:
     required:
     - endpoint
     type: object
+  notifications.CreateProviderParams:
+    type: object
+  notifications.UpdateProviderParams:
+    properties:
+      config:
+        $ref: '#/definitions/storecmn.JSONField'
+      is_enabled:
+        type: boolean
+      provider_type:
+        $ref: '#/definitions/models.NotificationProviderType'
+    type: object
   service.Stats:
     properties:
       avg_response_time:
@@ -147,30 +200,13 @@ definitions:
       uptime_percentage:
         type: number
     type: object
-  storage.Incident:
-    properties:
-      duration:
-        type: integer
-      end_time:
-        type: string
-      error:
-        type: string
-      id:
-        type: string
-      resolved:
-        type: boolean
-      service_id:
-        type: string
-      start_time:
-        type: string
-    type: object
-  storecmn.FindResponseWithCount-storage_Incident:
+  storecmn.FindResponseWithCount-models_Incident:
     properties:
       count:
         type: integer
       items:
         items:
-          $ref: '#/definitions/storage.Incident'
+          $ref: '#/definitions/models.Incident'
         type: array
     type: object
   storecmn.FindResponseWithCount-web_ServiceDTO:
@@ -181,6 +217,8 @@ definitions:
         items:
           $ref: '#/definitions/web.ServiceDTO'
         type: array
+    type: object
+  storecmn.JSONField:
     type: object
   web.CreateUpdateServiceRequest:
     properties:
@@ -225,8 +263,6 @@ definitions:
       checks_per_minute:
         example: 60
         type: integer
-      last_check_time:
-        type: string
       protocols:
         additionalProperties:
           type: integer
@@ -436,7 +472,7 @@ paths:
         "200":
           description: List of incidents
           schema:
-            $ref: '#/definitions/storecmn.FindResponseWithCount-storage_Incident'
+            $ref: '#/definitions/storecmn.FindResponseWithCount-models_Incident'
         "500":
           description: Internal server error
           schema:
@@ -780,7 +816,7 @@ paths:
         "200":
           description: List of incidents
           schema:
-            $ref: '#/definitions/storecmn.FindResponseWithCount-storage_Incident'
+            $ref: '#/definitions/storecmn.FindResponseWithCount-models_Incident'
         "400":
           description: Bad request
           schema:
@@ -861,6 +897,144 @@ paths:
       summary: Get service statistics
       tags:
       - statistics
+  /settings/notifications/providers:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of all configured notification providers.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of notification providers
+          schema:
+            items:
+              $ref: '#/definitions/models.NotificationProvider'
+            type: array
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+      summary: List all notification providers
+      tags:
+      - notifications
+    post:
+      consumes:
+      - application/json
+      description: Creates a new notification provider with the given configuration.
+      parameters:
+      - description: Body params
+        in: body
+        name: service
+        required: true
+        schema:
+          $ref: '#/definitions/notifications.CreateProviderParams'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Notification provider created
+          schema:
+            $ref: '#/definitions/models.NotificationProvider'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+      summary: Create new notification provider
+      tags:
+      - notifications
+  /settings/notifications/providers/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes a notification provider by its ID.
+      parameters:
+      - description: Notification Provider ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+      summary: Delete a notification provider
+      tags:
+      - notifications
+    put:
+      consumes:
+      - application/json
+      description: Updates a notification provider with the given ID and configuration.
+      parameters:
+      - description: Notification Provider ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Body params
+        in: body
+        name: service
+        required: true
+        schema:
+          $ref: '#/definitions/notifications.UpdateProviderParams'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Notification provider updated
+          schema:
+            $ref: '#/definitions/models.NotificationProvider'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+      summary: Update a notification provider
+      tags:
+      - notifications
+  /settings/notifications/providers/{id}/test:
+    post:
+      consumes:
+      - application/json
+      description: Sends a test notification using the specified provider ID.
+      parameters:
+      - description: Notification Provider ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+      summary: Test a notification provider
+      tags:
+      - notifications
   /tags:
     get:
       consumes:

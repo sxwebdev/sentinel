@@ -13,6 +13,8 @@ sqlc:
             go_type: ServiceProtocolType
           - path: github.com/sxwebdev/sentinel/internal/models
             go_type: ServiceStatus
+          - path: github.com/sxwebdev/sentinel/internal/models
+            go_type: NotificationProviderType
     crud:
       auto_remove_generated_files: true
       exclude_table_name_from_methods: true
@@ -111,12 +113,15 @@ sqlc:
           methods:
             create:
               skip_columns:
+                - is_enabled
                 - created_at
                 - updated_at
               returning: "*"
             delete:
             get:
               name: GetByID
+            find:
+              name: GetAll
 
         # notification_history
         notification_history:
@@ -125,12 +130,16 @@ sqlc:
           methods:
             create:
               skip_columns:
+                - status
+                - response
+                - attempts
+                - last_sending_error_message
+                - last_attempt_at
+                - sent_at
                 - created_at
                 - updated_at
               returning: "*"
             delete:
-            get:
-              name: GetByID
 
     constants:
       tables:

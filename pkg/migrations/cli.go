@@ -72,6 +72,22 @@ func CliCmd(l logger, fs embed.FS, migrationsPath string) *cli.Command {
 				},
 			},
 			{
+				Name:  "up",
+				Usage: "apply the next database migrations",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:     "db-path",
+						Aliases:  []string{"dp"},
+						Usage:    "path to the SQLite database file",
+						Required: true,
+					},
+				},
+				Action: func(ctx context.Context, cl *cli.Command) error {
+					m := New(l, fs, migrationsPath)
+					return m.MigrateUpAll(cl.String("db-path"))
+				},
+			},
+			{
 				Name:  "down",
 				Usage: "roll back the last database migration",
 				Flags: []cli.Flag{

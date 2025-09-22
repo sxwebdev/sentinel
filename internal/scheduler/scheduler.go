@@ -4,14 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/puzpuzpuz/xsync/v3"
 	"github.com/sxwebdev/sentinel/internal/models"
 	"github.com/sxwebdev/sentinel/internal/monitors"
-	"github.com/sxwebdev/sentinel/internal/notifier"
 	"github.com/sxwebdev/sentinel/internal/receiver"
 	"github.com/sxwebdev/sentinel/internal/services/baseservices"
 	"github.com/sxwebdev/sentinel/internal/services/incidents"
@@ -31,8 +30,7 @@ var ErrServiceNotFound = fmt.Errorf("service not found")
 type Scheduler struct {
 	logger logger.Logger
 
-	store    *store.Store
-	notifier *notifier.Notifier
+	store *store.Store
 
 	receiver     *receiver.Receiver
 	baseservices *baseservices.BaseServices
@@ -45,14 +43,12 @@ type Scheduler struct {
 func New(
 	l logger.Logger,
 	store *store.Store,
-	notifier *notifier.Notifier,
 	receiver *receiver.Receiver,
 	baseServices *baseservices.BaseServices,
 ) *Scheduler {
 	return &Scheduler{
 		logger:       l,
 		store:        store,
-		notifier:     notifier,
 		receiver:     receiver,
 		baseservices: baseServices,
 		jobs:         xsync.NewMapOf[string, *job](),
@@ -516,12 +512,9 @@ func (m *Scheduler) createIncident(ctx context.Context, svc *models.ServiceFullV
 	}
 
 	// Send alert notification
-	if m.notifier != nil {
-		if err := m.notifier.SendAlert(svc, incident); err != nil {
-			err := fmt.Errorf("failed to send alert notification for %s: %w", svc.Name, err)
-			log.Println(err)
-			return nil
-		}
+	message := m.formatAlertMessage(svc, incident)
+	if err := m.baseservices.Notifications().History().SendAlert(ctx, incident.ID, message); err != nil {
+		m.logger.Errorf("failed to send alert notification for %s: %v", svc.Name, err)
 	}
 
 	return nil
@@ -552,13 +545,71 @@ func (m *Scheduler) resolveActiveIncidents(ctx context.Context, serviceID string
 			return fmt.Errorf("failed to resolve incident %s: %w", incident.ID, err)
 		}
 
-		if m.notifier != nil {
-			if err := m.notifier.SendRecovery(svc, resolverIncident); err != nil {
-				m.logger.Errorf("failed to send recovery notification for %s: %v", svc.Name, err)
-				return nil
-			}
+		message := m.formatRecoveryMessage(svc, resolverIncident)
+		if err := m.baseservices.Notifications().History().SendAlert(ctx, resolverIncident.ID, message); err != nil {
+			m.logger.Errorf("failed to send recovery notification for %s: %v", svc.Name, err)
 		}
 	}
 
 	return nil
+}
+
+// formatAlertMessage formats an alert message
+func (s *Scheduler) formatAlertMessage(service *models.ServiceFullView, incident *models.Incident) string {
+	tags := "-"
+	if len(service.Tags) > 0 {
+		tags = strings.Join(service.Tags, ", ")
+	}
+
+	return fmt.Sprintf(
+		"🔴 [ALERT] %s is DOWN\n\n"+
+			"• Service: %s\n"+
+			"• Tags: %s\n"+
+			"• Error: %s\n"+
+			"• Started: %s\n"+
+			"• Incident ID: %s",
+		service.Name,
+		service.Name,
+		tags,
+		incident.Error,
+		incident.StartTime.Format("2006-01-02 15:04:05"),
+		incident.ID,
+	)
+}
+
+// formatRecoveryMessage formats a recovery message
+func (s *Scheduler) formatRecoveryMessage(service *models.ServiceFullView, incident *models.Incident) string {
+	var duration string
+	if incident.Duration != nil {
+		duration = utils.FormatDuration(time.Duration(*incident.Duration) * time.Millisecond)
+	} else {
+		duration = utils.FormatDuration(time.Since(incident.StartTime))
+	}
+
+	var endTime string
+	if incident.EndTime != nil {
+		endTime = incident.EndTime.Format("2006-01-02 15:04:05")
+	} else {
+		endTime = time.Now().Format("2006-01-02 15:04:05")
+	}
+
+	tags := "-"
+	if len(service.Tags) > 0 {
+		tags = strings.Join(service.Tags, ", ")
+	}
+
+	return fmt.Sprintf(
+		"🟢 [RECOVERY] %s is UP\n\n"+
+			"• Service: %s\n"+
+			"• Tags: %s\n"+
+			"• Downtime: %s\n"+
+			"• Recovered: %s\n"+
+			"• Incident ID: %s",
+		service.Name,
+		service.Name,
+		tags,
+		duration,
+		endTime,
+		incident.ID,
+	)
 }

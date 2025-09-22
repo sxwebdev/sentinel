@@ -9,7 +9,7 @@ import type {
   GetIncidentsParams,
   GetIncidentsStatsParams,
   GetServicesIdIncidentsParams,
-  StorecmnFindResponseWithCountStorageIncident,
+  StorecmnFindResponseWithCountModelsIncident,
   WebGetIncidentsStatsItem,
 } from "../../../types/model";
 
@@ -21,7 +21,7 @@ export const getIncidents = () => {
    * @summary Get recent incidents
    */
   const getIncidents = (params?: GetIncidentsParams) => {
-    return customFetcher<StorecmnFindResponseWithCountStorageIncident>({
+    return customFetcher<StorecmnFindResponseWithCountModelsIncident>({
       url: `/incidents`,
       method: "GET",
       params,
@@ -46,7 +46,7 @@ export const getIncidents = () => {
     id: string,
     params?: GetServicesIdIncidentsParams,
   ) => {
-    return customFetcher<StorecmnFindResponseWithCountStorageIncident>({
+    return customFetcher<StorecmnFindResponseWithCountModelsIncident>({
       url: `/services/${id}/incidents`,
       method: "GET",
       params,

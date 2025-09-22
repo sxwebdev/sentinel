@@ -13,7 +13,9 @@ import (
 type Querier interface {
 	Create(ctx context.Context, arg CreateParams) (*models.NotificationHistory, error)
 	Delete(ctx context.Context, id string) error
-	GetByID(ctx context.Context, id string) (*models.NotificationHistory, error)
+	GetAllUnsent(ctx context.Context) ([]*GetAllUnsentRow, error)
+	IncrementAttempt(ctx context.Context, arg IncrementAttemptParams) error
+	MarkAsSent(ctx context.Context, response *string, iD string) error
 }
 
 var _ Querier = (*Queries)(nil)

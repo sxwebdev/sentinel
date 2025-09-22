@@ -15,13 +15,11 @@ CREATE TABLE IF NOT EXISTS agents (
   config jsonb NOT NULL DEFAULT '{}',
   system_info jsonb NOT NULL DEFAULT '{}',
   last_seen_at DATETIME,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   UNIQUE(token_ct),
   UNIQUE(fingerprint)
 );
-
--- Create indexes for performance
 CREATE INDEX IF NOT EXISTS idx_agents_name ON agents(name); 
 CREATE INDEX IF NOT EXISTS idx_agents_enabled ON agents(is_enabled);
 
@@ -39,8 +37,8 @@ CREATE TABLE IF NOT EXISTS incident_states (
   incident_id TEXT NOT NULL REFERENCES incidents(id) ON DELETE CASCADE,
   "status" TEXT NOT NULL CHECK (status != ''),
   level INTEGER NOT NULL DEFAULT 0,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX IF NOT EXISTS idx_incident_states_incident_id ON incident_states(incident_id);
 CREATE INDEX IF NOT EXISTS idx_incident_states_status ON incident_states(status);
@@ -51,8 +49,8 @@ CREATE TABLE IF NOT EXISTS notification_providers (
   provider_type TEXT NOT NULL,
   config jsonb NOT NULL DEFAULT '{}',
   is_enabled BOOLEAN NOT NULL DEFAULT TRUE,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX IF NOT EXISTS idx_notification_providers_enabled ON notification_providers(is_enabled);
 
@@ -60,10 +58,16 @@ CREATE INDEX IF NOT EXISTS idx_notification_providers_enabled ON notification_pr
 CREATE TABLE IF NOT EXISTS notification_history (
   id TEXT PRIMARY KEY,
   provider_id TEXT NOT NULL REFERENCES notification_providers(id) ON DELETE CASCADE,
-  incident_id TEXT REFERENCES incidents(id) ON DELETE DELETE SET NULL,
+  incident_id TEXT REFERENCES incidents(id) ON DELETE SET NULL,
   message TEXT NOT NULL CHECK (message != ''),
   "status" TEXT NOT NULL DEFAULT 'pending' CHECK (status != ''),
+  response TEXT,
+  attempts INTEGER NOT NULL DEFAULT 0,
   error_message TEXT,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  last_attempt_at DATETIME,
+  sent_at DATETIME,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX IF NOT EXISTS idx_notification_history_provider ON notification_history(provider_id);
+CREATE INDEX IF NOT EXISTS idx_notification_history_status ON notification_history(status);

@@ -14,7 +14,6 @@ export interface WebDashboardStats {
   active_incidents?: number;
   avg_response_time?: number;
   checks_per_minute?: number;
-  last_check_time?: string;
   protocols?: WebDashboardStatsProtocols;
   services_down?: number;
   services_unknown?: number;

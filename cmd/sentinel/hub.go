@@ -9,7 +9,6 @@ import (
 
 	"github.com/sxwebdev/sentinel/internal/config"
 	"github.com/sxwebdev/sentinel/internal/models"
-	"github.com/sxwebdev/sentinel/internal/notifier"
 	"github.com/sxwebdev/sentinel/internal/receiver"
 	"github.com/sxwebdev/sentinel/internal/scheduler"
 	"github.com/sxwebdev/sentinel/internal/services/baseservices"
@@ -95,15 +94,6 @@ func hubStartCMD() *cli.Command {
 				return fmt.Errorf("failed to initialize store: %w", err)
 			}
 
-			// Initialize notifier
-			var notif *notifier.Notifier
-			if conf.Notifications.Enabled {
-				notif, err = notifier.New(l, conf.Notifications.URLs)
-				if err != nil {
-					return fmt.Errorf("failed to initialize notifier: %w", err)
-				}
-			}
-
 			// Init receiver
 			rc := receiver.New()
 
@@ -113,10 +103,10 @@ func hubStartCMD() *cli.Command {
 				return fmt.Errorf("failed to initialize upgrader: %w", err)
 			}
 
-			baseServices := baseservices.New(st, rc)
+			baseServices := baseservices.New(l, st, rc)
 
 			// Initialize scheduler
-			sched := scheduler.New(l, st, notif, rc, baseServices)
+			sched := scheduler.New(l, st, rc, baseServices)
 
 			serverInfo := models.GetSystemInfo(version, commitHash, buildDate)
 			serverInfo.SqliteVersion = sqliteVersion
@@ -133,13 +123,8 @@ func hubStartCMD() *cli.Command {
 				service.New(service.WithService(rc)),
 				service.New(service.WithService(sched)),
 				service.New(service.WithService(webServer)),
+				service.New(service.WithService(baseServices.Notifications().Sender())),
 			)
-
-			if notif != nil {
-				ln.ServicesRunner().Register(
-					service.New(service.WithService(notif)),
-				)
-			}
 
 			return ln.Run()
 		},

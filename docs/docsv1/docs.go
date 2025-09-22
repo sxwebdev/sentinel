@@ -96,7 +96,7 @@ const docTemplate = `{
                     "200": {
                         "description": "List of incidents",
                         "schema": {
-                            "$ref": "#/definitions/storecmn.FindResponseWithCount-storage_Incident"
+                            "$ref": "#/definitions/storecmn.FindResponseWithCount-models_Incident"
                         }
                     },
                     "500": {
@@ -616,7 +616,7 @@ const docTemplate = `{
                     "200": {
                         "description": "List of incidents",
                         "schema": {
-                            "$ref": "#/definitions/storecmn.FindResponseWithCount-storage_Incident"
+                            "$ref": "#/definitions/storecmn.FindResponseWithCount-models_Incident"
                         }
                     },
                     "400": {
@@ -738,6 +738,215 @@ const docTemplate = `{
                 }
             }
         },
+        "/settings/notifications/providers": {
+            "get": {
+                "description": "Retrieves a list of all configured notification providers.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "notifications"
+                ],
+                "summary": "List all notification providers",
+                "responses": {
+                    "200": {
+                        "description": "List of notification providers",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.NotificationProvider"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Creates a new notification provider with the given configuration.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "notifications"
+                ],
+                "summary": "Create new notification provider",
+                "parameters": [
+                    {
+                        "description": "Body params",
+                        "name": "service",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/notifications.CreateProviderParams"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Notification provider created",
+                        "schema": {
+                            "$ref": "#/definitions/models.NotificationProvider"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/settings/notifications/providers/{id}": {
+            "put": {
+                "description": "Updates a notification provider with the given ID and configuration.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "notifications"
+                ],
+                "summary": "Update a notification provider",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Notification Provider ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Body params",
+                        "name": "service",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/notifications.UpdateProviderParams"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Notification provider updated",
+                        "schema": {
+                            "$ref": "#/definitions/models.NotificationProvider"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Deletes a notification provider by its ID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "notifications"
+                ],
+                "summary": "Delete a notification provider",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Notification Provider ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/settings/notifications/providers/{id}/test": {
+            "post": {
+                "description": "Sends a test notification using the specified provider ID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "notifications"
+                ],
+                "summary": "Test a notification provider",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Notification Provider ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/tags": {
             "get": {
                 "description": "Retrieves all unique tags used across services",
@@ -820,6 +1029,70 @@ const docTemplate = `{
                     "type": "string"
                 }
             }
+        },
+        "models.Incident": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "duration": {
+                    "type": "integer"
+                },
+                "end_time": {
+                    "type": "string"
+                },
+                "error": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "resolved": {
+                    "type": "boolean"
+                },
+                "service_id": {
+                    "type": "string"
+                },
+                "start_time": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.NotificationProvider": {
+            "type": "object",
+            "properties": {
+                "config": {
+                    "$ref": "#/definitions/storecmn.JSONField"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_enabled": {
+                    "type": "boolean"
+                },
+                "provider_type": {
+                    "$ref": "#/definitions/models.NotificationProviderType"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.NotificationProviderType": {
+            "type": "string",
+            "enum": [
+                "shoutrrr"
+            ],
+            "x-enum-varnames": [
+                "NotificationProviderTypeShoutrrr"
+            ]
         },
         "models.ServiceProtocolType": {
             "type": "string",
@@ -985,6 +1258,23 @@ const docTemplate = `{
                 }
             }
         },
+        "notifications.CreateProviderParams": {
+            "type": "object"
+        },
+        "notifications.UpdateProviderParams": {
+            "type": "object",
+            "properties": {
+                "config": {
+                    "$ref": "#/definitions/storecmn.JSONField"
+                },
+                "is_enabled": {
+                    "type": "boolean"
+                },
+                "provider_type": {
+                    "$ref": "#/definitions/models.NotificationProviderType"
+                }
+            }
+        },
         "service.Stats": {
             "type": "object",
             "properties": {
@@ -1014,33 +1304,7 @@ const docTemplate = `{
                 }
             }
         },
-        "storage.Incident": {
-            "type": "object",
-            "properties": {
-                "duration": {
-                    "type": "integer"
-                },
-                "end_time": {
-                    "type": "string"
-                },
-                "error": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "resolved": {
-                    "type": "boolean"
-                },
-                "service_id": {
-                    "type": "string"
-                },
-                "start_time": {
-                    "type": "string"
-                }
-            }
-        },
-        "storecmn.FindResponseWithCount-storage_Incident": {
+        "storecmn.FindResponseWithCount-models_Incident": {
             "type": "object",
             "properties": {
                 "count": {
@@ -1049,7 +1313,7 @@ const docTemplate = `{
                 "items": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/storage.Incident"
+                        "$ref": "#/definitions/models.Incident"
                     }
                 }
             }
@@ -1067,6 +1331,9 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "storecmn.JSONField": {
+            "type": "object"
         },
         "web.CreateUpdateServiceRequest": {
             "type": "object",
@@ -1129,9 +1396,6 @@ const docTemplate = `{
                 "checks_per_minute": {
                     "type": "integer",
                     "example": 60
-                },
-                "last_check_time": {
-                    "type": "string"
                 },
                 "protocols": {
                     "type": "object",

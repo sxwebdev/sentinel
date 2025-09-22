@@ -26,8 +26,8 @@ type Agent struct {
 	Config      storecmn.JSONField `db:"config" json:"config"`
 	SystemInfo  storecmn.JSONField `db:"system_info" json:"system_info"`
 	LastSeenAt  *time.Time         `db:"last_seen_at" json:"last_seen_at"`
-	CreatedAt   *time.Time         `db:"created_at" json:"created_at"`
-	UpdatedAt   *time.Time         `db:"updated_at" json:"updated_at"`
+	CreatedAt   time.Time          `db:"created_at" json:"created_at"`
+	UpdatedAt   time.Time          `db:"updated_at" json:"updated_at"`
 }
 
 type Incident struct {
@@ -43,31 +43,36 @@ type Incident struct {
 }
 
 type IncidentState struct {
-	ID         string     `db:"id" json:"id"`
-	IncidentID string     `db:"incident_id" json:"incident_id"`
-	Status     string     `db:"status" json:"status"`
-	Level      int64      `db:"level" json:"level"`
-	CreatedAt  *time.Time `db:"created_at" json:"created_at"`
-	UpdatedAt  *time.Time `db:"updated_at" json:"updated_at"`
+	ID         string    `db:"id" json:"id"`
+	IncidentID string    `db:"incident_id" json:"incident_id"`
+	Status     string    `db:"status" json:"status"`
+	Level      int64     `db:"level" json:"level"`
+	CreatedAt  time.Time `db:"created_at" json:"created_at"`
+	UpdatedAt  time.Time `db:"updated_at" json:"updated_at"`
 }
 
 type NotificationHistory struct {
-	ID           string     `db:"id" json:"id"`
-	ProviderID   string     `db:"provider_id" json:"provider_id"`
-	IncidentID   *string    `db:"incident_id" json:"incident_id"`
-	Message      string     `db:"message" json:"message"`
-	Status       string     `db:"status" json:"status"`
-	ErrorMessage *string    `db:"error_message" json:"error_message"`
-	CreatedAt    *time.Time `db:"created_at" json:"created_at"`
+	ID            string     `db:"id" json:"id"`
+	ProviderID    string     `db:"provider_id" json:"provider_id"`
+	IncidentID    *string    `db:"incident_id" json:"incident_id"`
+	Message       string     `db:"message" json:"message"`
+	Status        string     `db:"status" json:"status"`
+	Response      *string    `db:"response" json:"response"`
+	Attempts      int64      `db:"attempts" json:"attempts"`
+	ErrorMessage  *string    `db:"error_message" json:"error_message"`
+	LastAttemptAt *time.Time `db:"last_attempt_at" json:"last_attempt_at"`
+	SentAt        *time.Time `db:"sent_at" json:"sent_at"`
+	CreatedAt     time.Time  `db:"created_at" json:"created_at"`
+	UpdatedAt     time.Time  `db:"updated_at" json:"updated_at"`
 }
 
 type NotificationProvider struct {
-	ID           string             `db:"id" json:"id"`
-	ProviderType string             `db:"provider_type" json:"provider_type"`
-	Config       storecmn.JSONField `db:"config" json:"config"`
-	IsEnabled    bool               `db:"is_enabled" json:"is_enabled"`
-	CreatedAt    *time.Time         `db:"created_at" json:"created_at"`
-	UpdatedAt    *time.Time         `db:"updated_at" json:"updated_at"`
+	ID           string                   `db:"id" json:"id"`
+	ProviderType NotificationProviderType `db:"provider_type" json:"provider_type"`
+	Config       storecmn.JSONField       `db:"config" json:"config"`
+	IsEnabled    bool                     `db:"is_enabled" json:"is_enabled"`
+	CreatedAt    time.Time                `db:"created_at" json:"created_at"`
+	UpdatedAt    time.Time                `db:"updated_at" json:"updated_at"`
 }
 
 type Service struct {

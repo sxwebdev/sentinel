@@ -6,7 +6,8 @@
  * OpenAPI spec version: 1.0
  */
 
-export interface StorageIncident {
+export interface ModelsIncident {
+  created_at?: string;
   duration?: number;
   end_time?: string;
   error?: string;
@@ -14,4 +15,5 @@ export interface StorageIncident {
   resolved?: boolean;
   service_id?: string;
   start_time?: string;
+  updated_at?: string;
 }

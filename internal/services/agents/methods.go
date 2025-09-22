@@ -38,13 +38,13 @@ func (s *Service) Create(ctx context.Context, params CreateParams) (*models.Agen
 
 	// Convert tags to JSONField
 	tags := storecmn.JSONField("[]")
-	if err := tags.UnmarshalAny(params.Tags); err != nil {
+	if err := tags.UnmarshalFromAny(params.Tags); err != nil {
 		return nil, fmt.Errorf("failed to convert tags to json raw message: %w", err)
 	}
 
 	// Convert config to JSONField
 	config := storecmn.JSONField("{}")
-	if err := config.UnmarshalAny(params.Config); err != nil {
+	if err := config.UnmarshalFromAny(params.Config); err != nil {
 		return nil, fmt.Errorf("failed to convert config to json raw message: %w", err)
 	}
 
@@ -148,19 +148,19 @@ func (s *Service) Update(ctx context.Context, id string, params UpdateParams) (*
 
 	// Convert tags to JSONField
 	tags := storecmn.JSONField("[]")
-	if err := tags.UnmarshalAny(params.Tags); err != nil {
+	if err := tags.UnmarshalFromAny(params.Tags); err != nil {
 		return nil, fmt.Errorf("failed to convert tags to json raw message: %w", err)
 	}
 
 	// Convert config to JSONField
 	config := storecmn.JSONField("{}")
-	if err := config.UnmarshalAny(params.Config); err != nil {
+	if err := config.UnmarshalFromAny(params.Config); err != nil {
 		return nil, fmt.Errorf("failed to convert config to json raw message: %w", err)
 	}
 
 	// Convert system info to JSONField
 	systemInfo := storecmn.JSONField("{}")
-	if err := systemInfo.UnmarshalAny(params.SystemInfo); err != nil {
+	if err := systemInfo.UnmarshalFromAny(params.SystemInfo); err != nil {
 		return nil, fmt.Errorf("failed to convert system info to json raw message: %w", err)
 	}
 

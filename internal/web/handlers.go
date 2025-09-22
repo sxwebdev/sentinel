@@ -186,6 +186,16 @@ func (s *Server) setupRoutes() {
 	api.Get("/tags", s.handleGetAllTags)
 	api.Get("/tags/count", s.handleGetAllTagsWithCount)
 
+	// Settings API
+	settingsGroup := api.Group("/settings")
+	notificationsGroup := settingsGroup.Group("/notifications")
+	notificationsProviderGroup := notificationsGroup.Group("/providers")
+	notificationsProviderGroup.Get("/", s.notificationProviderList)
+	notificationsProviderGroup.Post("/", s.notificationProviderCreate)
+	notificationsProviderGroup.Put("/:id", s.notificationProviderUpdate)
+	notificationsProviderGroup.Delete("/:id", s.notificationProviderDelete)
+	notificationsProviderGroup.Post("/:id/test", s.notificationProviderTest)
+
 	// Server API
 	serverGroup := api.Group("/server")
 	serverGroup.Get("/info", s.handleAPIInfo)
@@ -396,16 +406,16 @@ func (s *Server) handleAPIServiceDetail(c *fiber.Ctx) error {
 //	@Tags			incidents
 //	@Accept			json
 //	@Produce		json
-//	@Param			id			path		string												true	"Service ID"
-//	@Param			incident_id	query		string												false	"Filter by incident ID"
-//	@Param			resolved	query		bool												false	"Filter by resolved status"
-//	@Param			start_time	query		time.Time											false	"Filter by start time (RFC3339 format)"
-//	@Param			end_time	query		time.Time											false	"Filter by end time (RFC3339 format)"
-//	@Param			page		query		uint32												false	"Page number (for pagination)"
-//	@Param			page_size	query		uint32												false	"Number of items per page (default 20)"
-//	@Success		200			{object}	storecmn.FindResponseWithCount[storage.Incident]	"List of incidents"
-//	@Failure		400			{object}	ErrorResponse										"Bad request"
-//	@Failure		500			{object}	ErrorResponse										"Internal server error"
+//	@Param			id			path		string											true	"Service ID"
+//	@Param			incident_id	query		string											false	"Filter by incident ID"
+//	@Param			resolved	query		bool											false	"Filter by resolved status"
+//	@Param			start_time	query		time.Time										false	"Filter by start time (RFC3339 format)"
+//	@Param			end_time	query		time.Time										false	"Filter by end time (RFC3339 format)"
+//	@Param			page		query		uint32											false	"Page number (for pagination)"
+//	@Param			page_size	query		uint32											false	"Number of items per page (default 20)"
+//	@Success		200			{object}	storecmn.FindResponseWithCount[models.Incident]	"List of incidents"
+//	@Failure		400			{object}	ErrorResponse									"Bad request"
+//	@Failure		500			{object}	ErrorResponse									"Internal server error"
 //	@Router			/services/{id}/incidents [get]
 func (s *Server) handleAPIServiceIncidents(c *fiber.Ctx) error {
 	serviceID := c.Params("id")
@@ -549,14 +559,14 @@ func (s *Server) handleAPIServiceCheck(c *fiber.Ctx) error {
 //	@Tags			incidents
 //	@Accept			json
 //	@Produce		json
-//	@Param			search		query		string												false	"Filter by service ID or incident ID"
-//	@Param			resolved	query		bool												false	"Filter by resolved status"
-//	@Param			start_time	query		time.Time											false	"Start time for filtering (RFC3339 format)"
-//	@Param			end_time	query		time.Time											false	"End time for filtering (RFC3339 format)"
-//	@Param			page		query		uint32												false	"Page number (default 1)"
-//	@Param			page_size	query		uint32												false	"Number of items per page (default 100)"
-//	@Success		200			{object}	storecmn.FindResponseWithCount[storage.Incident]	"List of incidents"
-//	@Failure		500			{object}	ErrorResponse										"Internal server error"
+//	@Param			search		query		string											false	"Filter by service ID or incident ID"
+//	@Param			resolved	query		bool											false	"Filter by resolved status"
+//	@Param			start_time	query		time.Time										false	"Start time for filtering (RFC3339 format)"
+//	@Param			end_time	query		time.Time										false	"End time for filtering (RFC3339 format)"
+//	@Param			page		query		uint32											false	"Page number (default 1)"
+//	@Param			page_size	query		uint32											false	"Number of items per page (default 100)"
+//	@Success		200			{object}	storecmn.FindResponseWithCount[models.Incident]	"List of incidents"
+//	@Failure		500			{object}	ErrorResponse									"Internal server error"
 //	@Router			/incidents [get]
 func (s *Server) handleFindIncidents(c *fiber.Ctx) error {
 	params := struct {
@@ -716,7 +726,6 @@ func (s *Server) handleAPICreateService(c *fiber.Ctx) error {
 		return newErrorResponse(c, fiber.StatusBadRequest, err)
 	}
 
-	// Convert to storage.Service
 	createParams := service.CreateUpdateParams{
 		Name:      serviceDTO.Name,
 		Protocol:  serviceDTO.Protocol,
@@ -783,7 +792,6 @@ func (s *Server) handleAPIUpdateService(c *fiber.Ctx) error {
 	// Debug: log the received data
 	s.logger.Debugf("update service request: %+v", serviceDTO)
 
-	// Convert to storage.Service
 	updateParams := service.CreateUpdateParams{
 		Name:      serviceDTO.Name,
 		Protocol:  serviceDTO.Protocol,

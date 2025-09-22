@@ -26,7 +26,7 @@ func (j *JSONField) UnmarshalJSON(data []byte) error {
 }
 
 // Unmarshal any to JSONField
-func (j *JSONField) UnmarshalAny(value any) error {
+func (j *JSONField) UnmarshalFromAny(value any) error {
 	if value == nil {
 		*j = nil
 		return nil
@@ -76,7 +76,7 @@ func (j JSONField) Value() (driver.Value, error) {
 	return string(j), nil
 }
 
-// ToMap converts JSONField to map[string]any
+// ConvertToMap converts JSONField to map[string]any
 func (j JSONField) ConvertToMap() map[string]any {
 	if len(j) == 0 {
 		return map[string]any{}
@@ -86,4 +86,12 @@ func (j JSONField) ConvertToMap() map[string]any {
 		return map[string]any{}
 	}
 	return result
+}
+
+// ConvertToAny converts JSONField to any
+func (j JSONField) ConvertToAny(dst any) error {
+	if len(j) == 0 {
+		return nil
+	}
+	return json.Unmarshal(j, dst)
 }

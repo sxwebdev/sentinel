@@ -5,9 +5,7 @@
  * API for service monitoring and incident management
  * OpenAPI spec version: 1.0
  */
-import type { StorageIncident } from "./storageIncident";
 
-export interface StorecmnFindResponseWithCountStorageIncident {
-  count?: number;
-  items?: StorageIncident[];
+export interface StorecmnJSONField {
+  [key: string]: unknown;
 }

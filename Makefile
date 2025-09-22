@@ -21,6 +21,12 @@ help: ## Show this help message
 dev: ## Run in development mode with auto-reload
 	go run $(SENTINEL_PATH) start -c ./config.yaml
 
+migrateup:
+	go run $(SENTINEL_PATH) migrations up -db-path ./data/db.sqlite
+
+migratedown:
+	go run $(SENTINEL_PATH) migrations down -db-path ./data/db.sqlite
+
 agent: ## Run in development mode with auto-reload
 	go run $(SENTINEL_PATH) agent start -c ./config-agent.yaml
 

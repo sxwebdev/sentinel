@@ -13,25 +13,19 @@ import (
 )
 
 const create = `-- name: Create :one
-INSERT INTO notification_providers (id, provider_type, config, is_enabled)
-	VALUES (?, ?, ?, ?)
+INSERT INTO notification_providers (id, provider_type, config)
+	VALUES (?, ?, ?)
 	RETURNING id, provider_type, json(config), is_enabled, created_at, updated_at
 `
 
 type CreateParams struct {
-	ID           string             `db:"id" json:"id"`
-	ProviderType string             `db:"provider_type" json:"provider_type"`
-	Config       storecmn.JSONField `db:"config" json:"config"`
-	IsEnabled    bool               `db:"is_enabled" json:"is_enabled"`
+	ID           string                          `db:"id" json:"id"`
+	ProviderType models.NotificationProviderType `db:"provider_type" json:"provider_type"`
+	Config       storecmn.JSONField              `db:"config" json:"config"`
 }
 
 func (q *Queries) Create(ctx context.Context, arg CreateParams) (*models.NotificationProvider, error) {
-	row := q.db.QueryRowContext(ctx, create,
-		arg.ID,
-		arg.ProviderType,
-		arg.Config,
-		arg.IsEnabled,
-	)
+	row := q.db.QueryRowContext(ctx, create, arg.ID, arg.ProviderType, arg.Config)
 	var i models.NotificationProvider
 	err := row.Scan(
 		&i.ID,
@@ -51,6 +45,40 @@ DELETE FROM notification_providers WHERE id=?
 func (q *Queries) Delete(ctx context.Context, id string) error {
 	_, err := q.db.ExecContext(ctx, delete, id)
 	return err
+}
+
+const getAll = `-- name: GetAll :many
+SELECT id, provider_type, json(config), is_enabled, created_at, updated_at FROM notification_providers
+`
+
+func (q *Queries) GetAll(ctx context.Context) ([]*models.NotificationProvider, error) {
+	rows, err := q.db.QueryContext(ctx, getAll)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*models.NotificationProvider{}
+	for rows.Next() {
+		var i models.NotificationProvider
+		if err := rows.Scan(
+			&i.ID,
+			&i.ProviderType,
+			&i.Config,
+			&i.IsEnabled,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getByID = `-- name: GetByID :one
