@@ -71,7 +71,7 @@ func (s *Sender) do(ctx context.Context) error {
 		return nil
 	}
 
-	s.logger.Infof("found %d unsent notification history items", len(items))
+	s.logger.Infof("found %d unsent notifications", len(items))
 
 	unsentIncidents := make(map[string]struct{})
 

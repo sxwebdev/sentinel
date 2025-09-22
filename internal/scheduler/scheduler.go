@@ -166,14 +166,13 @@ func (s *Scheduler) addJob(ctx context.Context, job *job) {
 	s.jobs.Store(job.serviceID, job)
 
 	// Start monitoring in a new goroutine
-	s.wg.Add(1)
-	go s.monitorService(ctx, job)
+	s.wg.Go(func() {
+		s.monitorService(ctx, job)
+	})
 }
 
 // monitorService runs the monitoring loop for a single service
 func (s *Scheduler) monitorService(ctx context.Context, job *job) {
-	defer s.wg.Done()
-
 	// Create ticker for regular checks
 	job.ticker = time.NewTicker(job.interval)
 	defer job.ticker.Stop()
