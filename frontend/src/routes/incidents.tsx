@@ -16,9 +16,9 @@ import {
 } from "@/shared/components/ui";
 import { cn } from "@/shared/lib/utils";
 import type {
-  StorecmnFindResponseWithCountStorageIncident,
+  StorecmnFindResponseWithCountModelsIncident,
   GetIncidentsParams,
-  StorageIncident,
+  ModelsIncident,
   WebErrorResponse,
 } from "@/shared/types/model";
 import { formatDuration } from "@/shared/utils/duration";
@@ -49,7 +49,7 @@ function RouteComponent() {
 }
 
 interface IncidentsListProps {
-  incidentsData: StorecmnFindResponseWithCountStorageIncident;
+  incidentsData: StorecmnFindResponseWithCountModelsIncident;
 }
 
 export const IncidentsList = ({ incidentsData }: IncidentsListProps) => {
@@ -113,7 +113,7 @@ export const IncidentsList = ({ incidentsData }: IncidentsListProps) => {
           </div>
         ) : (
           <div className="space-y-3">
-            {incidentsData?.items?.map((incident: StorageIncident) => (
+            {incidentsData?.items?.map((incident: ModelsIncident) => (
               <div
                 key={incident.id}
                 className="bg-card flex items-center gap-4 rounded-lg border p-4 transition-shadow hover:shadow-sm"

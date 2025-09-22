@@ -17,17 +17,17 @@ import { ExpandableText } from "@/shared/components/expandableText";
 import { formatDuration } from "@/shared/utils";
 import PaginationTable from "@/shared/components/paginationTable";
 import type {
-  StorecmnFindResponseWithCountStorageIncident,
+  StorecmnFindResponseWithCountModelsIncident,
   GetServicesIdIncidentsParams,
-  StorageIncident,
+  ModelsIncident,
 } from "@/shared/types/model";
 
 interface IncidentsListProps {
-  incidentsData: StorecmnFindResponseWithCountStorageIncident;
+  incidentsData: StorecmnFindResponseWithCountModelsIncident;
   incidentsCount: number | null;
   filters: GetServicesIdIncidentsParams;
   setFilters: (filters: Partial<GetServicesIdIncidentsParams>) => void;
-  setDeleteIncident: (incident: StorageIncident) => void;
+  setDeleteIncident: (incident: ModelsIncident) => void;
 }
 
 export const IncidentsList = ({
@@ -71,7 +71,7 @@ export const IncidentsList = ({
           </div>
         ) : (
           <div className="space-y-3">
-            {incidentsData?.items?.map((incident: StorageIncident) => (
+            {incidentsData?.items?.map((incident: ModelsIncident) => (
               <div
                 key={incident.id}
                 className="bg-card flex items-center gap-4 rounded-lg border p-4 transition-shadow hover:shadow-sm"

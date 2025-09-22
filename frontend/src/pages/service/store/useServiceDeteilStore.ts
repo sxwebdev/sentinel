@@ -1,23 +1,23 @@
 import type {
-  StorecmnFindResponseWithCountStorageIncident,
+  StorecmnFindResponseWithCountModelsIncident,
   GetServicesIdIncidentsParams,
-  StorageIncident,
+  ModelsIncident,
   WebServiceDTO,
   ServiceStats,
 } from "@/shared/types/model";
 import { create } from "zustand";
 
 interface ServiceDetailStore {
-  deleteIncident: StorageIncident | null;
+  deleteIncident: ModelsIncident | null;
   serviceDetailData: WebServiceDTO | null;
-  incidentsData: StorecmnFindResponseWithCountStorageIncident | null;
+  incidentsData: StorecmnFindResponseWithCountModelsIncident | null;
   filters: GetServicesIdIncidentsParams;
   serviceStatsData: ServiceStats | null;
   setFilters: (value: Partial<ServiceDetailStore["filters"]>) => void;
-  setDeleteIncident: (deleteIncident: StorageIncident | null) => void;
+  setDeleteIncident: (deleteIncident: ModelsIncident | null) => void;
   setServiceDetailData: (serviceDetailData: WebServiceDTO | null) => void;
   setIncidentsData: (
-    incidentsData: StorecmnFindResponseWithCountStorageIncident | null,
+    incidentsData: StorecmnFindResponseWithCountModelsIncident | null,
   ) => void;
   setServiceStatsData: (serviceStatsData: ServiceStats | null) => void;
   setUpdateServiceStatsData: (serviceStatsData: ServiceStats | null) => void;
