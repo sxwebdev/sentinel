@@ -42,6 +42,34 @@ type Incident struct {
 	UpdatedAt *time.Time `db:"updated_at" json:"updated_at"`
 }
 
+type IncidentState struct {
+	ID         string     `db:"id" json:"id"`
+	IncidentID string     `db:"incident_id" json:"incident_id"`
+	Status     string     `db:"status" json:"status"`
+	Level      int64      `db:"level" json:"level"`
+	CreatedAt  *time.Time `db:"created_at" json:"created_at"`
+	UpdatedAt  *time.Time `db:"updated_at" json:"updated_at"`
+}
+
+type NotificationHistory struct {
+	ID           string     `db:"id" json:"id"`
+	ProviderID   string     `db:"provider_id" json:"provider_id"`
+	IncidentID   *string    `db:"incident_id" json:"incident_id"`
+	Message      string     `db:"message" json:"message"`
+	Status       string     `db:"status" json:"status"`
+	ErrorMessage *string    `db:"error_message" json:"error_message"`
+	CreatedAt    *time.Time `db:"created_at" json:"created_at"`
+}
+
+type NotificationProvider struct {
+	ID           string             `db:"id" json:"id"`
+	ProviderType string             `db:"provider_type" json:"provider_type"`
+	Config       storecmn.JSONField `db:"config" json:"config"`
+	IsEnabled    bool               `db:"is_enabled" json:"is_enabled"`
+	CreatedAt    *time.Time         `db:"created_at" json:"created_at"`
+	UpdatedAt    *time.Time         `db:"updated_at" json:"updated_at"`
+}
+
 type Service struct {
 	ID        string              `db:"id" json:"id"`
 	Name      string              `db:"name" json:"name"`

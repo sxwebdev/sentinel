@@ -59,12 +59,9 @@ func (s *Notifier) Start(ctx context.Context) error {
 	}
 
 	s.isStarted = true
-	s.wg.Add(1)
 
-	go func() {
-		defer s.wg.Done()
-		s.processQueue()
-	}()
+	// Start processing queue in a separate goroutine
+	s.wg.Go(s.processQueue)
 
 	return nil
 }

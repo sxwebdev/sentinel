@@ -33,7 +33,7 @@ sqlc:
                 - updated_at
               returning: "*"
               column_values:
-                created_at: now()
+                created_at: CURRENT_TIMESTAMP
             delete:
             get:
               name: GetByID
@@ -48,8 +48,6 @@ sqlc:
                 - created_at
                 - updated_at
               returning: "*"
-              column_values:
-                created_at: now()
             delete:
             get:
               name: GetByID
@@ -64,8 +62,6 @@ sqlc:
                 - created_at
                 - updated_at
               returning: "*"
-              column_values:
-                created_at: now()
             delete:
             get:
               name: GetByID
@@ -92,8 +88,55 @@ sqlc:
             get:
               name: GetByID
 
+        # incident_states
+        incident_states:
+          output_dir: sql/queries/incident_states
+          primary_column: id
+          methods:
+            create:
+              skip_columns:
+                - created_at
+                - updated_at
+              returning: "*"
+            delete:
+            get:
+              name: GetByID
+            find:
+              name: GetAll
+
+        # notification_providers
+        notification_providers:
+          output_dir: sql/queries/notification_providers
+          primary_column: id
+          methods:
+            create:
+              skip_columns:
+                - created_at
+                - updated_at
+              returning: "*"
+            delete:
+            get:
+              name: GetByID
+
+        # notification_history
+        notification_history:
+          output_dir: sql/queries/notification_history
+          primary_column: id
+          methods:
+            create:
+              skip_columns:
+                - created_at
+                - updated_at
+              returning: "*"
+            delete:
+            get:
+              name: GetByID
+
     constants:
       tables:
+        agents:
+          output_dir: internal/store/repos/repo_agents
+          include_column_names: true
         services:
           output_dir: internal/store/repos/repo_services
           include_column_names: true
@@ -103,6 +146,12 @@ sqlc:
         incidents:
           output_dir: internal/store/repos/repo_incidents
           include_column_names: true
-        agents:
-          output_dir: internal/store/repos/repo_agents
+        incident_states:
+          output_dir: internal/store/repos/repo_incident_states
+          include_column_names: true
+        notification_providers:
+          output_dir: internal/store/repos/repo_notification_providers
+          include_column_names: true
+        notification_history:
+          output_dir: internal/store/repos/repo_notification_history
           include_column_names: true

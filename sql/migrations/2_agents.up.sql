@@ -32,3 +32,38 @@ ALTER TABLE incidents RENAME COLUMN duration_ns TO duration;
 -- Update service_states response_time_ns to response_time (from nanoseconds to milliseconds)
 UPDATE service_states SET response_time_ns = response_time_ns / 1000000 WHERE response_time_ns IS NOT NULL AND response_time_ns > 0;
 ALTER TABLE service_states RENAME COLUMN response_time_ns TO response_time;
+
+-- Create incidents states table
+CREATE TABLE IF NOT EXISTS incident_states (
+  id TEXT PRIMARY KEY,
+  incident_id TEXT NOT NULL REFERENCES incidents(id) ON DELETE CASCADE,
+  "status" TEXT NOT NULL CHECK (status != ''),
+  level INTEGER NOT NULL DEFAULT 0,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_incident_states_incident_id ON incident_states(incident_id);
+CREATE INDEX IF NOT EXISTS idx_incident_states_status ON incident_states(status);
+
+-- Create notifications providers table
+CREATE TABLE IF NOT EXISTS notification_providers (
+  id TEXT PRIMARY KEY,
+  provider_type TEXT NOT NULL,
+  config jsonb NOT NULL DEFAULT '{}',
+  is_enabled BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_notification_providers_enabled ON notification_providers(is_enabled);
+
+-- Create notifications history table
+CREATE TABLE IF NOT EXISTS notification_history (
+  id TEXT PRIMARY KEY,
+  provider_id TEXT NOT NULL REFERENCES notification_providers(id) ON DELETE CASCADE,
+  incident_id TEXT REFERENCES incidents(id) ON DELETE DELETE SET NULL,
+  message TEXT NOT NULL CHECK (message != ''),
+  "status" TEXT NOT NULL DEFAULT 'pending' CHECK (status != ''),
+  error_message TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_notification_history_provider ON notification_history(provider_id);
