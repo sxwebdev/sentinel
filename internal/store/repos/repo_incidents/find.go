@@ -62,7 +62,7 @@ func findBuilder(params FindParams, col ...string) *sqlbuilder.SelectBuilder {
 func (s *CustomQueries) Find(ctx context.Context, params FindParams) (*storecmn.FindResponseWithCount[*models.Incident], error) {
 	sb := findBuilder(params, IncidentsColumnNames().Strings()...)
 
-	sb.OrderBy("start_time").Desc()
+	sb.OrderBy("created_at").Desc()
 
 	limit, offset, err := storecmn.Pagination(params.Page, params.PageSize)
 	if err != nil {

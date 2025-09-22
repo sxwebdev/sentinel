@@ -73,7 +73,16 @@ func (s *Sender) do(ctx context.Context) error {
 
 	s.logger.Infof("found %d unsent notification history items", len(items))
 
+	unsentIncidents := make(map[string]struct{})
+
 	for _, item := range items {
+		if item.IncidentID != nil && *item.IncidentID != "" {
+			if _, exists := unsentIncidents[*item.IncidentID]; exists {
+				s.logger.Infof("skipping notification %s for incident %s as previous attempt failed", item.ID, *item.IncidentID)
+				continue
+			}
+		}
+
 		var err error
 		switch item.ProviderType {
 		case models.NotificationProviderTypeShoutrrr:
@@ -84,12 +93,16 @@ func (s *Sender) do(ctx context.Context) error {
 		}
 
 		if err != nil {
-			createErr := s.store.NotificationHistory().IncrementAttempt(ctx, repo_notification_history.IncrementAttemptParams{
+			incrementErr := s.store.NotificationHistory().IncrementAttempt(ctx, repo_notification_history.IncrementAttemptParams{
 				ID:           item.ID,
 				ErrorMessage: utils.Pointer(err.Error()),
 			})
-			if createErr != nil {
-				return createErr
+			if incrementErr != nil {
+				return incrementErr
+			}
+
+			if item.IncidentID != nil && *item.IncidentID != "" {
+				unsentIncidents[*item.IncidentID] = struct{}{}
 			}
 
 			s.logger.Errorf("failed to send notification %s: %v", item.ID, err)
@@ -126,10 +139,8 @@ func (s *Sender) processShoutrrr(ctx context.Context, item *repo_notification_hi
 
 	select {
 	case <-ctx.Done():
-		errCh <- ctx.Err()
+		return ctx.Err()
 	case err := <-errCh:
 		return err
 	}
-
-	return nil
 }
