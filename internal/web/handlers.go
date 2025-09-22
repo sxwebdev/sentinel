@@ -189,12 +189,16 @@ func (s *Server) setupRoutes() {
 	// Settings API
 	settingsGroup := api.Group("/settings")
 	notificationsGroup := settingsGroup.Group("/notifications")
+
 	notificationsProviderGroup := notificationsGroup.Group("/providers")
 	notificationsProviderGroup.Get("/", s.notificationProviderList)
 	notificationsProviderGroup.Post("/", s.notificationProviderCreate)
 	notificationsProviderGroup.Put("/:id", s.notificationProviderUpdate)
 	notificationsProviderGroup.Delete("/:id", s.notificationProviderDelete)
 	notificationsProviderGroup.Post("/:id/test", s.notificationProviderTest)
+
+	notificationsHistoryGroup := notificationsGroup.Group("/history")
+	notificationsHistoryGroup.Get("/", s.notificationHistoryList)
 
 	// Server API
 	serverGroup := api.Group("/server")

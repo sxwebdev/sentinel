@@ -134,3 +134,37 @@ func (s *Server) notificationProviderTest(c *fiber.Ctx) error {
 
 	return c.SendStatus(fiber.StatusOK)
 }
+
+// notificationHistoryList lists notification history with optional filters and pagination
+//
+//	@Summary		List notification history
+//	@Description	Retrieves a list of notification history records with optional filtering by status and pagination.
+//	@Tags			notifications
+//	@Accept			json
+//	@Produce		json
+//	@Param			status		query		string															false	"Filter by status (e.g., 'sent', 'failed')"
+//	@Param			order_by	query		string															false	"Order by field (default is 'created_at')"
+//	@Param			page		query		int32															false	"Page number for pagination (default is 1)"
+//	@Param			page_size	query		int32															false	"Number of items per page (default is 20)"
+//	@Success		200			{object}	storecmn.FindResponseWithCount[models.NotificationHistoryView]	"List of notification history records"
+//	@Failure		400			{object}	ErrorResponse													"Bad request"
+//	@Failure		500			{object}	ErrorResponse													"Internal server error"
+//	@Router			/settings/notifications/history [get]
+func (s *Server) notificationHistoryList(c *fiber.Ctx) error {
+	var params notifications.FindHistoryParams
+	if err := c.QueryParser(&params); err != nil {
+		return newErrorResponse(c, fiber.StatusBadRequest, err)
+	}
+
+	histories, err := s.baseServices.Notifications().History().Find(c.Context(), notifications.FindHistoryParams{
+		Status:   params.Status,
+		OrderBy:  params.OrderBy,
+		Page:     params.Page,
+		PageSize: params.PageSize,
+	})
+	if err != nil {
+		return newErrorResponse(c, fiber.StatusInternalServerError, err)
+	}
+
+	return c.JSON(histories)
+}

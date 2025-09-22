@@ -27,7 +27,7 @@ func newHistory(l logger.Logger, store *store.Store, sender *Sender) *History {
 }
 
 // SendAlert sends an alert notification to all enabled providers
-func (s *History) SendAlert(ctx context.Context, incidentID, message string) error {
+func (s *History) SendAlert(ctx context.Context, serviceID, incidentID, message string) error {
 	// Get all enabled providers
 	providers, err := s.store.NotificationProviders().GetAllEnabled(ctx)
 	if err != nil {
@@ -39,6 +39,10 @@ func (s *History) SendAlert(ctx context.Context, incidentID, message string) err
 		params := CreateHistoryParams{
 			ProviderID: provider.ID,
 			Message:    message,
+		}
+
+		if serviceID != "" {
+			params.ServiceID = &serviceID
 		}
 
 		if incidentID != "" {
@@ -54,9 +58,10 @@ func (s *History) SendAlert(ctx context.Context, incidentID, message string) err
 }
 
 type CreateHistoryParams struct {
-	ProviderID string  `db:"provider_id" json:"provider_id"`
-	IncidentID *string `db:"incident_id" json:"incident_id"`
-	Message    string  `db:"message" json:"message"`
+	ProviderID string  `json:"provider_id"`
+	ServiceID  *string `json:"service_id"`
+	IncidentID *string `json:"incident_id"`
+	Message    string  `json:"message"`
 }
 
 // Validate validates the CreateHistoryParams fields
@@ -81,6 +86,7 @@ func (s *History) Create(ctx context.Context, params CreateHistoryParams) (*mode
 	createParams := repo_notification_history.CreateParams{
 		ID:         utils.GenerateULID(),
 		ProviderID: params.ProviderID,
+		ServiceID:  params.ServiceID,
 		IncidentID: params.IncidentID,
 		Message:    params.Message,
 	}
@@ -102,4 +108,23 @@ func (s *History) Delete(ctx context.Context, id string) error {
 	}
 
 	return s.store.NotificationHistory().Delete(ctx, id)
+}
+
+type FindHistoryParams struct {
+	Status   string  `query:"status"`
+	OrderBy  string  `query:"order_by"`
+	Page     *uint32 `query:"page"`
+	PageSize *uint32 `query:"page_size"`
+}
+
+// Find returns list of notification histories by given filters with pagination
+func (s *History) Find(ctx context.Context, params FindHistoryParams) (*storecmn.FindResponseWithCount[*models.NotificationHistoryView], error) {
+	p := repo_notification_history.FindParams{
+		Status:   params.Status,
+		OrderBy:  params.OrderBy,
+		Page:     params.Page,
+		PageSize: params.PageSize,
+	}
+
+	return s.store.NotificationHistory().Find(ctx, p)
 }

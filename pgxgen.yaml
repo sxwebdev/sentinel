@@ -133,7 +133,7 @@ sqlc:
                 - status
                 - response
                 - attempts
-                - last_sending_error_message
+                - error_message
                 - last_attempt_at
                 - sent_at
                 - created_at

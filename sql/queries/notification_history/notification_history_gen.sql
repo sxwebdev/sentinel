@@ -1,5 +1,5 @@
 -- name: Create :one
-INSERT INTO notification_history (id, provider_id, incident_id, message, error_message)
+INSERT INTO notification_history (id, provider_id, service_id, incident_id, message)
 	VALUES (?, ?, ?, ?, ?)
 	RETURNING *;
 

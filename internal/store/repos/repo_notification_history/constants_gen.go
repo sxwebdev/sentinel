@@ -41,6 +41,7 @@ func (s ColumnNames) Strings() []string {
 const (
 	ColumnNameNotificationHistoryId            ColumnName = "id"
 	ColumnNameNotificationHistoryProviderId    ColumnName = "provider_id"
+	ColumnNameNotificationHistoryServiceId     ColumnName = "service_id"
 	ColumnNameNotificationHistoryIncidentId    ColumnName = "incident_id"
 	ColumnNameNotificationHistoryMessage       ColumnName = "message"
 	ColumnNameNotificationHistoryStatus        ColumnName = "status"
@@ -57,6 +58,7 @@ func NotificationHistoryColumnNames() ColumnNames {
 	return ColumnNames{
 		ColumnNameNotificationHistoryId,
 		ColumnNameNotificationHistoryProviderId,
+		ColumnNameNotificationHistoryServiceId,
 		ColumnNameNotificationHistoryIncidentId,
 		ColumnNameNotificationHistoryMessage,
 		ColumnNameNotificationHistoryStatus,

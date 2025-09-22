@@ -58,6 +58,7 @@ CREATE INDEX IF NOT EXISTS idx_notification_providers_enabled ON notification_pr
 CREATE TABLE IF NOT EXISTS notification_history (
   id TEXT PRIMARY KEY,
   provider_id TEXT NOT NULL REFERENCES notification_providers(id) ON DELETE CASCADE,
+  service_id TEXT REFERENCES services(id) ON DELETE SET NULL,
   incident_id TEXT REFERENCES incidents(id) ON DELETE SET NULL,
   message TEXT NOT NULL CHECK (message != ''),
   "status" TEXT NOT NULL DEFAULT 'pending' CHECK (status != ''),

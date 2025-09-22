@@ -513,7 +513,7 @@ func (m *Scheduler) createIncident(ctx context.Context, svc *models.ServiceFullV
 
 	// Send alert notification
 	message := m.formatAlertMessage(svc, incident)
-	if err := m.baseservices.Notifications().History().SendAlert(ctx, incident.ID, message); err != nil {
+	if err := m.baseservices.Notifications().History().SendAlert(ctx, svc.ID, incident.ID, message); err != nil {
 		m.logger.Errorf("failed to send alert notification for %s: %v", svc.Name, err)
 	}
 
@@ -546,7 +546,7 @@ func (m *Scheduler) resolveActiveIncidents(ctx context.Context, serviceID string
 		}
 
 		message := m.formatRecoveryMessage(svc, resolverIncident)
-		if err := m.baseservices.Notifications().History().SendAlert(ctx, resolverIncident.ID, message); err != nil {
+		if err := m.baseservices.Notifications().History().SendAlert(ctx, svc.ID, resolverIncident.ID, message); err != nil {
 			m.logger.Errorf("failed to send recovery notification for %s: %v", svc.Name, err)
 		}
 	}

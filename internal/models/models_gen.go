@@ -54,6 +54,7 @@ type IncidentState struct {
 type NotificationHistory struct {
 	ID            string     `db:"id" json:"id"`
 	ProviderID    string     `db:"provider_id" json:"provider_id"`
+	ServiceID     *string    `db:"service_id" json:"service_id"`
 	IncidentID    *string    `db:"incident_id" json:"incident_id"`
 	Message       string     `db:"message" json:"message"`
 	Status        string     `db:"status" json:"status"`

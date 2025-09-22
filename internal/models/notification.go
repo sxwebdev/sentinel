@@ -36,3 +36,8 @@ func (n NotificationProviderShoutrrrConfig) Validate() error {
 
 	return nil
 }
+
+type NotificationHistoryView struct {
+	NotificationHistory
+	ServiceName *string `json:"service_name"`
+}

@@ -19,7 +19,7 @@ type Repos struct {
 	incidents             *repo_incidents.CustomQueries
 	incidentsStates       *repo_incident_states.Queries
 	notificationProviders *repo_notification_providers.Queries
-	notificationHistory   *repo_notification_history.Queries
+	notificationHistory   *repo_notification_history.CustomQueries
 }
 
 func New(sqlite *sql.DB) *Repos {
@@ -30,7 +30,7 @@ func New(sqlite *sql.DB) *Repos {
 		incidents:             repo_incidents.NewCustom(sqlite),
 		incidentsStates:       repo_incident_states.New(sqlite),
 		notificationProviders: repo_notification_providers.New(sqlite),
-		notificationHistory:   repo_notification_history.New(sqlite),
+		notificationHistory:   repo_notification_history.NewCustom(sqlite),
 	}
 }
 
@@ -101,7 +101,7 @@ func (s *Repos) NotificationProviders(opts ...Option) repo_notification_provider
 }
 
 // NotificationHistory returns repo for notification history
-func (s *Repos) NotificationHistory(opts ...Option) repo_notification_history.Querier {
+func (s *Repos) NotificationHistory(opts ...Option) repo_notification_history.ICustomQuerier {
 	options := parseOptions(opts...)
 
 	if options.Tx != nil {

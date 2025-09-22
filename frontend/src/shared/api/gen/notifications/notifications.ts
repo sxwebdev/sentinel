@@ -6,14 +6,27 @@
  * OpenAPI spec version: 1.0
  */
 import type {
+  GetSettingsNotificationsHistoryParams,
   ModelsNotificationProvider,
   NotificationsCreateProviderParams,
   NotificationsUpdateProviderParams,
+  StorecmnFindResponseWithCountModelsNotificationHistoryView,
 } from "../../../types/model";
 
 import { customFetcher } from "../../baseApi";
 
 export const getNotifications = () => {
+  /**
+   * Retrieves a list of notification history records with optional filtering by status and pagination.
+   * @summary List notification history
+   */
+  const getSettingsNotificationsHistory = (
+    params?: GetSettingsNotificationsHistoryParams,
+  ) => {
+    return customFetcher<StorecmnFindResponseWithCountModelsNotificationHistoryView>(
+      { url: `/settings/notifications/history`, method: "GET", params },
+    );
+  };
   /**
    * Retrieves a list of all configured notification providers.
    * @summary List all notification providers
@@ -74,6 +87,7 @@ export const getNotifications = () => {
     });
   };
   return {
+    getSettingsNotificationsHistory,
     getSettingsNotificationsProviders,
     postSettingsNotificationsProviders,
     putSettingsNotificationsProvidersId,
@@ -81,6 +95,13 @@ export const getNotifications = () => {
     postSettingsNotificationsProvidersIdTest,
   };
 };
+export type GetSettingsNotificationsHistoryResult = NonNullable<
+  Awaited<
+    ReturnType<
+      ReturnType<typeof getNotifications>["getSettingsNotificationsHistory"]
+    >
+  >
+>;
 export type GetSettingsNotificationsProvidersResult = NonNullable<
   Awaited<
     ReturnType<

@@ -32,6 +32,37 @@ definitions:
       updated_at:
         type: string
     type: object
+  models.NotificationHistoryView:
+    properties:
+      attempts:
+        type: integer
+      created_at:
+        type: string
+      error_message:
+        type: string
+      id:
+        type: string
+      incident_id:
+        type: string
+      last_attempt_at:
+        type: string
+      message:
+        type: string
+      provider_id:
+        type: string
+      response:
+        type: string
+      sent_at:
+        type: string
+      service_id:
+        type: string
+      service_name:
+        type: string
+      status:
+        type: string
+      updated_at:
+        type: string
+    type: object
   models.NotificationProvider:
     properties:
       config:
@@ -207,6 +238,15 @@ definitions:
       items:
         items:
           $ref: '#/definitions/models.Incident'
+        type: array
+    type: object
+  storecmn.FindResponseWithCount-models_NotificationHistoryView:
+    properties:
+      count:
+        type: integer
+      items:
+        items:
+          $ref: '#/definitions/models.NotificationHistoryView'
         type: array
     type: object
   storecmn.FindResponseWithCount-web_ServiceDTO:
@@ -897,6 +937,47 @@ paths:
       summary: Get service statistics
       tags:
       - statistics
+  /settings/notifications/history:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of notification history records with optional
+        filtering by status and pagination.
+      parameters:
+      - description: Filter by status (e.g., 'sent', 'failed')
+        in: query
+        name: status
+        type: string
+      - description: Order by field (default is 'created_at')
+        in: query
+        name: order_by
+        type: string
+      - description: Page number for pagination (default is 1)
+        in: query
+        name: page
+        type: integer
+      - description: Number of items per page (default is 20)
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of notification history records
+          schema:
+            $ref: '#/definitions/storecmn.FindResponseWithCount-models_NotificationHistoryView'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+      summary: List notification history
+      tags:
+      - notifications
   /settings/notifications/providers:
     get:
       consumes:

@@ -731,6 +731,67 @@
                 }
             }
         },
+        "/settings/notifications/history": {
+            "get": {
+                "description": "Retrieves a list of notification history records with optional filtering by status and pagination.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "notifications"
+                ],
+                "summary": "List notification history",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Filter by status (e.g., 'sent', 'failed')",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Order by field (default is 'created_at')",
+                        "name": "order_by",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page number for pagination (default is 1)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of items per page (default is 20)",
+                        "name": "page_size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of notification history records",
+                        "schema": {
+                            "$ref": "#/definitions/storecmn.FindResponseWithCount-models_NotificationHistoryView"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/web.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/settings/notifications/providers": {
             "get": {
                 "description": "Retrieves a list of all configured notification providers.",
@@ -1055,6 +1116,53 @@
                 }
             }
         },
+        "models.NotificationHistoryView": {
+            "type": "object",
+            "properties": {
+                "attempts": {
+                    "type": "integer"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "error_message": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "incident_id": {
+                    "type": "string"
+                },
+                "last_attempt_at": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "provider_id": {
+                    "type": "string"
+                },
+                "response": {
+                    "type": "string"
+                },
+                "sent_at": {
+                    "type": "string"
+                },
+                "service_id": {
+                    "type": "string"
+                },
+                "service_name": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
         "models.NotificationProvider": {
             "type": "object",
             "properties": {
@@ -1307,6 +1415,20 @@
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/models.Incident"
+                    }
+                }
+            }
+        },
+        "storecmn.FindResponseWithCount-models_NotificationHistoryView": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.NotificationHistoryView"
                     }
                 }
             }
