@@ -33,11 +33,8 @@ agent: ## Run in development mode with auto-reload
 run: build ## Build and run the application
 	./$(BUILD_DIR)/$(BINARY_NAME)
 
-runtcpserver:
-	go run ./cmd/tcpserver
-
-rungrpcserver:
-	go run ./cmd/grpcserver
+runtestservers:
+	go run ./cmd/testserver -http -grpc -tcp
 
 front:
 	cd frontend && pnpm dev

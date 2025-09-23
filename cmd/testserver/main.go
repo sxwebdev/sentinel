@@ -52,36 +52,30 @@ func run() error {
 
 	// Start enabled servers
 	if *enableTCP {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			log.Printf("Starting TCP server on port %d", *tcpPort)
 			if err := runTCPServer(ctx, *tcpPort); err != nil {
 				errChan <- fmt.Errorf("TCP server error: %w", err)
 			}
-		}()
+		})
 	}
 
 	if *enableGRPC {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			log.Printf("Starting gRPC server on port %d", *grpcPort)
 			if err := runGRPCServer(ctx, *grpcPort); err != nil {
 				errChan <- fmt.Errorf("gRPC server error: %w", err)
 			}
-		}()
+		})
 	}
 
 	if *enableHTTP {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			log.Printf("Starting HTTP server on port %d", *httpPort)
 			if err := runHTTPServer(ctx, *httpPort); err != nil {
 				errChan <- fmt.Errorf("HTTP server error: %w", err)
 			}
-		}()
+		})
 	}
 
 	// Wait for interrupt signal or server error
@@ -117,14 +111,12 @@ func run() error {
 
 // runTCPServer runs the TCP server with original logic from cmd/tcpserver/main.go
 func runTCPServer(ctx context.Context, port int) error {
-	addr := fmt.Sprintf("127.0.0.1:%d", port)
+	addr := fmt.Sprintf("localhost:%d", port)
 	listener, err := net.Listen("tcp", addr)
 	if err != nil {
 		return fmt.Errorf("failed to start TCP server: %w", err)
 	}
 	defer listener.Close()
-
-	log.Printf("TCP server is listening on %s", addr)
 
 	// Channel to signal when to stop accepting new connections
 	stopChan := make(chan struct{})
@@ -154,7 +146,7 @@ func runTCPServer(ctx context.Context, port int) error {
 			}
 		}
 
-		log.Printf("TCP client connected: %s", conn.RemoteAddr())
+		// log.Printf("TCP client connected: %s", conn.RemoteAddr())
 		go handleTCPConnection(conn)
 	}
 }
@@ -163,7 +155,7 @@ func runTCPServer(ctx context.Context, port int) error {
 func handleTCPConnection(conn net.Conn) {
 	defer func() {
 		conn.Close()
-		log.Printf("TCP connection closed: %s\n", conn.RemoteAddr())
+		// log.Printf("TCP connection closed: %s\n", conn.RemoteAddr())
 	}()
 
 	// Set connection timeout - close if no data received in 5 seconds
@@ -203,12 +195,12 @@ func handleTCPConnection(conn net.Conn) {
 	}
 
 	msg := string(accumulated)
-	log.Printf("TCP complete message received: %s", msg)
+	// log.Printf("TCP complete message received: %s", msg)
 
 	// Simple ping-pong protocol - exact match
 	switch msg {
 	case "ping":
-		log.Println("TCP: Sending pong")
+		// log.Println("TCP: Sending pong")
 		_, err := conn.Write([]byte("pong"))
 		if err != nil {
 			log.Printf("Failed to send TCP response: %v", err)
@@ -227,7 +219,6 @@ func handleTCPConnection(conn net.Conn) {
 // runGRPCServer runs the gRPC server with original logic from cmd/grpcserver/main.go
 func runGRPCServer(ctx context.Context, port int) error {
 	addr := fmt.Sprintf("localhost:%d", port)
-	log.Printf("Starting gRPC server on %s", addr)
 
 	lis, err := net.Listen("tcp", addr)
 	if err != nil {
@@ -288,7 +279,6 @@ func runHTTPServer(ctx context.Context, port int) error {
 	// Start server in a goroutine
 	serverErr := make(chan error, 1)
 	go func() {
-		log.Printf("HTTP server is listening on :%d", port)
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			serverErr <- fmt.Errorf("failed to start HTTP server: %w", err)
 		}

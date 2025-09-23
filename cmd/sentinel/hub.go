@@ -106,7 +106,7 @@ func hubStartCMD() *cli.Command {
 			baseServices := baseservices.New(l, st, rc)
 
 			// Initialize scheduler
-			sched := scheduler.New(l, st, rc, baseServices)
+			sched := scheduler.New(l, rc, baseServices)
 
 			serverInfo := models.GetSystemInfo(version, commitHash, buildDate)
 			serverInfo.SqliteVersion = sqliteVersion

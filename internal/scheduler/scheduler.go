@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"strings"
 	"sync"
 	"time"
@@ -16,7 +17,6 @@ import (
 	"github.com/sxwebdev/sentinel/internal/services/incidents"
 	"github.com/sxwebdev/sentinel/internal/services/service"
 	"github.com/sxwebdev/sentinel/internal/services/servicestate"
-	"github.com/sxwebdev/sentinel/internal/store"
 	"github.com/sxwebdev/sentinel/internal/store/repos/repo_service_states"
 	"github.com/sxwebdev/sentinel/internal/utils"
 	"github.com/tkcrm/modules/pkg/db/dbutils"
@@ -30,11 +30,10 @@ var ErrServiceNotFound = fmt.Errorf("service not found")
 type Scheduler struct {
 	logger logger.Logger
 
-	store *store.Store
-
 	receiver     *receiver.Receiver
 	baseservices *baseservices.BaseServices
 
+	// Job management, key is service ID
 	jobs *xsync.MapOf[string, *job]
 	wg   sync.WaitGroup
 }
@@ -42,13 +41,11 @@ type Scheduler struct {
 // New creates a new scheduler
 func New(
 	l logger.Logger,
-	store *store.Store,
 	receiver *receiver.Receiver,
 	baseServices *baseservices.BaseServices,
 ) *Scheduler {
 	return &Scheduler{
 		logger:       l,
-		store:        store,
 		receiver:     receiver,
 		baseservices: baseServices,
 		jobs:         xsync.NewMapOf[string, *job](),
@@ -219,15 +216,25 @@ func (s *Scheduler) performCheck(job *job) error {
 		return fmt.Errorf("failed to get service %s: %w", serviceName, err)
 	}
 
+	svcConfig, err := service.GetConfig()
+	if err != nil {
+		return fmt.Errorf("failed to parse service config for %s: %w", serviceName, err)
+	}
+
 	// Create monitor for this check
-	monitor, err := monitors.NewMonitor(service)
+	monitor, err := monitors.NewMonitor(monitors.MonitorParams{
+		ServiceName: service.Name,
+		Protocol:    service.Protocol,
+		Timeout:     service.Timeout.ToDuration(),
+		Config:      svcConfig,
+	})
 	if err != nil {
 		return fmt.Errorf("failed to create monitor for %s: %w", serviceName, err)
 	}
 
 	// Ensure monitor resources are cleaned up
 	defer func() {
-		if closer, ok := monitor.(interface{ Close() error }); ok {
+		if closer, ok := monitor.(io.Closer); ok {
 			if err := closer.Close(); err != nil {
 				s.logger.Errorf("Error closing monitor for %s: %v", serviceName, err)
 			}
@@ -352,13 +359,6 @@ func (s *Scheduler) removeJob(serviceID string) error {
 	return nil
 }
 
-// updateJob updates a service configuration dynamically
-func (s *Scheduler) updateJob(ctx context.Context, svc *models.ServiceFullView) error {
-	s.addService(ctx, svc)
-
-	return nil
-}
-
 func (s *Scheduler) subscribeEvents(ctx context.Context) error {
 	broker := s.receiver.TriggerService()
 	sub := broker.Subscribe()
@@ -383,9 +383,7 @@ func (s *Scheduler) subscribeEvents(ctx context.Context) error {
 					}
 				} else {
 					// Update or add to monitoring if service is enabled
-					if err := s.updateJob(ctx, item.Svc); err != nil {
-						s.logger.Errorf("update service error: %v", err)
-					}
+					s.addService(ctx, item.Svc)
 				}
 			case receiver.TriggerServiceEventTypeDeleted:
 				if err := s.removeJob(item.Svc.ID); err != nil {

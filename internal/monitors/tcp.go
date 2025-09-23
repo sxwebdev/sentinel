@@ -21,24 +21,19 @@ type TCPConfig struct {
 
 // TCPMonitor monitors TCP endpoints
 type TCPMonitor struct {
-	BaseMonitor
+	baseMonitor
 	conf TCPConfig
 }
 
-// NewTCPMonitor creates a new TCP monitor
-func NewTCPMonitor(svc *models.Service) (*TCPMonitor, error) {
-	svcConfig, err := svc.GetConfig()
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse service config: %w", err)
-	}
-
-	conf, err := GetConfig[TCPConfig](svcConfig, models.ServiceProtocolTypeTCP)
+// newTCPMonitor creates a new TCP monitor
+func newTCPMonitor(params MonitorParams) (*TCPMonitor, error) {
+	conf, err := GetConfig[TCPConfig](params.Config, models.ServiceProtocolTypeTCP)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get TCP config: %w", err)
 	}
 
 	monitor := &TCPMonitor{
-		BaseMonitor: NewBaseMonitor(svc),
+		baseMonitor: newBaseMonitor(params.ServiceName, params.Protocol, params.Timeout),
 		conf:        conf,
 	}
 
@@ -53,7 +48,7 @@ func (t *TCPMonitor) Check(ctx context.Context) error {
 	}
 	endpoint := t.conf.Endpoint
 
-	timeout := t.config.Timeout.ToDuration()
+	timeout := t.timeout
 	if timeout <= 0 {
 		timeout = 5 * time.Second
 	}

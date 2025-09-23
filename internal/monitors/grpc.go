@@ -25,23 +25,18 @@ type GRPCConfig struct {
 
 // GRPCMonitor monitors gRPC services
 type GRPCMonitor struct {
-	BaseMonitor
+	baseMonitor
 	conf GRPCConfig
 	conn *grpc.ClientConn
 }
 
-// NewGRPCMonitor creates a new gRPC monitor
-func NewGRPCMonitor(svc *models.Service) (*GRPCMonitor, error) {
+// newGRPCMonitor creates a new gRPC monitor
+func newGRPCMonitor(params MonitorParams) (*GRPCMonitor, error) {
 	monitor := &GRPCMonitor{
-		BaseMonitor: NewBaseMonitor(svc),
+		baseMonitor: newBaseMonitor(params.ServiceName, params.Protocol, params.Timeout),
 	}
 
-	svcConfig, err := svc.GetConfig()
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse service config: %w", err)
-	}
-
-	conf, err := GetConfig[GRPCConfig](svcConfig, models.ServiceProtocolTypeGRPC)
+	conf, err := GetConfig[GRPCConfig](params.Config, models.ServiceProtocolTypeGRPC)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get gRPC config: %w", err)
 	}

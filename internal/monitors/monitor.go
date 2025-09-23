@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"time"
 
 	"github.com/sxwebdev/sentinel/internal/models"
 )
@@ -11,50 +12,41 @@ import (
 // ServiceMonitor defines the interface for all service monitors
 type ServiceMonitor interface {
 	io.Closer
-
-	Name() string
-	Protocol() models.ServiceProtocolType
 	Check(ctx context.Context) error
-	Config() *models.Service
+}
+
+type MonitorParams struct {
+	ServiceName string
+	Protocol    models.ServiceProtocolType
+	Timeout     time.Duration
+	Config      map[string]any
 }
 
 // NewMonitor creates a new monitor based on the service configuration
-func NewMonitor(cfg *models.Service) (ServiceMonitor, error) {
-	switch cfg.Protocol {
+func NewMonitor(params MonitorParams) (ServiceMonitor, error) {
+	switch params.Protocol {
 	case models.ServiceProtocolTypeHTTP:
-		return NewHTTPMonitor(cfg)
+		return newHTTPMonitor(params)
 	case models.ServiceProtocolTypeTCP:
-		return NewTCPMonitor(cfg)
+		return newTCPMonitor(params)
 	case models.ServiceProtocolTypeGRPC:
-		return NewGRPCMonitor(cfg)
+		return newGRPCMonitor(params)
 	default:
-		return nil, fmt.Errorf("unsupported protocol: %s", cfg.Protocol)
+		return nil, fmt.Errorf("unsupported protocol: %s", params.Protocol)
 	}
 }
 
-// BaseMonitor provides common functionality for all monitors
-type BaseMonitor struct {
+// baseMonitor provides common functionality for all monitors
+type baseMonitor struct {
 	name     string
 	protocol models.ServiceProtocolType
-	config   *models.Service
+	timeout  time.Duration
 }
 
-func NewBaseMonitor(cfg *models.Service) BaseMonitor {
-	return BaseMonitor{
-		name:     cfg.Name,
-		protocol: cfg.Protocol,
-		config:   cfg,
+func newBaseMonitor(name string, protocol models.ServiceProtocolType, timeout time.Duration) baseMonitor {
+	return baseMonitor{
+		name:     name,
+		protocol: protocol,
+		timeout:  timeout,
 	}
-}
-
-func (b *BaseMonitor) Name() string {
-	return b.name
-}
-
-func (b *BaseMonitor) Protocol() models.ServiceProtocolType {
-	return b.protocol
-}
-
-func (b *BaseMonitor) Config() *models.Service {
-	return b.config
 }
