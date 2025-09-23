@@ -14,7 +14,7 @@ import (
 
 // checkNewVersion checks if a new version is available from github releases
 func (s *Server) checkNewVersionWrapper(ctx context.Context) {
-	ticker := time.NewTicker(time.Minute * 30)
+	ticker := time.NewTicker(time.Hour * 1)
 	defer ticker.Stop()
 
 	go func() {

@@ -2,16 +2,12 @@ package scheduler
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"io"
 	"strings"
-	"sync"
 	"time"
 
-	"github.com/puzpuzpuz/xsync/v3"
+	"github.com/sxwebdev/sentinel/internal/checker"
 	"github.com/sxwebdev/sentinel/internal/models"
-	"github.com/sxwebdev/sentinel/internal/monitors"
 	"github.com/sxwebdev/sentinel/internal/receiver"
 	"github.com/sxwebdev/sentinel/internal/services/baseservices"
 	"github.com/sxwebdev/sentinel/internal/services/incidents"
@@ -23,19 +19,14 @@ import (
 	"github.com/tkcrm/mx/logger"
 )
 
-// ErrServiceNotFound is returned when a service is not found
-var ErrServiceNotFound = fmt.Errorf("service not found")
-
 // Scheduler manages the monitoring of multiple services
 type Scheduler struct {
 	logger logger.Logger
 
+	checker *checker.Checker
+
 	receiver     *receiver.Receiver
 	baseservices *baseservices.BaseServices
-
-	// Job management, key is service ID
-	jobs *xsync.MapOf[string, *job]
-	wg   sync.WaitGroup
 }
 
 // New creates a new scheduler
@@ -44,12 +35,20 @@ func New(
 	receiver *receiver.Receiver,
 	baseServices *baseservices.BaseServices,
 ) *Scheduler {
-	return &Scheduler{
+	s := &Scheduler{
 		logger:       l,
 		receiver:     receiver,
 		baseservices: baseServices,
-		jobs:         xsync.NewMapOf[string, *job](),
 	}
+
+	s.checker = checker.New(
+		l,
+		receiver,
+		s.onSuccess,
+		s.onFailure,
+	)
+
+	return s
 }
 
 // Name returns the name of the scheduler
@@ -70,245 +69,35 @@ func (s *Scheduler) Start(ctx context.Context) error {
 
 	// Get all services under read lock
 	for _, svc := range services.Items {
-		s.addService(ctx, svc)
+		s.checker.AddService(ctx, checker.AddServiceParams{
+			ID:        svc.ID,
+			Name:      svc.Name,
+			Protocol:  svc.Protocol,
+			IsEnabled: svc.IsEnabled,
+			Interval:  svc.Interval,
+			Timeout:   svc.Timeout,
+			Retries:   svc.Retries,
+			Config:    svc.Config,
+		})
 	}
 
-	errChan := make(chan error, 1)
-	go func() {
-		errChan <- s.subscribeEvents(ctx)
-	}()
-
-	select {
-	case err := <-errChan:
-		return err
-	case <-ctx.Done():
-	}
-
-	return nil
+	return s.checker.Start(ctx)
 }
 
 func (s *Scheduler) Stop(ctx context.Context) error {
-	s.stopAll()
-	s.wg.Wait()
-	return nil
+	return s.checker.Stop(ctx)
 }
 
-// stopAll stops monitoring for all services
-func (s *Scheduler) stopAll() {
-	s.jobs.Range(func(key string, value *job) bool {
-		// Cancel any ongoing checks
-		if value.checkCancel != nil {
-			value.checkCancel()
-		}
-
-		select {
-		case <-value.stopChan:
-			// Channel already closed
-		default:
-			close(value.stopChan)
-		}
-		if value.ticker != nil {
-			value.ticker.Stop()
-		}
-		return true
-	})
-}
-
-// addService adds a service to be monitored
-func (s *Scheduler) addService(ctx context.Context, svc *models.ServiceFullView) {
-	// Only add enabled services to monitoring
-	if !svc.IsEnabled {
-		s.logger.Warnf("Skipping disabled service: %s (ID: %s)", svc.Name, svc.ID)
-		return
+// onSuccess is called when a service check succeeds
+func (s *Scheduler) onSuccess(ctx context.Context, serviceID string, responseTime time.Duration) error {
+	// Success - record the time of this successful attempt
+	if err := s.recordSuccess(ctx, serviceID, responseTime); err != nil {
+		return fmt.Errorf("failed to record success: %w", err)
 	}
 
-	// Create new service job with minimal info
-	checkCtx, checkCancel := context.WithCancel(ctx)
-	job := &job{
-		serviceID:   svc.ID,
-		serviceName: svc.Name,
-		interval:    svc.Interval,
-		timeout:     svc.Timeout,
-		retries:     svc.Retries,
-		stopChan:    make(chan struct{}),
-		checkCtx:    checkCtx,
-		checkCancel: checkCancel,
-	}
-
-	s.addJob(ctx, job)
-}
-
-// addJob adds a new job to the scheduler
-func (s *Scheduler) addJob(ctx context.Context, job *job) {
-	// Check if job already exists
-	if existingJob, exists := s.jobs.Load(job.serviceID); exists {
-		// Cancel any ongoing checks for the existing job
-		if existingJob.checkCancel != nil {
-			existingJob.checkCancel()
-		}
-
-		// Stop existing job gracefully
-		select {
-		case <-existingJob.stopChan:
-			// Channel already closed
-		default:
-			close(existingJob.stopChan)
-		}
-		if existingJob.ticker != nil {
-			existingJob.ticker.Stop()
-		}
-	}
-
-	// Store the new job
-	s.jobs.Store(job.serviceID, job)
-
-	// Start monitoring in a new goroutine
-	s.wg.Go(func() {
-		s.monitorService(ctx, job)
-	})
-}
-
-// monitorService runs the monitoring loop for a single service
-func (s *Scheduler) monitorService(ctx context.Context, job *job) {
-	// Create ticker for regular checks
-	job.ticker = time.NewTicker(job.interval)
-	defer job.ticker.Stop()
-
-	// Perform initial check
-	if err := s.performCheck(job); err != nil {
-		s.logger.Errorf("Error performing initial check for service %s: %v", job.serviceName, err)
-		return
-	}
-
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-job.stopChan:
-			return
-		case <-job.ticker.C:
-			if err := s.performCheck(job); err != nil && !errors.Is(err, context.Canceled) {
-				s.logger.Errorf("error performing check for service %s: %v", job.serviceName, err)
-				continue
-			}
-		}
-	}
-}
-
-// performCheck executes a health check for a service
-func (s *Scheduler) performCheck(job *job) error {
-	if !job.inProgress.CompareAndSwap(false, true) {
-		// Another check is already in progress
-		return nil
-	}
-	defer job.inProgress.Store(false)
-
-	// Check if job context is cancelled (handles job updates/deletions)
-	if job.checkCtx.Err() != nil {
-		return job.checkCtx.Err()
-	}
-
-	serviceName := job.serviceName
-
-	// Get current service configuration from database
-	service, err := s.baseservices.Services().GetByID(job.checkCtx, job.serviceID)
+	svc, err := s.baseservices.Services().GetViewByID(ctx, serviceID)
 	if err != nil {
-		return fmt.Errorf("failed to get service %s: %w", serviceName, err)
-	}
-
-	svcConfig, err := service.GetConfig()
-	if err != nil {
-		return fmt.Errorf("failed to parse service config for %s: %w", serviceName, err)
-	}
-
-	// Create monitor for this check
-	monitor, err := monitors.NewMonitor(monitors.MonitorParams{
-		ServiceName: service.Name,
-		Protocol:    service.Protocol,
-		Timeout:     service.Timeout.ToDuration(),
-		Config:      svcConfig,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to create monitor for %s: %w", serviceName, err)
-	}
-
-	// Ensure monitor resources are cleaned up
-	defer func() {
-		if closer, ok := monitor.(io.Closer); ok {
-			if err := closer.Close(); err != nil {
-				s.logger.Errorf("Error closing monitor for %s: %v", serviceName, err)
-			}
-		}
-	}()
-
-	// Perform the check with retries
-	var lastErr error
-	var lastAttemptResponseTime time.Duration
-
-	for attempt := int64(1); attempt <= job.retries; attempt++ {
-		// Create context with timeout for this specific check
-		attemptCtx, cancel := context.WithTimeout(job.checkCtx, job.timeout)
-
-		// Measure time for this specific attempt
-		attemptStartTime := time.Now()
-		err := monitor.Check(attemptCtx)
-		attemptResponseTime := time.Since(attemptStartTime)
-		lastAttemptResponseTime = attemptResponseTime
-
-		// Cancel context immediately after use to avoid memory leak
-		cancel()
-
-		if err == nil {
-			// Success - record the time of this successful attempt
-			if err := s.recordSuccess(job.checkCtx, job.serviceID, attemptResponseTime); err != nil {
-				return fmt.Errorf("failed to record success for %s: %w", serviceName, err)
-			}
-
-			if attempt == 1 {
-				s.logger.Debugf("service %s check successful in %v", serviceName, attemptResponseTime)
-			} else {
-				s.logger.Debugf("service %s check successful (attempt %d/%d) in %v", serviceName, attempt, job.retries, attemptResponseTime)
-			}
-
-			svc, err := s.baseservices.Services().GetViewByID(job.checkCtx, job.serviceID)
-			if err != nil {
-				return fmt.Errorf("failed to get service view for %s: %w", serviceName, err)
-			}
-
-			// Publish update to receiver
-			s.receiver.TriggerService().Publish(*receiver.NewTriggerServiceData(
-				receiver.TriggerServiceEventTypeUpdatedState,
-				svc,
-			))
-
-			return nil
-		}
-
-		lastErr = err
-
-		// If not the last attempt, wait a bit before retrying
-		if attempt < job.retries {
-			// Check if job context is cancelled before retrying
-			select {
-			case <-job.checkCtx.Done():
-				// Job context cancelled, stop retrying
-				return job.checkCtx.Err()
-			case <-time.After(time.Millisecond * 500 * time.Duration(attempt)):
-				// Exponential backoff - continue to next attempt
-			}
-		}
-
-		s.logger.Debugf("service %s check failed (attempt %d/%d): %s", serviceName, attempt, job.retries, err)
-	}
-
-	// All attempts failed - record the time of the last attempt
-	if err := s.recordFailure(job.checkCtx, job.serviceID, lastErr, lastAttemptResponseTime); err != nil {
-		return fmt.Errorf("failed to record failure for %s: %w", serviceName, err)
-	}
-
-	svc, err := s.baseservices.Services().GetViewByID(job.checkCtx, job.serviceID)
-	if err != nil {
-		return fmt.Errorf("failed to get service view for %s: %w", serviceName, err)
+		return fmt.Errorf("failed to get service view: %w", err)
 	}
 
 	// Publish update to receiver
@@ -320,81 +109,23 @@ func (s *Scheduler) performCheck(job *job) error {
 	return nil
 }
 
-// checkService manually triggers a check for a specific service
-func (s *Scheduler) checkService(serviceID string) error {
-	job, exists := s.jobs.Load(serviceID)
-	if !exists {
-		return ErrServiceNotFound
+// onFailure is called when a service check fails
+func (s *Scheduler) onFailure(ctx context.Context, serviceID string, checkErr error, responseTime time.Duration) error {
+	// All attempts failed - record the time of the last attempt
+	if err := s.recordFailure(ctx, serviceID, checkErr, responseTime); err != nil {
+		return fmt.Errorf("failed to record failure: %w", err)
 	}
 
-	return s.performCheck(job)
-}
-
-// removeJob removes a service dynamically (for runtime removals)
-func (s *Scheduler) removeJob(serviceID string) error {
-	job, exists := s.jobs.Load(serviceID)
-	if !exists {
-		return ErrServiceNotFound
+	svc, err := s.baseservices.Services().GetViewByID(ctx, serviceID)
+	if err != nil {
+		return fmt.Errorf("failed to get service view: %w", err)
 	}
 
-	// Cancel any ongoing checks for this job
-	if job.checkCancel != nil {
-		job.checkCancel()
-	}
-
-	// Stop the monitoring gracefully
-	select {
-	case <-job.stopChan:
-		// Channel already closed
-	default:
-		close(job.stopChan)
-	}
-	if job.ticker != nil {
-		job.ticker.Stop()
-	}
-
-	// Remove from services map
-	s.jobs.Delete(serviceID)
-
-	return nil
-}
-
-func (s *Scheduler) subscribeEvents(ctx context.Context) error {
-	broker := s.receiver.TriggerService()
-	sub := broker.Subscribe()
-	defer broker.Unsubscribe(sub)
-
-	for ctx.Err() == nil {
-		select {
-		case item := <-sub:
-			switch item.EventType {
-			case receiver.TriggerServiceEventTypeCheck:
-				if err := s.checkService(item.Svc.ID); err != nil {
-					s.logger.Errorf("check service error: %v", err)
-				}
-			case receiver.TriggerServiceEventTypeCreated:
-				s.addService(ctx, item.Svc)
-			case receiver.TriggerServiceEventTypeUpdated:
-				// Check if service was disabled
-				if !item.Svc.IsEnabled {
-					// Remove from monitoring if service is now disabled
-					if err := s.removeJob(item.Svc.ID); err != nil {
-						s.logger.Errorf("remove disabled service error: %v", err)
-					}
-				} else {
-					// Update or add to monitoring if service is enabled
-					s.addService(ctx, item.Svc)
-				}
-			case receiver.TriggerServiceEventTypeDeleted:
-				if err := s.removeJob(item.Svc.ID); err != nil {
-					s.logger.Errorf("remove service error: %v", err)
-				}
-			}
-
-		case <-ctx.Done():
-			return nil
-		}
-	}
+	// Publish update to receiver
+	s.receiver.TriggerService().Publish(*receiver.NewTriggerServiceData(
+		receiver.TriggerServiceEventTypeUpdatedState,
+		svc,
+	))
 
 	return nil
 }
@@ -445,12 +176,6 @@ func (m *Scheduler) recordSuccess(ctx context.Context, serviceID string, respons
 
 // RecordFailure records a failed check for a service
 func (m *Scheduler) recordFailure(ctx context.Context, serviceID string, checkErr error, responseTime time.Duration) error {
-	// Get current service from database
-	service, err := m.baseservices.Services().GetViewByID(ctx, serviceID)
-	if err != nil {
-		return fmt.Errorf("service %s not found in database: %w", serviceID, err)
-	}
-
 	// Get current service state
 	serviceState, err := m.baseservices.ServiceStates().GetByServiceID(ctx, serviceID)
 	if err != nil {
@@ -484,12 +209,12 @@ func (m *Scheduler) recordFailure(ctx context.Context, serviceID string, checkEr
 
 	// Save to database
 	if _, err := m.baseservices.ServiceStates().Update(ctx, serviceState.ID, updateParams); err != nil {
-		return fmt.Errorf("failed to update service state for %s: %w", service.Name, err)
+		return fmt.Errorf("failed to update service state: %w", err)
 	}
 
 	// Create incident if service was up before
 	if wasUp {
-		if err := m.createIncident(ctx, service, checkErr); err != nil {
+		if err := m.createIncident(ctx, serviceID, checkErr); err != nil {
 			return fmt.Errorf("failed to create incident: %w", err)
 		}
 	}
@@ -498,20 +223,26 @@ func (m *Scheduler) recordFailure(ctx context.Context, serviceID string, checkEr
 }
 
 // createIncident creates a new incident when a service goes down
-func (m *Scheduler) createIncident(ctx context.Context, svc *models.ServiceFullView, err error) error {
+func (m *Scheduler) createIncident(ctx context.Context, serviceID string, err error) error {
 	// Save incident to storage
 	incident, err := m.baseservices.Incidents().Create(ctx, incidents.CreateParams{
-		ServiceID: svc.ID,
+		ServiceID: serviceID,
 		Error:     err.Error(),
 	})
 	if err != nil {
-		return fmt.Errorf("failed to save incident for %s: %w", svc.Name, err)
+		return fmt.Errorf("failed to save incident: %w", err)
+	}
+
+	// Get current service from database
+	svc, err := m.baseservices.Services().GetViewByID(ctx, serviceID)
+	if err != nil {
+		return fmt.Errorf("service %s not found in database: %w", serviceID, err)
 	}
 
 	// Send alert notification
 	message := m.formatAlertMessage(svc, incident)
-	if err := m.baseservices.Notifications().History().SendAlert(ctx, svc.ID, incident.ID, message); err != nil {
-		m.logger.Errorf("failed to send alert notification for %s: %v", svc.Name, err)
+	if err := m.baseservices.Notifications().History().SendAlert(ctx, serviceID, incident.ID, message); err != nil {
+		m.logger.Errorf("failed to send alert notification: %v", err)
 	}
 
 	return nil
