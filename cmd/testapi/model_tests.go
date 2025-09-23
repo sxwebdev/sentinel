@@ -245,10 +245,9 @@ func testServiceDTOFields(s *TestSuite) error {
 
 	// Status should be one of the valid values
 	validStatuses := []models.ServiceStatus{
-		models.StatusUnknown,
-		models.StatusUp,
-		models.StatusDown,
-		models.StatusMaintenance,
+		models.ServiceStatusUnknown,
+		models.ServiceStatusUp,
+		models.ServiceStatusDown,
 	}
 	isValidStatus := false
 	for _, validStatus := range validStatuses {

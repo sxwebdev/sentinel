@@ -73,7 +73,7 @@ func (s *Service) Create(ctx context.Context, params CreateUpdateParams) (*model
 		serviceState := &repo_service_states.CreateParams{
 			ID:        utils.GenerateULID(),
 			ServiceID: createParams.ID,
-			Status:    models.StatusUnknown,
+			Status:    models.ServiceStatusUnknown,
 		}
 
 		_, err = s.store.ServiceStates(repos.WithTx(tx)).Create(ctx, *serviceState)
@@ -158,6 +158,11 @@ func (s *Service) GetByID(ctx context.Context, id string) (*models.Service, erro
 // GetAllEnabled returns all enabled services
 func (s *Service) GetAllEnabled(ctx context.Context) ([]*models.Service, error) {
 	return s.store.Services().GetAllEnabled(ctx)
+}
+
+// GetAllEnabledByAgentID returns all enabled services assigned to the given agent ID
+func (s *Service) GetAllEnabledByAgentID(ctx context.Context, agentID string) ([]*models.Service, error) {
+	return s.store.Services().GetAllEnabledByAgentID(ctx, agentID)
 }
 
 // GetViewByID returns service view by ID

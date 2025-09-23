@@ -27,8 +27,4 @@ ops:
     port: "10000"
     write_timeout: 60
 data_dir: ./data-agent
-server:
-  enabled: true
-  addr: :9000
-  reflect_enabled: false
 token: ""

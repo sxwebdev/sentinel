@@ -18,17 +18,17 @@ help: ## Show this help message
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  %-15s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
 # Development
-dev: ## Run in development mode with auto-reload
+hub: ## Run in development mode with auto-reload
 	go run $(SENTINEL_PATH) start -c ./config.yaml
+
+agent: ## Run in development mode with auto-reload
+	go run $(SENTINEL_PATH) agent start -c ./config-agent.yaml
 
 migrateup:
 	go run $(SENTINEL_PATH) migrations up -db-path ./data/sqlite/db.sqlite
 
 migratedown:
 	go run $(SENTINEL_PATH) migrations down -db-path ./data/sqlite/db.sqlite
-
-agent: ## Run in development mode with auto-reload
-	go run $(SENTINEL_PATH) agent start -c ./config-agent.yaml
 
 run: build ## Build and run the application
 	./$(BUILD_DIR)/$(BINARY_NAME)
@@ -156,10 +156,10 @@ gensql:
 
 genproto: ## Generate protobuf code
 	buf lint
-	rm -rf ./internal/agent/api/*
+	rm -rf ./internal/hubserver/api/*
 	buf generate
 
-grpcui-agent:
+grpcui-hub:
 	grpcui --plaintext localhost:9000
 
 %:

@@ -142,7 +142,7 @@ func (m *Scheduler) recordSuccess(ctx context.Context, serviceID string, respons
 	now := time.Now()
 	updateParams := servicestate.UpdateParams{
 		ServiceState: models.ServiceState{
-			Status:             models.StatusUp,
+			Status:             models.ServiceStatusUp,
 			LastCheck:          &now,
 			AvgResponseTime:    utils.Pointer(responseTime.Milliseconds()),
 			ConsecutiveFails:   0,
@@ -184,11 +184,11 @@ func (m *Scheduler) recordFailure(ctx context.Context, serviceID string, checkEr
 
 	// Update state
 	now := time.Now()
-	wasUp := serviceState.Status == models.StatusUp || serviceState.Status == models.StatusUnknown
+	wasUp := serviceState.Status == models.ServiceStatusUp || serviceState.Status == models.ServiceStatusUnknown
 
 	updateParams := servicestate.UpdateParams{
 		ServiceState: models.ServiceState{
-			Status:             models.StatusDown,
+			Status:             models.ServiceStatusDown,
 			LastCheck:          &now,
 			AvgResponseTime:    utils.Pointer(responseTime.Milliseconds()),
 			ConsecutiveFails:   serviceState.ConsecutiveFails + 1,

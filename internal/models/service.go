@@ -17,10 +17,9 @@ const (
 type ServiceStatus string
 
 const (
-	StatusUnknown     ServiceStatus = "unknown"
-	StatusUp          ServiceStatus = "up"
-	StatusDown        ServiceStatus = "down"
-	StatusMaintenance ServiceStatus = "maintenance"
+	ServiceStatusUnknown ServiceStatus = "unknown"
+	ServiceStatusUp      ServiceStatus = "up"
+	ServiceStatusDown    ServiceStatus = "down"
 )
 
 func (s ServiceStatus) String() string {

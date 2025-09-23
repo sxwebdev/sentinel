@@ -55,7 +55,7 @@ func testAdvancedServiceFilters(s *TestSuite) error {
 	}
 
 	for _, service := range result.Items {
-		if service.Status != models.StatusUp {
+		if service.Status != models.ServiceStatusUp {
 			return fmt.Errorf("service %s status is not 'up'", service.Name)
 		}
 	}

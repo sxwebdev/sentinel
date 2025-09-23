@@ -1,0 +1,56 @@
+syntax = "proto3";
+package sentinel.service.v1;
+
+import "google/protobuf/timestamp.proto";
+import "sentinel/common/v1/protocol.proto";
+
+message HTTPConfig {
+  message EndpointConfig {
+    string name = 1;
+    string url = 2;
+    string method = 3;
+    map<string, string> headers = 4;
+    string body = 5;
+    int32 expected_status = 6;
+    string json_path = 7;
+    string username = 8;
+    string password = 9;
+  }
+  repeated EndpointConfig endpoints = 1;
+  string condition = 2;
+}
+
+message TCPConfig {
+  string endpoint = 1;
+  string send_data = 2;
+  string expect_data = 3;
+}
+
+message GRPCConfig {
+  string endpoint = 1;
+  string check_type = 2;
+  string service_name = 3;
+  bool tls = 4;
+  bool insecure_tls = 5;
+}
+
+message ServiceConfig {
+  optional HTTPConfig http_config = 1;
+  optional TCPConfig tcp_config = 2;
+  optional GRPCConfig grpc_config = 3;
+}
+
+message Service {
+  string id = 1;
+  string name = 2;
+  common.v1.ServiceProtocol protocol = 3;
+  int64 interval = 4;
+  int64 timeout = 5;
+  int64 retries = 6;
+  repeated string tags = 7;
+  ServiceConfig config = 8;
+  bool is_notifications_enabled = 9;
+  bool is_enabled = 10;
+  google.protobuf.Timestamp created_at = 11;
+  google.protobuf.Timestamp updated_at = 12;
+}

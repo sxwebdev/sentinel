@@ -31,9 +31,9 @@ func findServicesBuilder(params FindParams, col ...string) *sqlbuilder.SelectBui
 	if params.Status != "" {
 		switch params.Status {
 		case "up":
-			sb.Where(sb.Equal("ss.status", models.StatusUp))
+			sb.Where(sb.Equal("ss.status", models.ServiceStatusUp))
 		case "down":
-			sb.Where(sb.Equal("ss.status", models.StatusDown))
+			sb.Where(sb.Equal("ss.status", models.ServiceStatusDown))
 		}
 	}
 

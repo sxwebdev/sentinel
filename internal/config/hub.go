@@ -6,15 +6,17 @@ import (
 
 	"github.com/tkcrm/mx/logger"
 	"github.com/tkcrm/mx/ops"
+	"github.com/tkcrm/mx/transport/connectrpc_transport"
 )
 
 // ConfigHub represents the main configuration structure
 type ConfigHub struct {
 	Log        logger.Config
 	Ops        ops.Config
-	DataDir    string           `yaml:"data_dir" default:"./data"`
-	Server     ServerConfig     `yaml:"server"`
-	Monitoring MonitoringConfig `yaml:"monitoring"`
+	DataDir    string                      `yaml:"data_dir" default:"./data"`
+	Server     ServerConfig                `yaml:"server"`
+	HubServer  connectrpc_transport.Config `yaml:"hub_server"`
+	Monitoring MonitoringConfig            `yaml:"monitoring"`
 	// Database      DatabaseConfig      `yaml:"database"`
 	Notifications NotificationsConfig `yaml:"notifications"`
 	Timezone      string              `yaml:"timezone" default:"UTC"`

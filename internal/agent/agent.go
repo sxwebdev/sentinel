@@ -3,7 +3,6 @@ package agent
 import (
 	"context"
 
-	"github.com/sxwebdev/sentinel/internal/agent/agentserver"
 	"github.com/sxwebdev/sentinel/internal/config"
 	"github.com/sxwebdev/sentinel/internal/models"
 	"github.com/tkcrm/mx/logger"
@@ -15,7 +14,7 @@ type Agent struct {
 	config     *config.ConfigAgent
 	systemInfo models.SystemInfo
 
-	server *agentserver.Server
+	// server *agentserver.Server
 
 	token       string
 	fingerprint string
@@ -33,7 +32,7 @@ func New(
 		logger:     l,
 		config:     config,
 		systemInfo: systemInfo,
-		server:     agentserver.New(systemInfo),
+		// server:     agentserver.New(systemInfo),
 	}
 
 	a.token = config.Token

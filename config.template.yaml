@@ -37,6 +37,10 @@ server:
   auth:
     enabled: false
     users: []
+hub_server:
+  enabled: true
+  addr: :9000
+  reflect_enabled: false
 monitoring:
   global:
     default_interval: 1m0s
