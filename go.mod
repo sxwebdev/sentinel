@@ -6,7 +6,6 @@ require (
 	connectrpc.com/connect v1.18.1
 	connectrpc.com/cors v0.1.0
 	github.com/Masterminds/semver/v3 v3.4.0
-	github.com/containrrr/shoutrrr v0.8.0
 	github.com/dop251/goja v0.0.0-20250630131328-58d95d85e994
 	github.com/dromara/carbon/v2 v2.6.12
 	github.com/georgysavva/scany/v2 v2.1.4
@@ -16,6 +15,7 @@ require (
 	github.com/gofiber/contrib/websocket v1.3.4
 	github.com/gofiber/fiber/v2 v2.52.9
 	github.com/huandu/go-sqlbuilder v1.37.0
+	github.com/nicholas-fedor/shoutrrr v0.9.1
 	github.com/oklog/ulid/v2 v2.1.1
 	github.com/puzpuzpuz/xsync/v3 v3.5.1
 	github.com/rs/cors v1.11.1

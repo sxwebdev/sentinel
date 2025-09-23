@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/containrrr/shoutrrr"
+	"github.com/nicholas-fedor/shoutrrr"
 	"github.com/sxwebdev/sentinel/internal/models"
 	"github.com/sxwebdev/sentinel/internal/store"
 	"github.com/sxwebdev/sentinel/internal/store/repos/repo_notification_history"
