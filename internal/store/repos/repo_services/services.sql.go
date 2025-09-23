@@ -23,7 +23,7 @@ func (q *Queries) Exist(ctx context.Context, id string) (int64, error) {
 }
 
 const getAllEnabled = `-- name: GetAllEnabled :many
-SELECT id, name, protocol, interval, timeout, retries, json(tags), json(config), is_enabled, created_at, updated_at FROM services WHERE is_enabled=TRUE ORDER BY name
+SELECT id, name, protocol, interval, timeout, retries, json(tags), json(config), is_enabled, is_notifications_enabled, created_at, updated_at FROM services WHERE is_enabled=TRUE ORDER BY name
 `
 
 func (q *Queries) GetAllEnabled(ctx context.Context) ([]*models.Service, error) {
@@ -45,6 +45,7 @@ func (q *Queries) GetAllEnabled(ctx context.Context) ([]*models.Service, error) 
 			&i.Tags,
 			&i.Config,
 			&i.IsEnabled,
+			&i.IsNotificationsEnabled,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {

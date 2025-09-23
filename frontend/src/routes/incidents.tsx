@@ -126,7 +126,7 @@ export const IncidentsList = ({ incidentsData }: IncidentsListProps) => {
                         <div
                           className={cn(
                             "h-2.5 w-2.5 rounded-full",
-                            incident.resolved
+                            incident.resolved_at
                               ? "bg-emerald-400"
                               : "bg-rose-400",
                           )}
@@ -134,7 +134,7 @@ export const IncidentsList = ({ incidentsData }: IncidentsListProps) => {
                       </TooltipTrigger>
                       <TooltipContent showArrow className="dark">
                         <p>
-                          {incident.resolved
+                          {incident.resolved_at
                             ? "Incident resolved"
                             : "Active incident"}
                         </p>
@@ -188,14 +188,15 @@ export const IncidentsList = ({ incidentsData }: IncidentsListProps) => {
                     </TooltipProvider>
 
                     <Badge
-                      variant={incident.resolved ? "default" : "destructive"}
+                      variant={incident.resolved_at ? "default" : "destructive"}
                       className={cn(
                         "text-xs font-medium",
-                        incident.resolved && "bg-emerald-100 text-emerald-600",
-                        !incident.resolved && "bg-rose-100 text-rose-600",
+                        incident.resolved_at &&
+                          "bg-emerald-100 text-emerald-600",
+                        !incident.resolved_at && "bg-rose-100 text-rose-600",
                       )}
                     >
-                      {incident.resolved ? "Resolved" : "Active"}
+                      {incident.resolved_at ? "Resolved" : "Active"}
                     </Badge>
                   </div>
 
@@ -210,22 +211,22 @@ export const IncidentsList = ({ incidentsData }: IncidentsListProps) => {
                     <div>
                       <span className="font-medium">Started:</span>{" "}
                       {new Date(
-                        incident?.start_time ?? "",
+                        incident?.started_at ?? "",
                       ).toLocaleDateString()}{" "}
                       at{" "}
                       {new Date(
-                        incident?.start_time ?? "",
+                        incident?.started_at ?? "",
                       ).toLocaleTimeString()}
                     </div>
-                    {incident?.end_time && (
+                    {incident?.resolved_at && (
                       <div>
                         <span className="font-medium">Ended:</span>{" "}
                         {new Date(
-                          incident?.end_time ?? "",
+                          incident?.resolved_at ?? "",
                         ).toLocaleDateString()}{" "}
                         at{" "}
                         {new Date(
-                          incident?.end_time ?? "",
+                          incident?.resolved_at ?? "",
                         ).toLocaleTimeString()}
                       </div>
                     )}

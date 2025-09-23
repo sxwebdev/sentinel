@@ -9,11 +9,10 @@
 export interface ModelsIncident {
   created_at?: string;
   duration?: number;
-  end_time?: string;
   error?: string;
   id?: string;
-  resolved?: boolean;
+  resolved_at?: string;
   service_id?: string;
-  start_time?: string;
+  started_at?: string;
   updated_at?: string;
 }

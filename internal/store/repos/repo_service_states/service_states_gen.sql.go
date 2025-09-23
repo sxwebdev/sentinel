@@ -13,9 +13,9 @@ import (
 )
 
 const create = `-- name: Create :one
-INSERT INTO service_states (id, service_id, status, last_check, next_check, last_error, consecutive_fails, consecutive_success, total_checks, response_time)
-	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-	RETURNING id, service_id, status, last_check, next_check, last_error, consecutive_fails, consecutive_success, total_checks, response_time, created_at, updated_at
+INSERT INTO service_states (id, service_id, status, last_check, last_error, consecutive_fails, consecutive_success, total_checks, avg_response_time)
+	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+	RETURNING id, service_id, status, last_check, last_error, consecutive_fails, consecutive_success, total_checks, avg_response_time, created_at, updated_at
 `
 
 type CreateParams struct {
@@ -23,12 +23,11 @@ type CreateParams struct {
 	ServiceID          string               `db:"service_id" json:"service_id"`
 	Status             models.ServiceStatus `db:"status" json:"status"`
 	LastCheck          *time.Time           `db:"last_check" json:"last_check"`
-	NextCheck          *time.Time           `db:"next_check" json:"next_check"`
 	LastError          *string              `db:"last_error" json:"last_error"`
 	ConsecutiveFails   int64                `db:"consecutive_fails" json:"consecutive_fails"`
 	ConsecutiveSuccess int64                `db:"consecutive_success" json:"consecutive_success"`
 	TotalChecks        int64                `db:"total_checks" json:"total_checks"`
-	ResponseTime       *int64               `db:"response_time" json:"response_time"`
+	AvgResponseTime    *int64               `db:"avg_response_time" json:"avg_response_time"`
 }
 
 func (q *Queries) Create(ctx context.Context, arg CreateParams) (*models.ServiceState, error) {
@@ -37,12 +36,11 @@ func (q *Queries) Create(ctx context.Context, arg CreateParams) (*models.Service
 		arg.ServiceID,
 		arg.Status,
 		arg.LastCheck,
-		arg.NextCheck,
 		arg.LastError,
 		arg.ConsecutiveFails,
 		arg.ConsecutiveSuccess,
 		arg.TotalChecks,
-		arg.ResponseTime,
+		arg.AvgResponseTime,
 	)
 	var i models.ServiceState
 	err := row.Scan(
@@ -50,12 +48,11 @@ func (q *Queries) Create(ctx context.Context, arg CreateParams) (*models.Service
 		&i.ServiceID,
 		&i.Status,
 		&i.LastCheck,
-		&i.NextCheck,
 		&i.LastError,
 		&i.ConsecutiveFails,
 		&i.ConsecutiveSuccess,
 		&i.TotalChecks,
-		&i.ResponseTime,
+		&i.AvgResponseTime,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -72,7 +69,7 @@ func (q *Queries) Delete(ctx context.Context, id string) error {
 }
 
 const getAll = `-- name: GetAll :many
-SELECT id, service_id, status, last_check, next_check, last_error, consecutive_fails, consecutive_success, total_checks, response_time, created_at, updated_at FROM service_states
+SELECT id, service_id, status, last_check, last_error, consecutive_fails, consecutive_success, total_checks, avg_response_time, created_at, updated_at FROM service_states
 `
 
 func (q *Queries) GetAll(ctx context.Context) ([]*models.ServiceState, error) {
@@ -89,12 +86,11 @@ func (q *Queries) GetAll(ctx context.Context) ([]*models.ServiceState, error) {
 			&i.ServiceID,
 			&i.Status,
 			&i.LastCheck,
-			&i.NextCheck,
 			&i.LastError,
 			&i.ConsecutiveFails,
 			&i.ConsecutiveSuccess,
 			&i.TotalChecks,
-			&i.ResponseTime,
+			&i.AvgResponseTime,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -112,7 +108,7 @@ func (q *Queries) GetAll(ctx context.Context) ([]*models.ServiceState, error) {
 }
 
 const getByID = `-- name: GetByID :one
-SELECT id, service_id, status, last_check, next_check, last_error, consecutive_fails, consecutive_success, total_checks, response_time, created_at, updated_at FROM service_states WHERE id=? LIMIT 1
+SELECT id, service_id, status, last_check, last_error, consecutive_fails, consecutive_success, total_checks, avg_response_time, created_at, updated_at FROM service_states WHERE id=? LIMIT 1
 `
 
 func (q *Queries) GetByID(ctx context.Context, id string) (*models.ServiceState, error) {
@@ -123,12 +119,11 @@ func (q *Queries) GetByID(ctx context.Context, id string) (*models.ServiceState,
 		&i.ServiceID,
 		&i.Status,
 		&i.LastCheck,
-		&i.NextCheck,
 		&i.LastError,
 		&i.ConsecutiveFails,
 		&i.ConsecutiveSuccess,
 		&i.TotalChecks,
-		&i.ResponseTime,
+		&i.AvgResponseTime,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

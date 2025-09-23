@@ -47,7 +47,7 @@ export const useServiceDetail = (serviceID: string) => {
     // });
   };
 
-  //Check service
+  // Check service
   const onCheckService = async (id: string) => {
     await postServicesIdCheck(id)
       .then(() => {

@@ -11,6 +11,7 @@ import type { ModelsServiceStatus } from "./modelsServiceStatus";
 
 export interface WebServiceDTO {
   active_incidents?: number;
+  avg_response_time?: number;
   config?: MonitorsConfig;
   consecutive_fails?: number;
   consecutive_success?: number;
@@ -20,9 +21,7 @@ export interface WebServiceDTO {
   last_check?: string;
   last_error?: string;
   name?: string;
-  next_check?: string;
   protocol?: ModelsServiceProtocolType;
-  response_time?: number;
   retries?: number;
   status?: ModelsServiceStatus;
   tags?: string[];

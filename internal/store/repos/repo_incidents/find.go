@@ -12,14 +12,14 @@ import (
 )
 
 type FindParams struct {
-	Search    string
-	ID        string
-	ServiceID string
-	Resolved  *bool
-	StartTime *time.Time
-	EndTime   *time.Time
-	Page      *uint32
-	PageSize  *uint32
+	Search     string
+	ID         string
+	ServiceID  string
+	Resolved   *bool
+	StartedAt  *time.Time
+	ResolvedAt *time.Time
+	Page       *uint32
+	PageSize   *uint32
 }
 
 func findBuilder(params FindParams, col ...string) *sqlbuilder.SelectBuilder {
@@ -44,15 +44,15 @@ func findBuilder(params FindParams, col ...string) *sqlbuilder.SelectBuilder {
 	}
 
 	if params.Resolved != nil {
-		sb.Where(sb.Equal("resolved", *params.Resolved))
+		sb.Where(sb.IsNotNull("resolved_at"))
 	}
 
-	if params.StartTime != nil {
-		sb.Where(sb.GreaterEqualThan("start_time", *params.StartTime))
+	if params.StartedAt != nil {
+		sb.Where(sb.GreaterEqualThan("started_at", *params.StartedAt))
 	}
 
-	if params.EndTime != nil {
-		sb.Where(sb.LessEqualThan("end_time", *params.EndTime))
+	if params.ResolvedAt != nil {
+		sb.Where(sb.LessEqualThan("resolved_at", *params.ResolvedAt))
 	}
 
 	return sb

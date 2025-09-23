@@ -1,6 +1,6 @@
 -- name: Create :one
-INSERT INTO service_states (id, service_id, status, last_check, next_check, last_error, consecutive_fails, consecutive_success, total_checks, response_time)
-	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+INSERT INTO service_states (id, service_id, status, last_check, last_error, consecutive_fails, consecutive_success, total_checks, avg_response_time)
+	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 	RETURNING *;
 
 -- name: Delete :exec

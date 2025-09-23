@@ -80,15 +80,14 @@ func (s *CustomQueries) FindView(ctx context.Context, params FindParams) (*store
 		"s.created_at",
 		"s.updated_at",
 		"count(incidents.id) as total_incidents",
-		"sum(case when incidents.resolved = 0 then 1 else 0 end) as active_incidents",
+		"sum(case when incidents.id IS NOT NULL AND incidents.resolved_at IS NULL then 1 else 0 end) as active_incidents",
 		"ss.status",
 		"ss.last_check",
-		"ss.next_check",
 		"ss.last_error",
 		"ss.consecutive_fails",
 		"ss.consecutive_success",
 		"ss.total_checks",
-		"ss.response_time",
+		"ss.avg_response_time",
 	)
 	sb.JoinWithOption(sqlbuilder.LeftJoin, "incidents", "s.id = incidents.service_id")
 	sb.JoinWithOption(sqlbuilder.LeftJoin, "service_states ss", "s.id = ss.service_id")

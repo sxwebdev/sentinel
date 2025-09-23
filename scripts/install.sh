@@ -332,15 +332,6 @@ monitoring:
     default_retries: 3
 
 timezone: UTC
-
-database:
-  path: "$DATA_DIR/db.sqlite"
-
-notifications:
-  enabled: false
-  urls:
-    # Telegram
-    # - "telegram://token@telegram?chats=@channel-1[,chat-id-1,...]&preview=false"
 EOF
 
     chown "$SERVICE_USER:$SERVICE_USER" "$CONFIG_FILE"

@@ -52,8 +52,6 @@ func (s *Service) Create(ctx context.Context, params CreateParams) (*models.Agen
 		ID:          utils.GenerateULID(),
 		Name:        params.Name,
 		Description: params.Description,
-		Host:        params.Host,
-		Port:        params.Port,
 		TokenCt:     params.TokenCt,
 		TokenNonce:  params.TokenNonce,
 		TokenHint:   params.TokenHint,
@@ -103,14 +101,6 @@ type UpdateParams struct {
 func (p UpdateParams) Validate() error {
 	if p.FieldMask.Contains(repo_agents.ColumnNameAgentsName) && p.Name == "" {
 		return fmt.Errorf("name is required")
-	}
-
-	if p.FieldMask.Contains(repo_agents.ColumnNameAgentsHost) && p.Host == "" {
-		return fmt.Errorf("host is required")
-	}
-
-	if p.FieldMask.Contains(repo_agents.ColumnNameAgentsPort) && p.Port == 0 {
-		return fmt.Errorf("port is required")
 	}
 
 	if p.FieldMask.Contains(repo_agents.ColumnNameAgentsTokenCt) && p.TokenCt == nil {
@@ -168,8 +158,6 @@ func (s *Service) Update(ctx context.Context, id string, params UpdateParams) (*
 		Agent: models.Agent{
 			Name:        params.Name,
 			Description: params.Description,
-			Host:        params.Host,
-			Port:        params.Port,
 			TokenCt:     params.TokenCt,
 			TokenNonce:  params.TokenNonce,
 			TokenHint:   params.TokenHint,

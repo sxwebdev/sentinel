@@ -32,12 +32,12 @@ func (o *CustomQueries) StatsByDateRange(ctx context.Context, startTime, endTime
 		sb := sqlbuilder.NewSelectBuilder()
 		sb.Select(
 			"COUNT(*) as count",
-			"AVG(CASE WHEN resolved = true THEN duration ELSE (strftime('%s', 'now') - strftime('%s', start_time)) * 1000 END) as avg_duration",
-			"SUM(CASE WHEN resolved = true THEN duration ELSE (strftime('%s', 'now') - strftime('%s', start_time)) * 1000 END) as total_duration",
+			"AVG(CASE WHEN resolved_at IS NOT NULL THEN duration ELSE (strftime('%s', 'now') - strftime('%s', started_at)) * 1000 END) as avg_duration",
+			"SUM(CASE WHEN resolved_at IS NOT NULL THEN duration ELSE (strftime('%s', 'now') - strftime('%s', started_at)) * 1000 END) as total_duration",
 		)
 		sb.From("incidents")
-		sb.Where(sb.GreaterEqualThan("start_time", dayStart))
-		sb.Where(sb.LessEqualThan("start_time", dayEnd))
+		sb.Where(sb.GreaterEqualThan("started_at", dayStart.Format("2006-01-02 15:04:05")))
+		sb.Where(sb.LessEqualThan("started_at", dayEnd.Format("2006-01-02 15:04:05")))
 
 		sql, args := sb.Build()
 		row := o.db.QueryRowContext(ctx, sql, args...)

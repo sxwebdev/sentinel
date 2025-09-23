@@ -10,9 +10,9 @@ export type GetIncidentsStatsParams = {
   /**
    * Start time (RFC3339 format)
    */
-  start_time: string;
+  started_at: string;
   /**
    * End time (RFC3339 format)
    */
-  end_time: string;
+  resolved_at: string;
 };

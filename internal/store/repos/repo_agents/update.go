@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"slices"
-	"time"
 
 	"github.com/huandu/go-sqlbuilder"
 	"github.com/samber/lo"
@@ -41,7 +40,7 @@ func (s *CustomQueries) Update(ctx context.Context, id string, params UpdateRequ
 	ub := sqlbuilder.NewUpdateBuilder()
 	ub.Update(TableNameAgents.String()).
 		Where(ub.Equal("id", id)).
-		Set(ub.Assign(ColumnNameAgentsUpdatedAt.String(), time.Now()))
+		Set("updated_at = CURRENT_TIMESTAMP")
 
 	values, err := utils.StructToMap(params.Agent, "json")
 	if err != nil {

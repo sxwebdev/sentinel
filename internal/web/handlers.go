@@ -413,8 +413,8 @@ func (s *Server) handleAPIServiceDetail(c *fiber.Ctx) error {
 //	@Param			id			path		string											true	"Service ID"
 //	@Param			incident_id	query		string											false	"Filter by incident ID"
 //	@Param			resolved	query		bool											false	"Filter by resolved status"
-//	@Param			start_time	query		time.Time										false	"Filter by start time (RFC3339 format)"
-//	@Param			end_time	query		time.Time										false	"Filter by end time (RFC3339 format)"
+//	@Param			started_at	query		time.Time										false	"Filter by started at (RFC3339 format)"
+//	@Param			resolved_at	query		time.Time										false	"Filter by resolved at (RFC3339 format)"
 //	@Param			page		query		uint32											false	"Page number (for pagination)"
 //	@Param			page_size	query		uint32											false	"Number of items per page (default 20)"
 //	@Success		200			{object}	storecmn.FindResponseWithCount[models.Incident]	"List of incidents"
@@ -430,8 +430,8 @@ func (s *Server) handleAPIServiceIncidents(c *fiber.Ctx) error {
 	params := struct {
 		IncidentID string     `query:"incident_id"`
 		Resolved   *bool      `query:"resolved"`
-		StartTime  *time.Time `query:"start_time"`
-		EndTime    *time.Time `query:"end_time"`
+		StartedAt  *time.Time `query:"started_at"`
+		ResolvedAt *time.Time `query:"resolved_at"`
 		Page       *uint32    `query:"page" validate:"omitempty,gte=1"`
 		PageSize   *uint32    `query:"page_size" validate:"omitempty,gte=1,lte=100"`
 	}{}
@@ -456,13 +456,13 @@ func (s *Server) handleAPIServiceIncidents(c *fiber.Ctx) error {
 	}
 
 	incidents, err := s.baseServices.Incidents().Find(c.Context(), incidents.FindParams{
-		ID:        params.IncidentID,
-		ServiceID: serviceID,
-		Resolved:  params.Resolved,
-		StartTime: params.StartTime,
-		EndTime:   params.EndTime,
-		Page:      params.Page,
-		PageSize:  params.PageSize,
+		ID:         params.IncidentID,
+		ServiceID:  serviceID,
+		Resolved:   params.Resolved,
+		StartedAt:  params.StartedAt,
+		ResolvedAt: params.ResolvedAt,
+		Page:       params.Page,
+		PageSize:   params.PageSize,
 	})
 	if err != nil {
 		return newErrorResponse(c, fiber.StatusInternalServerError, err)
@@ -565,8 +565,8 @@ func (s *Server) handleAPIServiceCheck(c *fiber.Ctx) error {
 //	@Produce		json
 //	@Param			search		query		string											false	"Filter by service ID or incident ID"
 //	@Param			resolved	query		bool											false	"Filter by resolved status"
-//	@Param			start_time	query		time.Time										false	"Start time for filtering (RFC3339 format)"
-//	@Param			end_time	query		time.Time										false	"End time for filtering (RFC3339 format)"
+//	@Param			started_at	query		time.Time										false	"Start time for filtering (RFC3339 format)"
+//	@Param			resolved_at	query		time.Time										false	"End time for filtering (RFC3339 format)"
 //	@Param			page		query		uint32											false	"Page number (default 1)"
 //	@Param			page_size	query		uint32											false	"Number of items per page (default 100)"
 //	@Success		200			{object}	storecmn.FindResponseWithCount[models.Incident]	"List of incidents"
@@ -574,12 +574,12 @@ func (s *Server) handleAPIServiceCheck(c *fiber.Ctx) error {
 //	@Router			/incidents [get]
 func (s *Server) handleFindIncidents(c *fiber.Ctx) error {
 	params := struct {
-		Search    string     `query:"search"`
-		Resolved  *bool      `query:"resolved"`
-		StartTime *time.Time `query:"start_time"`
-		EndTime   *time.Time `query:"end_time"`
-		Page      *uint32    `query:"page" validate:"omitempty,gte=1"`
-		PageSize  *uint32    `query:"page_size" validate:"omitempty,gte=1,lte=100"`
+		Search     string     `query:"search"`
+		Resolved   *bool      `query:"resolved"`
+		StartedAt  *time.Time `query:"started_at"`
+		ResolvedAt *time.Time `query:"resolved_at"`
+		Page       *uint32    `query:"page" validate:"omitempty,gte=1"`
+		PageSize   *uint32    `query:"page_size" validate:"omitempty,gte=1,lte=100"`
 	}{}
 
 	if err := c.QueryParser(&params); err != nil {
@@ -592,12 +592,12 @@ func (s *Server) handleFindIncidents(c *fiber.Ctx) error {
 	}
 
 	incidents, err := s.baseServices.Incidents().Find(c.Context(), incidents.FindParams{
-		Search:    params.Search,
-		Resolved:  params.Resolved,
-		StartTime: params.StartTime,
-		EndTime:   params.EndTime,
-		Page:      params.Page,
-		PageSize:  params.PageSize,
+		Search:     params.Search,
+		Resolved:   params.Resolved,
+		StartedAt:  params.StartedAt,
+		ResolvedAt: params.ResolvedAt,
+		Page:       params.Page,
+		PageSize:   params.PageSize,
 	})
 	if err != nil {
 		return newErrorResponse(c, fiber.StatusInternalServerError, err)
@@ -657,25 +657,25 @@ type getIncidentsStatsData []getIncidentsStatsItem
 //	@Tags			incidents
 //	@Accept			json
 //	@Produce		json
-//	@Param			start_time	query		string					true	"Start time (RFC3339 format)"
-//	@Param			end_time	query		string					true	"End time (RFC3339 format)"
+//	@Param			started_at	query		string					true	"Start time (RFC3339 format)"
+//	@Param			resolved_at	query		string					true	"End time (RFC3339 format)"
 //	@Success		200			{object}	getIncidentsStatsData	"Incidents stats by date range"
 //	@Failure		400			{object}	ErrorResponse			"Bad request"
 //	@Failure		500			{object}	ErrorResponse			"Internal server error"
 //	@Router			/incidents/stats [get]
 func (s *Server) handleAPIGetIncidentsStats(c *fiber.Ctx) error {
-	startTimeStr := carbon.Parse(c.Query("start_time"))
-	endTimeStr := carbon.Parse(c.Query("end_time"))
+	startTimeStr := carbon.Parse(c.Query("started_at"))
+	endTimeStr := carbon.Parse(c.Query("resolved_at"))
 
 	if startTimeStr.HasError() || endTimeStr.HasError() {
-		return newErrorResponse(c, fiber.StatusBadRequest, errors.New("start_time and end_time query parameters are required"))
+		return newErrorResponse(c, fiber.StatusBadRequest, errors.New("started_at and resolved_at query parameters are required"))
 	}
 
 	startTime := startTimeStr.StdTime()
 	endTime := endTimeStr.StdTime()
 
 	if endTime.Before(startTime) {
-		return newErrorResponse(c, fiber.StatusBadRequest, errors.New("end_time must be after start_time"))
+		return newErrorResponse(c, fiber.StatusBadRequest, errors.New("resolved_at must be after started_at"))
 	}
 
 	stats, err := s.baseServices.Incidents().StatsByDateRange(c.Context(), startTime, endTime)
@@ -733,8 +733,8 @@ func (s *Server) handleAPICreateService(c *fiber.Ctx) error {
 	createParams := service.CreateUpdateParams{
 		Name:      serviceDTO.Name,
 		Protocol:  serviceDTO.Protocol,
-		Interval:  time.Millisecond * time.Duration(serviceDTO.Interval),
-		Timeout:   time.Millisecond * time.Duration(serviceDTO.Timeout),
+		Interval:  serviceDTO.Interval,
+		Timeout:   serviceDTO.Timeout,
 		Retries:   serviceDTO.Retries,
 		Tags:      serviceDTO.Tags,
 		Config:    serviceDTO.Config.ConvertToMap(),
@@ -743,11 +743,11 @@ func (s *Server) handleAPICreateService(c *fiber.Ctx) error {
 
 	// Set default values
 	if createParams.Interval == 0 {
-		createParams.Interval = s.config.Monitoring.Global.DefaultInterval
+		createParams.Interval = s.config.Monitoring.Global.DefaultInterval.Milliseconds()
 	}
 
 	if createParams.Timeout == 0 {
-		createParams.Timeout = s.config.Monitoring.Global.DefaultTimeout
+		createParams.Timeout = s.config.Monitoring.Global.DefaultTimeout.Milliseconds()
 	}
 
 	if createParams.Retries == 0 {
@@ -799,8 +799,8 @@ func (s *Server) handleAPIUpdateService(c *fiber.Ctx) error {
 	updateParams := service.CreateUpdateParams{
 		Name:      serviceDTO.Name,
 		Protocol:  serviceDTO.Protocol,
-		Interval:  time.Millisecond * time.Duration(serviceDTO.Interval),
-		Timeout:   time.Millisecond * time.Duration(serviceDTO.Timeout),
+		Interval:  serviceDTO.Interval,
+		Timeout:   serviceDTO.Timeout,
 		Retries:   serviceDTO.Retries,
 		Tags:      serviceDTO.Tags,
 		IsEnabled: serviceDTO.IsEnabled,
@@ -823,10 +823,10 @@ func (s *Server) handleAPIUpdateService(c *fiber.Ctx) error {
 
 	// Set default values if not provided
 	if updateParams.Interval == 0 {
-		updateParams.Interval = s.config.Monitoring.Global.DefaultInterval
+		updateParams.Interval = s.config.Monitoring.Global.DefaultInterval.Milliseconds()
 	}
 	if updateParams.Timeout == 0 {
-		updateParams.Timeout = s.config.Monitoring.Global.DefaultTimeout
+		updateParams.Timeout = s.config.Monitoring.Global.DefaultTimeout.Milliseconds()
 	}
 	if updateParams.Retries == 0 {
 		updateParams.Retries = s.config.Monitoring.Global.DefaultRetries

@@ -57,6 +57,13 @@ func main() {
 			configCMD(),
 			migrationsCMD(),
 			versionCMD(),
+			{
+				Name: "migratedb",
+				Commands: []*cli.Command{
+					exportCmd(),
+					importCmd(),
+				},
+			},
 		},
 	}
 

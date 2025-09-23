@@ -22,9 +22,9 @@ func (q *Queries) DeleteByServiceID(ctx context.Context, serviceID string) error
 }
 
 const getAllUnresolvedByServiceID = `-- name: GetAllUnresolvedByServiceID :many
-SELECT id, service_id, start_time, end_time, error, duration, resolved, created_at, updated_at FROM incidents
-WHERE service_id=? AND NOT resolved
-ORDER BY start_time DESC
+SELECT id, service_id, error, duration, started_at, resolved_at, created_at, updated_at FROM incidents
+WHERE service_id=? AND resolved_at IS NULL
+ORDER BY created_at DESC
 `
 
 func (q *Queries) GetAllUnresolvedByServiceID(ctx context.Context, serviceID string) ([]*models.Incident, error) {
@@ -39,11 +39,10 @@ func (q *Queries) GetAllUnresolvedByServiceID(ctx context.Context, serviceID str
 		if err := rows.Scan(
 			&i.ID,
 			&i.ServiceID,
-			&i.StartTime,
-			&i.EndTime,
 			&i.Error,
 			&i.Duration,
-			&i.Resolved,
+			&i.StartedAt,
+			&i.ResolvedAt,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -63,11 +62,10 @@ func (q *Queries) GetAllUnresolvedByServiceID(ctx context.Context, serviceID str
 const resolveByID = `-- name: ResolveByID :exec
 UPDATE incidents
 SET
-  resolved = TRUE,
-  end_time = CURRENT_TIMESTAMP,
-  duration = CAST((julianday('now') - julianday(start_time)) * 86400000 AS INTEGER),
+  resolved_at = CURRENT_TIMESTAMP,
+  duration = CAST((julianday('now') - julianday(started_at)) * 86400000 AS INTEGER),
   updated_at = CURRENT_TIMESTAMP
-WHERE id=? AND NOT resolved
+WHERE id=? AND resolved_at IS NULL
 `
 
 func (q *Queries) ResolveByID(ctx context.Context, id string) error {
@@ -80,8 +78,8 @@ SELECT
  	COUNT(*) AS total_incidents,
  	SUM(duration) AS total_downtime,
   AVG(duration) AS avg_downtime,
-  SUM(CASE WHEN resolved THEN 1 ELSE 0 END) AS resolved_incidents,
-  SUM(CASE WHEN NOT resolved THEN 1 ELSE 0 END) AS unresolved_incidents
+  SUM(CASE WHEN resolved_at IS NOT NULL THEN 1 ELSE 0 END) AS resolved_incidents,
+  SUM(CASE WHEN resolved_at IS NULL THEN 1 ELSE 0 END) AS unresolved_incidents
 FROM incidents
 `
 
@@ -111,11 +109,11 @@ SELECT
  	COUNT(*) AS total_incidents,
  	SUM(duration) AS total_downtime,
   AVG(duration) AS avg_downtime,
-  SUM(CASE WHEN resolved THEN 1 ELSE 0 END) AS resolved_incidents,
-  SUM(CASE WHEN NOT resolved THEN 1 ELSE 0 END) AS unresolved_incidents,
+  SUM(CASE WHEN resolved_at IS NOT NULL THEN 1 ELSE 0 END) AS resolved_incidents,
+  SUM(CASE WHEN resolved_at IS NULL THEN 1 ELSE 0 END) AS unresolved_incidents,
   ROUND(100.0 - (COALESCE(SUM(duration), 0) * 100.0 / (30 * 24 * 60 * 60 * 1000)), 3) AS uptime_percentage_30d
 FROM incidents
-WHERE service_id=? AND start_time >= ?
+WHERE service_id=? AND created_at >= ?
 `
 
 type StatsByServiceIDRow struct {
@@ -127,8 +125,8 @@ type StatsByServiceIDRow struct {
 	UptimePercentage30d float64  `db:"uptime_percentage_30d" json:"uptime_percentage_30d"`
 }
 
-func (q *Queries) StatsByServiceID(ctx context.Context, serviceID string, startTime time.Time) (*StatsByServiceIDRow, error) {
-	row := q.db.QueryRowContext(ctx, statsByServiceID, serviceID, startTime)
+func (q *Queries) StatsByServiceID(ctx context.Context, serviceID string, createdAt time.Time) (*StatsByServiceIDRow, error) {
+	row := q.db.QueryRowContext(ctx, statsByServiceID, serviceID, createdAt)
 	var i StatsByServiceIDRow
 	err := row.Scan(
 		&i.TotalIncidents,

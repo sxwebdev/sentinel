@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/sxwebdev/sentinel/internal/config"
+	"github.com/sxwebdev/sentinel/internal/datamigrations"
 	"github.com/sxwebdev/sentinel/internal/models"
 	"github.com/sxwebdev/sentinel/internal/receiver"
 	"github.com/sxwebdev/sentinel/internal/scheduler"
@@ -68,7 +69,7 @@ func hubStartCMD() *cli.Command {
 				return fmt.Errorf("failed to set timezone: %w", err)
 			}
 
-			dbPath := filepath.Join(conf.DataDir, sqliteDBFile)
+			dbPath := filepath.Join(conf.DataDir, "sqlite", sqliteDBFile)
 
 			// init sqlite
 			db, err := sqlite.New(ctx, dbPath)
@@ -83,9 +84,9 @@ func hubStartCMD() *cli.Command {
 			}
 			l.Infof("SQLite version: %s", sqliteVersion)
 
-			// check and run migrations
-			m := migrations.New(l, sql.MigrationsFS, sql.MigrationsPath)
-			if err := m.MigrateUpAll(dbPath); err != nil {
+			// check and run all migrations
+			m := migrations.New(l, sql.MigrationsFS, sql.MigrationsPath, datamigrations.Migrations)
+			if err := m.MigrateUpAll(ctx, dbPath); err != nil {
 				return fmt.Errorf("failed to run migrations: %w", err)
 			}
 

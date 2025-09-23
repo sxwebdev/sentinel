@@ -1,6 +1,7 @@
 package migrations
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 )
@@ -25,12 +26,13 @@ func (at applyMigrationType) String() string {
 }
 
 // applyMigration runs a single migration
-func (m *Migrations) applyMigration(db *sql.DB, at applyMigrationType, version int, sql string) error {
-	if sql == "" {
-		return nil
+func (m *Service) applyMigration(ctx context.Context, db *sql.DB, at applyMigrationType, migration migration) error {
+	sql := migration.upSQL
+	if at == applyMigrationTypeDown {
+		sql = migration.downSQL
 	}
 
-	m.info("applying migration %s version %d", at.String(), version)
+	m.info("applying migration %s version %d", at.String(), migration.version)
 
 	// Start transaction
 	tx, err := db.Begin()
@@ -39,19 +41,41 @@ func (m *Migrations) applyMigration(db *sql.DB, at applyMigrationType, version i
 	}
 	defer tx.Rollback()
 
+	// Run Before hook
+	if at == applyMigrationTypeUp && migration.beforeUpFn != nil {
+		if err := migration.beforeUpFn(ctx, tx); err != nil {
+			return fmt.Errorf("before up hook failed: %w", err)
+		}
+	} else if at == applyMigrationTypeDown && migration.beforeDownFn != nil {
+		if err := migration.beforeDownFn(ctx, tx); err != nil {
+			return fmt.Errorf("before down hook failed: %w", err)
+		}
+	}
+
 	// Execute migration SQL
 	if _, err := tx.Exec(sql); err != nil {
 		return fmt.Errorf("failed to execute migration SQL: %w", err)
 	}
 
+	// Run After hook
+	if at == applyMigrationTypeUp && migration.afterUpFn != nil {
+		if err := migration.afterUpFn(ctx, tx); err != nil {
+			return fmt.Errorf("after up hook failed: %w", err)
+		}
+	} else if at == applyMigrationTypeDown && migration.afterDownFn != nil {
+		if err := migration.afterDownFn(ctx, tx); err != nil {
+			return fmt.Errorf("after down hook failed: %w", err)
+		}
+	}
+
 	// Record migration version
 	switch at {
 	case applyMigrationTypeUp:
-		if _, err := tx.Exec("INSERT INTO schema_version (version) VALUES (?)", version); err != nil {
+		if _, err := tx.Exec("INSERT INTO schema_version (version) VALUES (?)", migration.version); err != nil {
 			return fmt.Errorf("failed to record migration version: %w", err)
 		}
 	case applyMigrationTypeDown:
-		if _, err := tx.Exec("DELETE FROM schema_version WHERE version = ?", version); err != nil {
+		if _, err := tx.Exec("DELETE FROM schema_version WHERE version = ?", migration.version); err != nil {
 			return fmt.Errorf("failed to remove migration version record: %w", err)
 		}
 	default:

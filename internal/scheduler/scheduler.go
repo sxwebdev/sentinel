@@ -74,8 +74,8 @@ func (s *Scheduler) Start(ctx context.Context) error {
 			Name:      svc.Name,
 			Protocol:  svc.Protocol,
 			IsEnabled: svc.IsEnabled,
-			Interval:  svc.Interval,
-			Timeout:   svc.Timeout,
+			Interval:  time.Duration(svc.Interval) * time.Millisecond,
+			Timeout:   time.Duration(svc.Timeout) * time.Millisecond,
 			Retries:   svc.Retries,
 			Config:    svc.Config,
 		})
@@ -144,7 +144,7 @@ func (m *Scheduler) recordSuccess(ctx context.Context, serviceID string, respons
 		ServiceState: models.ServiceState{
 			Status:             models.StatusUp,
 			LastCheck:          &now,
-			ResponseTime:       utils.Pointer(responseTime.Milliseconds()),
+			AvgResponseTime:    utils.Pointer(responseTime.Milliseconds()),
 			ConsecutiveFails:   0,
 			ConsecutiveSuccess: serviceState.ConsecutiveSuccess + 1,
 			TotalChecks:        serviceState.TotalChecks + 1,
@@ -153,7 +153,7 @@ func (m *Scheduler) recordSuccess(ctx context.Context, serviceID string, respons
 		FieldMask: dbutils.FieldMask[repo_service_states.ColumnName]{
 			repo_service_states.ColumnNameServiceStatesStatus,
 			repo_service_states.ColumnNameServiceStatesLastCheck,
-			repo_service_states.ColumnNameServiceStatesResponseTime,
+			repo_service_states.ColumnNameServiceStatesAvgResponseTime,
 			repo_service_states.ColumnNameServiceStatesConsecutiveFails,
 			repo_service_states.ColumnNameServiceStatesConsecutiveSuccess,
 			repo_service_states.ColumnNameServiceStatesTotalChecks,
@@ -190,7 +190,7 @@ func (m *Scheduler) recordFailure(ctx context.Context, serviceID string, checkEr
 		ServiceState: models.ServiceState{
 			Status:             models.StatusDown,
 			LastCheck:          &now,
-			ResponseTime:       utils.Pointer(responseTime.Milliseconds()),
+			AvgResponseTime:    utils.Pointer(responseTime.Milliseconds()),
 			ConsecutiveFails:   serviceState.ConsecutiveFails + 1,
 			ConsecutiveSuccess: 0,
 			TotalChecks:        serviceState.TotalChecks + 1,
@@ -199,7 +199,7 @@ func (m *Scheduler) recordFailure(ctx context.Context, serviceID string, checkEr
 		FieldMask: dbutils.FieldMask[repo_service_states.ColumnName]{
 			repo_service_states.ColumnNameServiceStatesStatus,
 			repo_service_states.ColumnNameServiceStatesLastCheck,
-			repo_service_states.ColumnNameServiceStatesResponseTime,
+			repo_service_states.ColumnNameServiceStatesAvgResponseTime,
 			repo_service_states.ColumnNameServiceStatesConsecutiveFails,
 			repo_service_states.ColumnNameServiceStatesConsecutiveSuccess,
 			repo_service_states.ColumnNameServiceStatesTotalChecks,
@@ -300,7 +300,7 @@ func (s *Scheduler) formatAlertMessage(service *models.ServiceFullView, incident
 		service.Name,
 		tags,
 		incident.Error,
-		incident.StartTime.Format("2006-01-02 15:04:05"),
+		incident.CreatedAt.Format("2006-01-02 15:04:05"),
 		incident.ID,
 	)
 }
@@ -311,14 +311,14 @@ func (s *Scheduler) formatRecoveryMessage(service *models.ServiceFullView, incid
 	if incident.Duration != nil {
 		duration = utils.FormatDuration(time.Duration(*incident.Duration) * time.Millisecond)
 	} else {
-		duration = utils.FormatDuration(time.Since(incident.StartTime))
+		duration = utils.FormatDuration(time.Since(incident.CreatedAt))
 	}
 
-	var endTime string
-	if incident.EndTime != nil {
-		endTime = incident.EndTime.Format("2006-01-02 15:04:05")
+	var resolvedAt string
+	if incident.ResolvedAt != nil {
+		resolvedAt = incident.ResolvedAt.Format("2006-01-02 15:04:05")
 	} else {
-		endTime = time.Now().Format("2006-01-02 15:04:05")
+		resolvedAt = time.Now().Format("2006-01-02 15:04:05")
 	}
 
 	tags := "-"
@@ -337,7 +337,7 @@ func (s *Scheduler) formatRecoveryMessage(service *models.ServiceFullView, incid
 		service.Name,
 		tags,
 		duration,
-		endTime,
+		resolvedAt,
 		incident.ID,
 	)
 }

@@ -1,12 +1,13 @@
 package migrations
 
 import (
+	"context"
 	"fmt"
 )
 
 // MigrateDown rolls back the last applied migration
-func (m *Migrations) MigrateDown(dbPath string) error {
-	migrations, err := m.loadFromFS()
+func (m *Service) MigrateDown(ctx context.Context, dbPath string) error {
+	migrations, err := m.load()
 	if err != nil {
 		return fmt.Errorf("failed to load migrations: %w", err)
 	}
@@ -26,7 +27,7 @@ func (m *Migrations) MigrateDown(dbPath string) error {
 	// Find the migration to roll back
 	var migrationToRollback *migration
 	for i := len(migrations) - 1; i >= 0; i-- {
-		if migrations[i].Version == currentVersion {
+		if migrations[i].version == currentVersion {
 			migrationToRollback = &migrations[i]
 			break
 		}
@@ -37,8 +38,8 @@ func (m *Migrations) MigrateDown(dbPath string) error {
 	}
 
 	// Run the rollback
-	if err := m.applyMigration(db, applyMigrationTypeDown, migrationToRollback.Version, migrationToRollback.DownSQL); err != nil {
-		return fmt.Errorf("failed to roll back migration %d: %w", migrationToRollback.Version, err)
+	if err := m.applyMigration(ctx, db, applyMigrationTypeDown, *migrationToRollback); err != nil {
+		return fmt.Errorf("failed to roll back migration %d: %w", migrationToRollback.version, err)
 	}
 
 	return nil

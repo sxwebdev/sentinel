@@ -8,27 +8,29 @@ import (
 	"sort"
 )
 
-type Migrations struct {
+type Service struct {
 	logger         logger
 	fs             embed.FS
 	migrationsPath string
+	opsmigrations  DataMigrations
 }
 
-func New(logger logger, fs embed.FS, migrationsPath string) *Migrations {
-	return &Migrations{
+func New(logger logger, fs embed.FS, migrationsPath string, opsmigrations DataMigrations) *Service {
+	return &Service{
 		logger:         logger,
 		fs:             fs,
 		migrationsPath: migrationsPath,
+		opsmigrations:  opsmigrations,
 	}
 }
 
-func (m *Migrations) info(format string, args ...any) {
+func (m *Service) info(format string, args ...any) {
 	if m.logger != nil {
 		m.logger.Infof(format, args...)
 	}
 }
 
-func (m *Migrations) loadFromFS() ([]migration, error) {
+func (m *Service) load() ([]migration, error) {
 	// read all migration files from the embedded filesystem
 	entries, err := m.fs.ReadDir(m.migrationsPath)
 	if err != nil {
@@ -71,15 +73,15 @@ func (m *Migrations) loadFromFS() ([]migration, error) {
 		item, exists := migrationsMap[version]
 		if !exists {
 			migrationsMap[version] = migration{
-				Name: name,
+				name: name,
 			}
 		}
 
 		switch direction {
 		case "up":
-			item.UpSQL = string(data)
+			item.upSQL = string(data)
 		case "down":
-			item.DownSQL = string(data)
+			item.downSQL = string(data)
 		default:
 			return nil, fmt.Errorf("invalid migration direction in file %s", file.Name())
 		}
@@ -91,17 +93,31 @@ func (m *Migrations) loadFromFS() ([]migration, error) {
 	migrationsSlice := make([]migration, 0, len(migrationsMap))
 	for version, item := range migrationsMap {
 		migrationsSlice = append(migrationsSlice, migration{
-			Version: version,
-			Name:    item.Name,
-			UpSQL:   item.UpSQL,
-			DownSQL: item.DownSQL,
+			version: version,
+			name:    item.name,
+			upSQL:   item.upSQL,
+			downSQL: item.downSQL,
 		})
 	}
 
 	// sort migrations by version
 	sort.Slice(migrationsSlice, func(i, j int) bool {
-		return migrationsSlice[i].Version < migrationsSlice[j].Version
+		return migrationsSlice[i].version < migrationsSlice[j].version
 	})
+
+	// merge operational migrations by version
+	for _, opMig := range m.opsmigrations {
+		for i, mig := range migrationsSlice {
+			if mig.version == opMig.Version {
+				// merge hooks
+				migrationsSlice[i].beforeUpFn = opMig.BeforeUpFn
+				migrationsSlice[i].afterUpFn = opMig.AfterUpFn
+				migrationsSlice[i].beforeDownFn = opMig.BeforeDownFn
+				migrationsSlice[i].afterDownFn = opMig.AfterDownFn
+				break
+			}
+		}
+	}
 
 	return migrationsSlice, nil
 }

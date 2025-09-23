@@ -90,8 +90,8 @@ export function ChartIncidentsStats() {
 
     getIncidents()
       .getIncidentsStats({
-        start_time: startTime.toISOString(),
-        end_time: endTime.toISOString(),
+        started_at: startTime.toISOString(),
+        resolved_at: endTime.toISOString(),
       })
       .then((response) => {
         const formattedData = response.map((item) => ({

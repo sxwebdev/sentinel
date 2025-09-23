@@ -36,8 +36,8 @@ func (s *Service) Stats(ctx context.Context, serviceID string, since time.Time) 
 		return nil, fmt.Errorf("failed to get service state: %w", err)
 	}
 
-	if serviceState.ResponseTime != nil {
-		avgResponseTime = *serviceState.ResponseTime
+	if serviceState.AvgResponseTime != nil {
+		avgResponseTime = *serviceState.AvgResponseTime
 	}
 
 	return &Stats{

@@ -60,11 +60,6 @@ type GlobalConfig struct {
 	DefaultRetries  int64         `yaml:"default_retries" default:"10"`
 }
 
-// DatabaseConfig holds database settings
-// type DatabaseConfig struct {
-// 	Path string `yaml:"path" default:"./data/db.sqlite"`
-// }
-
 // NotificationsConfig holds notification settings for multiple providers
 type NotificationsConfig struct {
 	Enabled bool     `yaml:"enabled"`

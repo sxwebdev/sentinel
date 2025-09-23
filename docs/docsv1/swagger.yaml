@@ -17,17 +17,15 @@ definitions:
         type: string
       duration:
         type: integer
-      end_time:
-        type: string
       error:
         type: string
       id:
         type: string
-      resolved:
-        type: boolean
+      resolved_at:
+        type: string
       service_id:
         type: string
-      start_time:
+      started_at:
         type: string
       updated_at:
         type: string
@@ -361,6 +359,8 @@ definitions:
       active_incidents:
         example: 2
         type: integer
+      avg_response_time:
+        type: integer
       config:
         $ref: '#/definitions/monitors.Config'
       consecutive_fails:
@@ -373,7 +373,6 @@ definitions:
         example: service-1
         type: string
       interval:
-        example: 60000
         type: integer
       is_enabled:
         example: true
@@ -387,16 +386,10 @@ definitions:
       name:
         example: Web Server
         type: string
-      next_check:
-        example: "2023-10-01T12:05:00Z"
-        type: string
       protocol:
         allOf:
         - $ref: '#/definitions/models.ServiceProtocolType'
         example: http
-      response_time:
-        example: 150000000
-        type: integer
       retries:
         example: 5
         type: integer
@@ -412,7 +405,6 @@ definitions:
           type: string
         type: array
       timeout:
-        example: 10000
         type: integer
       total_checks:
         example: 100
@@ -525,12 +517,12 @@ paths:
       parameters:
       - description: Start time (RFC3339 format)
         in: query
-        name: start_time
+        name: started_at
         required: true
         type: string
       - description: End time (RFC3339 format)
         in: query
-        name: end_time
+        name: resolved_at
         required: true
         type: string
       produces:

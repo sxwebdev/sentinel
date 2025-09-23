@@ -16,6 +16,11 @@ type Agent struct {
 	systemInfo models.SystemInfo
 
 	server *agentserver.Server
+
+	token       string
+	fingerprint string
+
+	connectionManager *connectionManager
 }
 
 // New creates a new Agent instance
@@ -24,12 +29,19 @@ func New(
 	config *config.ConfigAgent,
 	systemInfo models.SystemInfo,
 ) *Agent {
-	return &Agent{
+	a := &Agent{
 		logger:     l,
 		config:     config,
 		systemInfo: systemInfo,
 		server:     agentserver.New(systemInfo),
 	}
+
+	a.token = config.Token
+	a.fingerprint = a.getFingerprint()
+
+	a.connectionManager = newConnectionManager(a)
+
+	return a
 }
 
 // Name returns the name of the agent
@@ -39,13 +51,10 @@ func (a *Agent) Name() string {
 
 // Start starts the agent
 func (a *Agent) Start(_ context.Context) error {
-	// Placeholder for starting agent logic
-	_ = a.getFingerprint()
 	return nil
 }
 
 // Stop stops the agent
 func (a *Agent) Stop(_ context.Context) error {
-	// Placeholder for stopping agent logic
 	return nil
 }

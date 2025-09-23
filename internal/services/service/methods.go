@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"slices"
-	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/sxwebdev/sentinel/internal/models"
@@ -21,8 +20,8 @@ import (
 type CreateUpdateParams struct {
 	Name      string                     `validate:"required"`
 	Protocol  models.ServiceProtocolType `validate:"required"`
-	Interval  time.Duration              `validate:"required"`
-	Timeout   time.Duration              `validate:"required"`
+	Interval  int64                      `validate:"required"`
+	Timeout   int64                      `validate:"required"`
 	Retries   int64                      `validate:"required,gte=0"`
 	Tags      []string
 	Config    map[string]any
@@ -55,8 +54,8 @@ func (s *Service) Create(ctx context.Context, params CreateUpdateParams) (*model
 		ID:        utils.GenerateULID(),
 		Name:      params.Name,
 		Protocol:  params.Protocol,
-		Interval:  storecmn.Duration(params.Interval),
-		Timeout:   storecmn.Duration(params.Timeout),
+		Interval:  params.Interval,
+		Timeout:   params.Timeout,
 		Retries:   params.Retries,
 		Tags:      tags,
 		Config:    config,
@@ -71,12 +70,10 @@ func (s *Service) Create(ctx context.Context, params CreateUpdateParams) (*model
 		}
 
 		// Create initial service state
-		nextCheck := time.Now().Add(params.Interval)
 		serviceState := &repo_service_states.CreateParams{
 			ID:        utils.GenerateULID(),
 			ServiceID: createParams.ID,
 			Status:    models.StatusUnknown,
-			NextCheck: &nextCheck,
 		}
 
 		_, err = s.store.ServiceStates(repos.WithTx(tx)).Create(ctx, *serviceState)
@@ -124,8 +121,8 @@ func (s *Service) Update(ctx context.Context, id string, params CreateUpdatePara
 	updateParams := repo_services.UpdateServiceRequest{
 		Name:      params.Name,
 		Protocol:  params.Protocol,
-		Interval:  storecmn.Duration(params.Interval),
-		Timeout:   storecmn.Duration(params.Timeout),
+		Interval:  params.Interval,
+		Timeout:   params.Timeout,
 		Retries:   params.Retries,
 		Tags:      tags,
 		Config:    config,

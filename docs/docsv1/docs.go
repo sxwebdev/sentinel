@@ -125,14 +125,14 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "Start time (RFC3339 format)",
-                        "name": "start_time",
+                        "name": "started_at",
                         "in": "query",
                         "required": true
                     },
                     {
                         "type": "string",
                         "description": "End time (RFC3339 format)",
-                        "name": "end_time",
+                        "name": "resolved_at",
                         "in": "query",
                         "required": true
                     }
@@ -1100,22 +1100,19 @@ const docTemplate = `{
                 "duration": {
                     "type": "integer"
                 },
-                "end_time": {
-                    "type": "string"
-                },
                 "error": {
                     "type": "string"
                 },
                 "id": {
                     "type": "string"
                 },
-                "resolved": {
-                    "type": "boolean"
+                "resolved_at": {
+                    "type": "string"
                 },
                 "service_id": {
                     "type": "string"
                 },
-                "start_time": {
+                "started_at": {
                     "type": "string"
                 },
                 "updated_at": {
@@ -1600,6 +1597,9 @@ const docTemplate = `{
                     "type": "integer",
                     "example": 2
                 },
+                "avg_response_time": {
+                    "type": "integer"
+                },
                 "config": {
                     "$ref": "#/definitions/monitors.Config"
                 },
@@ -1616,8 +1616,7 @@ const docTemplate = `{
                     "example": "service-1"
                 },
                 "interval": {
-                    "type": "integer",
-                    "example": 60000
+                    "type": "integer"
                 },
                 "is_enabled": {
                     "type": "boolean",
@@ -1635,10 +1634,6 @@ const docTemplate = `{
                     "type": "string",
                     "example": "Web Server"
                 },
-                "next_check": {
-                    "type": "string",
-                    "example": "2023-10-01T12:05:00Z"
-                },
                 "protocol": {
                     "allOf": [
                         {
@@ -1646,10 +1641,6 @@ const docTemplate = `{
                         }
                     ],
                     "example": "http"
-                },
-                "response_time": {
-                    "type": "integer",
-                    "example": 150000000
                 },
                 "retries": {
                     "type": "integer",
@@ -1674,8 +1665,7 @@ const docTemplate = `{
                     ]
                 },
                 "timeout": {
-                    "type": "integer",
-                    "example": 10000
+                    "type": "integer"
                 },
                 "total_checks": {
                     "type": "integer",

@@ -243,8 +243,8 @@ func (s *Checker) subscribeEvents(ctx context.Context) error {
 					Name:      item.Svc.Name,
 					Protocol:  item.Svc.Protocol,
 					IsEnabled: item.Svc.IsEnabled,
-					Interval:  item.Svc.Interval,
-					Timeout:   item.Svc.Timeout,
+					Interval:  time.Duration(item.Svc.Interval) * time.Millisecond,
+					Timeout:   time.Duration(item.Svc.Timeout) * time.Millisecond,
 					Retries:   item.Svc.Retries,
 					Config:    item.Svc.Config,
 				})
@@ -262,8 +262,8 @@ func (s *Checker) subscribeEvents(ctx context.Context) error {
 						Name:      item.Svc.Name,
 						Protocol:  item.Svc.Protocol,
 						IsEnabled: item.Svc.IsEnabled,
-						Interval:  item.Svc.Interval,
-						Timeout:   item.Svc.Timeout,
+						Interval:  time.Duration(item.Svc.Interval) * time.Millisecond,
+						Timeout:   time.Duration(item.Svc.Timeout) * time.Millisecond,
 						Retries:   item.Svc.Retries,
 						Config:    item.Svc.Config,
 					})

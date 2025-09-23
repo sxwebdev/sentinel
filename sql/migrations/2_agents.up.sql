@@ -3,12 +3,11 @@ CREATE TABLE IF NOT EXISTS agents (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
   description TEXT,
-  host TEXT NOT NULL,
-  port INT NOT NULL,
-  token_ct BLOB,
-  token_nonce BLOB,
+  token_ct BLOB NOT NULL,
+  token_nonce BLOB NOT NULL,
   token_hint TEXT NOT NULL,
   fingerprint TEXT,
+  last_assignment_rev TEXT,
   "status" TEXT NOT NULL DEFAULT 'unknown',
   is_enabled BOOLEAN NOT NULL DEFAULT TRUE,
   tags jsonb NOT NULL DEFAULT '[]',
@@ -16,20 +15,19 @@ CREATE TABLE IF NOT EXISTS agents (
   system_info jsonb NOT NULL DEFAULT '{}',
   last_seen_at DATETIME,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE(token_ct),
-  UNIQUE(fingerprint)
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX IF NOT EXISTS idx_agents_name ON agents(name); 
 CREATE INDEX IF NOT EXISTS idx_agents_enabled ON agents(is_enabled);
 
--- Update incidents duration. Converting from nanoseconds to milliseconds and renaming the column to duration
-UPDATE incidents SET duration_ns = duration_ns / 1000000 WHERE duration_ns IS NOT NULL AND duration_ns > 0;
-ALTER TABLE incidents RENAME COLUMN duration_ns TO duration;
-
--- Update service_states response_time_ns to response_time (from nanoseconds to milliseconds)
-UPDATE service_states SET response_time_ns = response_time_ns / 1000000 WHERE response_time_ns IS NOT NULL AND response_time_ns > 0;
-ALTER TABLE service_states RENAME COLUMN response_time_ns TO response_time;
+-- Create services_agents table (many-to-many relationship between services and agents)
+CREATE TABLE IF NOT EXISTS services_agents (
+  id TEXT PRIMARY KEY,
+  service_id TEXT NOT NULL REFERENCES services(id) ON DELETE CASCADE,
+  agent_id TEXT NOT NULL REFERENCES agents(id) ON DELETE CASCADE,
+  revision TEXT NOT NULL CHECK (revision != '')
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_services_agents_unique ON services_agents(service_id, agent_id);
 
 -- Create incidents states table
 CREATE TABLE IF NOT EXISTS incident_states (

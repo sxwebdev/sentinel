@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/sxwebdev/sentinel/internal/datamigrations"
 	"github.com/sxwebdev/sentinel/pkg/migrations"
 	"github.com/sxwebdev/sentinel/sql"
 	"github.com/tkcrm/mx/logger"
@@ -14,5 +15,5 @@ func migrationsCMD() *cli.Command {
 		logger.WithLogFormat(logger.LoggerFormatConsole),
 	)
 	l := logger.NewExtended(opts...)
-	return migrations.CliCmd(l, sql.MigrationsFS, sql.MigrationsPath)
+	return migrations.CliCmd(l, sql.MigrationsFS, sql.MigrationsPath, datamigrations.Migrations)
 }

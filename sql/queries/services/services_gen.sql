@@ -1,6 +1,6 @@
 -- name: Create :one
-INSERT INTO services (id, name, protocol, interval, timeout, retries, tags, config, is_enabled)
-	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+INSERT INTO services (id, name, protocol, interval, timeout, retries, tags, config, is_enabled, is_notifications_enabled)
+	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	RETURNING *;
 
 -- name: Delete :exec

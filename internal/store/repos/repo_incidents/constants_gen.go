@@ -39,26 +39,24 @@ func (s ColumnNames) Strings() []string {
 }
 
 const (
-	ColumnNameIncidentsId        ColumnName = "id"
-	ColumnNameIncidentsServiceId ColumnName = "service_id"
-	ColumnNameIncidentsStartTime ColumnName = "start_time"
-	ColumnNameIncidentsEndTime   ColumnName = "end_time"
-	ColumnNameIncidentsError     ColumnName = "error"
-	ColumnNameIncidentsDuration  ColumnName = "duration"
-	ColumnNameIncidentsResolved  ColumnName = "resolved"
-	ColumnNameIncidentsCreatedAt ColumnName = "created_at"
-	ColumnNameIncidentsUpdatedAt ColumnName = "updated_at"
+	ColumnNameIncidentsId         ColumnName = "id"
+	ColumnNameIncidentsServiceId  ColumnName = "service_id"
+	ColumnNameIncidentsError      ColumnName = "error"
+	ColumnNameIncidentsDuration   ColumnName = "duration"
+	ColumnNameIncidentsStartedAt  ColumnName = "started_at"
+	ColumnNameIncidentsResolvedAt ColumnName = "resolved_at"
+	ColumnNameIncidentsCreatedAt  ColumnName = "created_at"
+	ColumnNameIncidentsUpdatedAt  ColumnName = "updated_at"
 )
 
 func IncidentsColumnNames() ColumnNames {
 	return ColumnNames{
 		ColumnNameIncidentsId,
 		ColumnNameIncidentsServiceId,
-		ColumnNameIncidentsStartTime,
-		ColumnNameIncidentsEndTime,
 		ColumnNameIncidentsError,
 		ColumnNameIncidentsDuration,
-		ColumnNameIncidentsResolved,
+		ColumnNameIncidentsStartedAt,
+		ColumnNameIncidentsResolvedAt,
 		ColumnNameIncidentsCreatedAt,
 		ColumnNameIncidentsUpdatedAt,
 	}

@@ -19,7 +19,7 @@ type Querier interface {
 	GetByID(ctx context.Context, id string) (*models.Incident, error)
 	ResolveByID(ctx context.Context, id string) error
 	Stats(ctx context.Context) (*StatsRow, error)
-	StatsByServiceID(ctx context.Context, serviceID string, startTime time.Time) (*StatsByServiceIDRow, error)
+	StatsByServiceID(ctx context.Context, serviceID string, createdAt time.Time) (*StatsByServiceIDRow, error)
 }
 
 var _ Querier = (*Queries)(nil)

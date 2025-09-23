@@ -26,7 +26,8 @@ func New(ctx context.Context, dbPath string) (*SQLite, error) {
 	}
 
 	// Open SQLite database with proper settings for concurrent access
-	db, err := sql.Open("sqlite", dbPath+"?_busy_timeout=30000&_journal_mode=WAL&_synchronous=NORMAL&_cache_size=10000&_foreign_keys=on")
+	dsn := GetDSN(dbPath)
+	db, err := sql.Open("sqlite", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}

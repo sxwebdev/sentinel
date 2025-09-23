@@ -11,7 +11,7 @@ import (
 )
 
 // CliCmd returns a cli.Command for managing database migrations.
-func CliCmd(l logger, fs embed.FS, migrationsPath string) *cli.Command {
+func CliCmd(l logger, fs embed.FS, migrationsPath string, opsmigrations DataMigrations) *cli.Command {
 	return &cli.Command{
 		Name:  "migrations",
 		Usage: "manage database migrations",
@@ -27,15 +27,15 @@ func CliCmd(l logger, fs embed.FS, migrationsPath string) *cli.Command {
 						Required: true,
 					},
 					&cli.StringFlag{
-						Name:     "path",
+						Name:     "migrations-path",
 						Aliases:  []string{"p"},
-						Usage:    "path to the migration file",
+						Usage:    "path to the migrations folder",
 						Required: true,
 					},
 				},
 				Action: func(ctx context.Context, cl *cli.Command) error {
 					name := cl.String("name")
-					path := cl.String("path")
+					path := cl.String("migrations-path")
 
 					// check if path exists, if not create it
 					if _, err := os.Stat(path); os.IsNotExist(err) {
@@ -78,13 +78,13 @@ func CliCmd(l logger, fs embed.FS, migrationsPath string) *cli.Command {
 					&cli.StringFlag{
 						Name:     "db-path",
 						Aliases:  []string{"dp"},
-						Usage:    "path to the SQLite database file",
+						Usage:    "path to database file",
 						Required: true,
 					},
 				},
 				Action: func(ctx context.Context, cl *cli.Command) error {
-					m := New(l, fs, migrationsPath)
-					return m.MigrateUpAll(cl.String("db-path"))
+					m := New(l, fs, migrationsPath, opsmigrations)
+					return m.MigrateUpAll(ctx, cl.String("db-path"))
 				},
 			},
 			{
@@ -94,13 +94,13 @@ func CliCmd(l logger, fs embed.FS, migrationsPath string) *cli.Command {
 					&cli.StringFlag{
 						Name:     "db-path",
 						Aliases:  []string{"dp"},
-						Usage:    "path to the SQLite database file",
+						Usage:    "path to database file",
 						Required: true,
 					},
 				},
 				Action: func(ctx context.Context, cl *cli.Command) error {
-					m := New(l, fs, migrationsPath)
-					return m.MigrateDown(cl.String("db-path"))
+					m := New(l, fs, migrationsPath, opsmigrations)
+					return m.MigrateDown(ctx, cl.String("db-path"))
 				},
 			},
 		},

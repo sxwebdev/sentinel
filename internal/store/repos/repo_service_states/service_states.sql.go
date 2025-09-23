@@ -21,7 +21,7 @@ func (q *Queries) DeleteByServiceID(ctx context.Context, serviceID string) error
 }
 
 const getByServiceID = `-- name: GetByServiceID :one
-SELECT id, service_id, status, last_check, next_check, last_error, consecutive_fails, consecutive_success, total_checks, response_time, created_at, updated_at FROM service_states WHERE service_id=? LIMIT 1
+SELECT id, service_id, status, last_check, last_error, consecutive_fails, consecutive_success, total_checks, avg_response_time, created_at, updated_at FROM service_states WHERE service_id=? LIMIT 1
 `
 
 func (q *Queries) GetByServiceID(ctx context.Context, serviceID string) (*models.ServiceState, error) {
@@ -32,12 +32,11 @@ func (q *Queries) GetByServiceID(ctx context.Context, serviceID string) (*models
 		&i.ServiceID,
 		&i.Status,
 		&i.LastCheck,
-		&i.NextCheck,
 		&i.LastError,
 		&i.ConsecutiveFails,
 		&i.ConsecutiveSuccess,
 		&i.TotalChecks,
-		&i.ResponseTime,
+		&i.AvgResponseTime,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -50,7 +49,7 @@ SELECT
  	SUM(CASE WHEN status='up' THEN 1 ELSE 0 END) AS services_up,
  	SUM(CASE WHEN status='down' THEN 1 ELSE 0 END) AS services_down,
  	SUM(CASE WHEN status='unknown' THEN 1 ELSE 0 END) AS services_unknown,
- 	AVG(response_time) AS avg_response_time,
+ 	AVG(avg_response_time) AS avg_response_time,
  	SUM(total_checks) AS total_checks           
 FROM service_states
 `

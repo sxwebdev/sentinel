@@ -13,22 +13,21 @@ import (
 )
 
 const create = `-- name: Create :one
-INSERT INTO agents (id, name, description, host, port, token_ct, token_nonce, token_hint, tags, config)
-	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-	RETURNING id, name, description, host, port, token_ct, token_nonce, token_hint, fingerprint, status, is_enabled, json(tags), json(config), json(system_info), last_seen_at, created_at, updated_at
+INSERT INTO agents (id, name, description, token_ct, token_nonce, token_hint, last_assignment_rev, tags, config)
+	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+	RETURNING id, name, description, token_ct, token_nonce, token_hint, fingerprint, last_assignment_rev, status, is_enabled, json(tags), json(config), json(system_info), last_seen_at, created_at, updated_at
 `
 
 type CreateParams struct {
-	ID          string             `db:"id" json:"id"`
-	Name        string             `db:"name" json:"name"`
-	Description *string            `db:"description" json:"description"`
-	Host        string             `db:"host" json:"host"`
-	Port        int64              `db:"port" json:"port"`
-	TokenCt     []byte             `db:"token_ct" json:"token_ct"`
-	TokenNonce  []byte             `db:"token_nonce" json:"token_nonce"`
-	TokenHint   string             `db:"token_hint" json:"token_hint"`
-	Tags        storecmn.JSONField `db:"tags" json:"tags"`
-	Config      storecmn.JSONField `db:"config" json:"config"`
+	ID                string             `db:"id" json:"id"`
+	Name              string             `db:"name" json:"name"`
+	Description       *string            `db:"description" json:"description"`
+	TokenCt           []byte             `db:"token_ct" json:"token_ct"`
+	TokenNonce        []byte             `db:"token_nonce" json:"token_nonce"`
+	TokenHint         string             `db:"token_hint" json:"token_hint"`
+	LastAssignmentRev *string            `db:"last_assignment_rev" json:"last_assignment_rev"`
+	Tags              storecmn.JSONField `db:"tags" json:"tags"`
+	Config            storecmn.JSONField `db:"config" json:"config"`
 }
 
 func (q *Queries) Create(ctx context.Context, arg CreateParams) (*models.Agent, error) {
@@ -36,11 +35,10 @@ func (q *Queries) Create(ctx context.Context, arg CreateParams) (*models.Agent, 
 		arg.ID,
 		arg.Name,
 		arg.Description,
-		arg.Host,
-		arg.Port,
 		arg.TokenCt,
 		arg.TokenNonce,
 		arg.TokenHint,
+		arg.LastAssignmentRev,
 		arg.Tags,
 		arg.Config,
 	)
@@ -49,12 +47,11 @@ func (q *Queries) Create(ctx context.Context, arg CreateParams) (*models.Agent, 
 		&i.ID,
 		&i.Name,
 		&i.Description,
-		&i.Host,
-		&i.Port,
 		&i.TokenCt,
 		&i.TokenNonce,
 		&i.TokenHint,
 		&i.Fingerprint,
+		&i.LastAssignmentRev,
 		&i.Status,
 		&i.IsEnabled,
 		&i.Tags,
@@ -77,7 +74,7 @@ func (q *Queries) Delete(ctx context.Context, id string) error {
 }
 
 const getByID = `-- name: GetByID :one
-SELECT id, name, description, host, port, token_ct, token_nonce, token_hint, fingerprint, status, is_enabled, json(tags), json(config), json(system_info), last_seen_at, created_at, updated_at FROM agents WHERE id=? LIMIT 1
+SELECT id, name, description, token_ct, token_nonce, token_hint, fingerprint, last_assignment_rev, status, is_enabled, json(tags), json(config), json(system_info), last_seen_at, created_at, updated_at FROM agents WHERE id=? LIMIT 1
 `
 
 func (q *Queries) GetByID(ctx context.Context, id string) (*models.Agent, error) {
@@ -87,12 +84,11 @@ func (q *Queries) GetByID(ctx context.Context, id string) (*models.Agent, error)
 		&i.ID,
 		&i.Name,
 		&i.Description,
-		&i.Host,
-		&i.Port,
 		&i.TokenCt,
 		&i.TokenNonce,
 		&i.TokenHint,
 		&i.Fingerprint,
+		&i.LastAssignmentRev,
 		&i.Status,
 		&i.IsEnabled,
 		&i.Tags,

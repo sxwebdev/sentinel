@@ -77,14 +77,13 @@ sqlc:
           methods:
             create:
               skip_columns:
-                - created_at
-                - end_time
                 - duration
-                - resolved
+                - started_at
+                - resolved_at
                 - updated_at
+                - created_at
               returning: "*"
               column_values:
-                start_time: CURRENT_TIMESTAMP
                 error: sqlc.arg(incident_error)
             delete:
             get:

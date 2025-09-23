@@ -1,14 +1,15 @@
 package migrations
 
 import (
+	"context"
 	"fmt"
 )
 
 // MigrateUpAll runs all pending database migrations
-func (m *Migrations) MigrateUpAll(dbPath string) error {
+func (m *Service) MigrateUpAll(ctx context.Context, dbPath string) error {
 	m.info("applying all migrations")
 
-	migrations, err := m.loadFromFS()
+	migrations, err := m.load()
 	if err != nil {
 		return fmt.Errorf("failed to load migrations: %w", err)
 	}
@@ -36,9 +37,9 @@ func (m *Migrations) MigrateUpAll(dbPath string) error {
 
 	// Run pending migrations
 	for _, migration := range migrations {
-		if migration.Version > currentVersion {
-			if err := m.applyMigration(db, applyMigrationTypeUp, migration.Version, migration.UpSQL); err != nil {
-				return fmt.Errorf("failed to run migration %d: %w", migration.Version, err)
+		if migration.version > currentVersion {
+			if err := m.applyMigration(ctx, db, applyMigrationTypeUp, migration); err != nil {
+				return fmt.Errorf("failed to run migration %d: %w", migration.version, err)
 			}
 			appliedMigrationsCount++
 		}

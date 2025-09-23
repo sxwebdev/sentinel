@@ -11,14 +11,6 @@ overrides:
       - column: services.protocol
         go_type:
           type: ServiceProtocolType
-      - column: services.interval
-        go_type:
-          type: Duration
-          import: github.com/sxwebdev/sentinel/internal/store/storecmn
-      - column: services.timeout
-        go_type:
-          type: Duration
-          import: github.com/sxwebdev/sentinel/internal/store/storecmn
 
       # service_states
       - column: service_states.status

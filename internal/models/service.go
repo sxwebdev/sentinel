@@ -28,27 +28,27 @@ func (s ServiceStatus) String() string {
 }
 
 type ServiceFullView struct {
-	ID                 string              `json:"id"`
-	Name               string              `json:"name"`
-	Protocol           ServiceProtocolType `json:"protocol"`
-	Interval           time.Duration       `json:"interval" swaggertype:"primitive,integer"`
-	Timeout            time.Duration       `json:"timeout" swaggertype:"primitive,integer"`
-	Retries            int64               `json:"retries"`
-	Tags               []string            `json:"tags"`
-	Config             map[string]any      `json:"config"`
-	IsEnabled          bool                `json:"is_enabled"`
-	CreatedAt          time.Time           `json:"created_at"`
-	UpdatedAt          time.Time           `json:"updated_at"`
-	ActiveIncidents    int                 `json:"active_incidents,omitempty"`
-	TotalIncidents     int                 `json:"total_incidents,omitempty"`
-	Status             ServiceStatus       `json:"status"`
-	LastCheck          *time.Time          `json:"last_check,omitempty"`
-	NextCheck          *time.Time          `json:"next_check,omitempty"`
-	LastError          *string             `json:"last_error,omitempty"`
-	ConsecutiveFails   int                 `json:"consecutive_fails"`
-	ConsecutiveSuccess int                 `json:"consecutive_success"`
-	TotalChecks        int                 `json:"total_checks"`
-	ResponseTime       *time.Duration      `json:"response_time" swaggertype:"primitive,integer"`
+	ID                     string              `json:"id"`
+	Name                   string              `json:"name"`
+	Protocol               ServiceProtocolType `json:"protocol"`
+	Interval               int64               `json:"interval"`
+	Timeout                int64               `json:"timeout"`
+	Retries                int64               `json:"retries"`
+	Tags                   []string            `json:"tags"`
+	Config                 map[string]any      `json:"config"`
+	IsNotificationsEnabled bool                `json:"is_notifications_enabled"`
+	IsEnabled              bool                `json:"is_enabled"`
+	CreatedAt              time.Time           `json:"created_at"`
+	UpdatedAt              time.Time           `json:"updated_at"`
+	ActiveIncidents        int                 `json:"active_incidents,omitempty"`
+	TotalIncidents         int                 `json:"total_incidents,omitempty"`
+	Status                 ServiceStatus       `json:"status"`
+	LastCheck              *time.Time          `json:"last_check,omitempty"`
+	LastError              *string             `json:"last_error,omitempty"`
+	ConsecutiveFails       int                 `json:"consecutive_fails"`
+	ConsecutiveSuccess     int                 `json:"consecutive_success"`
+	TotalChecks            int                 `json:"total_checks"`
+	AvgResponseTime        *int64              `json:"avg_response_time"`
 }
 
 // GetConfig returns config value by key or default if not set

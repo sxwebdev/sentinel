@@ -11,35 +11,33 @@ import (
 )
 
 type Agent struct {
-	ID          string             `db:"id" json:"id"`
-	Name        string             `db:"name" json:"name"`
-	Description *string            `db:"description" json:"description"`
-	Host        string             `db:"host" json:"host"`
-	Port        int64              `db:"port" json:"port"`
-	TokenCt     []byte             `db:"token_ct" json:"token_ct"`
-	TokenNonce  []byte             `db:"token_nonce" json:"token_nonce"`
-	TokenHint   string             `db:"token_hint" json:"token_hint"`
-	Fingerprint *string            `db:"fingerprint" json:"fingerprint"`
-	Status      string             `db:"status" json:"status"`
-	IsEnabled   bool               `db:"is_enabled" json:"is_enabled"`
-	Tags        storecmn.JSONField `db:"tags" json:"tags"`
-	Config      storecmn.JSONField `db:"config" json:"config"`
-	SystemInfo  storecmn.JSONField `db:"system_info" json:"system_info"`
-	LastSeenAt  *time.Time         `db:"last_seen_at" json:"last_seen_at"`
-	CreatedAt   time.Time          `db:"created_at" json:"created_at"`
-	UpdatedAt   time.Time          `db:"updated_at" json:"updated_at"`
+	ID                string             `db:"id" json:"id"`
+	Name              string             `db:"name" json:"name"`
+	Description       *string            `db:"description" json:"description"`
+	TokenCt           []byte             `db:"token_ct" json:"token_ct"`
+	TokenNonce        []byte             `db:"token_nonce" json:"token_nonce"`
+	TokenHint         string             `db:"token_hint" json:"token_hint"`
+	Fingerprint       *string            `db:"fingerprint" json:"fingerprint"`
+	LastAssignmentRev *string            `db:"last_assignment_rev" json:"last_assignment_rev"`
+	Status            string             `db:"status" json:"status"`
+	IsEnabled         bool               `db:"is_enabled" json:"is_enabled"`
+	Tags              storecmn.JSONField `db:"tags" json:"tags"`
+	Config            storecmn.JSONField `db:"config" json:"config"`
+	SystemInfo        storecmn.JSONField `db:"system_info" json:"system_info"`
+	LastSeenAt        *time.Time         `db:"last_seen_at" json:"last_seen_at"`
+	CreatedAt         time.Time          `db:"created_at" json:"created_at"`
+	UpdatedAt         time.Time          `db:"updated_at" json:"updated_at"`
 }
 
 type Incident struct {
-	ID        string     `db:"id" json:"id"`
-	ServiceID string     `db:"service_id" json:"service_id"`
-	StartTime time.Time  `db:"start_time" json:"start_time"`
-	EndTime   *time.Time `db:"end_time" json:"end_time"`
-	Error     string     `db:"error" json:"error"`
-	Duration  *int64     `db:"duration" json:"duration"`
-	Resolved  bool       `db:"resolved" json:"resolved"`
-	CreatedAt *time.Time `db:"created_at" json:"created_at"`
-	UpdatedAt *time.Time `db:"updated_at" json:"updated_at"`
+	ID         string     `db:"id" json:"id"`
+	ServiceID  string     `db:"service_id" json:"service_id"`
+	Error      string     `db:"error" json:"error"`
+	Duration   *int64     `db:"duration" json:"duration"`
+	StartedAt  time.Time  `db:"started_at" json:"started_at"`
+	ResolvedAt *time.Time `db:"resolved_at" json:"resolved_at"`
+	CreatedAt  time.Time  `db:"created_at" json:"created_at"`
+	UpdatedAt  time.Time  `db:"updated_at" json:"updated_at"`
 }
 
 type IncidentState struct {
@@ -77,17 +75,18 @@ type NotificationProvider struct {
 }
 
 type Service struct {
-	ID        string              `db:"id" json:"id"`
-	Name      string              `db:"name" json:"name"`
-	Protocol  ServiceProtocolType `db:"protocol" json:"protocol"`
-	Interval  storecmn.Duration   `db:"interval" json:"interval"`
-	Timeout   storecmn.Duration   `db:"timeout" json:"timeout"`
-	Retries   int64               `db:"retries" json:"retries"`
-	Tags      storecmn.JSONField  `db:"tags" json:"tags"`
-	Config    storecmn.JSONField  `db:"config" json:"config"`
-	IsEnabled bool                `db:"is_enabled" json:"is_enabled"`
-	CreatedAt *time.Time          `db:"created_at" json:"created_at"`
-	UpdatedAt *time.Time          `db:"updated_at" json:"updated_at"`
+	ID                     string              `db:"id" json:"id"`
+	Name                   string              `db:"name" json:"name"`
+	Protocol               ServiceProtocolType `db:"protocol" json:"protocol"`
+	Interval               int64               `db:"interval" json:"interval"`
+	Timeout                int64               `db:"timeout" json:"timeout"`
+	Retries                int64               `db:"retries" json:"retries"`
+	Tags                   storecmn.JSONField  `db:"tags" json:"tags"`
+	Config                 storecmn.JSONField  `db:"config" json:"config"`
+	IsEnabled              bool                `db:"is_enabled" json:"is_enabled"`
+	IsNotificationsEnabled bool                `db:"is_notifications_enabled" json:"is_notifications_enabled"`
+	CreatedAt              time.Time           `db:"created_at" json:"created_at"`
+	UpdatedAt              time.Time           `db:"updated_at" json:"updated_at"`
 }
 
 type ServiceState struct {
@@ -95,12 +94,18 @@ type ServiceState struct {
 	ServiceID          string        `db:"service_id" json:"service_id"`
 	Status             ServiceStatus `db:"status" json:"status"`
 	LastCheck          *time.Time    `db:"last_check" json:"last_check"`
-	NextCheck          *time.Time    `db:"next_check" json:"next_check"`
 	LastError          *string       `db:"last_error" json:"last_error"`
 	ConsecutiveFails   int64         `db:"consecutive_fails" json:"consecutive_fails"`
 	ConsecutiveSuccess int64         `db:"consecutive_success" json:"consecutive_success"`
 	TotalChecks        int64         `db:"total_checks" json:"total_checks"`
-	ResponseTime       *int64        `db:"response_time" json:"response_time"`
-	CreatedAt          *time.Time    `db:"created_at" json:"created_at"`
-	UpdatedAt          *time.Time    `db:"updated_at" json:"updated_at"`
+	AvgResponseTime    *int64        `db:"avg_response_time" json:"avg_response_time"`
+	CreatedAt          time.Time     `db:"created_at" json:"created_at"`
+	UpdatedAt          time.Time     `db:"updated_at" json:"updated_at"`
+}
+
+type ServicesAgent struct {
+	ID        string `db:"id" json:"id"`
+	ServiceID string `db:"service_id" json:"service_id"`
+	AgentID   string `db:"agent_id" json:"agent_id"`
+	Revision  string `db:"revision" json:"revision"`
 }

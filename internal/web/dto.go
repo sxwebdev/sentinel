@@ -54,8 +54,8 @@ type ServiceStats struct {
 type CreateUpdateServiceRequest struct {
 	Name      string                     `json:"name" example:"Web Server"`
 	Protocol  models.ServiceProtocolType `json:"protocol" example:"http"`
-	Interval  uint32                     `json:"interval" swaggertype:"primitive,integer" example:"60000"`
-	Timeout   uint32                     `json:"timeout" swaggertype:"primitive,integer" example:"10000"`
+	Interval  int64                      `json:"interval" swaggertype:"primitive,integer" example:"60000"`
+	Timeout   int64                      `json:"timeout" swaggertype:"primitive,integer" example:"10000"`
 	Retries   int64                      `json:"retries" example:"5"`
 	Tags      []string                   `json:"tags" example:"web,production"`
 	Config    monitors.Config            `json:"config"`
@@ -67,8 +67,8 @@ type ServiceDTO struct {
 	ID                 string                     `json:"id" example:"service-1"`
 	Name               string                     `json:"name" example:"Web Server"`
 	Protocol           models.ServiceProtocolType `json:"protocol" example:"http"`
-	Interval           uint32                     `json:"interval" swaggertype:"primitive,integer" example:"60000"`
-	Timeout            uint32                     `json:"timeout" swaggertype:"primitive,integer" example:"10000"`
+	Interval           int64                      `json:"interval"`
+	Timeout            int64                      `json:"timeout"`
 	Retries            int64                      `json:"retries" example:"5"`
 	Tags               []string                   `json:"tags" example:"web,production"`
 	Config             monitors.Config            `json:"config"`
@@ -77,12 +77,11 @@ type ServiceDTO struct {
 	TotalIncidents     int                        `json:"total_incidents" example:"10"`
 	Status             models.ServiceStatus       `json:"status" example:"up / down / unknown"`
 	LastCheck          *time.Time                 `json:"last_check,omitempty" example:"2023-10-01T12:00:00Z"`
-	NextCheck          *time.Time                 `json:"next_check,omitempty" example:"2023-10-01T12:05:00Z"`
 	LastError          *string                    `json:"last_error,omitempty" example:"Connection timeout"`
 	ConsecutiveFails   int                        `json:"consecutive_fails" example:"1"`
 	ConsecutiveSuccess int                        `json:"consecutive_success" example:"5"`
 	TotalChecks        int                        `json:"total_checks" example:"100"`
-	ResponseTime       uint32                     `json:"response_time" swaggertype:"primitive,integer" example:"150000000"`
+	AvgResponseTime    *int64                     `json:"avg_response_time"`
 }
 
 type ServerInfoResponse struct {

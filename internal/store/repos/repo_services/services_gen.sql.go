@@ -13,21 +13,22 @@ import (
 )
 
 const create = `-- name: Create :one
-INSERT INTO services (id, name, protocol, interval, timeout, retries, tags, config, is_enabled)
-	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-	RETURNING id, name, protocol, interval, timeout, retries, json(tags), json(config), is_enabled, created_at, updated_at
+INSERT INTO services (id, name, protocol, interval, timeout, retries, tags, config, is_enabled, is_notifications_enabled)
+	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+	RETURNING id, name, protocol, interval, timeout, retries, json(tags), json(config), is_enabled, is_notifications_enabled, created_at, updated_at
 `
 
 type CreateParams struct {
-	ID        string                     `db:"id" json:"id"`
-	Name      string                     `db:"name" json:"name"`
-	Protocol  models.ServiceProtocolType `db:"protocol" json:"protocol"`
-	Interval  storecmn.Duration          `db:"interval" json:"interval"`
-	Timeout   storecmn.Duration          `db:"timeout" json:"timeout"`
-	Retries   int64                      `db:"retries" json:"retries"`
-	Tags      storecmn.JSONField         `db:"tags" json:"tags"`
-	Config    storecmn.JSONField         `db:"config" json:"config"`
-	IsEnabled bool                       `db:"is_enabled" json:"is_enabled"`
+	ID                     string                     `db:"id" json:"id"`
+	Name                   string                     `db:"name" json:"name"`
+	Protocol               models.ServiceProtocolType `db:"protocol" json:"protocol"`
+	Interval               int64                      `db:"interval" json:"interval"`
+	Timeout                int64                      `db:"timeout" json:"timeout"`
+	Retries                int64                      `db:"retries" json:"retries"`
+	Tags                   storecmn.JSONField         `db:"tags" json:"tags"`
+	Config                 storecmn.JSONField         `db:"config" json:"config"`
+	IsEnabled              bool                       `db:"is_enabled" json:"is_enabled"`
+	IsNotificationsEnabled bool                       `db:"is_notifications_enabled" json:"is_notifications_enabled"`
 }
 
 func (q *Queries) Create(ctx context.Context, arg CreateParams) (*models.Service, error) {
@@ -41,6 +42,7 @@ func (q *Queries) Create(ctx context.Context, arg CreateParams) (*models.Service
 		arg.Tags,
 		arg.Config,
 		arg.IsEnabled,
+		arg.IsNotificationsEnabled,
 	)
 	var i models.Service
 	err := row.Scan(
@@ -53,6 +55,7 @@ func (q *Queries) Create(ctx context.Context, arg CreateParams) (*models.Service
 		&i.Tags,
 		&i.Config,
 		&i.IsEnabled,
+		&i.IsNotificationsEnabled,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -69,7 +72,7 @@ func (q *Queries) Delete(ctx context.Context, id string) error {
 }
 
 const getByID = `-- name: GetByID :one
-SELECT id, name, protocol, interval, timeout, retries, json(tags), json(config), is_enabled, created_at, updated_at FROM services WHERE id=? LIMIT 1
+SELECT id, name, protocol, interval, timeout, retries, json(tags), json(config), is_enabled, is_notifications_enabled, created_at, updated_at FROM services WHERE id=? LIMIT 1
 `
 
 func (q *Queries) GetByID(ctx context.Context, id string) (*models.Service, error) {
@@ -85,6 +88,7 @@ func (q *Queries) GetByID(ctx context.Context, id string) (*models.Service, erro
 		&i.Tags,
 		&i.Config,
 		&i.IsEnabled,
+		&i.IsNotificationsEnabled,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

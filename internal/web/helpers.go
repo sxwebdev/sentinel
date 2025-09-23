@@ -26,8 +26,8 @@ func convertServiceToDTO(service *models.ServiceFullView) (ServiceDTO, error) {
 		ID:                 service.ID,
 		Name:               service.Name,
 		Protocol:           service.Protocol,
-		Interval:           uint32(service.Interval.Milliseconds()),
-		Timeout:            uint32(service.Timeout.Milliseconds()),
+		Interval:           service.Interval,
+		Timeout:            service.Timeout,
 		Retries:            service.Retries,
 		Tags:               service.Tags,
 		Config:             config,
@@ -36,15 +36,11 @@ func convertServiceToDTO(service *models.ServiceFullView) (ServiceDTO, error) {
 		TotalIncidents:     service.TotalIncidents,
 		Status:             service.Status,
 		LastCheck:          service.LastCheck,
-		NextCheck:          service.NextCheck,
 		LastError:          service.LastError,
 		ConsecutiveFails:   service.ConsecutiveFails,
 		ConsecutiveSuccess: service.ConsecutiveSuccess,
 		TotalChecks:        service.TotalChecks,
-	}
-
-	if service.ResponseTime != nil {
-		dto.ResponseTime = uint32(service.ResponseTime.Milliseconds())
+		AvgResponseTime:    service.AvgResponseTime,
 	}
 
 	return dto, nil
@@ -132,7 +128,7 @@ func (s *Server) getDashboardStats(ctx context.Context) (*DashboardStats, error)
 	var checksPerMinute int64
 	for _, service := range services {
 		if service.Interval > 0 {
-			checksPerMinute += int64(time.Minute / service.Interval.ToDuration())
+			checksPerMinute += int64(60000 / service.Interval)
 		}
 	}
 	stats.ChecksPerMinute = checksPerMinute

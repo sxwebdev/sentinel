@@ -39,17 +39,18 @@ func (s ColumnNames) Strings() []string {
 }
 
 const (
-	ColumnNameServicesId        ColumnName = "id"
-	ColumnNameServicesName      ColumnName = "name"
-	ColumnNameServicesProtocol  ColumnName = "protocol"
-	ColumnNameServicesInterval  ColumnName = "interval"
-	ColumnNameServicesTimeout   ColumnName = "timeout"
-	ColumnNameServicesRetries   ColumnName = "retries"
-	ColumnNameServicesTags      ColumnName = "tags"
-	ColumnNameServicesConfig    ColumnName = "config"
-	ColumnNameServicesIsEnabled ColumnName = "is_enabled"
-	ColumnNameServicesCreatedAt ColumnName = "created_at"
-	ColumnNameServicesUpdatedAt ColumnName = "updated_at"
+	ColumnNameServicesId                     ColumnName = "id"
+	ColumnNameServicesName                   ColumnName = "name"
+	ColumnNameServicesProtocol               ColumnName = "protocol"
+	ColumnNameServicesInterval               ColumnName = "interval"
+	ColumnNameServicesTimeout                ColumnName = "timeout"
+	ColumnNameServicesRetries                ColumnName = "retries"
+	ColumnNameServicesTags                   ColumnName = "tags"
+	ColumnNameServicesConfig                 ColumnName = "config"
+	ColumnNameServicesIsEnabled              ColumnName = "is_enabled"
+	ColumnNameServicesIsNotificationsEnabled ColumnName = "is_notifications_enabled"
+	ColumnNameServicesCreatedAt              ColumnName = "created_at"
+	ColumnNameServicesUpdatedAt              ColumnName = "updated_at"
 )
 
 func ServicesColumnNames() ColumnNames {
@@ -63,6 +64,7 @@ func ServicesColumnNames() ColumnNames {
 		ColumnNameServicesTags,
 		ColumnNameServicesConfig,
 		ColumnNameServicesIsEnabled,
+		ColumnNameServicesIsNotificationsEnabled,
 		ColumnNameServicesCreatedAt,
 		ColumnNameServicesUpdatedAt,
 	}

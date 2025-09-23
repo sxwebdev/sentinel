@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/huandu/go-sqlbuilder"
 	"github.com/sxwebdev/sentinel/internal/models"
@@ -12,14 +11,15 @@ import (
 )
 
 type UpdateServiceRequest struct {
-	Name      string                     `json:"name" yaml:"name"`
-	Protocol  models.ServiceProtocolType `json:"protocol" yaml:"protocol"`
-	Interval  storecmn.Duration          `json:"interval" yaml:"interval" swaggertype:"primitive,integer"`
-	Timeout   storecmn.Duration          `json:"timeout" yaml:"timeout" swaggertype:"primitive,integer"`
-	Retries   int64                      `json:"retries" yaml:"retries"`
-	Tags      storecmn.JSONField         `json:"tags" yaml:"tags"`
-	Config    storecmn.JSONField         `json:"config" yaml:"config"`
-	IsEnabled bool                       `json:"is_enabled" yaml:"is_enabled"`
+	Name                   string                     `json:"name"`
+	Protocol               models.ServiceProtocolType `json:"protocol"`
+	Interval               int64                      `json:"interval"`
+	Timeout                int64                      `json:"timeout"`
+	Retries                int64                      `json:"retries"`
+	Tags                   storecmn.JSONField         `json:"tags"`
+	Config                 storecmn.JSONField         `json:"config"`
+	IsEnabled              bool                       `json:"is_enabled"`
+	IsNotificationsEnabled bool                       `json:"is_notifications_enabled"`
 }
 
 func (s *CustomQueries) Update(ctx context.Context, id string, service UpdateServiceRequest) (*models.ServiceFullView, error) {
@@ -38,15 +38,16 @@ func (s *CustomQueries) Update(ctx context.Context, id string, service UpdateSer
 
 	// Prepare all fields for update
 	assignments := []string{
-		ub.Assign("name", service.Name),
-		ub.Assign("protocol", service.Protocol),
-		ub.Assign("interval", service.Interval.String()),
-		ub.Assign("timeout", service.Timeout.String()),
-		ub.Assign("retries", service.Retries),
-		ub.Assign("tags", string(tagsJSON)),
-		ub.Assign("config", string(configJSON)),
-		ub.Assign("is_enabled", service.IsEnabled),
-		ub.Assign("updated_at", time.Now()),
+		ub.Assign(ColumnNameServicesName.String(), service.Name),
+		ub.Assign(ColumnNameServicesProtocol.String(), service.Protocol),
+		ub.Assign(ColumnNameServicesInterval.String(), service.Interval),
+		ub.Assign(ColumnNameServicesTimeout.String(), service.Timeout),
+		ub.Assign(ColumnNameServicesRetries.String(), service.Retries),
+		ub.Assign(ColumnNameServicesTags.String(), string(tagsJSON)),
+		ub.Assign(ColumnNameServicesConfig.String(), string(configJSON)),
+		ub.Assign(ColumnNameServicesIsEnabled.String(), service.IsEnabled),
+		ub.Assign(ColumnNameServicesIsNotificationsEnabled.String(), service.IsNotificationsEnabled),
+		"updated_at = CURRENT_TIMESTAMP",
 	}
 
 	// Set all assignments at once
@@ -54,18 +55,8 @@ func (s *CustomQueries) Update(ctx context.Context, id string, service UpdateSer
 	ub.Where(ub.Equal("id", id))
 
 	sql, args := ub.Build()
-	result, err := s.db.ExecContext(ctx, sql, args...)
-	if err != nil {
+	if _, err := s.db.ExecContext(ctx, sql, args...); err != nil {
 		return nil, fmt.Errorf("failed to update service: %w", err)
-	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get rows affected: %w", err)
-	}
-
-	if rowsAffected == 0 {
-		return nil, fmt.Errorf("service not found")
 	}
 
 	return s.GetViewByID(ctx, id)

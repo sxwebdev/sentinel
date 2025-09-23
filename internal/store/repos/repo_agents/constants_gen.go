@@ -39,23 +39,22 @@ func (s ColumnNames) Strings() []string {
 }
 
 const (
-	ColumnNameAgentsId          ColumnName = "id"
-	ColumnNameAgentsName        ColumnName = "name"
-	ColumnNameAgentsDescription ColumnName = "description"
-	ColumnNameAgentsHost        ColumnName = "host"
-	ColumnNameAgentsPort        ColumnName = "port"
-	ColumnNameAgentsTokenCt     ColumnName = "token_ct"
-	ColumnNameAgentsTokenNonce  ColumnName = "token_nonce"
-	ColumnNameAgentsTokenHint   ColumnName = "token_hint"
-	ColumnNameAgentsFingerprint ColumnName = "fingerprint"
-	ColumnNameAgentsStatus      ColumnName = "status"
-	ColumnNameAgentsIsEnabled   ColumnName = "is_enabled"
-	ColumnNameAgentsTags        ColumnName = "tags"
-	ColumnNameAgentsConfig      ColumnName = "config"
-	ColumnNameAgentsSystemInfo  ColumnName = "system_info"
-	ColumnNameAgentsLastSeenAt  ColumnName = "last_seen_at"
-	ColumnNameAgentsCreatedAt   ColumnName = "created_at"
-	ColumnNameAgentsUpdatedAt   ColumnName = "updated_at"
+	ColumnNameAgentsId                ColumnName = "id"
+	ColumnNameAgentsName              ColumnName = "name"
+	ColumnNameAgentsDescription       ColumnName = "description"
+	ColumnNameAgentsTokenCt           ColumnName = "token_ct"
+	ColumnNameAgentsTokenNonce        ColumnName = "token_nonce"
+	ColumnNameAgentsTokenHint         ColumnName = "token_hint"
+	ColumnNameAgentsFingerprint       ColumnName = "fingerprint"
+	ColumnNameAgentsLastAssignmentRev ColumnName = "last_assignment_rev"
+	ColumnNameAgentsStatus            ColumnName = "status"
+	ColumnNameAgentsIsEnabled         ColumnName = "is_enabled"
+	ColumnNameAgentsTags              ColumnName = "tags"
+	ColumnNameAgentsConfig            ColumnName = "config"
+	ColumnNameAgentsSystemInfo        ColumnName = "system_info"
+	ColumnNameAgentsLastSeenAt        ColumnName = "last_seen_at"
+	ColumnNameAgentsCreatedAt         ColumnName = "created_at"
+	ColumnNameAgentsUpdatedAt         ColumnName = "updated_at"
 )
 
 func AgentsColumnNames() ColumnNames {
@@ -63,12 +62,11 @@ func AgentsColumnNames() ColumnNames {
 		ColumnNameAgentsId,
 		ColumnNameAgentsName,
 		ColumnNameAgentsDescription,
-		ColumnNameAgentsHost,
-		ColumnNameAgentsPort,
 		ColumnNameAgentsTokenCt,
 		ColumnNameAgentsTokenNonce,
 		ColumnNameAgentsTokenHint,
 		ColumnNameAgentsFingerprint,
+		ColumnNameAgentsLastAssignmentRev,
 		ColumnNameAgentsStatus,
 		ColumnNameAgentsIsEnabled,
 		ColumnNameAgentsTags,

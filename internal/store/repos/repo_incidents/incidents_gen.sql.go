@@ -12,9 +12,9 @@ import (
 )
 
 const create = `-- name: Create :one
-INSERT INTO incidents (id, service_id, start_time, error)
-	VALUES (?, ?, CURRENT_TIMESTAMP, ?3)
-	RETURNING id, service_id, start_time, end_time, error, duration, resolved, created_at, updated_at
+INSERT INTO incidents (id, service_id, error)
+	VALUES (?, ?, ?3)
+	RETURNING id, service_id, error, duration, started_at, resolved_at, created_at, updated_at
 `
 
 func (q *Queries) Create(ctx context.Context, iD string, serviceID string, incidentError string) (*models.Incident, error) {
@@ -23,11 +23,10 @@ func (q *Queries) Create(ctx context.Context, iD string, serviceID string, incid
 	err := row.Scan(
 		&i.ID,
 		&i.ServiceID,
-		&i.StartTime,
-		&i.EndTime,
 		&i.Error,
 		&i.Duration,
-		&i.Resolved,
+		&i.StartedAt,
+		&i.ResolvedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -44,7 +43,7 @@ func (q *Queries) Delete(ctx context.Context, id string) error {
 }
 
 const getByID = `-- name: GetByID :one
-SELECT id, service_id, start_time, end_time, error, duration, resolved, created_at, updated_at FROM incidents WHERE id=? LIMIT 1
+SELECT id, service_id, error, duration, started_at, resolved_at, created_at, updated_at FROM incidents WHERE id=? LIMIT 1
 `
 
 func (q *Queries) GetByID(ctx context.Context, id string) (*models.Incident, error) {
@@ -53,11 +52,10 @@ func (q *Queries) GetByID(ctx context.Context, id string) (*models.Incident, err
 	err := row.Scan(
 		&i.ID,
 		&i.ServiceID,
-		&i.StartTime,
-		&i.EndTime,
 		&i.Error,
 		&i.Duration,
-		&i.Resolved,
+		&i.StartedAt,
+		&i.ResolvedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

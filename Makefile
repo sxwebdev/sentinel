@@ -22,10 +22,10 @@ dev: ## Run in development mode with auto-reload
 	go run $(SENTINEL_PATH) start -c ./config.yaml
 
 migrateup:
-	go run $(SENTINEL_PATH) migrations up -db-path ./data/db.sqlite
+	go run $(SENTINEL_PATH) migrations up -db-path ./data/sqlite/db.sqlite
 
 migratedown:
-	go run $(SENTINEL_PATH) migrations down -db-path ./data/db.sqlite
+	go run $(SENTINEL_PATH) migrations down -db-path ./data/sqlite/db.sqlite
 
 agent: ## Run in development mode with auto-reload
 	go run $(SENTINEL_PATH) agent start -c ./config-agent.yaml
@@ -130,7 +130,7 @@ init-db: ## Initialize database directory
 # 	migrate create -ext sql -format unix -dir "$(MIGRATIONS_DIR)" $(filter-out $@,$(MAKECMDGOALS))
 
 db-create-migration:
-	go run ./cmd/sentinel migrations create -path ./sql/migrations -name $(filter-out $@,$(MAKECMDGOALS))
+	go run ./cmd/sentinel migrations create -p ./sql/migrations -name $(filter-out $@,$(MAKECMDGOALS))
 
 # Configuration
 init-config: ## Copy example configuration
