@@ -104,6 +104,31 @@ definitions:
     - StatusUp
     - StatusDown
     - StatusMaintenance
+  models.SystemInfo:
+    properties:
+      arch:
+        type: string
+      availableUpdate:
+        $ref: '#/definitions/models.AvailableUpdate'
+      buildDate:
+        type: string
+      commitHash:
+        type: string
+      cpuModel:
+        type: string
+      goVersion:
+        type: string
+      hostname:
+        type: string
+      kernelVersion:
+        type: string
+      os:
+        type: string
+      sqliteVersion:
+        type: string
+      version:
+        type: string
+    type: object
   monitors.Config:
     properties:
       grpc:
@@ -244,6 +269,15 @@ definitions:
           $ref: '#/definitions/models.NotificationHistoryView'
         type: array
     type: object
+  storecmn.FindResponseWithCount-web_AgentDTO:
+    properties:
+      count:
+        type: integer
+      items:
+        items:
+          $ref: '#/definitions/web.AgentDTO'
+        type: array
+    type: object
   storecmn.FindResponseWithCount-web_ServiceDTO:
     properties:
       count:
@@ -254,6 +288,72 @@ definitions:
         type: array
     type: object
   storecmn.JSONField:
+    type: object
+  web.AgentCreateParams:
+    properties:
+      config:
+        additionalProperties: {}
+        type: object
+      description:
+        type: string
+      name:
+        type: string
+      tags:
+        items:
+          type: string
+        type: array
+    type: object
+  web.AgentDTO:
+    properties:
+      config:
+        additionalProperties: {}
+        type: object
+      created_at:
+        type: string
+      description:
+        type: string
+      fingerprint:
+        type: string
+      id:
+        type: string
+      is_enabled:
+        type: boolean
+      last_online_at:
+        example: "2023-10-01T12:00:00Z"
+        type: string
+      name:
+        type: string
+      status:
+        type: string
+      system_info:
+        $ref: '#/definitions/models.SystemInfo'
+      tags:
+        example:
+        - tag1
+        - tag2
+        items:
+          type: string
+        type: array
+      token_hint:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  web.AgentUpdateParams:
+    properties:
+      config:
+        additionalProperties: {}
+        type: object
+      description:
+        type: string
+      isEnabled:
+        type: boolean
+      name:
+        type: string
+      tags:
+        items:
+          type: string
+        type: array
     type: object
   web.CreateUpdateServiceRequest:
     properties:
@@ -926,6 +1026,143 @@ paths:
       summary: Get service statistics
       tags:
       - statistics
+  /settings/agents:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of all agents.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of agents
+          schema:
+            $ref: '#/definitions/storecmn.FindResponseWithCount-web_AgentDTO'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+      summary: List agents
+      tags:
+      - agents
+    post:
+      consumes:
+      - application/json
+      description: Creates a new agent with the given configuration.
+      parameters:
+      - description: Body params
+        in: body
+        name: service
+        required: true
+        schema:
+          $ref: '#/definitions/web.AgentCreateParams'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Agent created
+          schema:
+            $ref: '#/definitions/web.AgentDTO'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+      summary: Create new agent
+      tags:
+      - agents
+  /settings/agents/{id}:
+    delete:
+      description: Deletes an agent by its ID.
+      parameters:
+      - description: Agent ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+        "404":
+          description: Agent not found
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+      summary: Delete agent
+      tags:
+      - agents
+    get:
+      description: Retrieves an agent by its ID.
+      parameters:
+      - description: Agent ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: Agent found
+          schema:
+            $ref: '#/definitions/web.AgentDTO'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+        "404":
+          description: Agent not found
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+      summary: Get agent by ID
+      tags:
+      - agents
+    put:
+      description: Updates an agent by its ID.
+      parameters:
+      - description: Agent ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Agent data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/web.AgentUpdateParams'
+      responses:
+        "200":
+          description: Agent updated
+          schema:
+            $ref: '#/definitions/web.AgentDTO'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+        "404":
+          description: Agent not found
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/web.ErrorResponse'
+      summary: Update agent
+      tags:
+      - agents
   /settings/notifications/history:
     get:
       consumes:

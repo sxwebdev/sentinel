@@ -6,7 +6,6 @@ import (
 	"slices"
 	"time"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/sxwebdev/sentinel/internal/models"
 	"github.com/sxwebdev/sentinel/internal/store/repos/repo_agents"
 	"github.com/sxwebdev/sentinel/internal/store/storecmn"
@@ -15,10 +14,8 @@ import (
 )
 
 type CreateParams struct {
-	Name        string `validate:"required"`
+	Name        string
 	Description *string
-	Host        string `validate:"required"`
-	Port        int64  `validate:"required"`
 	TokenCt     []byte
 	TokenNonce  []byte
 	TokenHint   string
@@ -26,14 +23,35 @@ type CreateParams struct {
 	Config      map[string]any
 }
 
-// Create a new agent
-func (s *Service) Create(ctx context.Context, params CreateParams) (*models.Agent, error) {
-	if err := validator.New().Struct(params); err != nil {
-		return nil, fmt.Errorf("validation error: %w", err)
+// Validate
+func (p CreateParams) Validate() error {
+	if p.Name == "" {
+		return fmt.Errorf("name is required")
 	}
 
+	if p.TokenCt == nil {
+		return fmt.Errorf("token_ct is required")
+	}
+
+	if p.TokenNonce == nil {
+		return fmt.Errorf("token_nonce is required")
+	}
+
+	if p.TokenHint == "" {
+		return fmt.Errorf("token_hint is required")
+	}
+
+	return nil
+}
+
+// Create a new agent
+func (s *Service) Create(ctx context.Context, params CreateParams) (*models.Agent, error) {
 	if len(params.Tags) > 0 {
 		slices.Sort(params.Tags)
+	}
+
+	if err := params.Validate(); err != nil {
+		return nil, fmt.Errorf("validation error: %w", err)
 	}
 
 	// Convert tags to JSONField
@@ -80,21 +98,16 @@ func (s *Service) Find(ctx context.Context, params FindParams) (*storecmn.FindRe
 }
 
 type UpdateParams struct {
-	Name        string
-	Description *string
-	Host        string
-	Port        int64
-	TokenCt     []byte
-	TokenNonce  []byte
-	TokenHint   string
-	Fingerprint *string
-	Status      string
-	IsEnabled   bool
-	Tags        []string
-	Config      map[string]any
-	SystemInfo  models.SystemInfo
-	LastSeenAt  *time.Time
-	FieldMask   dbutils.FieldMask[repo_agents.ColumnName]
+	Name         string
+	Description  *string
+	Fingerprint  *string
+	Status       string
+	IsEnabled    bool
+	Tags         []string
+	Config       map[string]any
+	SystemInfo   models.SystemInfo
+	LastOnlineAt *time.Time
+	FieldMask    dbutils.FieldMask[repo_agents.ColumnName]
 }
 
 // Validate
@@ -103,19 +116,7 @@ func (p UpdateParams) Validate() error {
 		return fmt.Errorf("name is required")
 	}
 
-	if p.FieldMask.Contains(repo_agents.ColumnNameAgentsTokenCt) && p.TokenCt == nil {
-		return fmt.Errorf("token_ct is required")
-	}
-
-	if p.FieldMask.Contains(repo_agents.ColumnNameAgentsTokenNonce) && p.TokenNonce == nil {
-		return fmt.Errorf("token_nonce is required")
-	}
-
-	if p.FieldMask.Contains(repo_agents.ColumnNameAgentsTokenHint) && p.TokenHint == "" {
-		return fmt.Errorf("token_hint is required")
-	}
-
-	if p.FieldMask.Contains(repo_agents.ColumnNameAgentsFingerprint) && p.Fingerprint == nil {
+	if p.FieldMask.Contains(repo_agents.ColumnNameAgentsFingerprint) && (p.Fingerprint == nil || *p.Fingerprint == "") {
 		return fmt.Errorf("fingerprint is required")
 	}
 
@@ -156,18 +157,15 @@ func (s *Service) Update(ctx context.Context, id string, params UpdateParams) (*
 
 	updateParams := repo_agents.UpdateRequest{
 		Agent: models.Agent{
-			Name:        params.Name,
-			Description: params.Description,
-			TokenCt:     params.TokenCt,
-			TokenNonce:  params.TokenNonce,
-			TokenHint:   params.TokenHint,
-			Fingerprint: params.Fingerprint,
-			Status:      params.Status,
-			IsEnabled:   params.IsEnabled,
-			Tags:        tags,
-			Config:      config,
-			SystemInfo:  systemInfo,
-			LastSeenAt:  params.LastSeenAt,
+			Name:         params.Name,
+			Description:  params.Description,
+			Fingerprint:  params.Fingerprint,
+			Status:       params.Status,
+			IsEnabled:    params.IsEnabled,
+			Tags:         tags,
+			Config:       config,
+			SystemInfo:   systemInfo,
+			LastOnlineAt: params.LastOnlineAt,
 		},
 		FieldMask: params.FieldMask,
 	}

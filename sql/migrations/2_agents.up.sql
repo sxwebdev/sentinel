@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS agents (
   tags jsonb NOT NULL DEFAULT '[]',
   config jsonb NOT NULL DEFAULT '{}',
   system_info jsonb NOT NULL DEFAULT '{}',
-  last_seen_at DATETIME,
+  last_online_at DATETIME,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

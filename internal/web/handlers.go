@@ -200,6 +200,13 @@ func (s *Server) setupRoutes() {
 	notificationsHistoryGroup := notificationsGroup.Group("/history")
 	notificationsHistoryGroup.Get("/", s.notificationHistoryList)
 
+	agentsGroup := settingsGroup.Group("/agents")
+	agentsGroup.Post("/", s.agentsCreate)
+	agentsGroup.Get("/", s.agentsList)
+	agentsGroup.Delete("/:id", s.agentDelete)
+	agentsGroup.Get("/:id", s.agentGetByID)
+	agentsGroup.Put("/:id", s.agentUpdate)
+
 	// Server API
 	serverGroup := api.Group("/server")
 	serverGroup.Get("/info", s.handleAPIInfo)

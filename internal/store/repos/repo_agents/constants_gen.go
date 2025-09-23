@@ -52,7 +52,7 @@ const (
 	ColumnNameAgentsTags              ColumnName = "tags"
 	ColumnNameAgentsConfig            ColumnName = "config"
 	ColumnNameAgentsSystemInfo        ColumnName = "system_info"
-	ColumnNameAgentsLastSeenAt        ColumnName = "last_seen_at"
+	ColumnNameAgentsLastOnlineAt      ColumnName = "last_online_at"
 	ColumnNameAgentsCreatedAt         ColumnName = "created_at"
 	ColumnNameAgentsUpdatedAt         ColumnName = "updated_at"
 )
@@ -72,7 +72,7 @@ func AgentsColumnNames() ColumnNames {
 		ColumnNameAgentsTags,
 		ColumnNameAgentsConfig,
 		ColumnNameAgentsSystemInfo,
-		ColumnNameAgentsLastSeenAt,
+		ColumnNameAgentsLastOnlineAt,
 		ColumnNameAgentsCreatedAt,
 		ColumnNameAgentsUpdatedAt,
 	}

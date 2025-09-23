@@ -7,15 +7,16 @@ package repo_agents
 
 import (
 	"context"
+	"time"
 
 	"github.com/sxwebdev/sentinel/internal/models"
 	"github.com/sxwebdev/sentinel/internal/store/storecmn"
 )
 
 const create = `-- name: Create :one
-INSERT INTO agents (id, name, description, token_ct, token_nonce, token_hint, last_assignment_rev, tags, config)
-	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-	RETURNING id, name, description, token_ct, token_nonce, token_hint, fingerprint, last_assignment_rev, status, is_enabled, json(tags), json(config), json(system_info), last_seen_at, created_at, updated_at
+INSERT INTO agents (id, name, description, token_ct, token_nonce, token_hint, last_assignment_rev, tags, config, last_online_at)
+	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+	RETURNING id, name, description, token_ct, token_nonce, token_hint, fingerprint, last_assignment_rev, status, is_enabled, json(tags), json(config), json(system_info), last_online_at, created_at, updated_at
 `
 
 type CreateParams struct {
@@ -28,6 +29,7 @@ type CreateParams struct {
 	LastAssignmentRev *string            `db:"last_assignment_rev" json:"last_assignment_rev"`
 	Tags              storecmn.JSONField `db:"tags" json:"tags"`
 	Config            storecmn.JSONField `db:"config" json:"config"`
+	LastOnlineAt      *time.Time         `db:"last_online_at" json:"last_online_at"`
 }
 
 func (q *Queries) Create(ctx context.Context, arg CreateParams) (*models.Agent, error) {
@@ -41,6 +43,7 @@ func (q *Queries) Create(ctx context.Context, arg CreateParams) (*models.Agent, 
 		arg.LastAssignmentRev,
 		arg.Tags,
 		arg.Config,
+		arg.LastOnlineAt,
 	)
 	var i models.Agent
 	err := row.Scan(
@@ -57,7 +60,7 @@ func (q *Queries) Create(ctx context.Context, arg CreateParams) (*models.Agent, 
 		&i.Tags,
 		&i.Config,
 		&i.SystemInfo,
-		&i.LastSeenAt,
+		&i.LastOnlineAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -74,7 +77,7 @@ func (q *Queries) Delete(ctx context.Context, id string) error {
 }
 
 const getByID = `-- name: GetByID :one
-SELECT id, name, description, token_ct, token_nonce, token_hint, fingerprint, last_assignment_rev, status, is_enabled, json(tags), json(config), json(system_info), last_seen_at, created_at, updated_at FROM agents WHERE id=? LIMIT 1
+SELECT id, name, description, token_ct, token_nonce, token_hint, fingerprint, last_assignment_rev, status, is_enabled, json(tags), json(config), json(system_info), last_online_at, created_at, updated_at FROM agents WHERE id=? LIMIT 1
 `
 
 func (q *Queries) GetByID(ctx context.Context, id string) (*models.Agent, error) {
@@ -94,7 +97,7 @@ func (q *Queries) GetByID(ctx context.Context, id string) (*models.Agent, error)
 		&i.Tags,
 		&i.Config,
 		&i.SystemInfo,
-		&i.LastSeenAt,
+		&i.LastOnlineAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
