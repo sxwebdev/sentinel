@@ -1342,10 +1342,6 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/monitors.EndpointConfig"
                     }
-                },
-                "timeout": {
-                    "type": "integer",
-                    "example": 30000
                 }
             }
         },

@@ -239,24 +239,21 @@ const HTTPForm = React.memo(
                 <Textarea
                   {...field}
                   value={field.value ?? ""}
-                  placeholder="// Example: return Math.abs(results.main.value - results.backup.value) > 5;"
+                  placeholder={`// Example 1: Math.abs(results.main.value - results.backup.value) > 5\n// Example 2: results.main.ok == true`}
                 />
               )}
             </FastField>
             <small className="text-muted-foreground text-xs">
               JavaScript condition that returns true to trigger an incident.
+              <br />
               Available variables:
               <code className="font-mono text-xs">
-                results.endpoint_name.value
+                <i className="ml-1">results.endpoint_name.</i>
+                <strong>your_value</strong>
               </code>
-              ,{" "}
-              <code className="font-mono text-xs">
-                results.endpoint_name.success
-              </code>
-              , etc.
             </small>
           </div>
-          <div className="flex flex-col gap-2">
+          {/* <div className="flex flex-col gap-2">
             <Label>Timeout(milliseconds)</Label>
             <FastField name="config.http.timeout">
               {({ field }: FieldProps) => (
@@ -275,7 +272,7 @@ const HTTPForm = React.memo(
                 />
               )}
             </FastField>
-          </div>
+          </div> */}
           {(values.config?.http?.endpoints || []).map((_, index: number) => (
             <Card key={index}>
               <CardHeader>

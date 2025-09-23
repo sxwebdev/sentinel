@@ -16,7 +16,6 @@ func testModelsValidation(s *TestSuite) error {
 	// Test HTTP config validation
 	httpConfig := monitors.Config{
 		HTTP: &monitors.HTTPConfig{
-			Timeout: 5000,
 			Endpoints: []monitors.EndpointConfig{
 				{
 					Name:           "Valid Endpoint",
@@ -44,7 +43,6 @@ func testModelsValidation(s *TestSuite) error {
 	// Test invalid HTTP config - missing endpoints
 	invalidHTTPConfig := monitors.Config{
 		HTTP: &monitors.HTTPConfig{
-			Timeout:   5000,
 			Endpoints: []monitors.EndpointConfig{}, // Empty endpoints
 		},
 	}
@@ -56,7 +54,6 @@ func testModelsValidation(s *TestSuite) error {
 	// Test invalid HTTP config - invalid endpoint
 	invalidEndpointConfig := monitors.Config{
 		HTTP: &monitors.HTTPConfig{
-			Timeout: 5000,
 			Endpoints: []monitors.EndpointConfig{
 				{
 					Name:           "", // Empty name
@@ -126,7 +123,6 @@ func testModelsValidation(s *TestSuite) error {
 	// Test config with wrong protocol
 	httpConfigForTCP := monitors.Config{
 		HTTP: &monitors.HTTPConfig{
-			Timeout: 5000,
 			Endpoints: []monitors.EndpointConfig{
 				{
 					Name:           "Test",
@@ -156,7 +152,6 @@ func testServiceDTOFields(s *TestSuite) error {
 		Tags:     []string{"dto", "test", "validation"},
 		Config: monitors.Config{
 			HTTP: &monitors.HTTPConfig{
-				Timeout: 5000,
 				Endpoints: []monitors.EndpointConfig{
 					{
 						Name:           "Test Endpoint",
@@ -210,9 +205,6 @@ func testServiceDTOFields(s *TestSuite) error {
 	// Check config conversion
 	if service.Config.HTTP == nil {
 		return fmt.Errorf("HTTP config should not be nil")
-	}
-	if service.Config.HTTP.Timeout != testService.Config.HTTP.Timeout {
-		return fmt.Errorf("HTTP config timeout mismatch")
 	}
 	if len(service.Config.HTTP.Endpoints) != len(testService.Config.HTTP.Endpoints) {
 		return fmt.Errorf("HTTP endpoints count mismatch")
@@ -360,7 +352,6 @@ func testResponseModels(s *TestSuite) error {
 		Tags:     []string{"test", "response-models"},
 		Config: monitors.Config{
 			HTTP: &monitors.HTTPConfig{
-				Timeout: 30000,
 				Endpoints: []monitors.EndpointConfig{
 					{
 						Name:           "test",
@@ -480,7 +471,6 @@ func testServiceStatsModel(s *TestSuite) error {
 		Tags:     []string{"stats-model-test"},
 		Config: monitors.Config{
 			HTTP: &monitors.HTTPConfig{
-				Timeout: 5000,
 				Endpoints: []monitors.EndpointConfig{
 					{
 						Name:           "Test Endpoint",

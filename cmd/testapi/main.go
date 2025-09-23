@@ -53,7 +53,6 @@ var testServices = []TestService{
 		Tags:     []string{"http", "production", "api"},
 		Config: monitors.Config{
 			HTTP: &monitors.HTTPConfig{
-				Timeout: 5000,
 				Endpoints: []monitors.EndpointConfig{
 					{
 						Name:           "Health Check",
@@ -72,7 +71,6 @@ var testServices = []TestService{
 		Tags:     []string{"http", "staging", "web"},
 		Config: monitors.Config{
 			HTTP: &monitors.HTTPConfig{
-				Timeout: 3000,
 				Endpoints: []monitors.EndpointConfig{
 					{
 						Name:           "Home Page",
@@ -115,7 +113,6 @@ var testServices = []TestService{
 		Tags:     []string{"disabled", "test"},
 		Config: monitors.Config{
 			HTTP: &monitors.HTTPConfig{
-				Timeout: 5000,
 				Endpoints: []monitors.EndpointConfig{
 					{
 						Name:           "Test Endpoint",

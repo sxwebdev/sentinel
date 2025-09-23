@@ -11,5 +11,4 @@ export interface MonitorsHTTPConfig {
   condition?: string;
   /** @minItems 1 */
   endpoints: MonitorsEndpointConfig[];
-  timeout?: number;
 }

@@ -184,9 +184,6 @@ definitions:
           $ref: '#/definitions/monitors.EndpointConfig'
         minItems: 1
         type: array
-      timeout:
-        example: 30000
-        type: integer
     required:
     - endpoints
     type: object

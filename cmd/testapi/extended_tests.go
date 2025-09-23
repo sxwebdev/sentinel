@@ -89,7 +89,6 @@ func testServiceCRUDCompleteFlow(s *TestSuite) error {
 		Tags:     []string{"complex", "test", "http"},
 		Config: monitors.Config{
 			HTTP: &monitors.HTTPConfig{
-				Timeout: 8000,
 				Endpoints: []monitors.EndpointConfig{
 					{
 						Name:           "Main API",
@@ -284,7 +283,6 @@ func testAdvancedIncidentManagement(s *TestSuite) error {
 		Tags:     []string{"incident-test"},
 		Config: monitors.Config{
 			HTTP: &monitors.HTTPConfig{
-				Timeout: 5000,
 				Endpoints: []monitors.EndpointConfig{
 					{
 						Name:           "Test Endpoint",
@@ -596,7 +594,6 @@ func testAdvancedPaginationAndSorting(s *TestSuite) error {
 			Tags:     []string{fmt.Sprintf("page-test-%d", i%3), "pagination"},
 			Config: monitors.Config{
 				HTTP: &monitors.HTTPConfig{
-					Timeout: 5000,
 					Endpoints: []monitors.EndpointConfig{
 						{
 							Name:           "Test Endpoint",
@@ -792,7 +789,6 @@ func testAdvancedErrorScenarios(s *TestSuite) error {
 		Retries:  3,
 		Config: monitors.Config{
 			HTTP: &monitors.HTTPConfig{
-				Timeout: 30000,
 				Endpoints: []monitors.EndpointConfig{
 					{
 						Name:           "test",
@@ -879,7 +875,6 @@ func testStatsWithDifferentParameters(s *TestSuite) error {
 		Tags:     []string{"stats-test"},
 		Config: monitors.Config{
 			HTTP: &monitors.HTTPConfig{
-				Timeout: 5000,
 				Endpoints: []monitors.EndpointConfig{
 					{
 						Name:           "Test Endpoint",

@@ -19,7 +19,6 @@ export const useServiceCreate = () => {
     config: {
       http: {
         condition: "",
-        timeout: 0,
         endpoints: [
           {
             name: "",
