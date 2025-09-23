@@ -16,6 +16,7 @@ type Querier interface {
 	Exist(ctx context.Context, id string) (int64, error)
 	GetAllEnabled(ctx context.Context) ([]*models.Service, error)
 	GetAllEnabledByAgentID(ctx context.Context, agentID string) ([]*models.Service, error)
+	GetAllEnabledWithoutAgents(ctx context.Context) ([]*models.Service, error)
 	GetByID(ctx context.Context, id string) (*models.Service, error)
 }
 

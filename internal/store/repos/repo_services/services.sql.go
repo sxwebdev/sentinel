@@ -104,3 +104,47 @@ func (q *Queries) GetAllEnabledByAgentID(ctx context.Context, agentID string) ([
 	}
 	return items, nil
 }
+
+const getAllEnabledWithoutAgents = `-- name: GetAllEnabledWithoutAgents :many
+SELECT id, name, protocol, interval, timeout, retries, json(tags), json(config), is_enabled, is_notifications_enabled, created_at, updated_at FROM services s
+  WHERE s.is_enabled=TRUE AND s.id NOT IN (
+    SELECT service_id FROM services_agents sa WHERE sa.service_id = s.id
+  )
+  ORDER BY s.created_at DESC
+`
+
+func (q *Queries) GetAllEnabledWithoutAgents(ctx context.Context) ([]*models.Service, error) {
+	rows, err := q.db.QueryContext(ctx, getAllEnabledWithoutAgents)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*models.Service{}
+	for rows.Next() {
+		var i models.Service
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Protocol,
+			&i.Interval,
+			&i.Timeout,
+			&i.Retries,
+			&i.Tags,
+			&i.Config,
+			&i.IsEnabled,
+			&i.IsNotificationsEnabled,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

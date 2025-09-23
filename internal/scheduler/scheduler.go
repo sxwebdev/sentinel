@@ -11,7 +11,6 @@ import (
 	"github.com/sxwebdev/sentinel/internal/receiver"
 	"github.com/sxwebdev/sentinel/internal/services/baseservices"
 	"github.com/sxwebdev/sentinel/internal/services/incidents"
-	"github.com/sxwebdev/sentinel/internal/services/service"
 	"github.com/sxwebdev/sentinel/internal/services/servicestate"
 	"github.com/sxwebdev/sentinel/internal/store/repos/repo_service_states"
 	"github.com/sxwebdev/sentinel/internal/utils"
@@ -57,18 +56,15 @@ func (s *Scheduler) Name() string { return "scheduler" }
 // Start begins monitoring all configured services
 func (s *Scheduler) Start(ctx context.Context) error {
 	// Load enabled services from storage
-	isEnabled := true
-	services, err := s.baseservices.Services().FindView(ctx, service.FindParams{
-		IsEnabled: &isEnabled,
-	})
+	services, err := s.baseservices.Services().GetAllEnabledWithoutAgents(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to load services: %w", err)
 	}
 
-	s.logger.Infof("starting scheduler with %d enabled services", len(services.Items))
+	s.logger.Infof("starting scheduler with %d enabled services", len(services))
 
 	// Get all services under read lock
-	for _, svc := range services.Items {
+	for _, svc := range services {
 		s.checker.AddService(ctx, checker.AddServiceParams{
 			ID:        svc.ID,
 			Name:      svc.Name,
@@ -77,7 +73,7 @@ func (s *Scheduler) Start(ctx context.Context) error {
 			Interval:  time.Duration(svc.Interval) * time.Millisecond,
 			Timeout:   time.Duration(svc.Timeout) * time.Millisecond,
 			Retries:   svc.Retries,
-			Config:    svc.Config,
+			Config:    svc.Config.ConvertToMap(),
 		})
 	}
 

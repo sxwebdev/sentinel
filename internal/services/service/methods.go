@@ -165,6 +165,11 @@ func (s *Service) GetAllEnabledByAgentID(ctx context.Context, agentID string) ([
 	return s.store.Services().GetAllEnabledByAgentID(ctx, agentID)
 }
 
+// GetAllEnabledWithoutAgents returns all enabled services that are not assigned to any agents
+func (s *Service) GetAllEnabledWithoutAgents(ctx context.Context) ([]*models.Service, error) {
+	return s.store.Services().GetAllEnabledWithoutAgents(ctx)
+}
+
 // GetViewByID returns service view by ID
 func (s *Service) GetViewByID(ctx context.Context, id string) (*models.ServiceFullView, error) {
 	return s.store.Services().GetViewByID(ctx, id)
