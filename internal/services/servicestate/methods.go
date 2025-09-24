@@ -21,6 +21,9 @@ type UpdateParams = repo_service_states.UpdateRequest
 
 // Update updates a service state by ID
 func (s *Service) Update(ctx context.Context, id string, params UpdateParams) (*models.ServiceState, error) {
+	if err := params.Status.Validate(); err != nil {
+		return nil, err
+	}
 	return s.store.ServiceStates().Update(ctx, id, params)
 }
 

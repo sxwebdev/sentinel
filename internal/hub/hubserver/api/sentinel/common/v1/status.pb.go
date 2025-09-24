@@ -82,8 +82,8 @@ const file_sentinel_common_v1_status_proto_rawDesc = "" +
 	"\x1aSERVICE_STATUS_UNSPECIFIED\x10\x00\x12\x1a\n" +
 	"\x16SERVICE_STATUS_UNKNOWN\x10\x01\x12\x15\n" +
 	"\x11SERVICE_STATUS_UP\x10\x02\x12\x17\n" +
-	"\x13SERVICE_STATUS_DOWN\x10\x03B\xe0\x01\n" +
-	"\x16com.sentinel.common.v1B\vStatusProtoP\x01ZOgithub.com/sxwebdev/sentinel/internal/hubserver/api/sentinel/common/v1;commonv1\xa2\x02\x03SCX\xaa\x02\x12Sentinel.Common.V1\xca\x02\x12Sentinel\\Common\\V1\xe2\x02\x1eSentinel\\Common\\V1\\GPBMetadata\xea\x02\x14Sentinel::Common::V1b\x06proto3"
+	"\x13SERVICE_STATUS_DOWN\x10\x03B\xe4\x01\n" +
+	"\x16com.sentinel.common.v1B\vStatusProtoP\x01ZSgithub.com/sxwebdev/sentinel/internal/hub/hubserver/api/sentinel/common/v1;commonv1\xa2\x02\x03SCX\xaa\x02\x12Sentinel.Common.V1\xca\x02\x12Sentinel\\Common\\V1\xe2\x02\x1eSentinel\\Common\\V1\\GPBMetadata\xea\x02\x14Sentinel::Common::V1b\x06proto3"
 
 var (
 	file_sentinel_common_v1_status_proto_rawDescOnce sync.Once

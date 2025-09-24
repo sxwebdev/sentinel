@@ -34,6 +34,10 @@ func (s *Service) Create(ctx context.Context, params CreateUpdateParams) (*model
 		return nil, fmt.Errorf("validation error: %w", err)
 	}
 
+	if err := params.Protocol.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid protocol: %w", err)
+	}
+
 	if len(params.Tags) > 0 {
 		slices.Sort(params.Tags)
 	}
@@ -102,6 +106,14 @@ func (s *Service) Create(ctx context.Context, params CreateUpdateParams) (*model
 
 // Update service
 func (s *Service) Update(ctx context.Context, id string, params CreateUpdateParams) (*models.ServiceFullView, error) {
+	if err := validator.New().Struct(params); err != nil {
+		return nil, fmt.Errorf("validation error: %w", err)
+	}
+
+	if err := params.Protocol.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid protocol: %w", err)
+	}
+
 	if len(params.Tags) > 0 {
 		slices.Sort(params.Tags)
 	}

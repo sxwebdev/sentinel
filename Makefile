@@ -156,7 +156,7 @@ gensql:
 
 genproto: ## Generate protobuf code
 	buf lint
-	rm -rf ./internal/hubserver/api/*
+	rm -rf ./internal/hub/hubserver/api/*
 	buf generate
 
 grpcui-hub:

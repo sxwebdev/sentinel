@@ -263,8 +263,8 @@ const file_sentinel_common_v1_info_proto_rawDesc = "" +
 	"\x10available_update\x18\f \x01(\v2#.sentinel.common.v1.AvailableUpdateH\x00R\x0favailableUpdate\x88\x01\x01\x129\n" +
 	"\n" +
 	"started_at\x18\r \x01(\v2\x1a.google.protobuf.TimestampR\tstartedAtB\x13\n" +
-	"\x11_available_updateB\xde\x01\n" +
-	"\x16com.sentinel.common.v1B\tInfoProtoP\x01ZOgithub.com/sxwebdev/sentinel/internal/hubserver/api/sentinel/common/v1;commonv1\xa2\x02\x03SCX\xaa\x02\x12Sentinel.Common.V1\xca\x02\x12Sentinel\\Common\\V1\xe2\x02\x1eSentinel\\Common\\V1\\GPBMetadata\xea\x02\x14Sentinel::Common::V1b\x06proto3"
+	"\x11_available_updateB\xe2\x01\n" +
+	"\x16com.sentinel.common.v1B\tInfoProtoP\x01ZSgithub.com/sxwebdev/sentinel/internal/hub/hubserver/api/sentinel/common/v1;commonv1\xa2\x02\x03SCX\xaa\x02\x12Sentinel.Common.V1\xca\x02\x12Sentinel\\Common\\V1\xe2\x02\x1eSentinel\\Common\\V1\\GPBMetadata\xea\x02\x14Sentinel::Common::V1b\x06proto3"
 
 var (
 	file_sentinel_common_v1_info_proto_rawDescOnce sync.Once

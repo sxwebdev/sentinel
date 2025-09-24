@@ -12,7 +12,7 @@ import (
 	"github.com/sxwebdev/sentinel/internal/config"
 	"github.com/sxwebdev/sentinel/internal/datamigrations"
 	"github.com/sxwebdev/sentinel/internal/handlerutils"
-	"github.com/sxwebdev/sentinel/internal/hubserver"
+	"github.com/sxwebdev/sentinel/internal/hub/hubserver"
 	"github.com/sxwebdev/sentinel/internal/models"
 	"github.com/sxwebdev/sentinel/internal/receiver"
 	"github.com/sxwebdev/sentinel/internal/scheduler"

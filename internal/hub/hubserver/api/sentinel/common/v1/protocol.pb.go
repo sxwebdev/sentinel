@@ -82,8 +82,8 @@ const file_sentinel_common_v1_protocol_proto_rawDesc = "" +
 	"\x1cSERVICE_PROTOCOL_UNSPECIFIED\x10\x00\x12\x19\n" +
 	"\x15SERVICE_PROTOCOL_HTTP\x10\x01\x12\x18\n" +
 	"\x14SERVICE_PROTOCOL_TCP\x10\x02\x12\x19\n" +
-	"\x15SERVICE_PROTOCOL_GRPC\x10\x03B\xe2\x01\n" +
-	"\x16com.sentinel.common.v1B\rProtocolProtoP\x01ZOgithub.com/sxwebdev/sentinel/internal/hubserver/api/sentinel/common/v1;commonv1\xa2\x02\x03SCX\xaa\x02\x12Sentinel.Common.V1\xca\x02\x12Sentinel\\Common\\V1\xe2\x02\x1eSentinel\\Common\\V1\\GPBMetadata\xea\x02\x14Sentinel::Common::V1b\x06proto3"
+	"\x15SERVICE_PROTOCOL_GRPC\x10\x03B\xe6\x01\n" +
+	"\x16com.sentinel.common.v1B\rProtocolProtoP\x01ZSgithub.com/sxwebdev/sentinel/internal/hub/hubserver/api/sentinel/common/v1;commonv1\xa2\x02\x03SCX\xaa\x02\x12Sentinel.Common.V1\xca\x02\x12Sentinel\\Common\\V1\xe2\x02\x1eSentinel\\Common\\V1\\GPBMetadata\xea\x02\x14Sentinel::Common::V1b\x06proto3"
 
 var (
 	file_sentinel_common_v1_protocol_proto_rawDescOnce sync.Once

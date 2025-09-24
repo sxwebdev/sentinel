@@ -6,9 +6,10 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
-	agentv1 "github.com/sxwebdev/sentinel/internal/hubserver/api/sentinel/agent/v1"
-	"github.com/sxwebdev/sentinel/internal/hubserver/api/sentinel/agent/v1/agentv1connect"
-	servicev1 "github.com/sxwebdev/sentinel/internal/hubserver/api/sentinel/service/v1"
+	agentv1 "github.com/sxwebdev/sentinel/internal/hub/hubserver/api/sentinel/agent/v1"
+	"github.com/sxwebdev/sentinel/internal/hub/hubserver/api/sentinel/agent/v1/agentv1connect"
+	servicev1 "github.com/sxwebdev/sentinel/internal/hub/hubserver/api/sentinel/service/v1"
+	"github.com/sxwebdev/sentinel/internal/hub/hubutils"
 	"github.com/sxwebdev/sentinel/internal/models"
 	"github.com/sxwebdev/sentinel/internal/services/agents"
 	"github.com/sxwebdev/sentinel/internal/services/baseservices"
@@ -72,7 +73,7 @@ func (s *Server) ReportSystemInfo(ctx context.Context, req *connect.Request[agen
 	}
 
 	if _, err := s.baseservices.Agents().Update(ctx, agentData.Agent.ID, agents.UpdateParams{
-		Status:       convertAgentStatusFromProto(req.Msg.Status),
+		Status:       hubutils.ConvertAgentStatusFromProto(req.Msg.Status),
 		SystemInfo:   systemInfo,
 		LastOnlineAt: utils.Pointer(time.Now()),
 		FieldMask: dbutils.FieldMask[repo_agents.ColumnName]{
@@ -94,14 +95,14 @@ func (s *Server) FetchServices(ctx context.Context, _ *connect.Request[agentv1.F
 		return nil, connect.NewError(connect.CodeUnauthenticated, err)
 	}
 
-	services, err := s.baseservices.Services().GetAllEnabledByAgentID(context.Background(), agentData.Agent.ID)
+	services, err := s.baseservices.Services().GetAllEnabledByAgentID(ctx, agentData.Agent.ID)
 	if err != nil {
 		return nil, err
 	}
 
 	var respServices []*servicev1.Service
 	for _, svc := range services {
-		respServices = append(respServices, convertServiceToProto(svc))
+		respServices = append(respServices, hubutils.ConvertServiceToProto(svc))
 	}
 
 	return connect.NewResponse(&agentv1.FetchServicesResponse{

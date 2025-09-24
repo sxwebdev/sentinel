@@ -7,7 +7,7 @@
 package servicev1
 
 import (
-	v1 "github.com/sxwebdev/sentinel/internal/hubserver/api/sentinel/common/v1"
+	v1 "github.com/sxwebdev/sentinel/internal/hub/hubserver/api/sentinel/common/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
@@ -572,8 +572,8 @@ const file_sentinel_service_v1_service_proto_rawDesc = "" +
 	"\n" +
 	"created_at\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
-	"updated_at\x18\f \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAtB\xe8\x01\n" +
-	"\x17com.sentinel.service.v1B\fServiceProtoP\x01ZQgithub.com/sxwebdev/sentinel/internal/hubserver/api/sentinel/service/v1;servicev1\xa2\x02\x03SSX\xaa\x02\x13Sentinel.Service.V1\xca\x02\x13Sentinel\\Service\\V1\xe2\x02\x1fSentinel\\Service\\V1\\GPBMetadata\xea\x02\x15Sentinel::Service::V1b\x06proto3"
+	"updated_at\x18\f \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAtB\xec\x01\n" +
+	"\x17com.sentinel.service.v1B\fServiceProtoP\x01ZUgithub.com/sxwebdev/sentinel/internal/hub/hubserver/api/sentinel/service/v1;servicev1\xa2\x02\x03SSX\xaa\x02\x13Sentinel.Service.V1\xca\x02\x13Sentinel\\Service\\V1\xe2\x02\x1fSentinel\\Service\\V1\\GPBMetadata\xea\x02\x15Sentinel::Service::V1b\x06proto3"
 
 var (
 	file_sentinel_service_v1_service_proto_rawDescOnce sync.Once

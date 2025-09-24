@@ -2,16 +2,33 @@ package models
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 )
 
 type ServiceProtocolType string
 
 const (
-	ServiceProtocolTypeHTTP ServiceProtocolType = "http"
-	ServiceProtocolTypeTCP  ServiceProtocolType = "tcp"
-	ServiceProtocolTypeGRPC ServiceProtocolType = "grpc"
+	ServiceProtocolTypeUnknown ServiceProtocolType = "unknown"
+	ServiceProtocolTypeHTTP    ServiceProtocolType = "http"
+	ServiceProtocolTypeTCP     ServiceProtocolType = "tcp"
+	ServiceProtocolTypeGRPC    ServiceProtocolType = "grpc"
 )
+
+// Validate checks if the ServiceProtocolType is valid
+func (s ServiceProtocolType) Validate() error {
+	switch s {
+	case ServiceProtocolTypeHTTP, ServiceProtocolTypeTCP, ServiceProtocolTypeGRPC:
+		return nil
+	default:
+		return fmt.Errorf("invalid service protocol type: %s", s)
+	}
+}
+
+// String returns the string representation of the ServiceProtocolType
+func (s ServiceProtocolType) String() string {
+	return string(s)
+}
 
 // ServiceStatus represents the current status of a service
 type ServiceStatus string
@@ -21,6 +38,16 @@ const (
 	ServiceStatusUp      ServiceStatus = "up"
 	ServiceStatusDown    ServiceStatus = "down"
 )
+
+// Validate checks if the ServiceStatus is valid
+func (s ServiceStatus) Validate() error {
+	switch s {
+	case ServiceStatusUnknown, ServiceStatusUp, ServiceStatusDown:
+		return nil
+	default:
+		return fmt.Errorf("invalid service status: %s", s)
+	}
+}
 
 func (s ServiceStatus) String() string {
 	return string(s)

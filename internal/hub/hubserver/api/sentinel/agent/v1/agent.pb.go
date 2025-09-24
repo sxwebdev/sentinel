@@ -7,8 +7,8 @@
 package agentv1
 
 import (
-	v11 "github.com/sxwebdev/sentinel/internal/hubserver/api/sentinel/common/v1"
-	v1 "github.com/sxwebdev/sentinel/internal/hubserver/api/sentinel/service/v1"
+	v11 "github.com/sxwebdev/sentinel/internal/hub/hubserver/api/sentinel/common/v1"
+	v1 "github.com/sxwebdev/sentinel/internal/hub/hubserver/api/sentinel/service/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
@@ -774,9 +774,9 @@ const file_sentinel_agent_v1_agent_proto_rawDesc = "" +
 	"\x10ReportSystemInfo\x12*.sentinel.agent.v1.ReportSystemInfoRequest\x1a+.sentinel.agent.v1.ReportSystemInfoResponse\"\x00\x12b\n" +
 	"\rFetchServices\x12'.sentinel.agent.v1.FetchServicesRequest\x1a(.sentinel.agent.v1.FetchServicesResponse\x12p\n" +
 	"\x11SubscribeServices\x12+.sentinel.agent.v1.SubscribeServicesRequest\x1a,.sentinel.agent.v1.SubscribeServicesResponse0\x01\x12c\n" +
-	"\fStreamChecks\x12&.sentinel.agent.v1.StreamChecksRequest\x1a'.sentinel.agent.v1.StreamChecksResponse(\x010\x01B\xd8\x01\n" +
+	"\fStreamChecks\x12&.sentinel.agent.v1.StreamChecksRequest\x1a'.sentinel.agent.v1.StreamChecksResponse(\x010\x01B\xdc\x01\n" +
 	"\x15com.sentinel.agent.v1B\n" +
-	"AgentProtoP\x01ZMgithub.com/sxwebdev/sentinel/internal/hubserver/api/sentinel/agent/v1;agentv1\xa2\x02\x03SAX\xaa\x02\x11Sentinel.Agent.V1\xca\x02\x11Sentinel\\Agent\\V1\xe2\x02\x1dSentinel\\Agent\\V1\\GPBMetadata\xea\x02\x13Sentinel::Agent::V1b\x06proto3"
+	"AgentProtoP\x01ZQgithub.com/sxwebdev/sentinel/internal/hub/hubserver/api/sentinel/agent/v1;agentv1\xa2\x02\x03SAX\xaa\x02\x11Sentinel.Agent.V1\xca\x02\x11Sentinel\\Agent\\V1\xe2\x02\x1dSentinel\\Agent\\V1\\GPBMetadata\xea\x02\x13Sentinel::Agent::V1b\x06proto3"
 
 var (
 	file_sentinel_agent_v1_agent_proto_rawDescOnce sync.Once
