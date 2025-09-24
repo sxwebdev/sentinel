@@ -16,9 +16,6 @@ import (
 type CreateParams struct {
 	Name        string
 	Description *string
-	TokenCt     []byte
-	TokenNonce  []byte
-	TokenHint   string
 	Tags        []string
 	Config      map[string]any
 }
@@ -29,23 +26,24 @@ func (p CreateParams) Validate() error {
 		return fmt.Errorf("name is required")
 	}
 
-	if p.TokenCt == nil {
-		return fmt.Errorf("token_ct is required")
-	}
-
-	if p.TokenNonce == nil {
-		return fmt.Errorf("token_nonce is required")
-	}
-
-	if p.TokenHint == "" {
-		return fmt.Errorf("token_hint is required")
-	}
-
 	return nil
 }
 
+type CreateResponse struct {
+	ID          string         `json:"id"`
+	Name        string         `json:"name"`
+	Description *string        `json:"description"`
+	Token       string         `json:"token"`
+	TokenHint   string         `json:"token_hint"`
+	Status      string         `json:"status"`
+	IsEnabled   bool           `json:"is_enabled"`
+	Tags        []string       `json:"tags"`
+	Config      map[string]any `json:"config"`
+	CreatedAt   time.Time      `json:"created_at"`
+}
+
 // Create a new agent
-func (s *Service) Create(ctx context.Context, params CreateParams) (*models.Agent, error) {
+func (s *Service) Create(ctx context.Context, params CreateParams) (*CreateResponse, error) {
 	if len(params.Tags) > 0 {
 		slices.Sort(params.Tags)
 	}
@@ -66,18 +64,50 @@ func (s *Service) Create(ctx context.Context, params CreateParams) (*models.Agen
 		return nil, fmt.Errorf("failed to convert config to json raw message: %w", err)
 	}
 
+	id := utils.GenerateULID()
+	token, secret, tokenHint, err := NewAgentToken(id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate agent token: %w", err)
+	}
+
+	// TODO: delete this line after testing
+	fmt.Println("Agent token:", token)
+
+	// Hash the secret using Argon2id
+	secretHash, err := HashSecretArgon2id(secret, DefaultArgon2)
+	if err != nil {
+		return nil, fmt.Errorf("failed to hash agent secret: %w", err)
+	}
+
 	createParams := repo_agents.CreateParams{
-		ID:          utils.GenerateULID(),
+		ID:          id,
 		Name:        params.Name,
 		Description: params.Description,
-		TokenCt:     params.TokenCt,
-		TokenNonce:  params.TokenNonce,
-		TokenHint:   params.TokenHint,
+		SecretHash:  secretHash,
+		TokenHint:   tokenHint,
 		Tags:        tags,
 		Config:      config,
 	}
 
-	return s.store.Agents().Create(ctx, createParams)
+	item, err := s.store.Agents().Create(ctx, createParams)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create agent: %w", err)
+	}
+
+	result := CreateResponse{
+		ID:          item.ID,
+		Name:        item.Name,
+		Description: item.Description,
+		Token:       token,
+		TokenHint:   tokenHint,
+		Status:      item.Status,
+		IsEnabled:   item.IsEnabled,
+		Tags:        params.Tags,
+		Config:      params.Config,
+		CreatedAt:   item.CreatedAt,
+	}
+
+	return &result, nil
 }
 
 // Delete an existing agent

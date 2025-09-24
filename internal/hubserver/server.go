@@ -32,7 +32,12 @@ func (s *Server) RegisterHandler(opts ...connect.HandlerOption) (string, http.Ha
 }
 
 // Authenticate is a no-op for now
-func (s *Server) Authenticate(_ context.Context, _ *connect.Request[agentv1.AuthenticateRequest]) (*connect.Response[agentv1.AuthenticateResponse], error) {
+func (s *Server) Authenticate(ctx context.Context, _ *connect.Request[agentv1.AuthenticateRequest]) (*connect.Response[agentv1.AuthenticateResponse], error) {
+	_, err := agentDataFromContext(ctx)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeUnauthenticated, err)
+	}
+
 	return connect.NewResponse(&agentv1.AuthenticateResponse{}), nil
 }
 
@@ -55,9 +60,13 @@ func (s *Server) ReportSystemInfo(_ context.Context, _ *connect.Request[agentv1.
 }
 
 // FetchServices fetches the list of services to be monitored by the agent.
-func (s *Server) FetchServices(_ context.Context, _ *connect.Request[agentv1.FetchServicesRequest]) (*connect.Response[agentv1.FetchServicesResponse], error) {
-	agentID := "todo"
-	services, err := s.baseservices.Services().GetAllEnabledByAgentID(context.Background(), agentID)
+func (s *Server) FetchServices(ctx context.Context, _ *connect.Request[agentv1.FetchServicesRequest]) (*connect.Response[agentv1.FetchServicesResponse], error) {
+	agentData, err := agentDataFromContext(ctx)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeUnauthenticated, err)
+	}
+
+	services, err := s.baseservices.Services().GetAllEnabledByAgentID(context.Background(), agentData.Agent.ID)
 	if err != nil {
 		return nil, err
 	}

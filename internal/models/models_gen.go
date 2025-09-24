@@ -14,8 +14,7 @@ type Agent struct {
 	ID                string             `db:"id" json:"id"`
 	Name              string             `db:"name" json:"name"`
 	Description       *string            `db:"description" json:"description"`
-	TokenCt           []byte             `db:"token_ct" json:"token_ct"`
-	TokenNonce        []byte             `db:"token_nonce" json:"token_nonce"`
+	SecretHash        string             `db:"secret_hash" json:"secret_hash"`
 	TokenHint         string             `db:"token_hint" json:"token_hint"`
 	Fingerprint       *string            `db:"fingerprint" json:"fingerprint"`
 	LastAssignmentRev *string            `db:"last_assignment_rev" json:"last_assignment_rev"`

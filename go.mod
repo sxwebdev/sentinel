@@ -3,8 +3,11 @@ module github.com/sxwebdev/sentinel
 go 1.25.1
 
 require (
+	connectrpc.com/authn v0.2.0
 	connectrpc.com/connect v1.18.1
 	connectrpc.com/cors v0.1.0
+	connectrpc.com/grpchealth v1.4.0
+	connectrpc.com/grpcreflect v1.3.0
 	github.com/Masterminds/semver/v3 v3.4.0
 	github.com/dop251/goja v0.0.0-20250630131328-58d95d85e994
 	github.com/dromara/carbon/v2 v2.6.12
@@ -32,6 +35,7 @@ require (
 	github.com/tkcrm/mx/transport/connectrpc_transport v0.0.0-20250618055556-3f77aaa9ddbd
 	github.com/urfave/cli/v3 v3.4.1
 	go.akshayshah.org/connectproto v0.6.0
+	golang.org/x/crypto v0.42.0
 	golang.org/x/net v0.44.0
 	golang.org/x/sync v0.17.0
 	google.golang.org/grpc v1.75.1
@@ -40,7 +44,6 @@ require (
 )
 
 require (
-	connectrpc.com/grpcreflect v1.3.0 // indirect
 	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/andybalholm/brotli v1.2.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
@@ -83,6 +86,7 @@ require (
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/klauspost/compress v1.18.0 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
+	github.com/lib/pq v1.10.9 // indirect
 	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect
 	github.com/mailru/easyjson v0.9.1 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
@@ -113,7 +117,6 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
-	golang.org/x/crypto v0.42.0 // indirect
 	golang.org/x/exp v0.0.0-20250911091902-df9299821621 // indirect
 	golang.org/x/mod v0.28.0 // indirect
 	golang.org/x/sys v0.36.0 // indirect

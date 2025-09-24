@@ -14,17 +14,16 @@ import (
 )
 
 const create = `-- name: Create :one
-INSERT INTO agents (id, name, description, token_ct, token_nonce, token_hint, last_assignment_rev, tags, config, last_online_at)
-	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-	RETURNING id, name, description, token_ct, token_nonce, token_hint, fingerprint, last_assignment_rev, status, is_enabled, json(tags), json(config), json(system_info), last_online_at, created_at, updated_at
+INSERT INTO agents (id, name, description, secret_hash, token_hint, last_assignment_rev, tags, config, last_online_at)
+	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+	RETURNING id, name, description, secret_hash, token_hint, fingerprint, last_assignment_rev, status, is_enabled, json(tags), json(config), json(system_info), last_online_at, created_at, updated_at
 `
 
 type CreateParams struct {
 	ID                string             `db:"id" json:"id"`
 	Name              string             `db:"name" json:"name"`
 	Description       *string            `db:"description" json:"description"`
-	TokenCt           []byte             `db:"token_ct" json:"token_ct"`
-	TokenNonce        []byte             `db:"token_nonce" json:"token_nonce"`
+	SecretHash        string             `db:"secret_hash" json:"secret_hash"`
 	TokenHint         string             `db:"token_hint" json:"token_hint"`
 	LastAssignmentRev *string            `db:"last_assignment_rev" json:"last_assignment_rev"`
 	Tags              storecmn.JSONField `db:"tags" json:"tags"`
@@ -37,8 +36,7 @@ func (q *Queries) Create(ctx context.Context, arg CreateParams) (*models.Agent, 
 		arg.ID,
 		arg.Name,
 		arg.Description,
-		arg.TokenCt,
-		arg.TokenNonce,
+		arg.SecretHash,
 		arg.TokenHint,
 		arg.LastAssignmentRev,
 		arg.Tags,
@@ -50,8 +48,7 @@ func (q *Queries) Create(ctx context.Context, arg CreateParams) (*models.Agent, 
 		&i.ID,
 		&i.Name,
 		&i.Description,
-		&i.TokenCt,
-		&i.TokenNonce,
+		&i.SecretHash,
 		&i.TokenHint,
 		&i.Fingerprint,
 		&i.LastAssignmentRev,
@@ -77,7 +74,7 @@ func (q *Queries) Delete(ctx context.Context, id string) error {
 }
 
 const getByID = `-- name: GetByID :one
-SELECT id, name, description, token_ct, token_nonce, token_hint, fingerprint, last_assignment_rev, status, is_enabled, json(tags), json(config), json(system_info), last_online_at, created_at, updated_at FROM agents WHERE id=? LIMIT 1
+SELECT id, name, description, secret_hash, token_hint, fingerprint, last_assignment_rev, status, is_enabled, json(tags), json(config), json(system_info), last_online_at, created_at, updated_at FROM agents WHERE id=? LIMIT 1
 `
 
 func (q *Queries) GetByID(ctx context.Context, id string) (*models.Agent, error) {
@@ -87,8 +84,7 @@ func (q *Queries) GetByID(ctx context.Context, id string) (*models.Agent, error)
 		&i.ID,
 		&i.Name,
 		&i.Description,
-		&i.TokenCt,
-		&i.TokenNonce,
+		&i.SecretHash,
 		&i.TokenHint,
 		&i.Fingerprint,
 		&i.LastAssignmentRev,

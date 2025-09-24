@@ -24,7 +24,7 @@ type AgentCreateParams struct {
 //	@Accept			json
 //	@Produce		json
 //	@Param			service	body		AgentCreateParams	true	"Body params"
-//	@Success		201		{object}	AgentDTO			"Agent created"
+//	@Success		201		{object}	agents.CreateResponse			"Agent created"
 //	@Failure		400		{object}	ErrorResponse		"Bad request"
 //	@Failure		500		{object}	ErrorResponse		"Internal server error"
 //	@Router			/settings/agents [post]
@@ -42,18 +42,12 @@ func (s *Server) agentsCreate(c *fiber.Ctx) error {
 	}
 
 	// Add service
-	svc, err := s.baseServices.Agents().Create(c.Context(), params)
+	item, err := s.baseServices.Agents().Create(c.Context(), params)
 	if err != nil {
 		return newErrorResponse(c, fiber.StatusBadRequest, err)
 	}
 
-	// Convert to DTO
-	svcDTO, err := toAgentDTO(svc)
-	if err != nil {
-		return newErrorResponse(c, fiber.StatusInternalServerError, err)
-	}
-
-	return c.Status(fiber.StatusCreated).JSON(svcDTO)
+	return c.Status(fiber.StatusCreated).JSON(item)
 }
 
 // aggentsList lists all agents

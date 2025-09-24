@@ -42,8 +42,7 @@ const (
 	ColumnNameAgentsId                ColumnName = "id"
 	ColumnNameAgentsName              ColumnName = "name"
 	ColumnNameAgentsDescription       ColumnName = "description"
-	ColumnNameAgentsTokenCt           ColumnName = "token_ct"
-	ColumnNameAgentsTokenNonce        ColumnName = "token_nonce"
+	ColumnNameAgentsSecretHash        ColumnName = "secret_hash"
 	ColumnNameAgentsTokenHint         ColumnName = "token_hint"
 	ColumnNameAgentsFingerprint       ColumnName = "fingerprint"
 	ColumnNameAgentsLastAssignmentRev ColumnName = "last_assignment_rev"
@@ -62,8 +61,7 @@ func AgentsColumnNames() ColumnNames {
 		ColumnNameAgentsId,
 		ColumnNameAgentsName,
 		ColumnNameAgentsDescription,
-		ColumnNameAgentsTokenCt,
-		ColumnNameAgentsTokenNonce,
+		ColumnNameAgentsSecretHash,
 		ColumnNameAgentsTokenHint,
 		ColumnNameAgentsFingerprint,
 		ColumnNameAgentsLastAssignmentRev,
