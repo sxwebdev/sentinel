@@ -29,5 +29,5 @@ ops:
 hub_server:
   name: connectrpc-client
   addr: ""
-data_dir: ./data-agent
+data_dir: ./data
 token: ""

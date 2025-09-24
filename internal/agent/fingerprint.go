@@ -13,7 +13,7 @@ import (
 func (a *Agent) getFingerprint() string {
 	// first look for a fingerprint in the data directory
 	if a.config.DataDir != "" {
-		if fp, err := os.ReadFile(filepath.Join(a.config.DataDir, "fingerprint")); err == nil {
+		if fp, err := os.ReadFile(filepath.Join(a.config.AgentDataDir(), "fingerprint")); err == nil {
 			return string(fp)
 		}
 	}
@@ -30,7 +30,7 @@ func (a *Agent) getFingerprint() string {
 
 	// save fingerprint to data directory
 	if a.config.DataDir != "" {
-		err = os.WriteFile(filepath.Join(a.config.DataDir, "fingerprint"), []byte(fingerprint), 0o644)
+		err = os.WriteFile(filepath.Join(a.config.AgentDataDir(), "fingerprint"), []byte(fingerprint), 0o644)
 		if err != nil {
 			slog.Warn("Failed to save fingerprint", "err", err)
 		}

@@ -49,8 +49,9 @@ func agentCMD() *cli.Command {
 					)
 
 					// check if exists data dir, if not create it
-					if _, err := os.Stat(conf.DataDir); os.IsNotExist(err) {
-						if err := os.MkdirAll(conf.DataDir, 0o700); err != nil {
+					if _, err := os.Stat(conf.AgentDataDir()); os.IsNotExist(err) {
+						l.Infof("creating data directory in %s", conf.AgentDataDir())
+						if err := os.MkdirAll(conf.AgentDataDir(), 0o700); err != nil {
 							return fmt.Errorf("failed to create data dir: %w", err)
 						}
 					}

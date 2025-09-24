@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"path/filepath"
 	"time"
 
 	"github.com/tkcrm/mx/logger"
@@ -11,16 +12,20 @@ import (
 
 // ConfigHub represents the main configuration structure
 type ConfigHub struct {
-	Log        logger.Config
-	Ops        ops.Config
-	DataDir    string                      `yaml:"data_dir" default:"./data"`
-	Server     ServerConfig                `yaml:"server"`
-	HubServer  connectrpc_transport.Config `yaml:"hub_server"`
-	Monitoring MonitoringConfig            `yaml:"monitoring"`
-	// Database      DatabaseConfig      `yaml:"database"`
-	Notifications NotificationsConfig `yaml:"notifications"`
-	Timezone      string              `yaml:"timezone" default:"UTC"`
-	Upgrader      Upgrader            `yaml:"upgrader"`
+	Log           logger.Config
+	Ops           ops.Config
+	DataDir       string                      `yaml:"data_dir" validate:"required" default:"./data"`
+	Server        ServerConfig                `yaml:"server"`
+	HubServer     connectrpc_transport.Config `yaml:"hub_server"`
+	Monitoring    MonitoringConfig            `yaml:"monitoring"`
+	Notifications NotificationsConfig         `yaml:"notifications"`
+	Timezone      string                      `yaml:"timezone" default:"UTC"`
+	Upgrader      Upgrader                    `yaml:"upgrader"`
+}
+
+// HubDataDir returns the data directory for the hub
+func (c *ConfigHub) HubDataDir() string {
+	return filepath.Join(c.DataDir, "hub")
 }
 
 // ServerConfig holds web server configuration
