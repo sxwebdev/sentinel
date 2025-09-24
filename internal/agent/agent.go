@@ -27,20 +27,23 @@ func New(
 	l logger.Logger,
 	config *config.ConfigAgent,
 	systemInfo models.SystemInfo,
-) *Agent {
+) (*Agent, error) {
 	a := &Agent{
 		logger:     l,
 		config:     config,
 		systemInfo: systemInfo,
-		// server:     agentserver.New(systemInfo),
 	}
 
 	a.token = config.Token
 	a.fingerprint = a.getFingerprint()
 
-	a.connectionManager = newConnectionManager(a)
+	var err error
+	a.connectionManager, err = newConnectionManager(a)
+	if err != nil {
+		return nil, err
+	}
 
-	return a
+	return a, nil
 }
 
 // Name returns the name of the agent

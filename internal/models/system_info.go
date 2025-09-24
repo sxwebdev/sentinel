@@ -3,6 +3,7 @@ package models
 import (
 	"os"
 	"runtime"
+	"time"
 
 	"github.com/shirou/gopsutil/v4/cpu"
 	"github.com/shirou/gopsutil/v4/host"
@@ -21,6 +22,7 @@ type SystemInfo struct {
 	CpuModel        string
 	IpAddress       string
 	AvailableUpdate *AvailableUpdate
+	StartedAt       time.Time
 }
 
 type AvailableUpdate struct {
@@ -30,6 +32,8 @@ type AvailableUpdate struct {
 	Description       string `json:"description,omitempty"`
 }
 
+var startedAt = time.Now()
+
 func GetSystemInfo(version, commitHash, buildDate string) SystemInfo {
 	info := SystemInfo{
 		Version:    version,
@@ -38,6 +42,7 @@ func GetSystemInfo(version, commitHash, buildDate string) SystemInfo {
 		GoVersion:  runtime.Version(),
 		OS:         runtime.GOOS,
 		Arch:       runtime.GOARCH,
+		StartedAt:  startedAt,
 	}
 
 	info.Hostname, _ = os.Hostname()

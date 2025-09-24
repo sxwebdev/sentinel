@@ -1,10 +1,13 @@
 package hubutils
 
 import (
+	"encoding/json"
+
 	agentv1 "github.com/sxwebdev/sentinel/internal/hub/hubserver/api/sentinel/agent/v1"
 	commonv1 "github.com/sxwebdev/sentinel/internal/hub/hubserver/api/sentinel/common/v1"
 	servicev1 "github.com/sxwebdev/sentinel/internal/hub/hubserver/api/sentinel/service/v1"
 	"github.com/sxwebdev/sentinel/internal/models"
+	"github.com/sxwebdev/sentinel/internal/store/storecmn"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -110,5 +113,62 @@ func ConvertAgentStatusToProto(status models.AgentStatusType) agentv1.AgentStatu
 		return agentv1.AgentStatus_AGENT_STATUS_INACTIVE
 	default:
 		return agentv1.AgentStatus_AGENT_STATUS_UNSPECIFIED
+	}
+}
+
+// ConvertSystemInfoToProto converts models.SystemInfo to its protobuf representation
+func ConvertSystemInfoToProto(info models.SystemInfo) *commonv1.SystemInfo {
+	return &commonv1.SystemInfo{
+		Version:       info.Version,
+		CommitHash:    info.CommitHash,
+		BuildDate:     info.BuildDate,
+		GoVersion:     info.GoVersion,
+		Os:            info.OS,
+		Arch:          info.Arch,
+		Hostname:      info.Hostname,
+		KernelVersion: info.KernelVersion,
+		IpAddress:     info.IpAddress,
+		CpuModel:      info.CpuModel,
+		StartedAt:     timestamppb.New(info.StartedAt),
+	}
+}
+
+// ConvertSystemInfoFromProto converts commonv1.SystemInfo to its models representation
+func ConvertSystemInfoFromProto(info *commonv1.SystemInfo) models.SystemInfo {
+	return models.SystemInfo{
+		Version:       info.Version,
+		CommitHash:    info.CommitHash,
+		BuildDate:     info.BuildDate,
+		GoVersion:     info.GoVersion,
+		OS:            info.Os,
+		Arch:          info.Arch,
+		Hostname:      info.Hostname,
+		KernelVersion: info.KernelVersion,
+		IpAddress:     info.IpAddress,
+		CpuModel:      info.CpuModel,
+		StartedAt:     info.StartedAt.AsTime(),
+	}
+}
+
+// ConvertServiceFromProto converts a protobuf Service to its models representation
+func ConvertServiceFromProto(svc *servicev1.Service) *models.Service {
+	var tags storecmn.JSONField
+	tags, _ = json.Marshal(svc.Tags)
+
+	config, _ := protojson.Marshal(svc.Config)
+
+	return &models.Service{
+		ID:                     svc.Id,
+		Name:                   svc.Name,
+		Protocol:               ConvertServiceProtocolFromProto(svc.Protocol),
+		Interval:               svc.Interval,
+		Timeout:                svc.Timeout,
+		Retries:                svc.Retries,
+		Tags:                   tags,
+		Config:                 config,
+		IsNotificationsEnabled: svc.IsNotificationsEnabled,
+		IsEnabled:              svc.IsEnabled,
+		CreatedAt:              svc.CreatedAt.AsTime(),
+		UpdatedAt:              svc.UpdatedAt.AsTime(),
 	}
 }

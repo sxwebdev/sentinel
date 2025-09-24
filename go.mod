@@ -32,6 +32,7 @@ require (
 	github.com/sxwebdev/xconfig/decoders/xconfigyaml v0.0.0-20250917185517-9fc0b932f57a
 	github.com/tkcrm/modules v0.0.0-20250909093305-a0b86c209cc5
 	github.com/tkcrm/mx v0.2.34
+	github.com/tkcrm/mx/clients/connectrpc_client v0.0.0-20250618055556-3f77aaa9ddbd
 	github.com/tkcrm/mx/transport/connectrpc_transport v0.0.0-20250618055556-3f77aaa9ddbd
 	github.com/urfave/cli/v3 v3.4.1
 	go.akshayshah.org/connectproto v0.6.0

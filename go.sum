@@ -269,6 +269,8 @@ github.com/tkcrm/modules v0.0.0-20250909093305-a0b86c209cc5 h1:rqtgAZFbz/Vdnyf6G
 github.com/tkcrm/modules v0.0.0-20250909093305-a0b86c209cc5/go.mod h1:uYV10lVr7Ba+Udzdc9kBUMeGd7xILwALLs4yZC7aAyA=
 github.com/tkcrm/mx v0.2.34 h1:reTg836KS00FI+QMBTQIa2wh6/Z28PE7cHBtTw7Y5nQ=
 github.com/tkcrm/mx v0.2.34/go.mod h1:9N8UrILT8mg0IWb2MMtq2MqOMW1CQVIMmEh9ML37N+0=
+github.com/tkcrm/mx/clients/connectrpc_client v0.0.0-20250618055556-3f77aaa9ddbd h1:CJcZARvmjFLp4MunOGi1fsOJSOzGiMudJ59LfIQzDKs=
+github.com/tkcrm/mx/clients/connectrpc_client v0.0.0-20250618055556-3f77aaa9ddbd/go.mod h1:cpUdawPD7PoUL55hbQZbbbp4+hbPbw0QEWLDMu46bOk=
 github.com/tkcrm/mx/transport/connectrpc_transport v0.0.0-20250618055556-3f77aaa9ddbd h1:a2zSOXliAdXfGKPH9h6QJWpfh0Uv/zfShlp+JzB85Ns=
 github.com/tkcrm/mx/transport/connectrpc_transport v0.0.0-20250618055556-3f77aaa9ddbd/go.mod h1:vGkbLZEJ5vhAumATg5oCXKDQwVmsSKsgps2qyLp+oT4=
 github.com/tklauser/go-sysconf v0.3.15 h1:VE89k0criAymJ/Os65CSn1IXaol+1wrsFHEB8Ol49K4=

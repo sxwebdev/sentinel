@@ -26,5 +26,8 @@ ops:
     path: /debug/pprof
     port: "10000"
     write_timeout: 60
+hub_server:
+  name: connectrpc-client
+  addr: ""
 data_dir: ./data-agent
 token: ""
