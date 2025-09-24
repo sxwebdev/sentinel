@@ -94,6 +94,10 @@ func (s *Interceptor) authorize(_ context.Context, req *http.Request) (*AgentDat
 		return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("agent secret is invalid"))
 	}
 
+	if !agent.IsEnabled {
+		return nil, connect.NewError(connect.CodePermissionDenied, fmt.Errorf("agent is disabled"))
+	}
+
 	ad := &AgentDataContext{
 		Agent: *agent,
 	}

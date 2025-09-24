@@ -18,7 +18,7 @@ type Agent struct {
 	TokenHint         string             `db:"token_hint" json:"token_hint"`
 	Fingerprint       *string            `db:"fingerprint" json:"fingerprint"`
 	LastAssignmentRev *string            `db:"last_assignment_rev" json:"last_assignment_rev"`
-	Status            string             `db:"status" json:"status"`
+	Status            AgentStatusType    `db:"status" json:"status"`
 	IsEnabled         bool               `db:"is_enabled" json:"is_enabled"`
 	Tags              storecmn.JSONField `db:"tags" json:"tags"`
 	Config            storecmn.JSONField `db:"config" json:"config"`

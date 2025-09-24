@@ -30,16 +30,16 @@ func (p CreateParams) Validate() error {
 }
 
 type CreateResponse struct {
-	ID          string         `json:"id"`
-	Name        string         `json:"name"`
-	Description *string        `json:"description"`
-	Token       string         `json:"token"`
-	TokenHint   string         `json:"token_hint"`
-	Status      string         `json:"status"`
-	IsEnabled   bool           `json:"is_enabled"`
-	Tags        []string       `json:"tags"`
-	Config      map[string]any `json:"config"`
-	CreatedAt   time.Time      `json:"created_at"`
+	ID          string                 `json:"id"`
+	Name        string                 `json:"name"`
+	Description *string                `json:"description"`
+	Token       string                 `json:"token"`
+	TokenHint   string                 `json:"token_hint"`
+	Status      models.AgentStatusType `json:"status"`
+	IsEnabled   bool                   `json:"is_enabled"`
+	Tags        []string               `json:"tags"`
+	Config      map[string]any         `json:"config"`
+	CreatedAt   time.Time              `json:"created_at"`
 }
 
 // Create a new agent
@@ -131,7 +131,7 @@ type UpdateParams struct {
 	Name         string
 	Description  *string
 	Fingerprint  *string
-	Status       string
+	Status       models.AgentStatusType
 	IsEnabled    bool
 	Tags         []string
 	Config       map[string]any
@@ -201,4 +201,40 @@ func (s *Service) Update(ctx context.Context, id string, params UpdateParams) (*
 	}
 
 	return s.store.Agents().Update(ctx, id, updateParams)
+}
+
+// CheckAndUpsertFingerprint checks if the fingerprint is unique and updates it if so
+func (s *Service) CheckAndUpsertFingerprint(ctx context.Context, id, fingerprint string) error {
+	if id == "" {
+		return storecmn.ErrEmptyID
+	}
+
+	if fingerprint == "" {
+		return fmt.Errorf("fingerprint is required")
+	}
+
+	// Check if the fingerprint is already used by another agent
+	existingAgent, err := s.GetByID(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	if existingAgent.Fingerprint != nil && *existingAgent.Fingerprint != fingerprint {
+		return fmt.Errorf("agent already has a different fingerprint")
+	}
+
+	// Update the agent with the new fingerprint
+	updateParams := repo_agents.UpdateRequest{
+		Agent: models.Agent{
+			Fingerprint:  &fingerprint,
+			LastOnlineAt: utils.Pointer(time.Now()),
+		},
+		FieldMask: dbutils.FieldMask[repo_agents.ColumnName]{
+			repo_agents.ColumnNameAgentsFingerprint,
+			repo_agents.ColumnNameAgentsLastOnlineAt,
+		},
+	}
+
+	_, err = s.store.Agents().Update(ctx, id, updateParams)
+	return err
 }

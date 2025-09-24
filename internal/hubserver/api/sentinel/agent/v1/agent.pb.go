@@ -179,6 +179,7 @@ func (x *ServiceDelete) GetServiceId() string {
 
 type AuthenticateRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	Fingerprint   string                 `protobuf:"bytes,1,opt,name=fingerprint,proto3" json:"fingerprint,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -211,6 +212,13 @@ func (x *AuthenticateRequest) ProtoReflect() protoreflect.Message {
 // Deprecated: Use AuthenticateRequest.ProtoReflect.Descriptor instead.
 func (*AuthenticateRequest) Descriptor() ([]byte, []int) {
 	return file_sentinel_agent_v1_agent_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *AuthenticateRequest) GetFingerprint() string {
+	if x != nil {
+		return x.Fingerprint
+	}
+	return ""
 }
 
 type AuthenticateResponse struct {
@@ -252,7 +260,7 @@ func (*AuthenticateResponse) Descriptor() ([]byte, []int) {
 type ReportSystemInfoRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Status        AgentStatus            `protobuf:"varint,1,opt,name=status,proto3,enum=sentinel.agent.v1.AgentStatus" json:"status,omitempty"`
-	ServerInfo    *v11.ServerInfo        `protobuf:"bytes,2,opt,name=server_info,json=serverInfo,proto3" json:"server_info,omitempty"`
+	SystemInfo    *v11.SystemInfo        `protobuf:"bytes,2,opt,name=system_info,json=systemInfo,proto3" json:"system_info,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -294,9 +302,9 @@ func (x *ReportSystemInfoRequest) GetStatus() AgentStatus {
 	return AgentStatus_AGENT_STATUS_UNSPECIFIED
 }
 
-func (x *ReportSystemInfoRequest) GetServerInfo() *v11.ServerInfo {
+func (x *ReportSystemInfoRequest) GetSystemInfo() *v11.SystemInfo {
 	if x != nil {
-		return x.ServerInfo
+		return x.SystemInfo
 	}
 	return nil
 }
@@ -726,13 +734,14 @@ const file_sentinel_agent_v1_agent_proto_rawDesc = "" +
 	"\rServiceDelete\x12\x10\n" +
 	"\x03rev\x18\x01 \x01(\tR\x03rev\x12\x1d\n" +
 	"\n" +
-	"service_id\x18\x02 \x01(\tR\tserviceId\"\x15\n" +
-	"\x13AuthenticateRequest\"\x16\n" +
+	"service_id\x18\x02 \x01(\tR\tserviceId\"7\n" +
+	"\x13AuthenticateRequest\x12 \n" +
+	"\vfingerprint\x18\x01 \x01(\tR\vfingerprint\"\x16\n" +
 	"\x14AuthenticateResponse\"\x92\x01\n" +
 	"\x17ReportSystemInfoRequest\x126\n" +
 	"\x06status\x18\x01 \x01(\x0e2\x1e.sentinel.agent.v1.AgentStatusR\x06status\x12?\n" +
-	"\vserver_info\x18\x02 \x01(\v2\x1e.sentinel.common.v1.ServerInfoR\n" +
-	"serverInfo\"\x1a\n" +
+	"\vsystem_info\x18\x02 \x01(\v2\x1e.sentinel.common.v1.SystemInfoR\n" +
+	"systemInfo\"\x1a\n" +
 	"\x18ReportSystemInfoResponse\"\x16\n" +
 	"\x14FetchServicesRequest\"Q\n" +
 	"\x15FetchServicesResponse\x128\n" +
@@ -799,14 +808,14 @@ var file_sentinel_agent_v1_agent_proto_goTypes = []any{
 	(*StreamChecksRequest)(nil),       // 12: sentinel.agent.v1.StreamChecksRequest
 	(*StreamChecksResponse)(nil),      // 13: sentinel.agent.v1.StreamChecksResponse
 	(*v1.Service)(nil),                // 14: sentinel.service.v1.Service
-	(*v11.ServerInfo)(nil),            // 15: sentinel.common.v1.ServerInfo
+	(*v11.SystemInfo)(nil),            // 15: sentinel.common.v1.SystemInfo
 	(v11.ServiceStatus)(0),            // 16: sentinel.common.v1.ServiceStatus
 	(*timestamppb.Timestamp)(nil),     // 17: google.protobuf.Timestamp
 }
 var file_sentinel_agent_v1_agent_proto_depIdxs = []int32{
 	14, // 0: sentinel.agent.v1.ServiceUpsert.service:type_name -> sentinel.service.v1.Service
 	0,  // 1: sentinel.agent.v1.ReportSystemInfoRequest.status:type_name -> sentinel.agent.v1.AgentStatus
-	15, // 2: sentinel.agent.v1.ReportSystemInfoRequest.server_info:type_name -> sentinel.common.v1.ServerInfo
+	15, // 2: sentinel.agent.v1.ReportSystemInfoRequest.system_info:type_name -> sentinel.common.v1.SystemInfo
 	14, // 3: sentinel.agent.v1.FetchServicesResponse.services:type_name -> sentinel.service.v1.Service
 	1,  // 4: sentinel.agent.v1.SubscribeServicesResponse.upsert:type_name -> sentinel.agent.v1.ServiceUpsert
 	2,  // 5: sentinel.agent.v1.SubscribeServicesResponse.delete:type_name -> sentinel.agent.v1.ServiceDelete

@@ -39,12 +39,12 @@ message ServiceDelete {
   string service_id = 2;
 }
 
-message AuthenticateRequest {}
+message AuthenticateRequest { string fingerprint = 1; }
 message AuthenticateResponse {}
 
 message ReportSystemInfoRequest {
   AgentStatus status = 1;
-  common.v1.ServerInfo server_info = 2;
+  common.v1.SystemInfo system_info = 2;
 }
 message ReportSystemInfoResponse {}
 

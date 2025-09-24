@@ -11,8 +11,8 @@ message AvailableUpdate {
   string description = 4;
 }
 
-// ServerInfo represents information about the server
-message ServerInfo {
+// SystemInfo represents information about the server
+message SystemInfo {
   string version = 1;
   string commit_hash = 2;
   string build_date = 3;
@@ -20,6 +20,10 @@ message ServerInfo {
   string sqlite_version = 5;
   string os = 6;
   string arch = 7;
-  optional AvailableUpdate available_update = 8;
-  google.protobuf.Timestamp started_at = 9;
+  string hostname = 8;
+  string kernel_version = 9;
+  string cpu_model = 10;
+  string ip_address = 11;
+  optional AvailableUpdate available_update = 12;
+  google.protobuf.Timestamp started_at = 13;
 }

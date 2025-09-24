@@ -91,8 +91,8 @@ func (x *AvailableUpdate) GetDescription() string {
 	return ""
 }
 
-// ServerInfo represents information about the server
-type ServerInfo struct {
+// SystemInfo represents information about the server
+type SystemInfo struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
 	Version         string                 `protobuf:"bytes,1,opt,name=version,proto3" json:"version,omitempty"`
 	CommitHash      string                 `protobuf:"bytes,2,opt,name=commit_hash,json=commitHash,proto3" json:"commit_hash,omitempty"`
@@ -101,26 +101,30 @@ type ServerInfo struct {
 	SqliteVersion   string                 `protobuf:"bytes,5,opt,name=sqlite_version,json=sqliteVersion,proto3" json:"sqlite_version,omitempty"`
 	Os              string                 `protobuf:"bytes,6,opt,name=os,proto3" json:"os,omitempty"`
 	Arch            string                 `protobuf:"bytes,7,opt,name=arch,proto3" json:"arch,omitempty"`
-	AvailableUpdate *AvailableUpdate       `protobuf:"bytes,8,opt,name=available_update,json=availableUpdate,proto3,oneof" json:"available_update,omitempty"`
-	StartedAt       *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
+	Hostname        string                 `protobuf:"bytes,8,opt,name=hostname,proto3" json:"hostname,omitempty"`
+	KernelVersion   string                 `protobuf:"bytes,9,opt,name=kernel_version,json=kernelVersion,proto3" json:"kernel_version,omitempty"`
+	CpuModel        string                 `protobuf:"bytes,10,opt,name=cpu_model,json=cpuModel,proto3" json:"cpu_model,omitempty"`
+	IpAddress       string                 `protobuf:"bytes,11,opt,name=ip_address,json=ipAddress,proto3" json:"ip_address,omitempty"`
+	AvailableUpdate *AvailableUpdate       `protobuf:"bytes,12,opt,name=available_update,json=availableUpdate,proto3,oneof" json:"available_update,omitempty"`
+	StartedAt       *timestamppb.Timestamp `protobuf:"bytes,13,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
 
-func (x *ServerInfo) Reset() {
-	*x = ServerInfo{}
+func (x *SystemInfo) Reset() {
+	*x = SystemInfo{}
 	mi := &file_sentinel_common_v1_info_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ServerInfo) String() string {
+func (x *SystemInfo) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ServerInfo) ProtoMessage() {}
+func (*SystemInfo) ProtoMessage() {}
 
-func (x *ServerInfo) ProtoReflect() protoreflect.Message {
+func (x *SystemInfo) ProtoReflect() protoreflect.Message {
 	mi := &file_sentinel_common_v1_info_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -132,68 +136,96 @@ func (x *ServerInfo) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ServerInfo.ProtoReflect.Descriptor instead.
-func (*ServerInfo) Descriptor() ([]byte, []int) {
+// Deprecated: Use SystemInfo.ProtoReflect.Descriptor instead.
+func (*SystemInfo) Descriptor() ([]byte, []int) {
 	return file_sentinel_common_v1_info_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *ServerInfo) GetVersion() string {
+func (x *SystemInfo) GetVersion() string {
 	if x != nil {
 		return x.Version
 	}
 	return ""
 }
 
-func (x *ServerInfo) GetCommitHash() string {
+func (x *SystemInfo) GetCommitHash() string {
 	if x != nil {
 		return x.CommitHash
 	}
 	return ""
 }
 
-func (x *ServerInfo) GetBuildDate() string {
+func (x *SystemInfo) GetBuildDate() string {
 	if x != nil {
 		return x.BuildDate
 	}
 	return ""
 }
 
-func (x *ServerInfo) GetGoVersion() string {
+func (x *SystemInfo) GetGoVersion() string {
 	if x != nil {
 		return x.GoVersion
 	}
 	return ""
 }
 
-func (x *ServerInfo) GetSqliteVersion() string {
+func (x *SystemInfo) GetSqliteVersion() string {
 	if x != nil {
 		return x.SqliteVersion
 	}
 	return ""
 }
 
-func (x *ServerInfo) GetOs() string {
+func (x *SystemInfo) GetOs() string {
 	if x != nil {
 		return x.Os
 	}
 	return ""
 }
 
-func (x *ServerInfo) GetArch() string {
+func (x *SystemInfo) GetArch() string {
 	if x != nil {
 		return x.Arch
 	}
 	return ""
 }
 
-func (x *ServerInfo) GetAvailableUpdate() *AvailableUpdate {
+func (x *SystemInfo) GetHostname() string {
+	if x != nil {
+		return x.Hostname
+	}
+	return ""
+}
+
+func (x *SystemInfo) GetKernelVersion() string {
+	if x != nil {
+		return x.KernelVersion
+	}
+	return ""
+}
+
+func (x *SystemInfo) GetCpuModel() string {
+	if x != nil {
+		return x.CpuModel
+	}
+	return ""
+}
+
+func (x *SystemInfo) GetIpAddress() string {
+	if x != nil {
+		return x.IpAddress
+	}
+	return ""
+}
+
+func (x *SystemInfo) GetAvailableUpdate() *AvailableUpdate {
 	if x != nil {
 		return x.AvailableUpdate
 	}
 	return nil
 }
 
-func (x *ServerInfo) GetStartedAt() *timestamppb.Timestamp {
+func (x *SystemInfo) GetStartedAt() *timestamppb.Timestamp {
 	if x != nil {
 		return x.StartedAt
 	}
@@ -209,9 +241,9 @@ const file_sentinel_common_v1_info_proto_rawDesc = "" +
 	"\x13is_available_manual\x18\x01 \x01(\bR\x11isAvailableManual\x12\x19\n" +
 	"\btag_name\x18\x02 \x01(\tR\atagName\x12\x10\n" +
 	"\x03url\x18\x03 \x01(\tR\x03url\x12 \n" +
-	"\vdescription\x18\x04 \x01(\tR\vdescription\"\xf5\x02\n" +
+	"\vdescription\x18\x04 \x01(\tR\vdescription\"\xf4\x03\n" +
 	"\n" +
-	"ServerInfo\x12\x18\n" +
+	"SystemInfo\x12\x18\n" +
 	"\aversion\x18\x01 \x01(\tR\aversion\x12\x1f\n" +
 	"\vcommit_hash\x18\x02 \x01(\tR\n" +
 	"commitHash\x12\x1d\n" +
@@ -221,10 +253,16 @@ const file_sentinel_common_v1_info_proto_rawDesc = "" +
 	"go_version\x18\x04 \x01(\tR\tgoVersion\x12%\n" +
 	"\x0esqlite_version\x18\x05 \x01(\tR\rsqliteVersion\x12\x0e\n" +
 	"\x02os\x18\x06 \x01(\tR\x02os\x12\x12\n" +
-	"\x04arch\x18\a \x01(\tR\x04arch\x12S\n" +
-	"\x10available_update\x18\b \x01(\v2#.sentinel.common.v1.AvailableUpdateH\x00R\x0favailableUpdate\x88\x01\x01\x129\n" +
+	"\x04arch\x18\a \x01(\tR\x04arch\x12\x1a\n" +
+	"\bhostname\x18\b \x01(\tR\bhostname\x12%\n" +
+	"\x0ekernel_version\x18\t \x01(\tR\rkernelVersion\x12\x1b\n" +
+	"\tcpu_model\x18\n" +
+	" \x01(\tR\bcpuModel\x12\x1d\n" +
 	"\n" +
-	"started_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tstartedAtB\x13\n" +
+	"ip_address\x18\v \x01(\tR\tipAddress\x12S\n" +
+	"\x10available_update\x18\f \x01(\v2#.sentinel.common.v1.AvailableUpdateH\x00R\x0favailableUpdate\x88\x01\x01\x129\n" +
+	"\n" +
+	"started_at\x18\r \x01(\v2\x1a.google.protobuf.TimestampR\tstartedAtB\x13\n" +
 	"\x11_available_updateB\xde\x01\n" +
 	"\x16com.sentinel.common.v1B\tInfoProtoP\x01ZOgithub.com/sxwebdev/sentinel/internal/hubserver/api/sentinel/common/v1;commonv1\xa2\x02\x03SCX\xaa\x02\x12Sentinel.Common.V1\xca\x02\x12Sentinel\\Common\\V1\xe2\x02\x1eSentinel\\Common\\V1\\GPBMetadata\xea\x02\x14Sentinel::Common::V1b\x06proto3"
 
@@ -243,12 +281,12 @@ func file_sentinel_common_v1_info_proto_rawDescGZIP() []byte {
 var file_sentinel_common_v1_info_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_sentinel_common_v1_info_proto_goTypes = []any{
 	(*AvailableUpdate)(nil),       // 0: sentinel.common.v1.AvailableUpdate
-	(*ServerInfo)(nil),            // 1: sentinel.common.v1.ServerInfo
+	(*SystemInfo)(nil),            // 1: sentinel.common.v1.SystemInfo
 	(*timestamppb.Timestamp)(nil), // 2: google.protobuf.Timestamp
 }
 var file_sentinel_common_v1_info_proto_depIdxs = []int32{
-	0, // 0: sentinel.common.v1.ServerInfo.available_update:type_name -> sentinel.common.v1.AvailableUpdate
-	2, // 1: sentinel.common.v1.ServerInfo.started_at:type_name -> google.protobuf.Timestamp
+	0, // 0: sentinel.common.v1.SystemInfo.available_update:type_name -> sentinel.common.v1.AvailableUpdate
+	2, // 1: sentinel.common.v1.SystemInfo.started_at:type_name -> google.protobuf.Timestamp
 	2, // [2:2] is the sub-list for method output_type
 	2, // [2:2] is the sub-list for method input_type
 	2, // [2:2] is the sub-list for extension type_name

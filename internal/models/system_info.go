@@ -19,6 +19,7 @@ type SystemInfo struct {
 	Hostname        string
 	KernelVersion   string
 	CpuModel        string
+	IpAddress       string
 	AvailableUpdate *AvailableUpdate
 }
 

@@ -31,6 +31,11 @@ overrides:
         go_type:
           type: "*string"
 
+      # agents
+      - column: agents.status
+        go_type:
+          type: AgentStatusType
+
 sql:
   # Services
   - schema: sql/migrations

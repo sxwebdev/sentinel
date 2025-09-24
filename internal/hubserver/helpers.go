@@ -1,6 +1,7 @@
 package hubserver
 
 import (
+	agentv1 "github.com/sxwebdev/sentinel/internal/hubserver/api/sentinel/agent/v1"
 	commonv1 "github.com/sxwebdev/sentinel/internal/hubserver/api/sentinel/common/v1"
 	servicev1 "github.com/sxwebdev/sentinel/internal/hubserver/api/sentinel/service/v1"
 	"github.com/sxwebdev/sentinel/internal/models"
@@ -55,5 +56,16 @@ func convertServiceStatusToProto(status models.ServiceStatus) commonv1.ServiceSt
 		return commonv1.ServiceStatus_SERVICE_STATUS_DOWN
 	default:
 		return commonv1.ServiceStatus_SERVICE_STATUS_UNSPECIFIED
+	}
+}
+
+func convertAgentStatusFromProto(status agentv1.AgentStatus) models.AgentStatusType {
+	switch status {
+	case agentv1.AgentStatus_AGENT_STATUS_ACTIVE:
+		return models.AgentStatusTypeActive
+	case agentv1.AgentStatus_AGENT_STATUS_INACTIVE:
+		return models.AgentStatusTypeInactive
+	default:
+		return models.AgentStatusTypeUnknown
 	}
 }
