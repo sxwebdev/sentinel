@@ -118,7 +118,7 @@ func ConvertAgentStatusToProto(status models.AgentStatusType) agentv1.AgentStatu
 
 // ConvertSystemInfoToProto converts models.SystemInfo to its protobuf representation
 func ConvertSystemInfoToProto(info models.SystemInfo) *commonv1.SystemInfo {
-	return &commonv1.SystemInfo{
+	res := &commonv1.SystemInfo{
 		Version:       info.Version,
 		CommitHash:    info.CommitHash,
 		BuildDate:     info.BuildDate,
@@ -129,13 +129,18 @@ func ConvertSystemInfoToProto(info models.SystemInfo) *commonv1.SystemInfo {
 		KernelVersion: info.KernelVersion,
 		IpAddress:     info.IpAddress,
 		CpuModel:      info.CpuModel,
-		StartedAt:     timestamppb.New(info.StartedAt),
 	}
+
+	if info.StartedAt != nil && !info.StartedAt.IsZero() {
+		res.StartedAt = timestamppb.New(*info.StartedAt)
+	}
+
+	return res
 }
 
 // ConvertSystemInfoFromProto converts commonv1.SystemInfo to its models representation
 func ConvertSystemInfoFromProto(info *commonv1.SystemInfo) models.SystemInfo {
-	return models.SystemInfo{
+	res := models.SystemInfo{
 		Version:       info.Version,
 		CommitHash:    info.CommitHash,
 		BuildDate:     info.BuildDate,
@@ -146,8 +151,14 @@ func ConvertSystemInfoFromProto(info *commonv1.SystemInfo) models.SystemInfo {
 		KernelVersion: info.KernelVersion,
 		IpAddress:     info.IpAddress,
 		CpuModel:      info.CpuModel,
-		StartedAt:     info.StartedAt.AsTime(),
 	}
+
+	if info.StartedAt != nil && info.StartedAt.IsValid() && !info.StartedAt.AsTime().IsZero() {
+		t := info.StartedAt.AsTime()
+		res.StartedAt = &t
+	}
+
+	return res
 }
 
 // ConvertServiceFromProto converts a protobuf Service to its models representation

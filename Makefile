@@ -25,10 +25,10 @@ agent: ## Run in development mode with auto-reload
 	go run $(SENTINEL_PATH) agent start -c ./config-agent.yaml
 
 migrateup:
-	go run $(SENTINEL_PATH) migrations up -db-path ./data/sqlite/db.sqlite
+	go run $(SENTINEL_PATH) migrations up -db-path ./data/hub/sqlite/db.sqlite
 
 migratedown:
-	go run $(SENTINEL_PATH) migrations down -db-path ./data/sqlite/db.sqlite
+	go run $(SENTINEL_PATH) migrations down -db-path ./data/hub/sqlite/db.sqlite
 
 run: build ## Build and run the application
 	./$(BUILD_DIR)/$(BINARY_NAME)

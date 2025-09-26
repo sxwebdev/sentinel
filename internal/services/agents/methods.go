@@ -70,9 +70,6 @@ func (s *Service) Create(ctx context.Context, params CreateParams) (*CreateRespo
 		return nil, fmt.Errorf("failed to generate agent token: %w", err)
 	}
 
-	// TODO: delete this line after testing
-	fmt.Println("Agent token:", token)
-
 	// Hash the secret using Argon2id
 	secretHash, err := HashSecretArgon2id(secret, DefaultArgon2)
 	if err != nil {

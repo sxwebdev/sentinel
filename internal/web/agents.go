@@ -23,10 +23,10 @@ type AgentCreateParams struct {
 //	@Tags			agents
 //	@Accept			json
 //	@Produce		json
-//	@Param			service	body		AgentCreateParams	true	"Body params"
-//	@Success		201		{object}	agents.CreateResponse			"Agent created"
-//	@Failure		400		{object}	ErrorResponse		"Bad request"
-//	@Failure		500		{object}	ErrorResponse		"Internal server error"
+//	@Param			service	body		AgentCreateParams		true	"Body params"
+//	@Success		201		{object}	agents.CreateResponse	"Agent created"
+//	@Failure		400		{object}	ErrorResponse			"Bad request"
+//	@Failure		500		{object}	ErrorResponse			"Internal server error"
 //	@Router			/settings/agents [post]
 func (s *Server) agentsCreate(c *fiber.Ctx) error {
 	var data AgentCreateParams

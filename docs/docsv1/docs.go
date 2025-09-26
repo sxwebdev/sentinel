@@ -793,7 +793,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Agent created",
                         "schema": {
-                            "$ref": "#/definitions/web.AgentDTO"
+                            "$ref": "#/definitions/agents.CreateResponse"
                         }
                     },
                     "400": {
@@ -1281,6 +1281,58 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "agents.CreateResponse": {
+            "type": "object",
+            "properties": {
+                "config": {
+                    "type": "object",
+                    "additionalProperties": {}
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_enabled": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/models.AgentStatusType"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "token": {
+                    "type": "string"
+                },
+                "token_hint": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.AgentStatusType": {
+            "type": "string",
+            "enum": [
+                "unknown",
+                "active",
+                "inactive"
+            ],
+            "x-enum-varnames": [
+                "AgentStatusTypeUnknown",
+                "AgentStatusTypeActive",
+                "AgentStatusTypeInactive"
+            ]
+        },
         "models.AvailableUpdate": {
             "type": "object",
             "properties": {
@@ -1378,7 +1430,8 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "config": {
-                    "$ref": "#/definitions/storecmn.JSONField"
+                    "type": "object",
+                    "additionalProperties": true
                 },
                 "created_at": {
                     "type": "string"
@@ -1409,11 +1462,13 @@ const docTemplate = `{
         "models.ServiceProtocolType": {
             "type": "string",
             "enum": [
+                "unknown",
                 "http",
                 "tcp",
                 "grpc"
             ],
             "x-enum-varnames": [
+                "ServiceProtocolTypeUnknown",
                 "ServiceProtocolTypeHTTP",
                 "ServiceProtocolTypeTCP",
                 "ServiceProtocolTypeGRPC"
@@ -1424,14 +1479,12 @@ const docTemplate = `{
             "enum": [
                 "unknown",
                 "up",
-                "down",
-                "maintenance"
+                "down"
             ],
             "x-enum-varnames": [
-                "StatusUnknown",
-                "StatusUp",
-                "StatusDown",
-                "StatusMaintenance"
+                "ServiceStatusUnknown",
+                "ServiceStatusUp",
+                "ServiceStatusDown"
             ]
         },
         "models.SystemInfo": {
@@ -1440,31 +1493,37 @@ const docTemplate = `{
                 "arch": {
                     "type": "string"
                 },
-                "availableUpdate": {
+                "available_update": {
                     "$ref": "#/definitions/models.AvailableUpdate"
                 },
-                "buildDate": {
+                "build_date": {
                     "type": "string"
                 },
-                "commitHash": {
+                "commit_hash": {
                     "type": "string"
                 },
-                "cpuModel": {
+                "cpu_model": {
                     "type": "string"
                 },
-                "goVersion": {
+                "go_version": {
                     "type": "string"
                 },
                 "hostname": {
                     "type": "string"
                 },
-                "kernelVersion": {
+                "ip_address": {
+                    "type": "string"
+                },
+                "kernel_version": {
                     "type": "string"
                 },
                 "os": {
                     "type": "string"
                 },
-                "sqliteVersion": {
+                "sqlite_version": {
+                    "type": "string"
+                },
+                "started_at": {
                     "type": "string"
                 },
                 "version": {
@@ -1611,7 +1670,8 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "config": {
-                    "$ref": "#/definitions/storecmn.JSONField"
+                    "type": "object",
+                    "additionalProperties": true
                 },
                 "is_enabled": {
                     "type": "boolean"
@@ -1706,9 +1766,6 @@ const docTemplate = `{
                 }
             }
         },
-        "storecmn.JSONField": {
-            "type": "object"
-        },
         "web.AgentCreateParams": {
             "type": "object",
             "properties": {
@@ -1760,7 +1817,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "status": {
-                    "type": "string"
+                    "$ref": "#/definitions/models.AgentStatusType"
                 },
                 "system_info": {
                     "$ref": "#/definitions/models.SystemInfo"

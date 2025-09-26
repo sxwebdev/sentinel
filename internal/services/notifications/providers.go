@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 
 	"github.com/sxwebdev/sentinel/internal/models"
 	"github.com/sxwebdev/sentinel/internal/store"
@@ -48,8 +49,8 @@ func (s *Providers) GetAll(ctx context.Context) ([]*models.NotificationProvider,
 }
 
 type CreateProviderParams struct {
-	ProviderType models.NotificationProviderType `db:"provider_type" json:"provider_type"`
-	Config       storecmn.JSONField              `db:"config" json:"config"`
+	ProviderType models.NotificationProviderType `json:"provider_type" example:"shoutrrr"`
+	Config       map[string]any                  `json:"config" example:"{\"urls\": [\"slack://hooks.slack.com/services/...\"]}"`
 }
 
 // Validate
@@ -58,7 +59,13 @@ func (s CreateProviderParams) Validate() error {
 		return err
 	}
 
-	if err := validateProviderConfig(s.ProviderType, s.Config); err != nil {
+	// Convert config to JSONField
+	config := storecmn.JSONField("{}")
+	if err := config.UnmarshalFromAny(s.Config); err != nil {
+		return fmt.Errorf("failed to convert config to json raw message: %w", err)
+	}
+
+	if err := validateProviderConfig(s.ProviderType, config); err != nil {
 		return err
 	}
 
@@ -71,10 +78,16 @@ func (s *Providers) Create(ctx context.Context, params CreateProviderParams) (*m
 		return nil, err
 	}
 
+	// Convert config to JSONField
+	config := storecmn.JSONField("{}")
+	if err := config.UnmarshalFromAny(params.Config); err != nil {
+		return nil, fmt.Errorf("failed to convert config to json raw message: %w", err)
+	}
+
 	createParams := repo_notification_providers.CreateParams{
 		ID:           utils.GenerateULID(),
 		ProviderType: params.ProviderType,
-		Config:       params.Config,
+		Config:       config,
 	}
 
 	return s.store.NotificationProviders().Create(ctx, createParams)
