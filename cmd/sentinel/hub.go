@@ -59,7 +59,7 @@ func hubStartCMD() *cli.Command {
 				launcher.WithName(appName),
 				launcher.WithLogger(l),
 				launcher.WithContext(ctx),
-				launcher.WithRunnerServicesSequence(launcher.RunnerServicesSequenceFifo),
+				launcher.WithRunnerServicesSequence(launcher.RunnerServicesSequenceLifo),
 				launcher.WithOpsConfig(conf.Ops),
 				launcher.WithAppStartStopLog(true),
 			)
@@ -128,7 +128,7 @@ func hubStartCMD() *cli.Command {
 			}
 
 			// init agent rpc server
-			hubServer := hubserver.New(l, baseServices)
+			hubServer := hubserver.New(ctx, l, baseServices)
 
 			rpcServer := connectrpc_transport.NewServer(
 				connectrpc_transport.WithName("hub-server"),

@@ -96,17 +96,17 @@ type ServerInfoResponse struct {
 }
 
 type AgentDTO struct {
-	ID           string                 `json:"id"`
-	Name         string                 `json:"name"`
-	Description  *string                `json:"description"`
-	TokenHint    string                 `json:"token_hint"`
-	Fingerprint  *string                `json:"fingerprint"`
-	Status       models.AgentStatusType `json:"status"`
-	IsEnabled    bool                   `json:"is_enabled"`
-	Tags         []string               `json:"tags" example:"tag1,tag2"`
-	Config       map[string]any         `json:"config"`
-	SystemInfo   models.SystemInfo      `json:"system_info"`
-	LastOnlineAt *time.Time             `json:"last_online_at" example:"2023-10-01T12:00:00Z"`
-	CreatedAt    time.Time              `json:"created_at"`
-	UpdatedAt    time.Time              `json:"updated_at"`
+	ID              string                 `json:"id"`
+	Name            string                 `json:"name"`
+	Description     *string                `json:"description"`
+	TokenHint       string                 `json:"token_hint"`
+	Fingerprint     *string                `json:"fingerprint"`
+	Status          models.AgentStatusType `json:"status"`
+	IsEnabled       bool                   `json:"is_enabled"`
+	Tags            []string               `json:"tags" example:"tag1,tag2"`
+	Config          map[string]any         `json:"config"`
+	SystemInfo      models.SystemInfo      `json:"system_info"`
+	LastConnectedAt *time.Time             `json:"last_connected_at" example:"2023-10-01T12:00:00Z"`
+	CreatedAt       time.Time              `json:"created_at"`
+	UpdatedAt       time.Time              `json:"updated_at"`
 }

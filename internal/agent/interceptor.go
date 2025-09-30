@@ -1,4 +1,4 @@
-package hubclient
+package agent
 
 import (
 	"context"

@@ -1,4 +1,4 @@
-package hubclient
+package agent
 
 import (
 	"context"
@@ -13,24 +13,30 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-type Client struct {
+type client struct {
+	logger      logger.Logger
 	fingerprint string
 	systemInfo  models.SystemInfo
+
+	changeStateCh chan<- ConnectionState
 
 	agentsService agentv1connect.AgentServiceClient
 }
 
-func New(
+func newClient(
 	ctx context.Context,
 	l logger.Logger,
 	token string,
 	fingerprint string,
 	systemInfo models.SystemInfo,
 	connectRPCConfig connectrpc_client.Config,
-) (*Client, error) {
-	c := &Client{
-		fingerprint: fingerprint,
-		systemInfo:  systemInfo,
+	changeStateCh chan<- ConnectionState,
+) (*client, error) {
+	c := &client{
+		logger:        l,
+		fingerprint:   fingerprint,
+		systemInfo:    systemInfo,
+		changeStateCh: changeStateCh,
 	}
 
 	agentsService, err := connectrpc_client.New(
@@ -52,13 +58,13 @@ func New(
 }
 
 // Ping checks the connectivity with the hub server.
-func (c *Client) Ping(ctx context.Context) error {
+func (c *client) Ping(ctx context.Context) error {
 	_, err := c.agentsService.Ping(ctx, connect.NewRequest(&emptypb.Empty{}))
 	return err
 }
 
 // Authenticate authenticates the client with the hub server.
-func (c *Client) Authenticate(ctx context.Context) error {
+func (c *client) Authenticate(ctx context.Context) error {
 	_, err := c.agentsService.Authenticate(ctx, connect.NewRequest(&agentv1.AuthenticateRequest{
 		Fingerprint: c.fingerprint,
 	}))
@@ -66,7 +72,7 @@ func (c *Client) Authenticate(ctx context.Context) error {
 }
 
 // ReportSystemInfo reports the system information to the hub server.
-func (c *Client) ReportSystemInfo(ctx context.Context) error {
+func (c *client) ReportSystemInfo(ctx context.Context) error {
 	_, err := c.agentsService.ReportSystemInfo(ctx, connect.NewRequest(&agentv1.ReportSystemInfoRequest{
 		SystemInfo: hubutils.ConvertSystemInfoToProto(c.systemInfo),
 	}))
@@ -74,7 +80,7 @@ func (c *Client) ReportSystemInfo(ctx context.Context) error {
 }
 
 // FetchServices fetches the list of services from the hub server.
-func (c *Client) FetchServices(ctx context.Context) ([]*models.Service, error) {
+func (c *client) FetchServices(ctx context.Context) ([]*models.Service, error) {
 	resp, err := c.agentsService.FetchServices(ctx, connect.NewRequest(&agentv1.FetchServicesRequest{}))
 	if err != nil {
 		return nil, err
@@ -87,4 +93,45 @@ func (c *Client) FetchServices(ctx context.Context) ([]*models.Service, error) {
 	}
 
 	return services, nil
+}
+
+// SubscribeServices subscribes to service updates from the hub server.
+func (c *client) SubscribeServices(ctx context.Context, handler func(eventType, svcID string, svc *models.Service)) error {
+	c.logger.Infoln("subscribed to service updates")
+	defer func() {
+		c.changeStateCh <- ConnectionStateDisconnected
+		c.logger.Infoln("unsubscribing from service updates")
+	}()
+
+	stream, err := c.agentsService.SubscribeServices(ctx, connect.NewRequest(&agentv1.SubscribeServicesRequest{}))
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		if err := stream.Close(); err != nil {
+			c.logger.Errorf("failed to close stream: %s", err)
+		}
+	}()
+
+	for stream.Receive() {
+		msg := stream.Msg()
+
+		eventType := "upsert"
+		var svcID string
+		if msg.GetDelete() != nil {
+			eventType = "delete"
+			svcID = msg.GetDelete().GetServiceId()
+		}
+
+		var svc *models.Service
+		if msg.GetUpsert() != nil {
+			svcID = msg.GetUpsert().GetService().GetId()
+			svc = hubutils.ConvertServiceFromProto(msg.GetUpsert().GetService())
+		}
+
+		handler(eventType, svcID, svc)
+	}
+
+	return nil
 }

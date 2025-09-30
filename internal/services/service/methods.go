@@ -156,6 +156,10 @@ func (s *Service) Update(ctx context.Context, id string, params CreateUpdatePara
 
 // GetByID returns service by ID
 func (s *Service) GetByID(ctx context.Context, id string) (*models.Service, error) {
+	if id == "" {
+		return nil, storecmn.ErrEmptyID
+	}
+
 	svc, err := s.store.Services().GetByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

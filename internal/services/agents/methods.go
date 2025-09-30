@@ -2,6 +2,8 @@ package agents
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	"slices"
 	"time"
@@ -114,7 +116,19 @@ func (s *Service) Delete(ctx context.Context, id string) error {
 
 // GetByID retrieves an agent by its ID
 func (s *Service) GetByID(ctx context.Context, id string) (*models.Agent, error) {
-	return s.store.Agents().GetByID(ctx, id)
+	if id == "" {
+		return nil, storecmn.ErrEmptyID
+	}
+
+	agent, err := s.store.Agents().GetByID(ctx, id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, storecmn.ErrNotFound
+		}
+		return nil, err
+	}
+
+	return agent, nil
 }
 
 type FindParams = repo_agents.FindParams
@@ -125,16 +139,16 @@ func (s *Service) Find(ctx context.Context, params FindParams) (*storecmn.FindRe
 }
 
 type UpdateParams struct {
-	Name         string
-	Description  *string
-	Fingerprint  *string
-	Status       models.AgentStatusType
-	IsEnabled    bool
-	Tags         []string
-	Config       map[string]any
-	SystemInfo   models.SystemInfo
-	LastOnlineAt *time.Time
-	FieldMask    dbutils.FieldMask[repo_agents.ColumnName]
+	Name            string
+	Description     *string
+	Fingerprint     *string
+	Status          models.AgentStatusType
+	IsEnabled       bool
+	Tags            []string
+	Config          map[string]any
+	SystemInfo      models.SystemInfo
+	LastConnectedAt *time.Time
+	FieldMask       dbutils.FieldMask[repo_agents.ColumnName]
 }
 
 // Validate
@@ -184,15 +198,15 @@ func (s *Service) Update(ctx context.Context, id string, params UpdateParams) (*
 
 	updateParams := repo_agents.UpdateRequest{
 		Agent: models.Agent{
-			Name:         params.Name,
-			Description:  params.Description,
-			Fingerprint:  params.Fingerprint,
-			Status:       params.Status,
-			IsEnabled:    params.IsEnabled,
-			Tags:         tags,
-			Config:       config,
-			SystemInfo:   systemInfo,
-			LastOnlineAt: params.LastOnlineAt,
+			Name:            params.Name,
+			Description:     params.Description,
+			Fingerprint:     params.Fingerprint,
+			Status:          params.Status,
+			IsEnabled:       params.IsEnabled,
+			Tags:            tags,
+			Config:          config,
+			SystemInfo:      systemInfo,
+			LastConnectedAt: params.LastConnectedAt,
 		},
 		FieldMask: params.FieldMask,
 	}
@@ -223,12 +237,12 @@ func (s *Service) CheckAndUpsertFingerprint(ctx context.Context, id, fingerprint
 	// Update the agent with the new fingerprint
 	updateParams := repo_agents.UpdateRequest{
 		Agent: models.Agent{
-			Fingerprint:  &fingerprint,
-			LastOnlineAt: utils.Pointer(time.Now()),
+			Fingerprint:     &fingerprint,
+			LastConnectedAt: utils.Pointer(time.Now()),
 		},
 		FieldMask: dbutils.FieldMask[repo_agents.ColumnName]{
 			repo_agents.ColumnNameAgentsFingerprint,
-			repo_agents.ColumnNameAgentsLastOnlineAt,
+			repo_agents.ColumnNameAgentsLastConnectedAt,
 		},
 	}
 

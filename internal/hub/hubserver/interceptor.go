@@ -55,7 +55,7 @@ func (s *Interceptor) ConnectRPCAuthMiddleware() *authn.Middleware {
 	return authn.NewMiddleware(authFn)
 }
 
-func (s *Interceptor) authorize(_ context.Context, req *http.Request) (*AgentDataContext, error) {
+func (s *Interceptor) authorize(ctx context.Context, req *http.Request) (*AgentDataContext, error) {
 	method, ok := authn.InferProcedure(req.URL)
 	if !ok {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to infer procedure"))
@@ -73,7 +73,7 @@ func (s *Interceptor) authorize(_ context.Context, req *http.Request) (*AgentDat
 		return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("failed to parse auth header: %w", err))
 	}
 
-	agent, err := s.baseServices.Agents().GetByID(req.Context(), agentID)
+	agent, err := s.baseServices.Agents().GetByID(ctx, agentID)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("failed to get agent by ID: %w", err))
 	}

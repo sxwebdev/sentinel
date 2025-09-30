@@ -11,7 +11,6 @@ import (
 	"github.com/sxwebdev/sentinel/internal/hub/hubserver/api/sentinel/agent/v1/agentv1connect"
 	servicev1 "github.com/sxwebdev/sentinel/internal/hub/hubserver/api/sentinel/service/v1"
 	"github.com/sxwebdev/sentinel/internal/hub/hubutils"
-	"github.com/sxwebdev/sentinel/internal/models"
 	"github.com/sxwebdev/sentinel/internal/services/agents"
 	"github.com/sxwebdev/sentinel/internal/services/baseservices"
 	"github.com/sxwebdev/sentinel/internal/store/repos/repo_agents"
@@ -25,6 +24,9 @@ import (
 type Server struct {
 	logger logger.Logger
 
+	// global context
+	gCtx context.Context
+
 	baseservices *baseservices.BaseServices
 
 	// Map of authorized agents: key is agent ID, value is name
@@ -34,9 +36,10 @@ type Server struct {
 	connectrpc_transport.ConnectRPCService
 }
 
-func New(l logger.Logger, baseservices *baseservices.BaseServices) *Server {
+func New(gCtx context.Context, l logger.Logger, baseservices *baseservices.BaseServices) *Server {
 	return &Server{
 		logger:           l,
+		gCtx:             gCtx,
 		baseservices:     baseservices,
 		authorizedAgents: xsync.NewMapOf[string, string](),
 	}
@@ -74,27 +77,14 @@ func (s *Server) ReportSystemInfo(ctx context.Context, req *connect.Request[agen
 		return nil, connect.NewError(connect.CodeUnauthenticated, err)
 	}
 
-	systemInfo := models.SystemInfo{
-		Version:       req.Msg.SystemInfo.Version,
-		CommitHash:    req.Msg.SystemInfo.CommitHash,
-		BuildDate:     req.Msg.SystemInfo.BuildDate,
-		GoVersion:     req.Msg.SystemInfo.GoVersion,
-		OS:            req.Msg.SystemInfo.Os,
-		Arch:          req.Msg.SystemInfo.Arch,
-		Hostname:      req.Msg.SystemInfo.Hostname,
-		KernelVersion: req.Msg.SystemInfo.KernelVersion,
-		IpAddress:     req.Msg.SystemInfo.IpAddress,
-		CpuModel:      req.Msg.SystemInfo.CpuModel,
-	}
-
 	if _, err := s.baseservices.Agents().Update(ctx, agentData.Agent.ID, agents.UpdateParams{
-		Status:       hubutils.ConvertAgentStatusFromProto(req.Msg.Status),
-		SystemInfo:   systemInfo,
-		LastOnlineAt: utils.Pointer(time.Now()),
+		Status:          hubutils.ConvertAgentStatusFromProto(req.Msg.Status),
+		SystemInfo:      hubutils.ConvertSystemInfoFromProto(req.Msg.SystemInfo),
+		LastConnectedAt: utils.Pointer(time.Now()),
 		FieldMask: dbutils.FieldMask[repo_agents.ColumnName]{
 			repo_agents.ColumnNameAgentsStatus,
 			repo_agents.ColumnNameAgentsSystemInfo,
-			repo_agents.ColumnNameAgentsLastOnlineAt,
+			repo_agents.ColumnNameAgentsLastConnectedAt,
 		},
 	}); err != nil {
 		return nil, err
@@ -149,18 +139,32 @@ func (s *Server) SubscribeServices(
 	for {
 		select {
 		case <-ticker.C:
+			// send test upsert
 			if err := stream.Send(&agentv1.SubscribeServicesResponse{
 				Update: &agentv1.SubscribeServicesResponse_Upsert{
 					Upsert: &agentv1.ServiceUpsert{
 						Service: &servicev1.Service{
-							Id: "service-id",
+							Id: "service-id-upsert",
 						},
 					},
 				},
 			}); err != nil {
 				return err
 			}
+
+			// send test delete
+			if err := stream.Send(&agentv1.SubscribeServicesResponse{
+				Update: &agentv1.SubscribeServicesResponse_Delete{
+					Delete: &agentv1.ServiceDelete{
+						ServiceId: "service-id-delete",
+					},
+				},
+			}); err != nil {
+				return err
+			}
 		case <-ctx.Done():
+			return nil
+		case <-s.gCtx.Done():
 			return nil
 		}
 	}

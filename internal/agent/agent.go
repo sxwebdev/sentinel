@@ -3,9 +3,9 @@ package agent
 import (
 	"context"
 	"sync"
+	"sync/atomic"
 
 	"github.com/sxwebdev/sentinel/internal/config"
-	"github.com/sxwebdev/sentinel/internal/hub/hubclient"
 	"github.com/sxwebdev/sentinel/internal/models"
 	"github.com/tkcrm/mx/logger"
 )
@@ -16,17 +16,16 @@ type Agent struct {
 	config     *config.ConfigAgent
 	systemInfo models.SystemInfo
 
-	// server *agentserver.Server
-
 	token       string
 	fingerprint string
 
-	state ConnectionState
+	client *client
 
-	client *hubclient.Client
-
-	mu       sync.RWMutex
-	services []*models.Service
+	mu            sync.RWMutex
+	services      []*models.Service
+	currentState  ConnectionState
+	changeStateCh chan ConnectionState
+	isConnection  atomic.Bool
 }
 
 // New creates a new Agent instance
@@ -37,22 +36,24 @@ func New(
 	systemInfo models.SystemInfo,
 ) (*Agent, error) {
 	a := &Agent{
-		logger:     l,
-		config:     config,
-		systemInfo: systemInfo,
+		logger:        l,
+		config:        config,
+		systemInfo:    systemInfo,
+		changeStateCh: make(chan ConnectionState, 1),
 	}
 
 	a.token = config.Token
 	a.fingerprint = a.getFingerprint()
 
 	var err error
-	a.client, err = hubclient.New(
+	a.client, err = newClient(
 		ctx,
 		a.logger,
 		a.token,
 		a.fingerprint,
 		a.systemInfo,
 		config.HubServer,
+		a.changeStateCh,
 	)
 	if err != nil {
 		return nil, err
@@ -76,6 +77,20 @@ func (s *Agent) Start(ctx context.Context) error {
 // Stop stops the agent
 func (s *Agent) Stop(_ context.Context) error {
 	return nil
+}
+
+// setState sets the connection state
+func (s *Agent) setState(state ConnectionState) {
+	s.mu.Lock()
+	s.currentState = state
+	s.mu.Unlock()
+}
+
+// getState returns the current connection state
+func (s *Agent) getState() ConnectionState {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.currentState
 }
 
 // setServices sets the services fetched from the hub server

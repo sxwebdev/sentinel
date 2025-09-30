@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 	"time"
+
+	"github.com/sxwebdev/sentinel/internal/models"
+	"github.com/tkcrm/modules/pkg/retry"
 )
 
 // ConnectionState represents the state of the connection.
@@ -14,43 +17,71 @@ const (
 	ConnectionStateConnected                           // Connected
 )
 
-// isConnected checks if the connection is active.
-func (cm *Agent) isConnected() bool {
-	return cm.state == ConnectionStateConnected
+// String returns the string representation of the ConnectionState.
+func (cs ConnectionState) String() string {
+	switch cs {
+	case ConnectionStateDisconnected:
+		return "disconnected"
+	case ConnectionStateConnected:
+		return "connected"
+	default:
+		return "unknown"
+	}
 }
 
 // initConnection is a goroutine that manages the connection lifecycle.
 func (s *Agent) initConnection(ctx context.Context) {
-	for ctx.Err() == nil {
-		if s.isConnected() {
-			if err := s.client.Ping(ctx); err != nil {
-				s.logger.Errorln("lost connection to hub server:", err)
-				s.state = ConnectionStateDisconnected
-			} else {
-				time.Sleep(3 * time.Second)
-				continue
+	// immediately try to connect
+	go func() {
+		s.changeStateCh <- ConnectionStateDisconnected
+	}()
+
+	// main connection loop
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case newState := <-s.changeStateCh:
+			s.setState(newState)
+
+			s.logger.Infoln("connection state changed to:", newState.String())
+
+			if newState == ConnectionStateDisconnected {
+				if !s.isConnection.CompareAndSwap(false, true) {
+					continue
+				}
+
+				if err := retry.New(
+					retry.WithContext(ctx),
+					retry.WithPolicy(retry.PolicyInfinite),
+					retry.WithDelay(2*time.Second),
+				).Do(func() error {
+					s.logger.Infoln("try to connecting to hub server:", s.config.HubServer.Addr)
+					err := s.connect(ctx)
+					if err != nil {
+						s.logger.Errorln("failed to connect to hub server:", err)
+					}
+					return err
+				}); err != nil {
+					s.logger.Errorf("unexpected error while connecting to hub server: %s", err)
+				}
 			}
-			time.Sleep(2 * time.Second)
-			continue
-		}
-
-		s.logger.Infoln("try to connecting to hub server:", s.config.HubServer.Addr)
-
-		if err := s.connect(ctx); err != nil {
-			s.logger.Errorln("failed to connect to hub server:", err)
-			time.Sleep(3 * time.Second)
-			continue
 		}
 	}
 }
 
 // connect establishes a connection to the hub server.
 func (s *Agent) connect(ctx context.Context) error {
+	defer s.isConnection.Store(false)
+
+	if state := s.getState(); state == ConnectionStateConnected {
+		s.logger.Error("already connected to hub server")
+		return nil
+	}
+
 	if err := s.client.Authenticate(ctx); err != nil {
 		return fmt.Errorf("failed to authenticate on hub: %w", err)
 	}
-
-	s.state = ConnectionStateConnected
 
 	s.logger.Infoln("successfully authenticated to hub server")
 
@@ -73,16 +104,16 @@ func (s *Agent) connect(ctx context.Context) error {
 
 	s.logger.Infoln("services fetched successfully", "count:", len(services))
 
+	s.changeStateCh <- ConnectionStateConnected
+
 	// subscribe to service updates
-	// go func() {
-	// 	if err := s.client.SubscribeServices(ctx, func(service *Service) {
-	// 		s.logger.Infoln("received service update:", service.ID)
-	// 		// handle service update
-	// 	}); err != nil {
-	// 		s.logger.Errorln("error while subscribing to services:", err)
-	// 		s.state = ConnectionStateDisconnected
-	// 	}
-	// }()
+	go func() {
+		if err := s.client.SubscribeServices(ctx, func(eventType, serviceID string, service *models.Service) {
+			s.logger.Infof("received event: %s, service ID: %s", eventType, serviceID)
+		}); err != nil {
+			s.logger.Errorln("error while subscribing to services:", err)
+		}
+	}()
 
 	return nil
 }

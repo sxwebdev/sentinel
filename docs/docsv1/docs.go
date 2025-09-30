@@ -1809,7 +1809,7 @@ const docTemplate = `{
                 "is_enabled": {
                     "type": "boolean"
                 },
-                "last_online_at": {
+                "last_connected_at": {
                     "type": "string",
                     "example": "2023-10-01T12:00:00Z"
                 },

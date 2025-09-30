@@ -14,9 +14,9 @@ import (
 )
 
 const create = `-- name: Create :one
-INSERT INTO agents (id, name, description, secret_hash, token_hint, last_assignment_rev, tags, config, last_online_at)
+INSERT INTO agents (id, name, description, secret_hash, token_hint, last_assignment_rev, tags, config, last_connected_at)
 	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-	RETURNING id, name, description, secret_hash, token_hint, fingerprint, last_assignment_rev, status, is_enabled, json(tags), json(config), json(system_info), last_online_at, created_at, updated_at
+	RETURNING id, name, description, secret_hash, token_hint, fingerprint, last_assignment_rev, status, is_enabled, json(tags), json(config), json(system_info), last_connected_at, created_at, updated_at
 `
 
 type CreateParams struct {
@@ -28,7 +28,7 @@ type CreateParams struct {
 	LastAssignmentRev *string            `db:"last_assignment_rev" json:"last_assignment_rev"`
 	Tags              storecmn.JSONField `db:"tags" json:"tags"`
 	Config            storecmn.JSONField `db:"config" json:"config"`
-	LastOnlineAt      *time.Time         `db:"last_online_at" json:"last_online_at"`
+	LastConnectedAt   *time.Time         `db:"last_connected_at" json:"last_connected_at"`
 }
 
 func (q *Queries) Create(ctx context.Context, arg CreateParams) (*models.Agent, error) {
@@ -41,7 +41,7 @@ func (q *Queries) Create(ctx context.Context, arg CreateParams) (*models.Agent, 
 		arg.LastAssignmentRev,
 		arg.Tags,
 		arg.Config,
-		arg.LastOnlineAt,
+		arg.LastConnectedAt,
 	)
 	var i models.Agent
 	err := row.Scan(
@@ -57,7 +57,7 @@ func (q *Queries) Create(ctx context.Context, arg CreateParams) (*models.Agent, 
 		&i.Tags,
 		&i.Config,
 		&i.SystemInfo,
-		&i.LastOnlineAt,
+		&i.LastConnectedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -74,7 +74,7 @@ func (q *Queries) Delete(ctx context.Context, id string) error {
 }
 
 const getByID = `-- name: GetByID :one
-SELECT id, name, description, secret_hash, token_hint, fingerprint, last_assignment_rev, status, is_enabled, json(tags), json(config), json(system_info), last_online_at, created_at, updated_at FROM agents WHERE id=? LIMIT 1
+SELECT id, name, description, secret_hash, token_hint, fingerprint, last_assignment_rev, status, is_enabled, json(tags), json(config), json(system_info), last_connected_at, created_at, updated_at FROM agents WHERE id=? LIMIT 1
 `
 
 func (q *Queries) GetByID(ctx context.Context, id string) (*models.Agent, error) {
@@ -93,7 +93,7 @@ func (q *Queries) GetByID(ctx context.Context, id string) (*models.Agent, error)
 		&i.Tags,
 		&i.Config,
 		&i.SystemInfo,
-		&i.LastOnlineAt,
+		&i.LastConnectedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

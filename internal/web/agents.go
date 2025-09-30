@@ -219,18 +219,18 @@ func toAgentDTO(m *models.Agent) (AgentDTO, error) {
 	}
 
 	return AgentDTO{
-		ID:           m.ID,
-		Name:         m.Name,
-		Description:  m.Description,
-		TokenHint:    m.TokenHint,
-		Fingerprint:  m.Fingerprint,
-		Status:       m.Status,
-		IsEnabled:    m.IsEnabled,
-		Tags:         tags,
-		Config:       config,
-		SystemInfo:   systemInfo,
-		LastOnlineAt: m.LastOnlineAt,
-		CreatedAt:    m.CreatedAt,
-		UpdatedAt:    m.UpdatedAt,
+		ID:              m.ID,
+		Name:            m.Name,
+		Description:     m.Description,
+		TokenHint:       m.TokenHint,
+		Fingerprint:     m.Fingerprint,
+		Status:          m.Status,
+		IsEnabled:       m.IsEnabled,
+		Tags:            tags,
+		Config:          config,
+		SystemInfo:      systemInfo,
+		LastConnectedAt: m.LastConnectedAt,
+		CreatedAt:       m.CreatedAt,
+		UpdatedAt:       m.UpdatedAt,
 	}, nil
 }

@@ -2,6 +2,8 @@ package incidents
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
@@ -19,7 +21,15 @@ func (s *Service) GetByID(ctx context.Context, id string) (*models.Incident, err
 		return nil, storecmn.ErrEmptyID
 	}
 
-	return s.store.Incidents().GetByID(ctx, id)
+	item, err := s.store.Incidents().GetByID(ctx, id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, storecmn.ErrNotFound
+		}
+		return nil, err
+	}
+
+	return item, nil
 }
 
 // Delete removes an incident by its ID.

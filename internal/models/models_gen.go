@@ -23,7 +23,7 @@ type Agent struct {
 	Tags              storecmn.JSONField `db:"tags" json:"tags"`
 	Config            storecmn.JSONField `db:"config" json:"config"`
 	SystemInfo        storecmn.JSONField `db:"system_info" json:"system_info"`
-	LastOnlineAt      *time.Time         `db:"last_online_at" json:"last_online_at"`
+	LastConnectedAt   *time.Time         `db:"last_connected_at" json:"last_connected_at"`
 	CreatedAt         time.Time          `db:"created_at" json:"created_at"`
 	UpdatedAt         time.Time          `db:"updated_at" json:"updated_at"`
 }

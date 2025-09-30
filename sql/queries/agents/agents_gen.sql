@@ -1,5 +1,5 @@
 -- name: Create :one
-INSERT INTO agents (id, name, description, secret_hash, token_hint, last_assignment_rev, tags, config, last_online_at)
+INSERT INTO agents (id, name, description, secret_hash, token_hint, last_assignment_rev, tags, config, last_connected_at)
 	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 	RETURNING *;
 
