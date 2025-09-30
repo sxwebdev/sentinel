@@ -128,7 +128,7 @@ func hubStartCMD() *cli.Command {
 			}
 
 			// init agent rpc server
-			hubServer := hubserver.New(baseServices)
+			hubServer := hubserver.New(l, baseServices)
 
 			rpcServer := connectrpc_transport.NewServer(
 				connectrpc_transport.WithName("hub-server"),
@@ -138,7 +138,12 @@ func hubStartCMD() *cli.Command {
 				connectrpc_transport.WithServerHandlerWrapper(
 					func(h http.Handler) http.Handler {
 						return h2c.NewHandler(
-							handlerutils.WithCORS(h),
+							handlerutils.WithCORS(
+								hubserver.
+									NewInterceptor(l, baseServices).
+									ConnectRPCAuthMiddleware().
+									Wrap(h),
+							),
 							&http2.Server{})
 					},
 				),

@@ -2,12 +2,15 @@ syntax = "proto3";
 package sentinel.agent.v1;
 
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
 import "sentinel/common/v1/info.proto";
 import "sentinel/common/v1/status.proto";
 import "sentinel/service/v1/service.proto";
 
 // AgentService is the service for agent management
 service AgentService {
+  // Ping is a health check endpoint.
+  rpc Ping(google.protobuf.Empty) returns (google.protobuf.Empty);
   // Authenticate authenticates the agent and returns an authentication token.
   rpc Authenticate(AuthenticateRequest) returns (AuthenticateResponse);
   // ReportSystemInfo reports the system information of the agent.
@@ -30,7 +33,7 @@ enum AgentStatus {
 }
 
 message ServiceUpsert {
-  string rev = 1; // ревизия, к которой относится апдейт
+  string rev = 1;
   service.v1.Service service = 2;
 }
 

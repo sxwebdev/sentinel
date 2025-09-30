@@ -11,6 +11,7 @@ import (
 	v1 "github.com/sxwebdev/sentinel/internal/hub/hubserver/api/sentinel/service/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
@@ -727,7 +728,7 @@ var File_sentinel_agent_v1_agent_proto protoreflect.FileDescriptor
 
 const file_sentinel_agent_v1_agent_proto_rawDesc = "" +
 	"\n" +
-	"\x1dsentinel/agent/v1/agent.proto\x12\x11sentinel.agent.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1dsentinel/common/v1/info.proto\x1a\x1fsentinel/common/v1/status.proto\x1a!sentinel/service/v1/service.proto\"Y\n" +
+	"\x1dsentinel/agent/v1/agent.proto\x12\x11sentinel.agent.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1dsentinel/common/v1/info.proto\x1a\x1fsentinel/common/v1/status.proto\x1a!sentinel/service/v1/service.proto\"Y\n" +
 	"\rServiceUpsert\x12\x10\n" +
 	"\x03rev\x18\x01 \x01(\tR\x03rev\x126\n" +
 	"\aservice\x18\x02 \x01(\v2\x1c.sentinel.service.v1.ServiceR\aservice\"@\n" +
@@ -768,8 +769,9 @@ const file_sentinel_agent_v1_agent_proto_rawDesc = "" +
 	"\vAgentStatus\x12\x1c\n" +
 	"\x18AGENT_STATUS_UNSPECIFIED\x10\x00\x12\x17\n" +
 	"\x13AGENT_STATUS_ACTIVE\x10\x01\x12\x19\n" +
-	"\x15AGENT_STATUS_INACTIVE\x10\x022\x99\x04\n" +
-	"\fAgentService\x12_\n" +
+	"\x15AGENT_STATUS_INACTIVE\x10\x022\xd1\x04\n" +
+	"\fAgentService\x126\n" +
+	"\x04Ping\x12\x16.google.protobuf.Empty\x1a\x16.google.protobuf.Empty\x12_\n" +
 	"\fAuthenticate\x12&.sentinel.agent.v1.AuthenticateRequest\x1a'.sentinel.agent.v1.AuthenticateResponse\x12m\n" +
 	"\x10ReportSystemInfo\x12*.sentinel.agent.v1.ReportSystemInfoRequest\x1a+.sentinel.agent.v1.ReportSystemInfoResponse\"\x00\x12b\n" +
 	"\rFetchServices\x12'.sentinel.agent.v1.FetchServicesRequest\x1a(.sentinel.agent.v1.FetchServicesResponse\x12p\n" +
@@ -811,6 +813,7 @@ var file_sentinel_agent_v1_agent_proto_goTypes = []any{
 	(*v11.SystemInfo)(nil),            // 15: sentinel.common.v1.SystemInfo
 	(v11.ServiceStatus)(0),            // 16: sentinel.common.v1.ServiceStatus
 	(*timestamppb.Timestamp)(nil),     // 17: google.protobuf.Timestamp
+	(*emptypb.Empty)(nil),             // 18: google.protobuf.Empty
 }
 var file_sentinel_agent_v1_agent_proto_depIdxs = []int32{
 	14, // 0: sentinel.agent.v1.ServiceUpsert.service:type_name -> sentinel.service.v1.Service
@@ -822,18 +825,20 @@ var file_sentinel_agent_v1_agent_proto_depIdxs = []int32{
 	16, // 6: sentinel.agent.v1.CheckResult.status:type_name -> sentinel.common.v1.ServiceStatus
 	17, // 7: sentinel.agent.v1.CheckResult.checked_at:type_name -> google.protobuf.Timestamp
 	11, // 8: sentinel.agent.v1.StreamChecksRequest.results:type_name -> sentinel.agent.v1.CheckResult
-	3,  // 9: sentinel.agent.v1.AgentService.Authenticate:input_type -> sentinel.agent.v1.AuthenticateRequest
-	5,  // 10: sentinel.agent.v1.AgentService.ReportSystemInfo:input_type -> sentinel.agent.v1.ReportSystemInfoRequest
-	7,  // 11: sentinel.agent.v1.AgentService.FetchServices:input_type -> sentinel.agent.v1.FetchServicesRequest
-	9,  // 12: sentinel.agent.v1.AgentService.SubscribeServices:input_type -> sentinel.agent.v1.SubscribeServicesRequest
-	12, // 13: sentinel.agent.v1.AgentService.StreamChecks:input_type -> sentinel.agent.v1.StreamChecksRequest
-	4,  // 14: sentinel.agent.v1.AgentService.Authenticate:output_type -> sentinel.agent.v1.AuthenticateResponse
-	6,  // 15: sentinel.agent.v1.AgentService.ReportSystemInfo:output_type -> sentinel.agent.v1.ReportSystemInfoResponse
-	8,  // 16: sentinel.agent.v1.AgentService.FetchServices:output_type -> sentinel.agent.v1.FetchServicesResponse
-	10, // 17: sentinel.agent.v1.AgentService.SubscribeServices:output_type -> sentinel.agent.v1.SubscribeServicesResponse
-	13, // 18: sentinel.agent.v1.AgentService.StreamChecks:output_type -> sentinel.agent.v1.StreamChecksResponse
-	14, // [14:19] is the sub-list for method output_type
-	9,  // [9:14] is the sub-list for method input_type
+	18, // 9: sentinel.agent.v1.AgentService.Ping:input_type -> google.protobuf.Empty
+	3,  // 10: sentinel.agent.v1.AgentService.Authenticate:input_type -> sentinel.agent.v1.AuthenticateRequest
+	5,  // 11: sentinel.agent.v1.AgentService.ReportSystemInfo:input_type -> sentinel.agent.v1.ReportSystemInfoRequest
+	7,  // 12: sentinel.agent.v1.AgentService.FetchServices:input_type -> sentinel.agent.v1.FetchServicesRequest
+	9,  // 13: sentinel.agent.v1.AgentService.SubscribeServices:input_type -> sentinel.agent.v1.SubscribeServicesRequest
+	12, // 14: sentinel.agent.v1.AgentService.StreamChecks:input_type -> sentinel.agent.v1.StreamChecksRequest
+	18, // 15: sentinel.agent.v1.AgentService.Ping:output_type -> google.protobuf.Empty
+	4,  // 16: sentinel.agent.v1.AgentService.Authenticate:output_type -> sentinel.agent.v1.AuthenticateResponse
+	6,  // 17: sentinel.agent.v1.AgentService.ReportSystemInfo:output_type -> sentinel.agent.v1.ReportSystemInfoResponse
+	8,  // 18: sentinel.agent.v1.AgentService.FetchServices:output_type -> sentinel.agent.v1.FetchServicesResponse
+	10, // 19: sentinel.agent.v1.AgentService.SubscribeServices:output_type -> sentinel.agent.v1.SubscribeServicesResponse
+	13, // 20: sentinel.agent.v1.AgentService.StreamChecks:output_type -> sentinel.agent.v1.StreamChecksResponse
+	15, // [15:21] is the sub-list for method output_type
+	9,  // [9:15] is the sub-list for method input_type
 	9,  // [9:9] is the sub-list for extension type_name
 	9,  // [9:9] is the sub-list for extension extendee
 	0,  // [0:9] is the sub-list for field type_name

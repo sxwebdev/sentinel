@@ -7,6 +7,7 @@ import (
 
 	"github.com/shirou/gopsutil/v4/cpu"
 	"github.com/shirou/gopsutil/v4/host"
+	"github.com/sxwebdev/sentinel/internal/utils"
 )
 
 type SystemInfo struct {
@@ -46,6 +47,9 @@ func GetSystemInfo(version, commitHash, buildDate string) SystemInfo {
 	}
 
 	info.Hostname, _ = os.Hostname()
+
+	// get public ip address (fallbacks to local if unavailable)
+	info.IpAddress = utils.GetPublicIP()
 
 	if cpuInfo, err := cpu.Info(); err == nil && len(cpuInfo) > 0 {
 		info.CpuModel = cpuInfo[0].ModelName

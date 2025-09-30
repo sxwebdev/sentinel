@@ -59,7 +59,7 @@ func agentCMD() *cli.Command {
 					serverInfo := models.GetSystemInfo(version, commitHash, buildDate)
 
 					// init agent service
-					ag, err := agent.New(l, conf, serverInfo)
+					ag, err := agent.New(ctx, l, conf, serverInfo)
 					if err != nil {
 						return fmt.Errorf("failed to init agent: %w", err)
 					}

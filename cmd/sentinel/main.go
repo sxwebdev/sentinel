@@ -46,6 +46,11 @@ func main() {
 
 	l := logger.NewExtended(defaultLoggerOpts()...)
 
+	// check if os args constains agent command
+	if len(os.Args) > 1 && os.Args[1] == "agent" {
+		appName = "sentinel-agent"
+	}
+
 	app := &cli.Command{
 		Name:    appName,
 		Usage:   "A CLI application for " + appName,

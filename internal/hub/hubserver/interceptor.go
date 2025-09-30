@@ -68,15 +68,7 @@ func (s *Interceptor) authorize(_ context.Context, req *http.Request) (*AgentDat
 		return nil, nil //nolint:nilnil
 	}
 
-	// get access token from header
-	parts := strings.SplitN(req.Header.Get("Authorization"), " ", 2)
-	if len(parts) < 2 || parts[0] != "Sentinel" {
-		return nil, authn.Errorf("expected Sentinel authentication scheme")
-	}
-
-	token := parts[1]
-
-	agentID, secret, err := agents.ParseAuthHeader(token)
+	agentID, secret, err := agents.ParseAuthHeader(req.Header.Get("Authorization"))
 	if err != nil {
 		return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("failed to parse auth header: %w", err))
 	}

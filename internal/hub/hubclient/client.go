@@ -10,6 +10,7 @@ import (
 	"github.com/sxwebdev/sentinel/internal/models"
 	"github.com/tkcrm/mx/clients/connectrpc_client"
 	"github.com/tkcrm/mx/logger"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type Client struct {
@@ -20,7 +21,9 @@ type Client struct {
 }
 
 func New(
+	ctx context.Context,
 	l logger.Logger,
+	token string,
 	fingerprint string,
 	systemInfo models.SystemInfo,
 	connectRPCConfig connectrpc_client.Config,
@@ -30,13 +33,28 @@ func New(
 		systemInfo:  systemInfo,
 	}
 
-	agentsService, err := connectrpc_client.New(connectRPCConfig, l, agentv1connect.NewAgentServiceClient)
+	agentsService, err := connectrpc_client.New(
+		connectRPCConfig, l,
+		agentv1connect.NewAgentServiceClient,
+		connectrpc_client.WithContext(ctx),
+		connectrpc_client.WithConnectrpcOpts(
+			connect.WithInterceptors(
+				newInterceptor(token),
+			),
+		),
+	)
 	if err != nil {
 		return nil, err
 	}
 	c.agentsService = agentsService
 
 	return c, nil
+}
+
+// Ping checks the connectivity with the hub server.
+func (c *Client) Ping(ctx context.Context) error {
+	_, err := c.agentsService.Ping(ctx, connect.NewRequest(&emptypb.Empty{}))
+	return err
 }
 
 // Authenticate authenticates the client with the hub server.

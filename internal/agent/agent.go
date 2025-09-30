@@ -2,8 +2,10 @@ package agent
 
 import (
 	"context"
+	"sync"
 
 	"github.com/sxwebdev/sentinel/internal/config"
+	"github.com/sxwebdev/sentinel/internal/hub/hubclient"
 	"github.com/sxwebdev/sentinel/internal/models"
 	"github.com/tkcrm/mx/logger"
 )
@@ -19,11 +21,17 @@ type Agent struct {
 	token       string
 	fingerprint string
 
-	connectionManager *connectionManager
+	state ConnectionState
+
+	client *hubclient.Client
+
+	mu       sync.RWMutex
+	services []*models.Service
 }
 
 // New creates a new Agent instance
 func New(
+	ctx context.Context,
 	l logger.Logger,
 	config *config.ConfigAgent,
 	systemInfo models.SystemInfo,
@@ -38,7 +46,14 @@ func New(
 	a.fingerprint = a.getFingerprint()
 
 	var err error
-	a.connectionManager, err = newConnectionManager(a)
+	a.client, err = hubclient.New(
+		ctx,
+		a.logger,
+		a.token,
+		a.fingerprint,
+		a.systemInfo,
+		config.HubServer,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -47,16 +62,25 @@ func New(
 }
 
 // Name returns the name of the agent
-func (a *Agent) Name() string {
+func (s *Agent) Name() string {
 	return "sentinel-agent"
 }
 
 // Start starts the agent
-func (a *Agent) Start(_ context.Context) error {
+func (s *Agent) Start(ctx context.Context) error {
+	go s.initConnection(ctx)
+
 	return nil
 }
 
 // Stop stops the agent
-func (a *Agent) Stop(_ context.Context) error {
+func (s *Agent) Stop(_ context.Context) error {
 	return nil
+}
+
+// setServices sets the services fetched from the hub server
+func (s *Agent) setServices(services []*models.Service) {
+	s.mu.Lock()
+	s.services = services
+	s.mu.Unlock()
 }

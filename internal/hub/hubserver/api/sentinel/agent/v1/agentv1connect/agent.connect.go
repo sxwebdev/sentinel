@@ -9,6 +9,7 @@ import (
 	context "context"
 	errors "errors"
 	v1 "github.com/sxwebdev/sentinel/internal/hub/hubserver/api/sentinel/agent/v1"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	http "net/http"
 	strings "strings"
 )
@@ -33,6 +34,8 @@ const (
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
+	// AgentServicePingProcedure is the fully-qualified name of the AgentService's Ping RPC.
+	AgentServicePingProcedure = "/sentinel.agent.v1.AgentService/Ping"
 	// AgentServiceAuthenticateProcedure is the fully-qualified name of the AgentService's Authenticate
 	// RPC.
 	AgentServiceAuthenticateProcedure = "/sentinel.agent.v1.AgentService/Authenticate"
@@ -52,6 +55,8 @@ const (
 
 // AgentServiceClient is a client for the sentinel.agent.v1.AgentService service.
 type AgentServiceClient interface {
+	// Ping is a health check endpoint.
+	Ping(context.Context, *connect.Request[emptypb.Empty]) (*connect.Response[emptypb.Empty], error)
 	// Authenticate authenticates the agent and returns an authentication token.
 	Authenticate(context.Context, *connect.Request[v1.AuthenticateRequest]) (*connect.Response[v1.AuthenticateResponse], error)
 	// ReportSystemInfo reports the system information of the agent.
@@ -75,6 +80,12 @@ func NewAgentServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 	baseURL = strings.TrimRight(baseURL, "/")
 	agentServiceMethods := v1.File_sentinel_agent_v1_agent_proto.Services().ByName("AgentService").Methods()
 	return &agentServiceClient{
+		ping: connect.NewClient[emptypb.Empty, emptypb.Empty](
+			httpClient,
+			baseURL+AgentServicePingProcedure,
+			connect.WithSchema(agentServiceMethods.ByName("Ping")),
+			connect.WithClientOptions(opts...),
+		),
 		authenticate: connect.NewClient[v1.AuthenticateRequest, v1.AuthenticateResponse](
 			httpClient,
 			baseURL+AgentServiceAuthenticateProcedure,
@@ -110,11 +121,17 @@ func NewAgentServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 
 // agentServiceClient implements AgentServiceClient.
 type agentServiceClient struct {
+	ping              *connect.Client[emptypb.Empty, emptypb.Empty]
 	authenticate      *connect.Client[v1.AuthenticateRequest, v1.AuthenticateResponse]
 	reportSystemInfo  *connect.Client[v1.ReportSystemInfoRequest, v1.ReportSystemInfoResponse]
 	fetchServices     *connect.Client[v1.FetchServicesRequest, v1.FetchServicesResponse]
 	subscribeServices *connect.Client[v1.SubscribeServicesRequest, v1.SubscribeServicesResponse]
 	streamChecks      *connect.Client[v1.StreamChecksRequest, v1.StreamChecksResponse]
+}
+
+// Ping calls sentinel.agent.v1.AgentService.Ping.
+func (c *agentServiceClient) Ping(ctx context.Context, req *connect.Request[emptypb.Empty]) (*connect.Response[emptypb.Empty], error) {
+	return c.ping.CallUnary(ctx, req)
 }
 
 // Authenticate calls sentinel.agent.v1.AgentService.Authenticate.
@@ -144,6 +161,8 @@ func (c *agentServiceClient) StreamChecks(ctx context.Context) *connect.BidiStre
 
 // AgentServiceHandler is an implementation of the sentinel.agent.v1.AgentService service.
 type AgentServiceHandler interface {
+	// Ping is a health check endpoint.
+	Ping(context.Context, *connect.Request[emptypb.Empty]) (*connect.Response[emptypb.Empty], error)
 	// Authenticate authenticates the agent and returns an authentication token.
 	Authenticate(context.Context, *connect.Request[v1.AuthenticateRequest]) (*connect.Response[v1.AuthenticateResponse], error)
 	// ReportSystemInfo reports the system information of the agent.
@@ -163,6 +182,12 @@ type AgentServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewAgentServiceHandler(svc AgentServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
 	agentServiceMethods := v1.File_sentinel_agent_v1_agent_proto.Services().ByName("AgentService").Methods()
+	agentServicePingHandler := connect.NewUnaryHandler(
+		AgentServicePingProcedure,
+		svc.Ping,
+		connect.WithSchema(agentServiceMethods.ByName("Ping")),
+		connect.WithHandlerOptions(opts...),
+	)
 	agentServiceAuthenticateHandler := connect.NewUnaryHandler(
 		AgentServiceAuthenticateProcedure,
 		svc.Authenticate,
@@ -195,6 +220,8 @@ func NewAgentServiceHandler(svc AgentServiceHandler, opts ...connect.HandlerOpti
 	)
 	return "/sentinel.agent.v1.AgentService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
+		case AgentServicePingProcedure:
+			agentServicePingHandler.ServeHTTP(w, r)
 		case AgentServiceAuthenticateProcedure:
 			agentServiceAuthenticateHandler.ServeHTTP(w, r)
 		case AgentServiceReportSystemInfoProcedure:
@@ -213,6 +240,10 @@ func NewAgentServiceHandler(svc AgentServiceHandler, opts ...connect.HandlerOpti
 
 // UnimplementedAgentServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedAgentServiceHandler struct{}
+
+func (UnimplementedAgentServiceHandler) Ping(context.Context, *connect.Request[emptypb.Empty]) (*connect.Response[emptypb.Empty], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("sentinel.agent.v1.AgentService.Ping is not implemented"))
+}
 
 func (UnimplementedAgentServiceHandler) Authenticate(context.Context, *connect.Request[v1.AuthenticateRequest]) (*connect.Response[v1.AuthenticateResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("sentinel.agent.v1.AgentService.Authenticate is not implemented"))
