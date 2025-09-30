@@ -354,7 +354,7 @@ Wants=network.target
 Type=simple
 User=$SERVICE_USER
 Group=$SERVICE_USER
-ExecStart=$BINARY_PATH start --config $CONFIG_FILE
+ExecStart=$BINARY_PATH hub start --config $CONFIG_FILE
 WorkingDirectory=$CONFIG_DIR
 
 # Restart policy

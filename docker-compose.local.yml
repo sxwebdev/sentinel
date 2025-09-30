@@ -8,7 +8,7 @@ services:
         VERSION: local-dev
         COMMIT_HASH: local
         BUILD_DATE: local
-    command: ["start", "--config", "./config.yaml"]
+    command: ["hub", "start", "--config", "./config.yaml"]
     ports:
       - "8080:8080"
     volumes:

@@ -19,7 +19,7 @@ help: ## Show this help message
 
 # Development
 hub: ## Run in development mode with auto-reload
-	go run $(SENTINEL_PATH) start -c ./config.yaml
+	go run $(SENTINEL_PATH) hub start -c ./config.yaml
 
 agent: ## Run in development mode with auto-reload
 	go run $(SENTINEL_PATH) agent start -c ./config-agent.yaml
