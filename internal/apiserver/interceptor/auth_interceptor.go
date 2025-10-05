@@ -20,6 +20,7 @@ import (
 var availableMethodsBeforeAuth = map[string]struct{}{
 	// Auth
 	authv1connect.AuthServiceAuthorizationProcedure: {},
+	authv1connect.AuthServiceAuthenticateProcedure:  {},
 	authv1connect.AuthServiceRefreshTokenProcedure:  {},
 
 	// System

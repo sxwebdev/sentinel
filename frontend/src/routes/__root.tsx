@@ -1,17 +1,18 @@
-import { createRootRoute } from "@tanstack/react-router";
+import type { AuthState } from "@/app/providers/auth/hooks";
+import { createRootRouteWithContext, Outlet } from "@tanstack/react-router";
 import { Toaster } from "sonner";
 // import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 
-import App from "@/app/app";
+interface MyRouterContext {
+  auth: AuthState;
+}
 
-const RootComponent = () => (
-  <>
-    <App />
-    <Toaster />
-    {/* <TanStackRouterDevtools /> */}
-  </>
-);
-
-export const Route = createRootRoute({
-  component: RootComponent,
+export const Route = createRootRouteWithContext<MyRouterContext>()({
+  component: () => (
+    <>
+      <Outlet />
+      <Toaster />
+      {/* <TanStackRouterDevtools /> */}
+    </>
+  ),
 });

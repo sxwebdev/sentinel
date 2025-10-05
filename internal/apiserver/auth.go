@@ -9,6 +9,7 @@ import (
 	authpbv1 "github.com/sxwebdev/sentinel/internal/hub/hubserver/api/sentinel/auth/v1"
 	"github.com/sxwebdev/sentinel/internal/hub/hubserver/api/sentinel/auth/v1/authv1connect"
 	"github.com/sxwebdev/sentinel/internal/servers/hutils"
+	"github.com/sxwebdev/sentinel/internal/servers/ptconverts"
 	"github.com/sxwebdev/sentinel/internal/services/auth"
 	"github.com/sxwebdev/sentinel/internal/services/baseservices"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -72,13 +73,49 @@ func (s *AuthServer) Authorization(
 	}
 
 	resp := &authpbv1.AuthorizationResponse{
-		AuthData: &authpbv1.AuthPayload{
+		AuthPayload: &authpbv1.AuthPayload{
 			AccessToken:           data.SessionPair.AccessToken,
 			RefreshToken:          data.SessionPair.RefreshToken,
 			AccessTokenExpiredAt:  timestamppb.New(data.AccessTokenData.Expiry),
 			RefreshTokenExpiredAt: timestamppb.New(data.RefreshTokenData.Expiry),
 			DeviceId:              data.AccessTokenData.AdditionalData.DeviceInfo.DeviceID,
 		},
+		User: ptconverts.ConvertUserToProto(data.User),
+	}
+
+	res := connect.NewResponse(resp)
+
+	return res, nil
+}
+
+/*
+Authenticate
+*/
+func (s *AuthServer) Authenticate(
+	ctx context.Context,
+	req *connect.Request[authpbv1.AuthenticateRequest],
+) (*connect.Response[authpbv1.AuthenticateResponse], error) {
+	if req.Msg.GetAccessToken() == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("access token is required"))
+	}
+
+	claims, err := s.baseServices.Auth().Manager().Authenticate(ctx, req.Msg.GetAccessToken())
+	if err != nil {
+		return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("invalid access token: %w", err))
+	}
+
+	if claims == nil {
+		return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("empty claims"))
+	}
+
+	// get user
+	user, err := s.baseServices.Users().GetByID(ctx, claims.UserID)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("get user id: %w", err))
+	}
+
+	resp := &authpbv1.AuthenticateResponse{
+		User: ptconverts.ConvertUserToProto(user),
 	}
 
 	res := connect.NewResponse(resp)

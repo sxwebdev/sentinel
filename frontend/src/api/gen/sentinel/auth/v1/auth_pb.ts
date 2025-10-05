@@ -6,13 +6,15 @@ import type { GenEnum, GenFile, GenMessage, GenService } from "@bufbuild/protobu
 import { enumDesc, fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
 import type { Timestamp } from "@bufbuild/protobuf/wkt";
 import { file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
+import type { User } from "../../users/v1/users_pb";
+import { file_sentinel_users_v1_users } from "../../users/v1/users_pb";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file sentinel/auth/v1/auth.proto.
  */
 export const file_sentinel_auth_v1_auth: GenFile = /*@__PURE__*/
-  fileDesc("ChtzZW50aW5lbC9hdXRoL3YxL2F1dGgucHJvdG8SEHNlbnRpbmVsLmF1dGgudjEipQEKCkRldmljZUluZm8SEQoJZGV2aWNlX2lkGAEgASgJEjEKC2RldmljZV90eXBlGAIgASgOMhwuc2VudGluZWwuYXV0aC52MS5EZXZpY2VUeXBlEhMKC2RldmljZV9uYW1lGAMgASgJEhMKC2ZpbmdlcnByaW50GAQgASgJEhIKCm9zX3ZlcnNpb24YBSABKAkSEwoLYXBwX3ZlcnNpb24YBiABKAkiiQEKB1Nlc3Npb24SMQoLZGV2aWNlX2luZm8YASABKAsyHC5zZW50aW5lbC5hdXRoLnYxLkRldmljZUluZm8SDwoHY291bnRyeRgCIAEoCRIKCgJpcBgDIAEoCRIuCgpjcmVhdGVkX2F0GAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCJqChRBdXRob3JpemF0aW9uUmVxdWVzdBINCgVlbWFpbBgBIAEoCRIQCghwYXNzd29yZBgCIAEoCRIxCgtkZXZpY2VfaW5mbxgEIAEoCzIcLnNlbnRpbmVsLmF1dGgudjEuRGV2aWNlSW5mbyL6AQoLQXV0aFBheWxvYWQSFAoMYWNjZXNzX3Rva2VuGAEgASgJEhUKDXJlZnJlc2hfdG9rZW4YAiABKAkSOwoXYWNjZXNzX3Rva2VuX2V4cGlyZWRfYXQYAyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEjwKGHJlZnJlc2hfdG9rZW5fZXhwaXJlZF9hdBgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASEQoJZGV2aWNlX2lkGAUgASgJEhwKD29yZ2FuaXphdGlvbl9pZBgGIAEoCUgAiAEBQhIKEF9vcmdhbml6YXRpb25faWQiSQoVQXV0aG9yaXphdGlvblJlc3BvbnNlEjAKCWF1dGhfZGF0YRgBIAEoCzIdLnNlbnRpbmVsLmF1dGgudjEuQXV0aFBheWxvYWQiLAoTUmVmcmVzaFRva2VuUmVxdWVzdBIVCg1yZWZyZXNoX3Rva2VuGAEgASgJIr4BChRSZWZyZXNoVG9rZW5SZXNwb25zZRIUCgxhY2Nlc3NfdG9rZW4YASABKAkSFQoNcmVmcmVzaF90b2tlbhgCIAEoCRI7ChdhY2Nlc3NfdG9rZW5fZXhwaXJlZF9hdBgDIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASPAoYcmVmcmVzaF90b2tlbl9leHBpcmVkX2F0GAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCIXChVBY3RpdmVTZXNzaW9uc1JlcXVlc3QiRQoWQWN0aXZlU2Vzc2lvbnNSZXNwb25zZRIrCghzZXNzaW9ucxgBIAMoCzIZLnNlbnRpbmVsLmF1dGgudjEuU2Vzc2lvbiIpChREZWxldGVTZXNzaW9uUmVxdWVzdBIRCglkZXZpY2VfaWQYASABKAkiFwoVRGVsZXRlU2Vzc2lvblJlc3BvbnNlIkMKG1Rlcm1pbmF0ZUFsbFNlc3Npb25zUmVxdWVzdBIWCglkZXZpY2VfaWQYASABKAlIAIgBAUIMCgpfZGV2aWNlX2lkIh4KHFRlcm1pbmF0ZUFsbFNlc3Npb25zUmVzcG9uc2UiDwoNTG9nb3V0UmVxdWVzdCIQCg5Mb2dvdXRSZXNwb25zZSo+CgpEZXZpY2VUeXBlEhsKF0RFVklDRV9UWVBFX1VOU1BFQ0lGSUVEEAASEwoPREVWSUNFX1RZUEVfV0VCEAEy5QQKC0F1dGhTZXJ2aWNlEmIKDUF1dGhvcml6YXRpb24SJi5zZW50aW5lbC5hdXRoLnYxLkF1dGhvcml6YXRpb25SZXF1ZXN0Gicuc2VudGluZWwuYXV0aC52MS5BdXRob3JpemF0aW9uUmVzcG9uc2UiABJfCgxSZWZyZXNoVG9rZW4SJS5zZW50aW5lbC5hdXRoLnYxLlJlZnJlc2hUb2tlblJlcXVlc3QaJi5zZW50aW5lbC5hdXRoLnYxLlJlZnJlc2hUb2tlblJlc3BvbnNlIgASTQoGTG9nb3V0Eh8uc2VudGluZWwuYXV0aC52MS5Mb2dvdXRSZXF1ZXN0GiAuc2VudGluZWwuYXV0aC52MS5Mb2dvdXRSZXNwb25zZSIAEmUKDkFjdGl2ZVNlc3Npb25zEicuc2VudGluZWwuYXV0aC52MS5BY3RpdmVTZXNzaW9uc1JlcXVlc3QaKC5zZW50aW5lbC5hdXRoLnYxLkFjdGl2ZVNlc3Npb25zUmVzcG9uc2UiABJiCg1EZWxldGVTZXNzaW9uEiYuc2VudGluZWwuYXV0aC52MS5EZWxldGVTZXNzaW9uUmVxdWVzdBonLnNlbnRpbmVsLmF1dGgudjEuRGVsZXRlU2Vzc2lvblJlc3BvbnNlIgASdwoUVGVybWluYXRlQWxsU2Vzc2lvbnMSLS5zZW50aW5lbC5hdXRoLnYxLlRlcm1pbmF0ZUFsbFNlc3Npb25zUmVxdWVzdBouLnNlbnRpbmVsLmF1dGgudjEuVGVybWluYXRlQWxsU2Vzc2lvbnNSZXNwb25zZSIAQtQBChRjb20uc2VudGluZWwuYXV0aC52MUIJQXV0aFByb3RvUAFaT2dpdGh1Yi5jb20vc3h3ZWJkZXYvc2VudGluZWwvaW50ZXJuYWwvaHViL2h1YnNlcnZlci9hcGkvc2VudGluZWwvYXV0aC92MTthdXRodjGiAgNTQViqAhBTZW50aW5lbC5BdXRoLlYxygIQU2VudGluZWxcQXV0aFxWMeICHFNlbnRpbmVsXEF1dGhcVjFcR1BCTWV0YWRhdGHqAhJTZW50aW5lbDo6QXV0aDo6VjFiBnByb3RvMw", [file_google_protobuf_timestamp]);
+  fileDesc("ChtzZW50aW5lbC9hdXRoL3YxL2F1dGgucHJvdG8SEHNlbnRpbmVsLmF1dGgudjEipQEKCkRldmljZUluZm8SEQoJZGV2aWNlX2lkGAEgASgJEjEKC2RldmljZV90eXBlGAIgASgOMhwuc2VudGluZWwuYXV0aC52MS5EZXZpY2VUeXBlEhMKC2RldmljZV9uYW1lGAMgASgJEhMKC2ZpbmdlcnByaW50GAQgASgJEhIKCm9zX3ZlcnNpb24YBSABKAkSEwoLYXBwX3ZlcnNpb24YBiABKAkiiQEKB1Nlc3Npb24SMQoLZGV2aWNlX2luZm8YASABKAsyHC5zZW50aW5lbC5hdXRoLnYxLkRldmljZUluZm8SDwoHY291bnRyeRgCIAEoCRIKCgJpcBgDIAEoCRIuCgpjcmVhdGVkX2F0GAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCJqChRBdXRob3JpemF0aW9uUmVxdWVzdBINCgVlbWFpbBgBIAEoCRIQCghwYXNzd29yZBgCIAEoCRIxCgtkZXZpY2VfaW5mbxgEIAEoCzIcLnNlbnRpbmVsLmF1dGgudjEuRGV2aWNlSW5mbyL6AQoLQXV0aFBheWxvYWQSFAoMYWNjZXNzX3Rva2VuGAEgASgJEhUKDXJlZnJlc2hfdG9rZW4YAiABKAkSOwoXYWNjZXNzX3Rva2VuX2V4cGlyZWRfYXQYAyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEjwKGHJlZnJlc2hfdG9rZW5fZXhwaXJlZF9hdBgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASEQoJZGV2aWNlX2lkGAUgASgJEhwKD29yZ2FuaXphdGlvbl9pZBgGIAEoCUgAiAEBQhIKEF9vcmdhbml6YXRpb25faWQicwoVQXV0aG9yaXphdGlvblJlc3BvbnNlEjMKDGF1dGhfcGF5bG9hZBgBIAEoCzIdLnNlbnRpbmVsLmF1dGgudjEuQXV0aFBheWxvYWQSJQoEdXNlchgCIAEoCzIXLnNlbnRpbmVsLnVzZXJzLnYxLlVzZXIiKwoTQXV0aGVudGljYXRlUmVxdWVzdBIUCgxhY2Nlc3NfdG9rZW4YASABKAkiPQoUQXV0aGVudGljYXRlUmVzcG9uc2USJQoEdXNlchgCIAEoCzIXLnNlbnRpbmVsLnVzZXJzLnYxLlVzZXIiLAoTUmVmcmVzaFRva2VuUmVxdWVzdBIVCg1yZWZyZXNoX3Rva2VuGAEgASgJIr4BChRSZWZyZXNoVG9rZW5SZXNwb25zZRIUCgxhY2Nlc3NfdG9rZW4YASABKAkSFQoNcmVmcmVzaF90b2tlbhgCIAEoCRI7ChdhY2Nlc3NfdG9rZW5fZXhwaXJlZF9hdBgDIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASPAoYcmVmcmVzaF90b2tlbl9leHBpcmVkX2F0GAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCIXChVBY3RpdmVTZXNzaW9uc1JlcXVlc3QiRQoWQWN0aXZlU2Vzc2lvbnNSZXNwb25zZRIrCghzZXNzaW9ucxgBIAMoCzIZLnNlbnRpbmVsLmF1dGgudjEuU2Vzc2lvbiIpChREZWxldGVTZXNzaW9uUmVxdWVzdBIRCglkZXZpY2VfaWQYASABKAkiFwoVRGVsZXRlU2Vzc2lvblJlc3BvbnNlIkMKG1Rlcm1pbmF0ZUFsbFNlc3Npb25zUmVxdWVzdBIWCglkZXZpY2VfaWQYASABKAlIAIgBAUIMCgpfZGV2aWNlX2lkIh4KHFRlcm1pbmF0ZUFsbFNlc3Npb25zUmVzcG9uc2UiDwoNTG9nb3V0UmVxdWVzdCIQCg5Mb2dvdXRSZXNwb25zZSo+CgpEZXZpY2VUeXBlEhsKF0RFVklDRV9UWVBFX1VOU1BFQ0lGSUVEEAASEwoPREVWSUNFX1RZUEVfV0VCEAEyxgUKC0F1dGhTZXJ2aWNlEmIKDUF1dGhvcml6YXRpb24SJi5zZW50aW5lbC5hdXRoLnYxLkF1dGhvcml6YXRpb25SZXF1ZXN0Gicuc2VudGluZWwuYXV0aC52MS5BdXRob3JpemF0aW9uUmVzcG9uc2UiABJfCgxBdXRoZW50aWNhdGUSJS5zZW50aW5lbC5hdXRoLnYxLkF1dGhlbnRpY2F0ZVJlcXVlc3QaJi5zZW50aW5lbC5hdXRoLnYxLkF1dGhlbnRpY2F0ZVJlc3BvbnNlIgASXwoMUmVmcmVzaFRva2VuEiUuc2VudGluZWwuYXV0aC52MS5SZWZyZXNoVG9rZW5SZXF1ZXN0GiYuc2VudGluZWwuYXV0aC52MS5SZWZyZXNoVG9rZW5SZXNwb25zZSIAEk0KBkxvZ291dBIfLnNlbnRpbmVsLmF1dGgudjEuTG9nb3V0UmVxdWVzdBogLnNlbnRpbmVsLmF1dGgudjEuTG9nb3V0UmVzcG9uc2UiABJlCg5BY3RpdmVTZXNzaW9ucxInLnNlbnRpbmVsLmF1dGgudjEuQWN0aXZlU2Vzc2lvbnNSZXF1ZXN0Giguc2VudGluZWwuYXV0aC52MS5BY3RpdmVTZXNzaW9uc1Jlc3BvbnNlIgASYgoNRGVsZXRlU2Vzc2lvbhImLnNlbnRpbmVsLmF1dGgudjEuRGVsZXRlU2Vzc2lvblJlcXVlc3QaJy5zZW50aW5lbC5hdXRoLnYxLkRlbGV0ZVNlc3Npb25SZXNwb25zZSIAEncKFFRlcm1pbmF0ZUFsbFNlc3Npb25zEi0uc2VudGluZWwuYXV0aC52MS5UZXJtaW5hdGVBbGxTZXNzaW9uc1JlcXVlc3QaLi5zZW50aW5lbC5hdXRoLnYxLlRlcm1pbmF0ZUFsbFNlc3Npb25zUmVzcG9uc2UiAELUAQoUY29tLnNlbnRpbmVsLmF1dGgudjFCCUF1dGhQcm90b1ABWk9naXRodWIuY29tL3N4d2ViZGV2L3NlbnRpbmVsL2ludGVybmFsL2h1Yi9odWJzZXJ2ZXIvYXBpL3NlbnRpbmVsL2F1dGgvdjE7YXV0aHYxogIDU0FYqgIQU2VudGluZWwuQXV0aC5WMcoCEFNlbnRpbmVsXEF1dGhcVjHiAhxTZW50aW5lbFxBdXRoXFYxXEdQQk1ldGFkYXRh6gISU2VudGluZWw6OkF1dGg6OlYxYgZwcm90bzM", [file_google_protobuf_timestamp, file_sentinel_users_v1_users]);
 
 /**
  * @generated from message sentinel.auth.v1.DeviceInfo
@@ -164,9 +166,14 @@ export const AuthPayloadSchema: GenMessage<AuthPayload> = /*@__PURE__*/
  */
 export type AuthorizationResponse = Message<"sentinel.auth.v1.AuthorizationResponse"> & {
   /**
-   * @generated from field: sentinel.auth.v1.AuthPayload auth_data = 1;
+   * @generated from field: sentinel.auth.v1.AuthPayload auth_payload = 1;
    */
-  authData?: AuthPayload;
+  authPayload?: AuthPayload;
+
+  /**
+   * @generated from field: sentinel.users.v1.User user = 2;
+   */
+  user?: User;
 };
 
 /**
@@ -175,6 +182,42 @@ export type AuthorizationResponse = Message<"sentinel.auth.v1.AuthorizationRespo
  */
 export const AuthorizationResponseSchema: GenMessage<AuthorizationResponse> = /*@__PURE__*/
   messageDesc(file_sentinel_auth_v1_auth, 4);
+
+/**
+ * Authenticate
+ *
+ * @generated from message sentinel.auth.v1.AuthenticateRequest
+ */
+export type AuthenticateRequest = Message<"sentinel.auth.v1.AuthenticateRequest"> & {
+  /**
+   * @generated from field: string access_token = 1;
+   */
+  accessToken: string;
+};
+
+/**
+ * Describes the message sentinel.auth.v1.AuthenticateRequest.
+ * Use `create(AuthenticateRequestSchema)` to create a new message.
+ */
+export const AuthenticateRequestSchema: GenMessage<AuthenticateRequest> = /*@__PURE__*/
+  messageDesc(file_sentinel_auth_v1_auth, 5);
+
+/**
+ * @generated from message sentinel.auth.v1.AuthenticateResponse
+ */
+export type AuthenticateResponse = Message<"sentinel.auth.v1.AuthenticateResponse"> & {
+  /**
+   * @generated from field: sentinel.users.v1.User user = 2;
+   */
+  user?: User;
+};
+
+/**
+ * Describes the message sentinel.auth.v1.AuthenticateResponse.
+ * Use `create(AuthenticateResponseSchema)` to create a new message.
+ */
+export const AuthenticateResponseSchema: GenMessage<AuthenticateResponse> = /*@__PURE__*/
+  messageDesc(file_sentinel_auth_v1_auth, 6);
 
 /**
  * Refresh token
@@ -193,7 +236,7 @@ export type RefreshTokenRequest = Message<"sentinel.auth.v1.RefreshTokenRequest"
  * Use `create(RefreshTokenRequestSchema)` to create a new message.
  */
 export const RefreshTokenRequestSchema: GenMessage<RefreshTokenRequest> = /*@__PURE__*/
-  messageDesc(file_sentinel_auth_v1_auth, 5);
+  messageDesc(file_sentinel_auth_v1_auth, 7);
 
 /**
  * @generated from message sentinel.auth.v1.RefreshTokenResponse
@@ -225,7 +268,7 @@ export type RefreshTokenResponse = Message<"sentinel.auth.v1.RefreshTokenRespons
  * Use `create(RefreshTokenResponseSchema)` to create a new message.
  */
 export const RefreshTokenResponseSchema: GenMessage<RefreshTokenResponse> = /*@__PURE__*/
-  messageDesc(file_sentinel_auth_v1_auth, 6);
+  messageDesc(file_sentinel_auth_v1_auth, 8);
 
 /**
  * Active sessions
@@ -240,7 +283,7 @@ export type ActiveSessionsRequest = Message<"sentinel.auth.v1.ActiveSessionsRequ
  * Use `create(ActiveSessionsRequestSchema)` to create a new message.
  */
 export const ActiveSessionsRequestSchema: GenMessage<ActiveSessionsRequest> = /*@__PURE__*/
-  messageDesc(file_sentinel_auth_v1_auth, 7);
+  messageDesc(file_sentinel_auth_v1_auth, 9);
 
 /**
  * @generated from message sentinel.auth.v1.ActiveSessionsResponse
@@ -257,7 +300,7 @@ export type ActiveSessionsResponse = Message<"sentinel.auth.v1.ActiveSessionsRes
  * Use `create(ActiveSessionsResponseSchema)` to create a new message.
  */
 export const ActiveSessionsResponseSchema: GenMessage<ActiveSessionsResponse> = /*@__PURE__*/
-  messageDesc(file_sentinel_auth_v1_auth, 8);
+  messageDesc(file_sentinel_auth_v1_auth, 10);
 
 /**
  * Delete session
@@ -276,7 +319,7 @@ export type DeleteSessionRequest = Message<"sentinel.auth.v1.DeleteSessionReques
  * Use `create(DeleteSessionRequestSchema)` to create a new message.
  */
 export const DeleteSessionRequestSchema: GenMessage<DeleteSessionRequest> = /*@__PURE__*/
-  messageDesc(file_sentinel_auth_v1_auth, 9);
+  messageDesc(file_sentinel_auth_v1_auth, 11);
 
 /**
  * @generated from message sentinel.auth.v1.DeleteSessionResponse
@@ -289,7 +332,7 @@ export type DeleteSessionResponse = Message<"sentinel.auth.v1.DeleteSessionRespo
  * Use `create(DeleteSessionResponseSchema)` to create a new message.
  */
 export const DeleteSessionResponseSchema: GenMessage<DeleteSessionResponse> = /*@__PURE__*/
-  messageDesc(file_sentinel_auth_v1_auth, 10);
+  messageDesc(file_sentinel_auth_v1_auth, 12);
 
 /**
  * Terminate all sessions
@@ -311,7 +354,7 @@ export type TerminateAllSessionsRequest = Message<"sentinel.auth.v1.TerminateAll
  * Use `create(TerminateAllSessionsRequestSchema)` to create a new message.
  */
 export const TerminateAllSessionsRequestSchema: GenMessage<TerminateAllSessionsRequest> = /*@__PURE__*/
-  messageDesc(file_sentinel_auth_v1_auth, 11);
+  messageDesc(file_sentinel_auth_v1_auth, 13);
 
 /**
  * @generated from message sentinel.auth.v1.TerminateAllSessionsResponse
@@ -324,7 +367,7 @@ export type TerminateAllSessionsResponse = Message<"sentinel.auth.v1.TerminateAl
  * Use `create(TerminateAllSessionsResponseSchema)` to create a new message.
  */
 export const TerminateAllSessionsResponseSchema: GenMessage<TerminateAllSessionsResponse> = /*@__PURE__*/
-  messageDesc(file_sentinel_auth_v1_auth, 12);
+  messageDesc(file_sentinel_auth_v1_auth, 14);
 
 /**
  * Logout
@@ -339,7 +382,7 @@ export type LogoutRequest = Message<"sentinel.auth.v1.LogoutRequest"> & {
  * Use `create(LogoutRequestSchema)` to create a new message.
  */
 export const LogoutRequestSchema: GenMessage<LogoutRequest> = /*@__PURE__*/
-  messageDesc(file_sentinel_auth_v1_auth, 13);
+  messageDesc(file_sentinel_auth_v1_auth, 15);
 
 /**
  * @generated from message sentinel.auth.v1.LogoutResponse
@@ -352,7 +395,7 @@ export type LogoutResponse = Message<"sentinel.auth.v1.LogoutResponse"> & {
  * Use `create(LogoutResponseSchema)` to create a new message.
  */
 export const LogoutResponseSchema: GenMessage<LogoutResponse> = /*@__PURE__*/
-  messageDesc(file_sentinel_auth_v1_auth, 14);
+  messageDesc(file_sentinel_auth_v1_auth, 16);
 
 /**
  * @generated from enum sentinel.auth.v1.DeviceType
@@ -390,6 +433,14 @@ export const AuthService: GenService<{
     methodKind: "unary";
     input: typeof AuthorizationRequestSchema;
     output: typeof AuthorizationResponseSchema;
+  },
+  /**
+   * @generated from rpc sentinel.auth.v1.AuthService.Authenticate
+   */
+  authenticate: {
+    methodKind: "unary";
+    input: typeof AuthenticateRequestSchema;
+    output: typeof AuthenticateResponseSchema;
   },
   /**
    * @generated from rpc sentinel.auth.v1.AuthService.RefreshToken

@@ -2,19 +2,46 @@ package users
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 
 	"github.com/sxwebdev/sentinel/internal/models"
 	"github.com/sxwebdev/sentinel/internal/store/repos/repo_users"
+	"github.com/sxwebdev/sentinel/internal/store/storecmn"
 )
 
 // GetByID gets user by ID
 func (s *Service) GetByID(ctx context.Context, id string) (*models.User, error) {
-	return s.store.Users().GetByID(ctx, id)
+	if id == "" {
+		return nil, storecmn.ErrEmptyID
+	}
+
+	item, err := s.store.Users().GetByID(ctx, id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, storecmn.ErrNotFound
+		}
+		return nil, err
+	}
+
+	return item, nil
 }
 
 // GetByEmail gets user by email
 func (s *Service) GetByEmail(ctx context.Context, email string) (*models.User, error) {
-	return s.store.Users().GetByEmail(ctx, email)
+	if email == "" {
+		return nil, storecmn.ErrEmptyID
+	}
+
+	item, err := s.store.Users().GetByEmail(ctx, email)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, storecmn.ErrNotFound
+		}
+		return nil, err
+	}
+
+	return item, nil
 }
 
 type CreateParams = repo_users.CreateParams

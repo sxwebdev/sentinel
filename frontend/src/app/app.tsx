@@ -1,18 +1,22 @@
-import { Outlet } from "@tanstack/react-router";
+import { Outlet, RouterProvider } from "@tanstack/react-router";
 import Layout from "./layout";
 import { useQuery } from "@connectrpc/connect-query";
 import { projectsList } from "@/api/gen/sentinel/projects/v1/projects-ProjectsService_connectquery";
-import { Spinner } from "@/shared/components/ui/spinner";
+import PageLoader from "@/shared/components/pageLoader";
+import { useAuth } from "./providers/auth/hooks";
+import { AuthProvider } from "./providers/auth";
+import { router } from "../router";
+
+function InnerApp() {
+  const auth = useAuth();
+  return <RouterProvider router={router} context={{ auth }} />;
+}
 
 const App = () => {
   const queryProject = useQuery(projectsList);
 
   if (queryProject.isLoading) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center">
-        <Spinner className="size-6" />
-      </div>
-    );
+    return <PageLoader />;
   }
 
   // if (queryProject.data?.items.length === 0) {
@@ -20,10 +24,16 @@ const App = () => {
   // }
 
   return (
-    <Layout projects={queryProject.data?.items || []}>
-      <Outlet />
-    </Layout>
+    <AuthProvider>
+      <InnerApp />
+    </AuthProvider>
   );
+
+  // return (
+  //   <Layout projects={queryProject.data?.items || []}>
+  //     <Outlet />
+  //   </Layout>
+  // );
 };
 
 export default App;

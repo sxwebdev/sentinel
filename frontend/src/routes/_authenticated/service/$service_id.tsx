@@ -6,6 +6,6 @@ const ServiceDetailComponent = () => {
   return <ServiceDetail serviceID={service_id} />;
 };
 
-export const Route = createFileRoute("/service/$service_id")({
+export const Route = createFileRoute("/_authenticated/service/$service_id")({
   component: ServiceDetailComponent,
 });

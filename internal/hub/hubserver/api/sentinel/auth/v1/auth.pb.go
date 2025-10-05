@@ -7,6 +7,7 @@
 package authv1
 
 import (
+	v1 "github.com/sxwebdev/sentinel/internal/hub/hubserver/api/sentinel/users/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
@@ -367,7 +368,8 @@ func (x *AuthPayload) GetOrganizationId() string {
 
 type AuthorizationResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	AuthData      *AuthPayload           `protobuf:"bytes,1,opt,name=auth_data,json=authData,proto3" json:"auth_data,omitempty"`
+	AuthPayload   *AuthPayload           `protobuf:"bytes,1,opt,name=auth_payload,json=authPayload,proto3" json:"auth_payload,omitempty"`
+	User          *v1.User               `protobuf:"bytes,2,opt,name=user,proto3" json:"user,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -402,9 +404,105 @@ func (*AuthorizationResponse) Descriptor() ([]byte, []int) {
 	return file_sentinel_auth_v1_auth_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *AuthorizationResponse) GetAuthData() *AuthPayload {
+func (x *AuthorizationResponse) GetAuthPayload() *AuthPayload {
 	if x != nil {
-		return x.AuthData
+		return x.AuthPayload
+	}
+	return nil
+}
+
+func (x *AuthorizationResponse) GetUser() *v1.User {
+	if x != nil {
+		return x.User
+	}
+	return nil
+}
+
+// Authenticate
+type AuthenticateRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	AccessToken   string                 `protobuf:"bytes,1,opt,name=access_token,json=accessToken,proto3" json:"access_token,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AuthenticateRequest) Reset() {
+	*x = AuthenticateRequest{}
+	mi := &file_sentinel_auth_v1_auth_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AuthenticateRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AuthenticateRequest) ProtoMessage() {}
+
+func (x *AuthenticateRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_sentinel_auth_v1_auth_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AuthenticateRequest.ProtoReflect.Descriptor instead.
+func (*AuthenticateRequest) Descriptor() ([]byte, []int) {
+	return file_sentinel_auth_v1_auth_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *AuthenticateRequest) GetAccessToken() string {
+	if x != nil {
+		return x.AccessToken
+	}
+	return ""
+}
+
+type AuthenticateResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	User          *v1.User               `protobuf:"bytes,2,opt,name=user,proto3" json:"user,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AuthenticateResponse) Reset() {
+	*x = AuthenticateResponse{}
+	mi := &file_sentinel_auth_v1_auth_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AuthenticateResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AuthenticateResponse) ProtoMessage() {}
+
+func (x *AuthenticateResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_sentinel_auth_v1_auth_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AuthenticateResponse.ProtoReflect.Descriptor instead.
+func (*AuthenticateResponse) Descriptor() ([]byte, []int) {
+	return file_sentinel_auth_v1_auth_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *AuthenticateResponse) GetUser() *v1.User {
+	if x != nil {
+		return x.User
 	}
 	return nil
 }
@@ -419,7 +517,7 @@ type RefreshTokenRequest struct {
 
 func (x *RefreshTokenRequest) Reset() {
 	*x = RefreshTokenRequest{}
-	mi := &file_sentinel_auth_v1_auth_proto_msgTypes[5]
+	mi := &file_sentinel_auth_v1_auth_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -431,7 +529,7 @@ func (x *RefreshTokenRequest) String() string {
 func (*RefreshTokenRequest) ProtoMessage() {}
 
 func (x *RefreshTokenRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sentinel_auth_v1_auth_proto_msgTypes[5]
+	mi := &file_sentinel_auth_v1_auth_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -444,7 +542,7 @@ func (x *RefreshTokenRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RefreshTokenRequest.ProtoReflect.Descriptor instead.
 func (*RefreshTokenRequest) Descriptor() ([]byte, []int) {
-	return file_sentinel_auth_v1_auth_proto_rawDescGZIP(), []int{5}
+	return file_sentinel_auth_v1_auth_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *RefreshTokenRequest) GetRefreshToken() string {
@@ -466,7 +564,7 @@ type RefreshTokenResponse struct {
 
 func (x *RefreshTokenResponse) Reset() {
 	*x = RefreshTokenResponse{}
-	mi := &file_sentinel_auth_v1_auth_proto_msgTypes[6]
+	mi := &file_sentinel_auth_v1_auth_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -478,7 +576,7 @@ func (x *RefreshTokenResponse) String() string {
 func (*RefreshTokenResponse) ProtoMessage() {}
 
 func (x *RefreshTokenResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sentinel_auth_v1_auth_proto_msgTypes[6]
+	mi := &file_sentinel_auth_v1_auth_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -491,7 +589,7 @@ func (x *RefreshTokenResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RefreshTokenResponse.ProtoReflect.Descriptor instead.
 func (*RefreshTokenResponse) Descriptor() ([]byte, []int) {
-	return file_sentinel_auth_v1_auth_proto_rawDescGZIP(), []int{6}
+	return file_sentinel_auth_v1_auth_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *RefreshTokenResponse) GetAccessToken() string {
@@ -531,7 +629,7 @@ type ActiveSessionsRequest struct {
 
 func (x *ActiveSessionsRequest) Reset() {
 	*x = ActiveSessionsRequest{}
-	mi := &file_sentinel_auth_v1_auth_proto_msgTypes[7]
+	mi := &file_sentinel_auth_v1_auth_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -543,7 +641,7 @@ func (x *ActiveSessionsRequest) String() string {
 func (*ActiveSessionsRequest) ProtoMessage() {}
 
 func (x *ActiveSessionsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sentinel_auth_v1_auth_proto_msgTypes[7]
+	mi := &file_sentinel_auth_v1_auth_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -556,7 +654,7 @@ func (x *ActiveSessionsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ActiveSessionsRequest.ProtoReflect.Descriptor instead.
 func (*ActiveSessionsRequest) Descriptor() ([]byte, []int) {
-	return file_sentinel_auth_v1_auth_proto_rawDescGZIP(), []int{7}
+	return file_sentinel_auth_v1_auth_proto_rawDescGZIP(), []int{9}
 }
 
 type ActiveSessionsResponse struct {
@@ -568,7 +666,7 @@ type ActiveSessionsResponse struct {
 
 func (x *ActiveSessionsResponse) Reset() {
 	*x = ActiveSessionsResponse{}
-	mi := &file_sentinel_auth_v1_auth_proto_msgTypes[8]
+	mi := &file_sentinel_auth_v1_auth_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -580,7 +678,7 @@ func (x *ActiveSessionsResponse) String() string {
 func (*ActiveSessionsResponse) ProtoMessage() {}
 
 func (x *ActiveSessionsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sentinel_auth_v1_auth_proto_msgTypes[8]
+	mi := &file_sentinel_auth_v1_auth_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -593,7 +691,7 @@ func (x *ActiveSessionsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ActiveSessionsResponse.ProtoReflect.Descriptor instead.
 func (*ActiveSessionsResponse) Descriptor() ([]byte, []int) {
-	return file_sentinel_auth_v1_auth_proto_rawDescGZIP(), []int{8}
+	return file_sentinel_auth_v1_auth_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *ActiveSessionsResponse) GetSessions() []*Session {
@@ -613,7 +711,7 @@ type DeleteSessionRequest struct {
 
 func (x *DeleteSessionRequest) Reset() {
 	*x = DeleteSessionRequest{}
-	mi := &file_sentinel_auth_v1_auth_proto_msgTypes[9]
+	mi := &file_sentinel_auth_v1_auth_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -625,7 +723,7 @@ func (x *DeleteSessionRequest) String() string {
 func (*DeleteSessionRequest) ProtoMessage() {}
 
 func (x *DeleteSessionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sentinel_auth_v1_auth_proto_msgTypes[9]
+	mi := &file_sentinel_auth_v1_auth_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -638,7 +736,7 @@ func (x *DeleteSessionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteSessionRequest.ProtoReflect.Descriptor instead.
 func (*DeleteSessionRequest) Descriptor() ([]byte, []int) {
-	return file_sentinel_auth_v1_auth_proto_rawDescGZIP(), []int{9}
+	return file_sentinel_auth_v1_auth_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *DeleteSessionRequest) GetDeviceId() string {
@@ -656,7 +754,7 @@ type DeleteSessionResponse struct {
 
 func (x *DeleteSessionResponse) Reset() {
 	*x = DeleteSessionResponse{}
-	mi := &file_sentinel_auth_v1_auth_proto_msgTypes[10]
+	mi := &file_sentinel_auth_v1_auth_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -668,7 +766,7 @@ func (x *DeleteSessionResponse) String() string {
 func (*DeleteSessionResponse) ProtoMessage() {}
 
 func (x *DeleteSessionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sentinel_auth_v1_auth_proto_msgTypes[10]
+	mi := &file_sentinel_auth_v1_auth_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -681,7 +779,7 @@ func (x *DeleteSessionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteSessionResponse.ProtoReflect.Descriptor instead.
 func (*DeleteSessionResponse) Descriptor() ([]byte, []int) {
-	return file_sentinel_auth_v1_auth_proto_rawDescGZIP(), []int{10}
+	return file_sentinel_auth_v1_auth_proto_rawDescGZIP(), []int{12}
 }
 
 // Terminate all sessions
@@ -696,7 +794,7 @@ type TerminateAllSessionsRequest struct {
 
 func (x *TerminateAllSessionsRequest) Reset() {
 	*x = TerminateAllSessionsRequest{}
-	mi := &file_sentinel_auth_v1_auth_proto_msgTypes[11]
+	mi := &file_sentinel_auth_v1_auth_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -708,7 +806,7 @@ func (x *TerminateAllSessionsRequest) String() string {
 func (*TerminateAllSessionsRequest) ProtoMessage() {}
 
 func (x *TerminateAllSessionsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sentinel_auth_v1_auth_proto_msgTypes[11]
+	mi := &file_sentinel_auth_v1_auth_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -721,7 +819,7 @@ func (x *TerminateAllSessionsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TerminateAllSessionsRequest.ProtoReflect.Descriptor instead.
 func (*TerminateAllSessionsRequest) Descriptor() ([]byte, []int) {
-	return file_sentinel_auth_v1_auth_proto_rawDescGZIP(), []int{11}
+	return file_sentinel_auth_v1_auth_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *TerminateAllSessionsRequest) GetDeviceId() string {
@@ -739,7 +837,7 @@ type TerminateAllSessionsResponse struct {
 
 func (x *TerminateAllSessionsResponse) Reset() {
 	*x = TerminateAllSessionsResponse{}
-	mi := &file_sentinel_auth_v1_auth_proto_msgTypes[12]
+	mi := &file_sentinel_auth_v1_auth_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -751,7 +849,7 @@ func (x *TerminateAllSessionsResponse) String() string {
 func (*TerminateAllSessionsResponse) ProtoMessage() {}
 
 func (x *TerminateAllSessionsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sentinel_auth_v1_auth_proto_msgTypes[12]
+	mi := &file_sentinel_auth_v1_auth_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -764,7 +862,7 @@ func (x *TerminateAllSessionsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TerminateAllSessionsResponse.ProtoReflect.Descriptor instead.
 func (*TerminateAllSessionsResponse) Descriptor() ([]byte, []int) {
-	return file_sentinel_auth_v1_auth_proto_rawDescGZIP(), []int{12}
+	return file_sentinel_auth_v1_auth_proto_rawDescGZIP(), []int{14}
 }
 
 // Logout
@@ -776,7 +874,7 @@ type LogoutRequest struct {
 
 func (x *LogoutRequest) Reset() {
 	*x = LogoutRequest{}
-	mi := &file_sentinel_auth_v1_auth_proto_msgTypes[13]
+	mi := &file_sentinel_auth_v1_auth_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -788,7 +886,7 @@ func (x *LogoutRequest) String() string {
 func (*LogoutRequest) ProtoMessage() {}
 
 func (x *LogoutRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sentinel_auth_v1_auth_proto_msgTypes[13]
+	mi := &file_sentinel_auth_v1_auth_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -801,7 +899,7 @@ func (x *LogoutRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LogoutRequest.ProtoReflect.Descriptor instead.
 func (*LogoutRequest) Descriptor() ([]byte, []int) {
-	return file_sentinel_auth_v1_auth_proto_rawDescGZIP(), []int{13}
+	return file_sentinel_auth_v1_auth_proto_rawDescGZIP(), []int{15}
 }
 
 type LogoutResponse struct {
@@ -812,7 +910,7 @@ type LogoutResponse struct {
 
 func (x *LogoutResponse) Reset() {
 	*x = LogoutResponse{}
-	mi := &file_sentinel_auth_v1_auth_proto_msgTypes[14]
+	mi := &file_sentinel_auth_v1_auth_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -824,7 +922,7 @@ func (x *LogoutResponse) String() string {
 func (*LogoutResponse) ProtoMessage() {}
 
 func (x *LogoutResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sentinel_auth_v1_auth_proto_msgTypes[14]
+	mi := &file_sentinel_auth_v1_auth_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -837,14 +935,14 @@ func (x *LogoutResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LogoutResponse.ProtoReflect.Descriptor instead.
 func (*LogoutResponse) Descriptor() ([]byte, []int) {
-	return file_sentinel_auth_v1_auth_proto_rawDescGZIP(), []int{14}
+	return file_sentinel_auth_v1_auth_proto_rawDescGZIP(), []int{16}
 }
 
 var File_sentinel_auth_v1_auth_proto protoreflect.FileDescriptor
 
 const file_sentinel_auth_v1_auth_proto_rawDesc = "" +
 	"\n" +
-	"\x1bsentinel/auth/v1/auth.proto\x12\x10sentinel.auth.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xeb\x01\n" +
+	"\x1bsentinel/auth/v1/auth.proto\x12\x10sentinel.auth.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1dsentinel/users/v1/users.proto\"\xeb\x01\n" +
 	"\n" +
 	"DeviceInfo\x12\x1b\n" +
 	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\x12=\n" +
@@ -876,9 +974,14 @@ const file_sentinel_auth_v1_auth_proto_rawDesc = "" +
 	"\x18refresh_token_expired_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\x15refreshTokenExpiredAt\x12\x1b\n" +
 	"\tdevice_id\x18\x05 \x01(\tR\bdeviceId\x12,\n" +
 	"\x0forganization_id\x18\x06 \x01(\tH\x00R\x0eorganizationId\x88\x01\x01B\x12\n" +
-	"\x10_organization_id\"S\n" +
-	"\x15AuthorizationResponse\x12:\n" +
-	"\tauth_data\x18\x01 \x01(\v2\x1d.sentinel.auth.v1.AuthPayloadR\bauthData\":\n" +
+	"\x10_organization_id\"\x86\x01\n" +
+	"\x15AuthorizationResponse\x12@\n" +
+	"\fauth_payload\x18\x01 \x01(\v2\x1d.sentinel.auth.v1.AuthPayloadR\vauthPayload\x12+\n" +
+	"\x04user\x18\x02 \x01(\v2\x17.sentinel.users.v1.UserR\x04user\"8\n" +
+	"\x13AuthenticateRequest\x12!\n" +
+	"\faccess_token\x18\x01 \x01(\tR\vaccessToken\"C\n" +
+	"\x14AuthenticateResponse\x12+\n" +
+	"\x04user\x18\x02 \x01(\v2\x17.sentinel.users.v1.UserR\x04user\":\n" +
 	"\x13RefreshTokenRequest\x12#\n" +
 	"\rrefresh_token\x18\x01 \x01(\tR\frefreshToken\"\x86\x02\n" +
 	"\x14RefreshTokenResponse\x12!\n" +
@@ -902,9 +1005,10 @@ const file_sentinel_auth_v1_auth_proto_rawDesc = "" +
 	"\n" +
 	"DeviceType\x12\x1b\n" +
 	"\x17DEVICE_TYPE_UNSPECIFIED\x10\x00\x12\x13\n" +
-	"\x0fDEVICE_TYPE_WEB\x10\x012\xe5\x04\n" +
+	"\x0fDEVICE_TYPE_WEB\x10\x012\xc6\x05\n" +
 	"\vAuthService\x12b\n" +
 	"\rAuthorization\x12&.sentinel.auth.v1.AuthorizationRequest\x1a'.sentinel.auth.v1.AuthorizationResponse\"\x00\x12_\n" +
+	"\fAuthenticate\x12%.sentinel.auth.v1.AuthenticateRequest\x1a&.sentinel.auth.v1.AuthenticateResponse\"\x00\x12_\n" +
 	"\fRefreshToken\x12%.sentinel.auth.v1.RefreshTokenRequest\x1a&.sentinel.auth.v1.RefreshTokenResponse\"\x00\x12M\n" +
 	"\x06Logout\x12\x1f.sentinel.auth.v1.LogoutRequest\x1a .sentinel.auth.v1.LogoutResponse\"\x00\x12e\n" +
 	"\x0eActiveSessions\x12'.sentinel.auth.v1.ActiveSessionsRequest\x1a(.sentinel.auth.v1.ActiveSessionsResponse\"\x00\x12b\n" +
@@ -925,7 +1029,7 @@ func file_sentinel_auth_v1_auth_proto_rawDescGZIP() []byte {
 }
 
 var file_sentinel_auth_v1_auth_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_sentinel_auth_v1_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
+var file_sentinel_auth_v1_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
 var file_sentinel_auth_v1_auth_proto_goTypes = []any{
 	(DeviceType)(0),                      // 0: sentinel.auth.v1.DeviceType
 	(*DeviceInfo)(nil),                   // 1: sentinel.auth.v1.DeviceInfo
@@ -933,46 +1037,53 @@ var file_sentinel_auth_v1_auth_proto_goTypes = []any{
 	(*AuthorizationRequest)(nil),         // 3: sentinel.auth.v1.AuthorizationRequest
 	(*AuthPayload)(nil),                  // 4: sentinel.auth.v1.AuthPayload
 	(*AuthorizationResponse)(nil),        // 5: sentinel.auth.v1.AuthorizationResponse
-	(*RefreshTokenRequest)(nil),          // 6: sentinel.auth.v1.RefreshTokenRequest
-	(*RefreshTokenResponse)(nil),         // 7: sentinel.auth.v1.RefreshTokenResponse
-	(*ActiveSessionsRequest)(nil),        // 8: sentinel.auth.v1.ActiveSessionsRequest
-	(*ActiveSessionsResponse)(nil),       // 9: sentinel.auth.v1.ActiveSessionsResponse
-	(*DeleteSessionRequest)(nil),         // 10: sentinel.auth.v1.DeleteSessionRequest
-	(*DeleteSessionResponse)(nil),        // 11: sentinel.auth.v1.DeleteSessionResponse
-	(*TerminateAllSessionsRequest)(nil),  // 12: sentinel.auth.v1.TerminateAllSessionsRequest
-	(*TerminateAllSessionsResponse)(nil), // 13: sentinel.auth.v1.TerminateAllSessionsResponse
-	(*LogoutRequest)(nil),                // 14: sentinel.auth.v1.LogoutRequest
-	(*LogoutResponse)(nil),               // 15: sentinel.auth.v1.LogoutResponse
-	(*timestamppb.Timestamp)(nil),        // 16: google.protobuf.Timestamp
+	(*AuthenticateRequest)(nil),          // 6: sentinel.auth.v1.AuthenticateRequest
+	(*AuthenticateResponse)(nil),         // 7: sentinel.auth.v1.AuthenticateResponse
+	(*RefreshTokenRequest)(nil),          // 8: sentinel.auth.v1.RefreshTokenRequest
+	(*RefreshTokenResponse)(nil),         // 9: sentinel.auth.v1.RefreshTokenResponse
+	(*ActiveSessionsRequest)(nil),        // 10: sentinel.auth.v1.ActiveSessionsRequest
+	(*ActiveSessionsResponse)(nil),       // 11: sentinel.auth.v1.ActiveSessionsResponse
+	(*DeleteSessionRequest)(nil),         // 12: sentinel.auth.v1.DeleteSessionRequest
+	(*DeleteSessionResponse)(nil),        // 13: sentinel.auth.v1.DeleteSessionResponse
+	(*TerminateAllSessionsRequest)(nil),  // 14: sentinel.auth.v1.TerminateAllSessionsRequest
+	(*TerminateAllSessionsResponse)(nil), // 15: sentinel.auth.v1.TerminateAllSessionsResponse
+	(*LogoutRequest)(nil),                // 16: sentinel.auth.v1.LogoutRequest
+	(*LogoutResponse)(nil),               // 17: sentinel.auth.v1.LogoutResponse
+	(*timestamppb.Timestamp)(nil),        // 18: google.protobuf.Timestamp
+	(*v1.User)(nil),                      // 19: sentinel.users.v1.User
 }
 var file_sentinel_auth_v1_auth_proto_depIdxs = []int32{
 	0,  // 0: sentinel.auth.v1.DeviceInfo.device_type:type_name -> sentinel.auth.v1.DeviceType
 	1,  // 1: sentinel.auth.v1.Session.device_info:type_name -> sentinel.auth.v1.DeviceInfo
-	16, // 2: sentinel.auth.v1.Session.created_at:type_name -> google.protobuf.Timestamp
+	18, // 2: sentinel.auth.v1.Session.created_at:type_name -> google.protobuf.Timestamp
 	1,  // 3: sentinel.auth.v1.AuthorizationRequest.device_info:type_name -> sentinel.auth.v1.DeviceInfo
-	16, // 4: sentinel.auth.v1.AuthPayload.access_token_expired_at:type_name -> google.protobuf.Timestamp
-	16, // 5: sentinel.auth.v1.AuthPayload.refresh_token_expired_at:type_name -> google.protobuf.Timestamp
-	4,  // 6: sentinel.auth.v1.AuthorizationResponse.auth_data:type_name -> sentinel.auth.v1.AuthPayload
-	16, // 7: sentinel.auth.v1.RefreshTokenResponse.access_token_expired_at:type_name -> google.protobuf.Timestamp
-	16, // 8: sentinel.auth.v1.RefreshTokenResponse.refresh_token_expired_at:type_name -> google.protobuf.Timestamp
-	2,  // 9: sentinel.auth.v1.ActiveSessionsResponse.sessions:type_name -> sentinel.auth.v1.Session
-	3,  // 10: sentinel.auth.v1.AuthService.Authorization:input_type -> sentinel.auth.v1.AuthorizationRequest
-	6,  // 11: sentinel.auth.v1.AuthService.RefreshToken:input_type -> sentinel.auth.v1.RefreshTokenRequest
-	14, // 12: sentinel.auth.v1.AuthService.Logout:input_type -> sentinel.auth.v1.LogoutRequest
-	8,  // 13: sentinel.auth.v1.AuthService.ActiveSessions:input_type -> sentinel.auth.v1.ActiveSessionsRequest
-	10, // 14: sentinel.auth.v1.AuthService.DeleteSession:input_type -> sentinel.auth.v1.DeleteSessionRequest
-	12, // 15: sentinel.auth.v1.AuthService.TerminateAllSessions:input_type -> sentinel.auth.v1.TerminateAllSessionsRequest
-	5,  // 16: sentinel.auth.v1.AuthService.Authorization:output_type -> sentinel.auth.v1.AuthorizationResponse
-	7,  // 17: sentinel.auth.v1.AuthService.RefreshToken:output_type -> sentinel.auth.v1.RefreshTokenResponse
-	15, // 18: sentinel.auth.v1.AuthService.Logout:output_type -> sentinel.auth.v1.LogoutResponse
-	9,  // 19: sentinel.auth.v1.AuthService.ActiveSessions:output_type -> sentinel.auth.v1.ActiveSessionsResponse
-	11, // 20: sentinel.auth.v1.AuthService.DeleteSession:output_type -> sentinel.auth.v1.DeleteSessionResponse
-	13, // 21: sentinel.auth.v1.AuthService.TerminateAllSessions:output_type -> sentinel.auth.v1.TerminateAllSessionsResponse
-	16, // [16:22] is the sub-list for method output_type
-	10, // [10:16] is the sub-list for method input_type
-	10, // [10:10] is the sub-list for extension type_name
-	10, // [10:10] is the sub-list for extension extendee
-	0,  // [0:10] is the sub-list for field type_name
+	18, // 4: sentinel.auth.v1.AuthPayload.access_token_expired_at:type_name -> google.protobuf.Timestamp
+	18, // 5: sentinel.auth.v1.AuthPayload.refresh_token_expired_at:type_name -> google.protobuf.Timestamp
+	4,  // 6: sentinel.auth.v1.AuthorizationResponse.auth_payload:type_name -> sentinel.auth.v1.AuthPayload
+	19, // 7: sentinel.auth.v1.AuthorizationResponse.user:type_name -> sentinel.users.v1.User
+	19, // 8: sentinel.auth.v1.AuthenticateResponse.user:type_name -> sentinel.users.v1.User
+	18, // 9: sentinel.auth.v1.RefreshTokenResponse.access_token_expired_at:type_name -> google.protobuf.Timestamp
+	18, // 10: sentinel.auth.v1.RefreshTokenResponse.refresh_token_expired_at:type_name -> google.protobuf.Timestamp
+	2,  // 11: sentinel.auth.v1.ActiveSessionsResponse.sessions:type_name -> sentinel.auth.v1.Session
+	3,  // 12: sentinel.auth.v1.AuthService.Authorization:input_type -> sentinel.auth.v1.AuthorizationRequest
+	6,  // 13: sentinel.auth.v1.AuthService.Authenticate:input_type -> sentinel.auth.v1.AuthenticateRequest
+	8,  // 14: sentinel.auth.v1.AuthService.RefreshToken:input_type -> sentinel.auth.v1.RefreshTokenRequest
+	16, // 15: sentinel.auth.v1.AuthService.Logout:input_type -> sentinel.auth.v1.LogoutRequest
+	10, // 16: sentinel.auth.v1.AuthService.ActiveSessions:input_type -> sentinel.auth.v1.ActiveSessionsRequest
+	12, // 17: sentinel.auth.v1.AuthService.DeleteSession:input_type -> sentinel.auth.v1.DeleteSessionRequest
+	14, // 18: sentinel.auth.v1.AuthService.TerminateAllSessions:input_type -> sentinel.auth.v1.TerminateAllSessionsRequest
+	5,  // 19: sentinel.auth.v1.AuthService.Authorization:output_type -> sentinel.auth.v1.AuthorizationResponse
+	7,  // 20: sentinel.auth.v1.AuthService.Authenticate:output_type -> sentinel.auth.v1.AuthenticateResponse
+	9,  // 21: sentinel.auth.v1.AuthService.RefreshToken:output_type -> sentinel.auth.v1.RefreshTokenResponse
+	17, // 22: sentinel.auth.v1.AuthService.Logout:output_type -> sentinel.auth.v1.LogoutResponse
+	11, // 23: sentinel.auth.v1.AuthService.ActiveSessions:output_type -> sentinel.auth.v1.ActiveSessionsResponse
+	13, // 24: sentinel.auth.v1.AuthService.DeleteSession:output_type -> sentinel.auth.v1.DeleteSessionResponse
+	15, // 25: sentinel.auth.v1.AuthService.TerminateAllSessions:output_type -> sentinel.auth.v1.TerminateAllSessionsResponse
+	19, // [19:26] is the sub-list for method output_type
+	12, // [12:19] is the sub-list for method input_type
+	12, // [12:12] is the sub-list for extension type_name
+	12, // [12:12] is the sub-list for extension extendee
+	0,  // [0:12] is the sub-list for field type_name
 }
 
 func init() { file_sentinel_auth_v1_auth_proto_init() }
@@ -981,14 +1092,14 @@ func file_sentinel_auth_v1_auth_proto_init() {
 		return
 	}
 	file_sentinel_auth_v1_auth_proto_msgTypes[3].OneofWrappers = []any{}
-	file_sentinel_auth_v1_auth_proto_msgTypes[11].OneofWrappers = []any{}
+	file_sentinel_auth_v1_auth_proto_msgTypes[13].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_sentinel_auth_v1_auth_proto_rawDesc), len(file_sentinel_auth_v1_auth_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   15,
+			NumMessages:   17,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -2,11 +2,13 @@ syntax = "proto3";
 package sentinel.auth.v1;
 
 import "google/protobuf/timestamp.proto";
+import "sentinel/users/v1/users.proto";
 
 // AuthService is the service for authentication and authorization.
 service AuthService {
   /* Auth */
   rpc Authorization(AuthorizationRequest) returns (AuthorizationResponse) {};
+  rpc Authenticate(AuthenticateRequest) returns (AuthenticateResponse) {};
   rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse) {};
   rpc Logout(LogoutRequest) returns (LogoutResponse) {};
 
@@ -54,7 +56,14 @@ message AuthPayload {
   optional string organization_id = 6;
 }
 
-message AuthorizationResponse { AuthPayload auth_data = 1; }
+message AuthorizationResponse {
+  AuthPayload auth_payload = 1;
+  sentinel.users.v1.User user = 2;
+}
+
+// Authenticate
+message AuthenticateRequest { string access_token = 1; }
+message AuthenticateResponse { sentinel.users.v1.User user = 2; }
 
 // Refresh token
 message RefreshTokenRequest { string refresh_token = 1; }

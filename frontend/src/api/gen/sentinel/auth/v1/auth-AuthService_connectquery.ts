@@ -12,6 +12,11 @@ import { AuthService } from "./auth_pb";
 export const authorization = AuthService.method.authorization;
 
 /**
+ * @generated from rpc sentinel.auth.v1.AuthService.Authenticate
+ */
+export const authenticate = AuthService.method.authenticate;
+
+/**
  * @generated from rpc sentinel.auth.v1.AuthService.RefreshToken
  */
 export const refreshToken = AuthService.method.refreshToken;
