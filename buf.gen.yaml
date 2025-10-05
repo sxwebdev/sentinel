@@ -11,3 +11,9 @@ plugins:
   - remote: buf.build/connectrpc/go:v1.18.1
     out: internal/hub/hubserver/api
     opt: paths=source_relative
+  - remote: buf.build/bufbuild/es:v2.9.0
+    out: frontend/src/api/gen
+    opt: target=ts
+  - remote: buf.build/connectrpc/query-es:v2.2.0
+    out: frontend/src/api/gen
+    opt: target=ts

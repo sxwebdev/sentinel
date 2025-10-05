@@ -157,10 +157,15 @@ gensql:
 genproto: ## Generate protobuf code
 	buf lint
 	rm -rf ./internal/hub/hubserver/api/*
+	rm -rf frontend/src/api/gen/*
 	buf generate
+	rm -rf frontend/src/api/gen/sentinel/hub
 
 grpcui-hub:
 	grpcui --plaintext localhost:9000
+
+grpcui-server:
+	grpcui --plaintext localhost:8080
 
 %:
 	@:

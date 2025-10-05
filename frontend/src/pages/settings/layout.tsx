@@ -5,12 +5,7 @@ import {
   useLocation,
   useNavigate,
 } from "@tanstack/react-router";
-import {
-  BellIcon,
-  GlassesIcon,
-  OctagonAlertIcon,
-  // SettingsIcon,
-} from "lucide-react";
+import { BellIcon, OctagonAlertIcon, SettingsIcon } from "lucide-react";
 
 import {
   Card,
@@ -32,22 +27,14 @@ import { cn } from "@/shared/lib/utils";
 import { buttonVariants } from "@/shared/components/ui/button";
 
 const menuItems = [
-  // linkOptions({
-  //   to: "/settings",
-  //   label: (
-  //     <>
-  //       <SettingsIcon size={16} /> General
-  //     </>
-  //   ),
-  //   activeOptions: { exact: true },
-  // }),
   linkOptions({
-    to: "/settings/agents",
+    to: "/settings",
     label: (
       <>
-        <GlassesIcon size={16} /> Agents
+        <SettingsIcon size={16} /> General
       </>
     ),
+    activeOptions: { exact: true },
   }),
   linkOptions({
     to: "/settings/notifications",

@@ -1,9 +1,0 @@
-syntax = "proto3";
-package sentinel.common.v1;
-
-enum ServiceProtocol {
-  SERVICE_PROTOCOL_UNSPECIFIED = 0;
-  SERVICE_PROTOCOL_HTTP = 1;
-  SERVICE_PROTOCOL_TCP = 2;
-  SERVICE_PROTOCOL_GRPC = 3;
-}

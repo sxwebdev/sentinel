@@ -51,6 +51,7 @@ func (s *Providers) GetAll(ctx context.Context) ([]*models.NotificationProvider,
 type CreateProviderParams struct {
 	ProviderType models.NotificationProviderType `json:"provider_type" example:"shoutrrr"`
 	Config       map[string]any                  `json:"config" example:"{\"urls\": [\"slack://hooks.slack.com/services/...\"]}"`
+	IsEnabled    bool                            `json:"is_enabled" example:"true"`
 }
 
 // Validate
@@ -88,6 +89,7 @@ func (s *Providers) Create(ctx context.Context, params CreateProviderParams) (*m
 		ID:           utils.GenerateULID(),
 		ProviderType: params.ProviderType,
 		Config:       config,
+		IsEnabled:    params.IsEnabled,
 	}
 
 	return s.store.NotificationProviders().Create(ctx, createParams)

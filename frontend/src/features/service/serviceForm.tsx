@@ -20,7 +20,7 @@ import {
 import { PlusIcon, TrashIcon } from "lucide-react";
 import * as Yup from "yup";
 import InputTag from "@/shared/components/ui/inputTag";
-import type { WebCreateUpdateServiceRequest } from "@/shared/types/model";
+import { toast } from "sonner";
 
 export interface ServiceFormRef {
   submitForm: () => void;
@@ -465,13 +465,24 @@ const HTTPForm = React.memo(
 
 export const ServiceForm = forwardRef<ServiceFormRef, ServiceFormProps>(
   ({ initialValues, onSubmit, onFormStateChange }, ref) => {
+    const [agents, setAgents] = React.useState<WebAgentDTO[] | undefined>([]);
+
     const formikRef =
       React.useRef<FormikProps<WebCreateUpdateServiceRequest> | null>(null);
+
     const lastStateRef = React.useRef({
       isSubmitting: false,
       isValid: false,
       dirty: false,
     });
+
+    // load agents
+    React.useEffect(() => {
+      getAgents()
+        .getSettingsAgents()
+        .then(({ items }) => setAgents(items))
+        .catch(() => toast.error("Failed to load agents"));
+    }, []);
 
     // Стабильная функция для отложенного обновления состояния
     const updateFormState = React.useCallback(
@@ -505,6 +516,7 @@ export const ServiceForm = forwardRef<ServiceFormRef, ServiceFormProps>(
         return formikRef.current?.dirty || false;
       },
     }));
+
     const grpcSchema = Yup.object({
       endpoint: Yup.string().required("GRPC endpoint is required"),
     });
@@ -742,6 +754,45 @@ export const ServiceForm = forwardRef<ServiceFormRef, ServiceFormProps>(
                     />
                   )}
                 </FastField>
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label>Agents</Label>
+                <Field name="agent_ids">
+                  {({ field }: FieldProps) => (
+                    <Select
+                      value={
+                        Array.isArray(field.value)
+                          ? (field.value[0] ?? "")
+                          : (field.value ?? "")
+                      }
+                      onValueChange={(value) =>
+                        setFieldValue("agent_ids", value ? [value] : [])
+                      }
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue
+                          className="w-full"
+                          placeholder="Select an agent"
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {agents?.map((agent) => (
+                          <SelectItem
+                            key={agent.id}
+                            value={agent?.id as string}
+                          >
+                            {agent.name}
+                          </SelectItem>
+                        ))}
+                        {agents?.length === 0 && (
+                          <SelectItem value="none" disabled>
+                            No agents available
+                          </SelectItem>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </Field>
               </div>
               <div className="flex flex-col gap-2">
                 <Label>Enabled Service</Label>

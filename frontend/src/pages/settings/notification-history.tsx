@@ -69,10 +69,10 @@ const NotificationHistoryPage = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {q.data?.items?.length === 0 ? (
+            {q.data?.items.length === 0 ? (
               <TableRow>
-                <TableHead colSpan={6} className="h-24 text-center">
-                  No providers found.
+                <TableHead colSpan={5} className="h-24 text-center">
+                  No notifications found.
                 </TableHead>
               </TableRow>
             ) : (

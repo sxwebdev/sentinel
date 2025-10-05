@@ -13,25 +13,34 @@ import (
 )
 
 const create = `-- name: Create :one
-INSERT INTO notification_providers (id, provider_type, config)
-	VALUES (?, ?, ?)
-	RETURNING id, provider_type, json(config), is_enabled, created_at, updated_at
+INSERT INTO notification_providers (id, provider_type, config, is_enabled, project_id)
+	VALUES (?, ?, ?, ?, ?)
+	RETURNING id, provider_type, config, is_enabled, project_id, created_at, updated_at
 `
 
 type CreateParams struct {
 	ID           string                          `db:"id" json:"id"`
 	ProviderType models.NotificationProviderType `db:"provider_type" json:"provider_type"`
 	Config       storecmn.JSONField              `db:"config" json:"config"`
+	IsEnabled    bool                            `db:"is_enabled" json:"is_enabled"`
+	ProjectID    *string                         `db:"project_id" json:"project_id"`
 }
 
 func (q *Queries) Create(ctx context.Context, arg CreateParams) (*models.NotificationProvider, error) {
-	row := q.db.QueryRowContext(ctx, create, arg.ID, arg.ProviderType, arg.Config)
+	row := q.db.QueryRowContext(ctx, create,
+		arg.ID,
+		arg.ProviderType,
+		arg.Config,
+		arg.IsEnabled,
+		arg.ProjectID,
+	)
 	var i models.NotificationProvider
 	err := row.Scan(
 		&i.ID,
 		&i.ProviderType,
 		&i.Config,
 		&i.IsEnabled,
+		&i.ProjectID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -48,7 +57,7 @@ func (q *Queries) Delete(ctx context.Context, id string) error {
 }
 
 const getAll = `-- name: GetAll :many
-SELECT id, provider_type, json(config), is_enabled, created_at, updated_at FROM notification_providers
+SELECT id, provider_type, config, is_enabled, project_id, created_at, updated_at FROM notification_providers
 `
 
 func (q *Queries) GetAll(ctx context.Context) ([]*models.NotificationProvider, error) {
@@ -65,6 +74,7 @@ func (q *Queries) GetAll(ctx context.Context) ([]*models.NotificationProvider, e
 			&i.ProviderType,
 			&i.Config,
 			&i.IsEnabled,
+			&i.ProjectID,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -82,7 +92,7 @@ func (q *Queries) GetAll(ctx context.Context) ([]*models.NotificationProvider, e
 }
 
 const getByID = `-- name: GetByID :one
-SELECT id, provider_type, json(config), is_enabled, created_at, updated_at FROM notification_providers WHERE id=? LIMIT 1
+SELECT id, provider_type, config, is_enabled, project_id, created_at, updated_at FROM notification_providers WHERE id=? LIMIT 1
 `
 
 func (q *Queries) GetByID(ctx context.Context, id string) (*models.NotificationProvider, error) {
@@ -93,6 +103,7 @@ func (q *Queries) GetByID(ctx context.Context, id string) (*models.NotificationP
 		&i.ProviderType,
 		&i.Config,
 		&i.IsEnabled,
+		&i.ProjectID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

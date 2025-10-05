@@ -5,6 +5,7 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"github.com/sxwebdev/sentinel/internal/checker"
 	"github.com/sxwebdev/sentinel/internal/config"
 	"github.com/sxwebdev/sentinel/internal/models"
 	"github.com/tkcrm/mx/logger"
@@ -19,12 +20,15 @@ type Agent struct {
 	token       string
 	fingerprint string
 
-	client *client
+	client  *client
+	checker *checker.Checker
+	// receiver       *receiver.Receiver
+	checkResultsCh chan checkResult
 
-	mu            sync.RWMutex
-	services      []*models.Service
-	currentState  ConnectionState
-	changeStateCh chan ConnectionState
+	mu sync.RWMutex
+	// services      []*models.Service
+	currentState  connectionState
+	changeStateCh chan connectionState
 	isConnection  atomic.Bool
 }
 
@@ -33,17 +37,27 @@ func New(
 	ctx context.Context,
 	l logger.Logger,
 	config *config.ConfigAgent,
+	// receiver *receiver.Receiver,
 	systemInfo models.SystemInfo,
 ) (*Agent, error) {
 	a := &Agent{
-		logger:        l,
-		config:        config,
-		systemInfo:    systemInfo,
-		changeStateCh: make(chan ConnectionState, 1),
+		logger: l,
+		config: config,
+		// receiver:       receiver,
+		systemInfo:     systemInfo,
+		changeStateCh:  make(chan connectionState, 1),
+		checkResultsCh: make(chan checkResult, 100),
 	}
 
 	a.token = config.Token
 	a.fingerprint = a.getFingerprint()
+
+	a.checker = checker.New(
+		l,
+		nil,
+		a.onSuccess,
+		a.onFailure,
+	)
 
 	var err error
 	a.client, err = newClient(
@@ -54,6 +68,7 @@ func New(
 		a.systemInfo,
 		config.HubServer,
 		a.changeStateCh,
+		a.checkResultsCh,
 	)
 	if err != nil {
 		return nil, err
@@ -71,31 +86,36 @@ func (s *Agent) Name() string {
 func (s *Agent) Start(ctx context.Context) error {
 	go s.initConnection(ctx)
 
-	return nil
+	errCh := make(chan error, 1)
+	go func() {
+		errCh <- s.checker.Start(ctx)
+	}()
+
+	return <-errCh
 }
 
 // Stop stops the agent
-func (s *Agent) Stop(_ context.Context) error {
-	return nil
+func (s *Agent) Stop(ctx context.Context) error {
+	return s.checker.Stop(ctx)
 }
 
 // setState sets the connection state
-func (s *Agent) setState(state ConnectionState) {
+func (s *Agent) setState(state connectionState) {
 	s.mu.Lock()
 	s.currentState = state
 	s.mu.Unlock()
 }
 
 // getState returns the current connection state
-func (s *Agent) getState() ConnectionState {
+func (s *Agent) getState() connectionState {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return s.currentState
 }
 
 // setServices sets the services fetched from the hub server
-func (s *Agent) setServices(services []*models.Service) {
-	s.mu.Lock()
-	s.services = services
-	s.mu.Unlock()
-}
+// func (s *Agent) setServices(services []*models.Service) {
+// 	s.mu.Lock()
+// 	s.services = services
+// 	s.mu.Unlock()
+// }

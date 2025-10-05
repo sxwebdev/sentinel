@@ -1,5 +1,5 @@
--- name: DeleteByServiceID :exec
-DELETE FROM incidents WHERE service_id=?;
+-- name: DeleteByMonitorID :exec
+DELETE FROM incidents WHERE monitor_id=?;
 
 -- name: Stats :one
 SELECT
@@ -10,7 +10,7 @@ SELECT
   SUM(CASE WHEN resolved_at IS NULL THEN 1 ELSE 0 END) AS unresolved_incidents
 FROM incidents;
 
--- name: StatsByServiceID :one
+-- name: StatsByMonitorID :one
 SELECT
  	COUNT(*) AS total_incidents,
  	SUM(duration) AS total_downtime,
@@ -19,11 +19,11 @@ SELECT
   SUM(CASE WHEN resolved_at IS NULL THEN 1 ELSE 0 END) AS unresolved_incidents,
   ROUND(100.0 - (COALESCE(SUM(duration), 0) * 100.0 / (30 * 24 * 60 * 60 * 1000)), 3) AS uptime_percentage_30d
 FROM incidents
-WHERE service_id=? AND created_at >= ?;
+WHERE monitor_id=? AND created_at >= ?;
 
--- name: GetAllUnresolvedByServiceID :many
+-- name: GetAllUnresolvedByMonitorID :many
 SELECT * FROM incidents
-WHERE service_id=? AND resolved_at IS NULL
+WHERE monitor_id=? AND resolved_at IS NULL
 ORDER BY created_at DESC;
 
 -- name: ResolveByID :exec

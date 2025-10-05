@@ -5,6 +5,21 @@
 import { SystemService } from "./service_pb";
 
 /**
+ * @generated from rpc sentinel.system.v1.SystemService.CheckIsInitialized
+ */
+export const checkIsInitialized = SystemService.method.checkIsInitialized;
+
+/**
+ * @generated from rpc sentinel.system.v1.SystemService.Initialize
+ */
+export const initialize = SystemService.method.initialize;
+
+/**
  * @generated from rpc sentinel.system.v1.SystemService.GetSystemInfo
  */
 export const getSystemInfo = SystemService.method.getSystemInfo;
+
+/**
+ * @generated from rpc sentinel.system.v1.SystemService.CheckForUpdates
+ */
+export const checkForUpdates = SystemService.method.checkForUpdates;

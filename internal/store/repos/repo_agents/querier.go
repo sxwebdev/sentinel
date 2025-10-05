@@ -13,6 +13,7 @@ import (
 type Querier interface {
 	Create(ctx context.Context, arg CreateParams) (*models.Agent, error)
 	Delete(ctx context.Context, id string) error
+	Exist(ctx context.Context, id string) (int64, error)
 	GetByID(ctx context.Context, id string) (*models.Agent, error)
 }
 

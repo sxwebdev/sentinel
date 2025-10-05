@@ -9,19 +9,44 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IncidentsRouteImport } from './routes/incidents'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as AgentsRouteImport } from './routes/agents'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SettingsIndexRouteImport } from './routes/settings/index'
+import { Route as SettingsNotificationsHistoryRouteImport } from './routes/settings/notifications-history'
+import { Route as SettingsNotificationsRouteImport } from './routes/settings/notifications'
 import { Route as ServiceService_idRouteImport } from './routes/service/$service_id'
 
-const IncidentsRoute = IncidentsRouteImport.update({
-  id: '/incidents',
-  path: '/incidents',
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AgentsRoute = AgentsRouteImport.update({
+  id: '/agents',
+  path: '/agents',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsIndexRoute = SettingsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => SettingsRoute,
+} as any)
+const SettingsNotificationsHistoryRoute =
+  SettingsNotificationsHistoryRouteImport.update({
+    id: '/notifications-history',
+    path: '/notifications-history',
+    getParentRoute: () => SettingsRoute,
+  } as any)
+const SettingsNotificationsRoute = SettingsNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => SettingsRoute,
 } as any)
 const ServiceService_idRoute = ServiceService_idRouteImport.update({
   id: '/service/$service_id',
@@ -31,41 +56,81 @@ const ServiceService_idRoute = ServiceService_idRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/incidents': typeof IncidentsRoute
+  '/agents': typeof AgentsRoute
+  '/settings': typeof SettingsRouteWithChildren
   '/service/$service_id': typeof ServiceService_idRoute
+  '/settings/notifications': typeof SettingsNotificationsRoute
+  '/settings/notifications-history': typeof SettingsNotificationsHistoryRoute
+  '/settings/': typeof SettingsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/incidents': typeof IncidentsRoute
+  '/agents': typeof AgentsRoute
   '/service/$service_id': typeof ServiceService_idRoute
+  '/settings/notifications': typeof SettingsNotificationsRoute
+  '/settings/notifications-history': typeof SettingsNotificationsHistoryRoute
+  '/settings': typeof SettingsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/incidents': typeof IncidentsRoute
+  '/agents': typeof AgentsRoute
+  '/settings': typeof SettingsRouteWithChildren
   '/service/$service_id': typeof ServiceService_idRoute
+  '/settings/notifications': typeof SettingsNotificationsRoute
+  '/settings/notifications-history': typeof SettingsNotificationsHistoryRoute
+  '/settings/': typeof SettingsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/incidents' | '/service/$service_id'
+  fullPaths:
+    | '/'
+    | '/agents'
+    | '/settings'
+    | '/service/$service_id'
+    | '/settings/notifications'
+    | '/settings/notifications-history'
+    | '/settings/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/incidents' | '/service/$service_id'
-  id: '__root__' | '/' | '/incidents' | '/service/$service_id'
+  to:
+    | '/'
+    | '/agents'
+    | '/service/$service_id'
+    | '/settings/notifications'
+    | '/settings/notifications-history'
+    | '/settings'
+  id:
+    | '__root__'
+    | '/'
+    | '/agents'
+    | '/settings'
+    | '/service/$service_id'
+    | '/settings/notifications'
+    | '/settings/notifications-history'
+    | '/settings/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  IncidentsRoute: typeof IncidentsRoute
+  AgentsRoute: typeof AgentsRoute
+  SettingsRoute: typeof SettingsRouteWithChildren
   ServiceService_idRoute: typeof ServiceService_idRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/incidents': {
-      id: '/incidents'
-      path: '/incidents'
-      fullPath: '/incidents'
-      preLoaderRoute: typeof IncidentsRouteImport
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/agents': {
+      id: '/agents'
+      path: '/agents'
+      fullPath: '/agents'
+      preLoaderRoute: typeof AgentsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -74,6 +139,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/settings/': {
+      id: '/settings/'
+      path: '/'
+      fullPath: '/settings/'
+      preLoaderRoute: typeof SettingsIndexRouteImport
+      parentRoute: typeof SettingsRoute
+    }
+    '/settings/notifications-history': {
+      id: '/settings/notifications-history'
+      path: '/notifications-history'
+      fullPath: '/settings/notifications-history'
+      preLoaderRoute: typeof SettingsNotificationsHistoryRouteImport
+      parentRoute: typeof SettingsRoute
+    }
+    '/settings/notifications': {
+      id: '/settings/notifications'
+      path: '/notifications'
+      fullPath: '/settings/notifications'
+      preLoaderRoute: typeof SettingsNotificationsRouteImport
+      parentRoute: typeof SettingsRoute
     }
     '/service/$service_id': {
       id: '/service/$service_id'
@@ -85,9 +171,26 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface SettingsRouteChildren {
+  SettingsNotificationsRoute: typeof SettingsNotificationsRoute
+  SettingsNotificationsHistoryRoute: typeof SettingsNotificationsHistoryRoute
+  SettingsIndexRoute: typeof SettingsIndexRoute
+}
+
+const SettingsRouteChildren: SettingsRouteChildren = {
+  SettingsNotificationsRoute: SettingsNotificationsRoute,
+  SettingsNotificationsHistoryRoute: SettingsNotificationsHistoryRoute,
+  SettingsIndexRoute: SettingsIndexRoute,
+}
+
+const SettingsRouteWithChildren = SettingsRoute._addFileChildren(
+  SettingsRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  IncidentsRoute: IncidentsRoute,
+  AgentsRoute: AgentsRoute,
+  SettingsRoute: SettingsRouteWithChildren,
   ServiceService_idRoute: ServiceService_idRoute,
 }
 export const routeTree = rootRouteImport

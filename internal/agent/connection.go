@@ -5,24 +5,23 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/sxwebdev/sentinel/internal/models"
 	"github.com/tkcrm/modules/pkg/retry"
 )
 
-// ConnectionState represents the state of the connection.
-type ConnectionState uint8
+// connectionState represents the state of the connection.
+type connectionState uint8
 
 const (
-	ConnectionStateDisconnected ConnectionState = iota // No active connection
-	ConnectionStateConnected                           // Connected
+	connectionStateDisconnected connectionState = iota // No active connection
+	connectionStateConnected                           // Connected
 )
 
 // String returns the string representation of the ConnectionState.
-func (cs ConnectionState) String() string {
+func (cs connectionState) String() string {
 	switch cs {
-	case ConnectionStateDisconnected:
+	case connectionStateDisconnected:
 		return "disconnected"
-	case ConnectionStateConnected:
+	case connectionStateConnected:
 		return "connected"
 	default:
 		return "unknown"
@@ -33,7 +32,7 @@ func (cs ConnectionState) String() string {
 func (s *Agent) initConnection(ctx context.Context) {
 	// immediately try to connect
 	go func() {
-		s.changeStateCh <- ConnectionStateDisconnected
+		s.changeStateCh <- connectionStateDisconnected
 	}()
 
 	// main connection loop
@@ -46,7 +45,7 @@ func (s *Agent) initConnection(ctx context.Context) {
 
 			s.logger.Infoln("connection state changed to:", newState.String())
 
-			if newState == ConnectionStateDisconnected {
+			if newState == connectionStateDisconnected {
 				if !s.isConnection.CompareAndSwap(false, true) {
 					continue
 				}
@@ -74,7 +73,7 @@ func (s *Agent) initConnection(ctx context.Context) {
 func (s *Agent) connect(ctx context.Context) error {
 	defer s.isConnection.Store(false)
 
-	if state := s.getState(); state == ConnectionStateConnected {
+	if state := s.getState(); state == connectionStateConnected {
 		s.logger.Error("already connected to hub server")
 		return nil
 	}
@@ -95,23 +94,59 @@ func (s *Agent) connect(ctx context.Context) error {
 
 	s.logger.Infoln("fetching services from hub server")
 
-	services, err := s.client.FetchServices(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to fetch services: %w", err)
-	}
+	// services, err := s.client.FetchServices(ctx)
+	// if err != nil {
+	// 	return fmt.Errorf("failed to fetch services: %w", err)
+	// }
 
-	s.setServices(services)
+	// s.logger.Infoln("services fetched successfully count:", len(services))
 
-	s.logger.Infoln("services fetched successfully", "count:", len(services))
+	// for _, svc := range services {
+	// 	s.checker.AddService(ctx, checker.AddServiceParams{
+	// 		ID:        svc.ID,
+	// 		Name:      svc.Name,
+	// 		Protocol:  svc.Protocol,
+	// 		IsEnabled: svc.IsEnabled,
+	// 		Interval:  time.Duration(svc.Interval) * time.Millisecond,
+	// 		Timeout:   time.Duration(svc.Timeout) * time.Millisecond,
+	// 		Retries:   svc.Retries,
+	// 		Config:    svc.Config.ConvertToMap(),
+	// 	})
+	// }
 
-	s.changeStateCh <- ConnectionStateConnected
+	// if len(services) > 0 {
+	// 	s.logger.Infoln("added services to checker count:", len(services))
+	// }
+
+	s.changeStateCh <- connectionStateConnected
 
 	// subscribe to service updates
+	// go func() {
+	// 	if err := s.client.SubscribeServices(ctx, func(eventType subscribeServiceType, serviceID string, service *models.Service) {
+	// 		switch eventType {
+	// 		case subscribeServiceTypeUpsert:
+	// 			s.checker.AddService(ctx, checker.AddServiceParams{
+	// 				ID:        service.ID,
+	// 				Name:      service.Name,
+	// 				Protocol:  service.Protocol,
+	// 				IsEnabled: service.IsEnabled,
+	// 				Interval:  time.Duration(service.Interval) * time.Millisecond,
+	// 				Timeout:   time.Duration(service.Timeout) * time.Millisecond,
+	// 				Retries:   service.Retries,
+	// 				Config:    service.Config.ConvertToMap(),
+	// 			})
+	// 		case subscribeServiceTypeDelete:
+	// 			s.checker.DeleteService(serviceID)
+	// 		}
+	// 	}); err != nil {
+	// 		s.logger.Errorf("error while subscribing to services: %v", err)
+	// 	}
+	// }()
+
+	// stream check results
 	go func() {
-		if err := s.client.SubscribeServices(ctx, func(eventType, serviceID string, service *models.Service) {
-			s.logger.Infof("received event: %s, service ID: %s", eventType, serviceID)
-		}); err != nil {
-			s.logger.Errorln("error while subscribing to services:", err)
+		if err := s.client.StreamChecks(ctx); err != nil {
+			s.logger.Errorf("error while streaming checks: %v", err)
 		}
 	}()
 

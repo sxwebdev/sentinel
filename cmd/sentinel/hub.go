@@ -2,24 +2,25 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"net/http"
 	"os"
 	"path/filepath"
 	"time"
 
-	"connectrpc.com/connect"
+	"github.com/sxwebdev/sentinel/internal/alertresolver"
 	"github.com/sxwebdev/sentinel/internal/config"
 	"github.com/sxwebdev/sentinel/internal/datamigrations"
-	"github.com/sxwebdev/sentinel/internal/handlerutils"
-	"github.com/sxwebdev/sentinel/internal/hub/hubserver"
+	"github.com/sxwebdev/sentinel/internal/dispatcher"
 	"github.com/sxwebdev/sentinel/internal/models"
 	"github.com/sxwebdev/sentinel/internal/receiver"
 	"github.com/sxwebdev/sentinel/internal/scheduler"
+	"github.com/sxwebdev/sentinel/internal/servers"
 	"github.com/sxwebdev/sentinel/internal/services/baseservices"
 	"github.com/sxwebdev/sentinel/internal/store"
-	"github.com/sxwebdev/sentinel/internal/upgrader"
-	"github.com/sxwebdev/sentinel/internal/web"
+	updater "github.com/sxwebdev/sentinel/internal/updated"
+	"github.com/sxwebdev/sentinel/internal/utils"
+	"github.com/sxwebdev/sentinel/pkg/locker"
 	"github.com/sxwebdev/sentinel/pkg/migrations"
 	"github.com/sxwebdev/sentinel/pkg/sqlite"
 	"github.com/sxwebdev/sentinel/sql"
@@ -27,12 +28,7 @@ import (
 	"github.com/tkcrm/mx/logger"
 	"github.com/tkcrm/mx/service"
 	"github.com/tkcrm/mx/service/pingpong"
-	"github.com/tkcrm/mx/transport/connectrpc_transport"
 	"github.com/urfave/cli/v3"
-	"go.akshayshah.org/connectproto"
-	"golang.org/x/net/http2"
-	"golang.org/x/net/http2/h2c"
-	"google.golang.org/protobuf/encoding/protojson"
 )
 
 func hubStartCMD() *cli.Command {
@@ -76,6 +72,55 @@ func hubStartCMD() *cli.Command {
 						}
 					}
 
+					var authConfig config.AuthConfig
+
+					// get file datadir/hub/secrets.json
+					// if not exists create it with generated values
+					secretsFilePath := filepath.Join(conf.HubDataDir(), "secrets.json")
+					if _, err := os.Stat(secretsFilePath); os.IsNotExist(err) {
+						l.Infof("creating secrets file in %s", secretsFilePath)
+						if err := os.MkdirAll(filepath.Dir(secretsFilePath), 0o700); err != nil {
+							return fmt.Errorf("failed to create secrets dir: %w", err)
+						}
+
+						accessToken, err := utils.GenerateRandomString(48, "")
+						if err != nil {
+							return fmt.Errorf("failed to generate access token secret key: %w", err)
+						}
+
+						refreshToken, err := utils.GenerateRandomString(48, "")
+						if err != nil {
+							return fmt.Errorf("failed to generate refresh token secret key: %w", err)
+						}
+
+						authConfig = config.AuthConfig{
+							AccessTokenSecretKey:  accessToken,
+							RefreshTokenSecretKey: refreshToken,
+						}
+
+						data, err := json.MarshalIndent(authConfig, "", "  ")
+						if err != nil {
+							return fmt.Errorf("failed to marshal secrets: %w", err)
+						}
+
+						if err := os.WriteFile(secretsFilePath, data, 0o600); err != nil {
+							return fmt.Errorf("failed to create secrets file: %w", err)
+						}
+					} else {
+						data, err := os.ReadFile(secretsFilePath)
+						if err != nil {
+							return fmt.Errorf("failed to read secrets file: %w", err)
+						}
+
+						if err := json.Unmarshal(data, &authConfig); err != nil {
+							return fmt.Errorf("failed to unmarshal secrets file: %w", err)
+						}
+
+						if authConfig.AccessTokenSecretKey == "" || authConfig.RefreshTokenSecretKey == "" {
+							return fmt.Errorf("invalid secrets file: missing keys")
+						}
+					}
+
 					// set default timezone
 					var err error
 					time.Local, err = time.LoadLocation(conf.Timezone)
@@ -112,66 +157,39 @@ func hubStartCMD() *cli.Command {
 					// Init receiver
 					rc := receiver.New()
 
+					// Initialize dispatcher
+					dispatcher := dispatcher.New()
+
+					baseServices := baseservices.New(l, st, authConfig, rc, dispatcher)
+
+					// init alert resolver
+					ar := alertresolver.New(l, baseServices)
+
+					// Initialize scheduler
+					sched := scheduler.New(l, rc, baseServices, ar)
+
+					systemInfo := models.GetSystemInfo(version, commitHash, buildDate)
+					systemInfo.SqliteVersion = sqliteVersion
+
+					availableUpdateData := locker.New(models.AvailableUpdate{})
+
 					// Initialize upgrader if configured
-					upgr, err := upgrader.New(l, conf.Upgrader)
+					updater, err := updater.New(l, conf.Upgrader, version, availableUpdateData)
 					if err != nil {
 						return fmt.Errorf("failed to initialize upgrader: %w", err)
 					}
 
-					baseServices := baseservices.New(l, st, rc)
-
-					// Initialize scheduler
-					sched := scheduler.New(l, rc, baseServices)
-
-					serverInfo := models.GetSystemInfo(version, commitHash, buildDate)
-					serverInfo.SqliteVersion = sqliteVersion
-
-					webServer, err := web.NewServer(l, conf, serverInfo, baseServices, rc, upgr)
-					if err != nil {
-						return fmt.Errorf("failed to initialize web server: %w", err)
-					}
-
-					// init agent rpc server
-					hubServer := hubserver.New(ctx, l, baseServices)
-
-					rpcServer := connectrpc_transport.NewServer(
-						connectrpc_transport.WithName("hub-server"),
-						connectrpc_transport.WithLogger(l),
-						connectrpc_transport.WithConfig(conf.HubServer),
-						connectrpc_transport.WithServices(hubServer),
-						connectrpc_transport.WithServerHandlerWrapper(
-							func(h http.Handler) http.Handler {
-								return h2c.NewHandler(
-									handlerutils.WithCORS(
-										hubserver.
-											NewInterceptor(l, baseServices).
-											ConnectRPCAuthMiddleware().
-											Wrap(h),
-									),
-									&http2.Server{})
-							},
-						),
-						connectrpc_transport.WithReflection(
-							hubServer.Name(),
-						),
-						connectrpc_transport.WithConnectRPCOptions(
-							connect.WithHandlerOptions(
-								connectproto.WithJSON(
-									protojson.MarshalOptions{EmitUnpopulated: true},
-									protojson.UnmarshalOptions{DiscardUnknown: true},
-								),
-							),
-						),
-					)
+					srv := servers.New(ctx, l, conf.Server.Addr, baseServices, ar, systemInfo, availableUpdateData)
 
 					// register services
 					ln.ServicesRunner().Register(
 						service.New(service.WithService(pingpong.New(l))),
 						service.New(service.WithService(db)),
+						service.New(service.WithService(updater)),
 						service.New(service.WithService(rc)),
+						service.New(service.WithService(dispatcher)),
 						service.New(service.WithService(sched)),
-						service.New(service.WithService(webServer)),
-						service.New(service.WithService(rpcServer)),
+						service.New(service.WithService(srv)),
 						service.New(service.WithService(baseServices.Notifications().Sender())),
 					)
 

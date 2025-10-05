@@ -1,6 +1,7 @@
 import { useState, useRef, useLayoutEffect } from "react";
 import { cn } from "@/shared/lib/utils";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import { Button } from "./ui";
 
 interface ExpandableTextProps {
   content: string;
@@ -53,9 +54,10 @@ export const ExpandableText = ({ content, className }: ExpandableTextProps) => {
 
       {/* Show toggle button if content is truncated OR currently expanded */}
       {(isTruncated || isExpanded) && (
-        <button
+        <Button
           onClick={toggleExpansion}
-          className="mt-2 inline-flex items-center gap-1 rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-600 transition-colors duration-200 hover:bg-blue-100 hover:text-blue-700"
+          variant="secondary"
+          className="mt-2 h-8 gap-1 px-1.5 py-1 text-xs"
         >
           {isExpanded ? (
             <>
@@ -68,7 +70,7 @@ export const ExpandableText = ({ content, className }: ExpandableTextProps) => {
               Show more
             </>
           )}
-        </button>
+        </Button>
       )}
     </div>
   );

@@ -47,7 +47,7 @@ export const ServiceStats = ({
   ];
 
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
+    <div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-6">
       {cardStats.map((stat) => (
         <InfoCardStats
           key={stat.key}

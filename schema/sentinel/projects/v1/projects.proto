@@ -1,0 +1,59 @@
+syntax = "proto3";
+package sentinel.projects.v1;
+
+import "google/protobuf/timestamp.proto";
+
+// ProjectsService is the service for managing projects.
+service ProjectsService {
+  rpc ProjectsList(ProjectsListRequest) returns (ProjectsListResponse);
+  rpc ProjectCreate(ProjectCreateRequest) returns (ProjectCreateResponse);
+  rpc ProjectGet(ProjectGetRequest) returns (ProjectGetResponse);
+  rpc ProjectUpdate(ProjectUpdateRequest) returns (ProjectUpdateResponse);
+  rpc ProjectDelete(ProjectDeleteRequest) returns (ProjectDeleteResponse);
+}
+
+message ProjectMonitorDefaults {
+  int64 interval = 1; // in milliseconds
+  int64 timeout = 2;  // in milliseconds
+  int64 retries = 3;
+}
+
+message ProjectSettings { ProjectMonitorDefaults monitor_defaults = 1; }
+
+message Project {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  ProjectSettings settings = 6;
+  google.protobuf.Timestamp created_at = 4;
+  google.protobuf.Timestamp updated_at = 5;
+}
+
+// ProjectsListRequest is the request message for listing projects.
+message ProjectsListRequest {}
+message ProjectsListResponse { repeated Project items = 1; }
+
+// ProjectCreateRequest is the request message for creating a project.
+message ProjectCreateRequest {
+  string name = 1;
+  string description = 2;
+  ProjectSettings settings = 3;
+}
+message ProjectCreateResponse { Project item = 1; }
+
+// ProjectGetRequest is the request message for getting a project.
+message ProjectGetRequest { string id = 1; }
+message ProjectGetResponse { Project item = 1; }
+
+// ProjectUpdateRequest is the request message for updating a project.
+message ProjectUpdateRequest {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  ProjectSettings settings = 4;
+}
+message ProjectUpdateResponse { Project item = 1; }
+
+// ProjectDeleteRequest is the request message for deleting a project.
+message ProjectDeleteRequest { string id = 1; }
+message ProjectDeleteResponse {}

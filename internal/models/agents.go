@@ -11,3 +11,5 @@ const (
 func (s AgentStatusType) String() string {
 	return string(s)
 }
+
+type AgentConfig struct{}

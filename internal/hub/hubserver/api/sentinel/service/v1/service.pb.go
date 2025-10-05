@@ -7,7 +7,6 @@
 package servicev1
 
 import (
-	v1 "github.com/sxwebdev/sentinel/internal/hub/hubserver/api/sentinel/common/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
@@ -22,6 +21,110 @@ const (
 	// Verify that runtime/protoimpl is sufficiently up-to-date.
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
+
+type ServiceProtocol int32
+
+const (
+	ServiceProtocol_SERVICE_PROTOCOL_UNSPECIFIED ServiceProtocol = 0
+	ServiceProtocol_SERVICE_PROTOCOL_HTTP        ServiceProtocol = 1
+	ServiceProtocol_SERVICE_PROTOCOL_TCP         ServiceProtocol = 2
+	ServiceProtocol_SERVICE_PROTOCOL_GRPC        ServiceProtocol = 3
+)
+
+// Enum value maps for ServiceProtocol.
+var (
+	ServiceProtocol_name = map[int32]string{
+		0: "SERVICE_PROTOCOL_UNSPECIFIED",
+		1: "SERVICE_PROTOCOL_HTTP",
+		2: "SERVICE_PROTOCOL_TCP",
+		3: "SERVICE_PROTOCOL_GRPC",
+	}
+	ServiceProtocol_value = map[string]int32{
+		"SERVICE_PROTOCOL_UNSPECIFIED": 0,
+		"SERVICE_PROTOCOL_HTTP":        1,
+		"SERVICE_PROTOCOL_TCP":         2,
+		"SERVICE_PROTOCOL_GRPC":        3,
+	}
+)
+
+func (x ServiceProtocol) Enum() *ServiceProtocol {
+	p := new(ServiceProtocol)
+	*p = x
+	return p
+}
+
+func (x ServiceProtocol) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ServiceProtocol) Descriptor() protoreflect.EnumDescriptor {
+	return file_sentinel_service_v1_service_proto_enumTypes[0].Descriptor()
+}
+
+func (ServiceProtocol) Type() protoreflect.EnumType {
+	return &file_sentinel_service_v1_service_proto_enumTypes[0]
+}
+
+func (x ServiceProtocol) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ServiceProtocol.Descriptor instead.
+func (ServiceProtocol) EnumDescriptor() ([]byte, []int) {
+	return file_sentinel_service_v1_service_proto_rawDescGZIP(), []int{0}
+}
+
+type ServiceStatus int32
+
+const (
+	ServiceStatus_SERVICE_STATUS_UNSPECIFIED ServiceStatus = 0
+	ServiceStatus_SERVICE_STATUS_UNKNOWN     ServiceStatus = 1
+	ServiceStatus_SERVICE_STATUS_UP          ServiceStatus = 2
+	ServiceStatus_SERVICE_STATUS_DOWN        ServiceStatus = 3
+)
+
+// Enum value maps for ServiceStatus.
+var (
+	ServiceStatus_name = map[int32]string{
+		0: "SERVICE_STATUS_UNSPECIFIED",
+		1: "SERVICE_STATUS_UNKNOWN",
+		2: "SERVICE_STATUS_UP",
+		3: "SERVICE_STATUS_DOWN",
+	}
+	ServiceStatus_value = map[string]int32{
+		"SERVICE_STATUS_UNSPECIFIED": 0,
+		"SERVICE_STATUS_UNKNOWN":     1,
+		"SERVICE_STATUS_UP":          2,
+		"SERVICE_STATUS_DOWN":        3,
+	}
+)
+
+func (x ServiceStatus) Enum() *ServiceStatus {
+	p := new(ServiceStatus)
+	*p = x
+	return p
+}
+
+func (x ServiceStatus) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ServiceStatus) Descriptor() protoreflect.EnumDescriptor {
+	return file_sentinel_service_v1_service_proto_enumTypes[1].Descriptor()
+}
+
+func (ServiceStatus) Type() protoreflect.EnumType {
+	return &file_sentinel_service_v1_service_proto_enumTypes[1]
+}
+
+func (x ServiceStatus) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ServiceStatus.Descriptor instead.
+func (ServiceStatus) EnumDescriptor() ([]byte, []int) {
+	return file_sentinel_service_v1_service_proto_rawDescGZIP(), []int{1}
+}
 
 type HTTPConfig struct {
 	state         protoimpl.MessageState       `protogen:"open.v1"`
@@ -275,7 +378,7 @@ type Service struct {
 	state                  protoimpl.MessageState `protogen:"open.v1"`
 	Id                     string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	Name                   string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Protocol               v1.ServiceProtocol     `protobuf:"varint,3,opt,name=protocol,proto3,enum=sentinel.common.v1.ServiceProtocol" json:"protocol,omitempty"`
+	Protocol               ServiceProtocol        `protobuf:"varint,3,opt,name=protocol,proto3,enum=sentinel.service.v1.ServiceProtocol" json:"protocol,omitempty"`
 	Interval               int64                  `protobuf:"varint,4,opt,name=interval,proto3" json:"interval,omitempty"`
 	Timeout                int64                  `protobuf:"varint,5,opt,name=timeout,proto3" json:"timeout,omitempty"`
 	Retries                int64                  `protobuf:"varint,6,opt,name=retries,proto3" json:"retries,omitempty"`
@@ -333,11 +436,11 @@ func (x *Service) GetName() string {
 	return ""
 }
 
-func (x *Service) GetProtocol() v1.ServiceProtocol {
+func (x *Service) GetProtocol() ServiceProtocol {
 	if x != nil {
 		return x.Protocol
 	}
-	return v1.ServiceProtocol(0)
+	return ServiceProtocol_SERVICE_PROTOCOL_UNSPECIFIED
 }
 
 func (x *Service) GetInterval() int64 {
@@ -515,7 +618,7 @@ var File_sentinel_service_v1_service_proto protoreflect.FileDescriptor
 
 const file_sentinel_service_v1_service_proto_rawDesc = "" +
 	"\n" +
-	"!sentinel/service/v1/service.proto\x12\x13sentinel.service.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a!sentinel/common/v1/protocol.proto\"\xee\x03\n" +
+	"!sentinel/service/v1/service.proto\x12\x13sentinel.service.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xee\x03\n" +
 	"\n" +
 	"HTTPConfig\x12L\n" +
 	"\tendpoints\x18\x01 \x03(\v2..sentinel.service.v1.HTTPConfig.EndpointConfigR\tendpoints\x12\x1c\n" +
@@ -555,11 +658,11 @@ const file_sentinel_service_v1_service_proto_rawDesc = "" +
 	"grpcConfig\x88\x01\x01B\x0e\n" +
 	"\f_http_configB\r\n" +
 	"\v_tcp_configB\x0e\n" +
-	"\f_grpc_config\"\xdd\x03\n" +
+	"\f_grpc_config\"\xde\x03\n" +
 	"\aService\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\x12?\n" +
-	"\bprotocol\x18\x03 \x01(\x0e2#.sentinel.common.v1.ServiceProtocolR\bprotocol\x12\x1a\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12@\n" +
+	"\bprotocol\x18\x03 \x01(\x0e2$.sentinel.service.v1.ServiceProtocolR\bprotocol\x12\x1a\n" +
 	"\binterval\x18\x04 \x01(\x03R\binterval\x12\x18\n" +
 	"\atimeout\x18\x05 \x01(\x03R\atimeout\x12\x18\n" +
 	"\aretries\x18\x06 \x01(\x03R\aretries\x12\x12\n" +
@@ -572,7 +675,17 @@ const file_sentinel_service_v1_service_proto_rawDesc = "" +
 	"\n" +
 	"created_at\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
-	"updated_at\x18\f \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAtB\xec\x01\n" +
+	"updated_at\x18\f \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt*\x83\x01\n" +
+	"\x0fServiceProtocol\x12 \n" +
+	"\x1cSERVICE_PROTOCOL_UNSPECIFIED\x10\x00\x12\x19\n" +
+	"\x15SERVICE_PROTOCOL_HTTP\x10\x01\x12\x18\n" +
+	"\x14SERVICE_PROTOCOL_TCP\x10\x02\x12\x19\n" +
+	"\x15SERVICE_PROTOCOL_GRPC\x10\x03*{\n" +
+	"\rServiceStatus\x12\x1e\n" +
+	"\x1aSERVICE_STATUS_UNSPECIFIED\x10\x00\x12\x1a\n" +
+	"\x16SERVICE_STATUS_UNKNOWN\x10\x01\x12\x15\n" +
+	"\x11SERVICE_STATUS_UP\x10\x02\x12\x17\n" +
+	"\x13SERVICE_STATUS_DOWN\x10\x03B\xec\x01\n" +
 	"\x17com.sentinel.service.v1B\fServiceProtoP\x01ZUgithub.com/sxwebdev/sentinel/internal/hub/hubserver/api/sentinel/service/v1;servicev1\xa2\x02\x03SSX\xaa\x02\x13Sentinel.Service.V1\xca\x02\x13Sentinel\\Service\\V1\xe2\x02\x1fSentinel\\Service\\V1\\GPBMetadata\xea\x02\x15Sentinel::Service::V1b\x06proto3"
 
 var (
@@ -587,28 +700,30 @@ func file_sentinel_service_v1_service_proto_rawDescGZIP() []byte {
 	return file_sentinel_service_v1_service_proto_rawDescData
 }
 
+var file_sentinel_service_v1_service_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
 var file_sentinel_service_v1_service_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_sentinel_service_v1_service_proto_goTypes = []any{
-	(*HTTPConfig)(nil),                // 0: sentinel.service.v1.HTTPConfig
-	(*TCPConfig)(nil),                 // 1: sentinel.service.v1.TCPConfig
-	(*GRPCConfig)(nil),                // 2: sentinel.service.v1.GRPCConfig
-	(*ServiceConfig)(nil),             // 3: sentinel.service.v1.ServiceConfig
-	(*Service)(nil),                   // 4: sentinel.service.v1.Service
-	(*HTTPConfig_EndpointConfig)(nil), // 5: sentinel.service.v1.HTTPConfig.EndpointConfig
-	nil,                               // 6: sentinel.service.v1.HTTPConfig.EndpointConfig.HeadersEntry
-	(v1.ServiceProtocol)(0),           // 7: sentinel.common.v1.ServiceProtocol
-	(*timestamppb.Timestamp)(nil),     // 8: google.protobuf.Timestamp
+	(ServiceProtocol)(0),              // 0: sentinel.service.v1.ServiceProtocol
+	(ServiceStatus)(0),                // 1: sentinel.service.v1.ServiceStatus
+	(*HTTPConfig)(nil),                // 2: sentinel.service.v1.HTTPConfig
+	(*TCPConfig)(nil),                 // 3: sentinel.service.v1.TCPConfig
+	(*GRPCConfig)(nil),                // 4: sentinel.service.v1.GRPCConfig
+	(*ServiceConfig)(nil),             // 5: sentinel.service.v1.ServiceConfig
+	(*Service)(nil),                   // 6: sentinel.service.v1.Service
+	(*HTTPConfig_EndpointConfig)(nil), // 7: sentinel.service.v1.HTTPConfig.EndpointConfig
+	nil,                               // 8: sentinel.service.v1.HTTPConfig.EndpointConfig.HeadersEntry
+	(*timestamppb.Timestamp)(nil),     // 9: google.protobuf.Timestamp
 }
 var file_sentinel_service_v1_service_proto_depIdxs = []int32{
-	5, // 0: sentinel.service.v1.HTTPConfig.endpoints:type_name -> sentinel.service.v1.HTTPConfig.EndpointConfig
-	0, // 1: sentinel.service.v1.ServiceConfig.http_config:type_name -> sentinel.service.v1.HTTPConfig
-	1, // 2: sentinel.service.v1.ServiceConfig.tcp_config:type_name -> sentinel.service.v1.TCPConfig
-	2, // 3: sentinel.service.v1.ServiceConfig.grpc_config:type_name -> sentinel.service.v1.GRPCConfig
-	7, // 4: sentinel.service.v1.Service.protocol:type_name -> sentinel.common.v1.ServiceProtocol
-	3, // 5: sentinel.service.v1.Service.config:type_name -> sentinel.service.v1.ServiceConfig
-	8, // 6: sentinel.service.v1.Service.created_at:type_name -> google.protobuf.Timestamp
-	8, // 7: sentinel.service.v1.Service.updated_at:type_name -> google.protobuf.Timestamp
-	6, // 8: sentinel.service.v1.HTTPConfig.EndpointConfig.headers:type_name -> sentinel.service.v1.HTTPConfig.EndpointConfig.HeadersEntry
+	7, // 0: sentinel.service.v1.HTTPConfig.endpoints:type_name -> sentinel.service.v1.HTTPConfig.EndpointConfig
+	2, // 1: sentinel.service.v1.ServiceConfig.http_config:type_name -> sentinel.service.v1.HTTPConfig
+	3, // 2: sentinel.service.v1.ServiceConfig.tcp_config:type_name -> sentinel.service.v1.TCPConfig
+	4, // 3: sentinel.service.v1.ServiceConfig.grpc_config:type_name -> sentinel.service.v1.GRPCConfig
+	0, // 4: sentinel.service.v1.Service.protocol:type_name -> sentinel.service.v1.ServiceProtocol
+	5, // 5: sentinel.service.v1.Service.config:type_name -> sentinel.service.v1.ServiceConfig
+	9, // 6: sentinel.service.v1.Service.created_at:type_name -> google.protobuf.Timestamp
+	9, // 7: sentinel.service.v1.Service.updated_at:type_name -> google.protobuf.Timestamp
+	8, // 8: sentinel.service.v1.HTTPConfig.EndpointConfig.headers:type_name -> sentinel.service.v1.HTTPConfig.EndpointConfig.HeadersEntry
 	9, // [9:9] is the sub-list for method output_type
 	9, // [9:9] is the sub-list for method input_type
 	9, // [9:9] is the sub-list for extension type_name
@@ -627,13 +742,14 @@ func file_sentinel_service_v1_service_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_sentinel_service_v1_service_proto_rawDesc), len(file_sentinel_service_v1_service_proto_rawDesc)),
-			NumEnums:      0,
+			NumEnums:      2,
 			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
 		GoTypes:           file_sentinel_service_v1_service_proto_goTypes,
 		DependencyIndexes: file_sentinel_service_v1_service_proto_depIdxs,
+		EnumInfos:         file_sentinel_service_v1_service_proto_enumTypes,
 		MessageInfos:      file_sentinel_service_v1_service_proto_msgTypes,
 	}.Build()
 	File_sentinel_service_v1_service_proto = out.File

@@ -15,7 +15,7 @@ import (
 
 const getAllUnsent = `-- name: GetAllUnsent :many
 SELECT
-    h.id, h.provider_id, h.service_id, h.incident_id, h.message, h.status, h.response, h.attempts, h.error_message, h.last_attempt_at, h.sent_at, h.created_at, h.updated_at,
+    h.id, h.alert_id, h.provider_id, h.message, h.status, h.response, h.attempts, h.error_message, h.last_attempt_at, h.sent_at, h.created_at, h.updated_at,
     p.provider_type,
     p.config
   FROM notification_history h
@@ -29,9 +29,8 @@ SELECT
 
 type GetAllUnsentRow struct {
 	ID            string                          `db:"id" json:"id"`
+	AlertID       *string                         `db:"alert_id" json:"alert_id"`
 	ProviderID    string                          `db:"provider_id" json:"provider_id"`
-	ServiceID     *string                         `db:"service_id" json:"service_id"`
-	IncidentID    *string                         `db:"incident_id" json:"incident_id"`
 	Message       string                          `db:"message" json:"message"`
 	Status        string                          `db:"status" json:"status"`
 	Response      *string                         `db:"response" json:"response"`
@@ -56,9 +55,8 @@ func (q *Queries) GetAllUnsent(ctx context.Context) ([]*GetAllUnsentRow, error) 
 		var i GetAllUnsentRow
 		if err := rows.Scan(
 			&i.ID,
+			&i.AlertID,
 			&i.ProviderID,
-			&i.ServiceID,
-			&i.IncidentID,
 			&i.Message,
 			&i.Status,
 			&i.Response,

@@ -39,23 +39,37 @@ func (s ColumnNames) Strings() []string {
 }
 
 const (
-	ColumnNameIncidentsId         ColumnName = "id"
-	ColumnNameIncidentsServiceId  ColumnName = "service_id"
-	ColumnNameIncidentsError      ColumnName = "error"
-	ColumnNameIncidentsDuration   ColumnName = "duration"
-	ColumnNameIncidentsStartedAt  ColumnName = "started_at"
-	ColumnNameIncidentsResolvedAt ColumnName = "resolved_at"
-	ColumnNameIncidentsCreatedAt  ColumnName = "created_at"
-	ColumnNameIncidentsUpdatedAt  ColumnName = "updated_at"
+	ColumnNameIncidentsId          ColumnName = "id"
+	ColumnNameIncidentsProjectId   ColumnName = "project_id"
+	ColumnNameIncidentsOrigin      ColumnName = "origin"
+	ColumnNameIncidentsMonitorId   ColumnName = "monitor_id"
+	ColumnNameIncidentsResourceId  ColumnName = "resource_id"
+	ColumnNameIncidentsAgentId     ColumnName = "agent_id"
+	ColumnNameIncidentsKind        ColumnName = "kind"
+	ColumnNameIncidentsStatus      ColumnName = "status"
+	ColumnNameIncidentsSeverity    ColumnName = "severity"
+	ColumnNameIncidentsSummary     ColumnName = "summary"
+	ColumnNameIncidentsFirstSeenAt ColumnName = "first_seen_at"
+	ColumnNameIncidentsLastSeenAt  ColumnName = "last_seen_at"
+	ColumnNameIncidentsResolvedAt  ColumnName = "resolved_at"
+	ColumnNameIncidentsCreatedAt   ColumnName = "created_at"
+	ColumnNameIncidentsUpdatedAt   ColumnName = "updated_at"
 )
 
 func IncidentsColumnNames() ColumnNames {
 	return ColumnNames{
 		ColumnNameIncidentsId,
-		ColumnNameIncidentsServiceId,
-		ColumnNameIncidentsError,
-		ColumnNameIncidentsDuration,
-		ColumnNameIncidentsStartedAt,
+		ColumnNameIncidentsProjectId,
+		ColumnNameIncidentsOrigin,
+		ColumnNameIncidentsMonitorId,
+		ColumnNameIncidentsResourceId,
+		ColumnNameIncidentsAgentId,
+		ColumnNameIncidentsKind,
+		ColumnNameIncidentsStatus,
+		ColumnNameIncidentsSeverity,
+		ColumnNameIncidentsSummary,
+		ColumnNameIncidentsFirstSeenAt,
+		ColumnNameIncidentsLastSeenAt,
 		ColumnNameIncidentsResolvedAt,
 		ColumnNameIncidentsCreatedAt,
 		ColumnNameIncidentsUpdatedAt,

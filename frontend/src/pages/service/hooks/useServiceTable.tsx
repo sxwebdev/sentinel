@@ -105,7 +105,7 @@ export const useServiceTable = () => {
         },
       },
       {
-        header: "Service ",
+        header: "Service",
         accessorKey: "service",
         cell: ({ row }) => {
           return (
@@ -128,10 +128,11 @@ export const useServiceTable = () => {
               className={cn(
                 "text-xs font-semibold",
                 row.original?.status === "up" &&
-                  "bg-emerald-100 text-emerald-600",
-                row.original?.status === "down" && "bg-rose-100 text-rose-600",
+                  "bg-emerald-100 text-emerald-600 dark:bg-emerald-600 dark:text-emerald-100",
+                row.original?.status === "down" &&
+                  "bg-rose-100 text-rose-600 dark:bg-rose-600 dark:text-rose-100",
                 row.original?.status === "unknown" &&
-                  "bg-yellow-100 text-yellow-600",
+                  "bg-yellow-100 text-yellow-600 dark:bg-yellow-600 dark:text-yellow-100",
               )}
             >
               {row.original?.status?.toUpperCase()}

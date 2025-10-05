@@ -12,14 +12,14 @@ import (
 )
 
 type Querier interface {
-	Create(ctx context.Context, iD string, serviceID string, incidentError string) (*models.Incident, error)
+	Create(ctx context.Context, arg CreateParams) (*models.Incident, error)
 	Delete(ctx context.Context, id string) error
-	DeleteByServiceID(ctx context.Context, serviceID string) error
-	GetAllUnresolvedByServiceID(ctx context.Context, serviceID string) ([]*models.Incident, error)
+	DeleteByMonitorID(ctx context.Context, monitorID *string) error
+	GetAllUnresolvedByMonitorID(ctx context.Context, monitorID *string) ([]*models.Incident, error)
 	GetByID(ctx context.Context, id string) (*models.Incident, error)
 	ResolveByID(ctx context.Context, id string) error
 	Stats(ctx context.Context) (*StatsRow, error)
-	StatsByServiceID(ctx context.Context, serviceID string, createdAt time.Time) (*StatsByServiceIDRow, error)
+	StatsByMonitorID(ctx context.Context, monitorID *string, createdAt time.Time) (*StatsByMonitorIDRow, error)
 }
 
 var _ Querier = (*Queries)(nil)

@@ -13,7 +13,7 @@ import (
 )
 
 const getAllEnabled = `-- name: GetAllEnabled :many
-SELECT id, provider_type, json(config), is_enabled, created_at, updated_at FROM notification_providers WHERE is_enabled=true
+SELECT id, provider_type, config, is_enabled, project_id, created_at, updated_at FROM notification_providers WHERE is_enabled=true
 `
 
 func (q *Queries) GetAllEnabled(ctx context.Context) ([]*models.NotificationProvider, error) {
@@ -30,6 +30,7 @@ func (q *Queries) GetAllEnabled(ctx context.Context) ([]*models.NotificationProv
 			&i.ProviderType,
 			&i.Config,
 			&i.IsEnabled,
+			&i.ProjectID,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {

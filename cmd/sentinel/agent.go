@@ -56,10 +56,14 @@ func agentCMD() *cli.Command {
 						}
 					}
 
-					serverInfo := models.GetSystemInfo(version, commitHash, buildDate)
+					// get system info
+					systemInfo := models.GetSystemInfo(version, commitHash, buildDate)
+
+					// init receiver
+					// rc := receiver.New()
 
 					// init agent service
-					ag, err := agent.New(ctx, l, conf, serverInfo)
+					ag, err := agent.New(ctx, l, conf, *systemInfo)
 					if err != nil {
 						return fmt.Errorf("failed to init agent: %w", err)
 					}
@@ -67,6 +71,7 @@ func agentCMD() *cli.Command {
 					// register services
 					ln.ServicesRunner().Register(
 						service.New(service.WithService(pingpong.New(l))),
+						// service.New(service.WithService(rc)),
 						service.New(service.WithService(ag)),
 					)
 

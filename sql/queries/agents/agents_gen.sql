@@ -1,6 +1,6 @@
 -- name: Create :one
-INSERT INTO agents (id, name, description, secret_hash, token_hint, last_assignment_rev, tags, config, last_connected_at)
-	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+INSERT INTO agents (id, name, description, secret_hash, token_hint, kind, location, tags, config, project_id)
+	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	RETURNING *;
 
 -- name: Delete :exec

@@ -1,7 +1,6 @@
 package models
 
 import (
-	"encoding/json"
 	"fmt"
 	"time"
 )
@@ -78,10 +77,10 @@ type ServiceFullView struct {
 }
 
 // GetConfig returns config value by key or default if not set
-func (s *Service) GetConfig() (map[string]any, error) {
-	var config map[string]any
-	if err := json.Unmarshal([]byte(s.Config), &config); err != nil {
-		return nil, err
-	}
-	return config, nil
-}
+// func (s *Service) GetConfig() (map[string]any, error) {
+// 	var config map[string]any
+// 	if err := json.Unmarshal([]byte(s.Config), &config); err != nil {
+// 		return nil, err
+// 	}
+// 	return config, nil
+// }

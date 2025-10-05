@@ -62,7 +62,7 @@ export const ServiceTable = ({ protocols }: ServiceTableProps) => {
               clear
             />
             <MultiSelect
-              className="lg:col-span-2"
+              className="dark:bg-input/30 lg:col-span-2"
               options={
                 allTags?.map((tag) => ({
                   label: `${tag} (${countAllTags?.[tag] ?? 0})`,
@@ -117,9 +117,9 @@ export const ServiceTable = ({ protocols }: ServiceTableProps) => {
           </div>
           <div className="border-border overflow-hidden rounded-xl border">
             <Table>
-              <TableHeader className="rounded-t-lg bg-gray-100">
+              <TableHeader>
                 {table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow key={headerGroup.id}>
+                  <TableRow key={headerGroup.id} className="bg-muted/50">
                     {headerGroup.headers.map((header, idx) => {
                       return (
                         <TableHead

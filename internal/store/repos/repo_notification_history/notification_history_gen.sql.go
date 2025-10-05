@@ -12,33 +12,30 @@ import (
 )
 
 const create = `-- name: Create :one
-INSERT INTO notification_history (id, provider_id, service_id, incident_id, message)
-	VALUES (?, ?, ?, ?, ?)
-	RETURNING id, provider_id, service_id, incident_id, message, status, response, attempts, error_message, last_attempt_at, sent_at, created_at, updated_at
+INSERT INTO notification_history (id, alert_id, provider_id, message)
+	VALUES (?, ?, ?, ?)
+	RETURNING id, alert_id, provider_id, message, status, response, attempts, error_message, last_attempt_at, sent_at, created_at, updated_at
 `
 
 type CreateParams struct {
 	ID         string  `db:"id" json:"id"`
+	AlertID    *string `db:"alert_id" json:"alert_id"`
 	ProviderID string  `db:"provider_id" json:"provider_id"`
-	ServiceID  *string `db:"service_id" json:"service_id"`
-	IncidentID *string `db:"incident_id" json:"incident_id"`
 	Message    string  `db:"message" json:"message"`
 }
 
 func (q *Queries) Create(ctx context.Context, arg CreateParams) (*models.NotificationHistory, error) {
 	row := q.db.QueryRowContext(ctx, create,
 		arg.ID,
+		arg.AlertID,
 		arg.ProviderID,
-		arg.ServiceID,
-		arg.IncidentID,
 		arg.Message,
 	)
 	var i models.NotificationHistory
 	err := row.Scan(
 		&i.ID,
+		&i.AlertID,
 		&i.ProviderID,
-		&i.ServiceID,
-		&i.IncidentID,
 		&i.Message,
 		&i.Status,
 		&i.Response,

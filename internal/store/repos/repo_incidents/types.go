@@ -9,7 +9,7 @@ type StatsByServiceID struct {
 	UptimePercentage30d float64
 }
 
-func (s StatsByServiceIDRow) ToDomain() *StatsByServiceID {
+func (s StatsByMonitorIDRow) ToDomain() *StatsByServiceID {
 	var totalDowntime int64
 	if s.TotalDowntime != nil {
 		totalDowntime = int64(*s.TotalDowntime)

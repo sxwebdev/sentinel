@@ -39,7 +39,7 @@ const ServiceCreate = () => {
   return (
     <Dialog open={isOpenModal} onOpenChange={setIsOpenModal}>
       <DialogTrigger asChild>
-        <Button size="sm">
+        <Button size="sm" variant="outline">
           <PlusIcon />
           {isMobile ? "Add" : "Add Service"}
         </Button>

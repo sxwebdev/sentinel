@@ -143,13 +143,8 @@ export const IncidentsList = ({
                     </TooltipProvider>
 
                     <Badge
-                      variant={incident.resolved_at ? "default" : "destructive"}
-                      className={cn(
-                        "text-xs font-medium",
-                        incident.resolved_at &&
-                          "bg-emerald-100 text-emerald-600",
-                        !incident.resolved_at && "bg-rose-100 text-rose-600",
-                      )}
+                      variant={incident.resolved_at ? "success" : "error"}
+                      className="text-xs font-medium"
                     >
                       {incident.resolved_at ? "Resolved" : "Active"}
                     </Badge>

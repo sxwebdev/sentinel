@@ -11,32 +11,37 @@ import (
 )
 
 type SystemInfo struct {
-	Version         string           `json:"version"`
-	CommitHash      string           `json:"commit_hash"`
-	BuildDate       string           `json:"build_date"`
-	GoVersion       string           `json:"go_version"`
-	SqliteVersion   string           `json:"sqlite_version"`
-	OS              string           `json:"os"`
-	Arch            string           `json:"arch"`
-	Hostname        string           `json:"hostname"`
-	KernelVersion   string           `json:"kernel_version"`
-	CpuModel        string           `json:"cpu_model"`
-	IpAddress       string           `json:"ip_address"`
-	AvailableUpdate *AvailableUpdate `json:"available_update,omitempty"`
-	StartedAt       *time.Time       `json:"started_at"`
+	Version       string     `json:"version"`
+	CommitHash    string     `json:"commit_hash"`
+	BuildDate     string     `json:"build_date"`
+	GoVersion     string     `json:"go_version"`
+	SqliteVersion string     `json:"sqlite_version"`
+	OS            string     `json:"os"`
+	Arch          string     `json:"arch"`
+	Hostname      string     `json:"hostname"`
+	KernelVersion string     `json:"kernel_version"`
+	CpuModel      string     `json:"cpu_model"`
+	IpAddress     string     `json:"ip_address"`
+	StartedAt     *time.Time `json:"started_at"`
 }
 
-type AvailableUpdate struct {
+type AvailableUpdateDetails struct {
 	IsAvailableManual bool   `json:"is_available_manual"`
 	TagName           string `json:"tag_name"`
 	URL               string `json:"url"`
 	Description       string `json:"description,omitempty"`
 }
 
+type AvailableUpdate struct {
+	CurrentVersion string                 `json:"current_version"`
+	IsAvailable    bool                   `json:"is_available"`
+	Details        AvailableUpdateDetails `json:"details,omitempty"`
+}
+
 var startedAt = time.Now()
 
-func GetSystemInfo(version, commitHash, buildDate string) SystemInfo {
-	info := SystemInfo{
+func GetSystemInfo(version, commitHash, buildDate string) *SystemInfo {
+	info := &SystemInfo{
 		Version:    version,
 		CommitHash: commitHash,
 		BuildDate:  buildDate,

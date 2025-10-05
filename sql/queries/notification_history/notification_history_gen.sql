@@ -1,6 +1,6 @@
 -- name: Create :one
-INSERT INTO notification_history (id, provider_id, service_id, incident_id, message)
-	VALUES (?, ?, ?, ?, ?)
+INSERT INTO notification_history (id, alert_id, provider_id, message)
+	VALUES (?, ?, ?, ?)
 	RETURNING *;
 
 -- name: Delete :exec

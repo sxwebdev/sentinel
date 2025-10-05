@@ -1,6 +1,7 @@
 package notifications
 
 import (
+	"github.com/sxwebdev/sentinel/internal/dispatcher"
 	"github.com/sxwebdev/sentinel/internal/store"
 	"github.com/tkcrm/mx/logger"
 )
@@ -11,9 +12,9 @@ type Service struct {
 	sender    *Sender
 }
 
-func New(l logger.Logger, store *store.Store) *Service {
-	senderSvc := newSender(l, store)
-	historySvc := newHistory(l, store, senderSvc)
+func New(l logger.Logger, store *store.Store, dispatcher *dispatcher.Dispatcher) *Service {
+	senderSvc := newSender(l, store, dispatcher)
+	historySvc := newHistory(l, store, senderSvc, dispatcher)
 
 	return &Service{
 		providers: newProviders(store, historySvc),

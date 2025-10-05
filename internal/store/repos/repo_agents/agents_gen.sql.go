@@ -7,28 +7,28 @@ package repo_agents
 
 import (
 	"context"
-	"time"
 
 	"github.com/sxwebdev/sentinel/internal/models"
 	"github.com/sxwebdev/sentinel/internal/store/storecmn"
 )
 
 const create = `-- name: Create :one
-INSERT INTO agents (id, name, description, secret_hash, token_hint, last_assignment_rev, tags, config, last_connected_at)
-	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-	RETURNING id, name, description, secret_hash, token_hint, fingerprint, last_assignment_rev, status, is_enabled, json(tags), json(config), json(system_info), last_connected_at, created_at, updated_at
+INSERT INTO agents (id, name, description, secret_hash, token_hint, kind, location, tags, config, project_id)
+	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+	RETURNING id, name, description, secret_hash, token_hint, fingerprint, kind, status, is_enabled, location, tags, config, system_info, project_id, last_seen_at, created_at, updated_at
 `
 
 type CreateParams struct {
-	ID                string             `db:"id" json:"id"`
-	Name              string             `db:"name" json:"name"`
-	Description       *string            `db:"description" json:"description"`
-	SecretHash        string             `db:"secret_hash" json:"secret_hash"`
-	TokenHint         string             `db:"token_hint" json:"token_hint"`
-	LastAssignmentRev *string            `db:"last_assignment_rev" json:"last_assignment_rev"`
-	Tags              storecmn.JSONField `db:"tags" json:"tags"`
-	Config            storecmn.JSONField `db:"config" json:"config"`
-	LastConnectedAt   *time.Time         `db:"last_connected_at" json:"last_connected_at"`
+	ID          string             `db:"id" json:"id"`
+	Name        string             `db:"name" json:"name"`
+	Description string             `db:"description" json:"description"`
+	SecretHash  string             `db:"secret_hash" json:"secret_hash"`
+	TokenHint   string             `db:"token_hint" json:"token_hint"`
+	Kind        string             `db:"kind" json:"kind"`
+	Location    *string            `db:"location" json:"location"`
+	Tags        storecmn.JSONField `db:"tags" json:"tags"`
+	Config      storecmn.JSONField `db:"config" json:"config"`
+	ProjectID   string             `db:"project_id" json:"project_id"`
 }
 
 func (q *Queries) Create(ctx context.Context, arg CreateParams) (*models.Agent, error) {
@@ -38,10 +38,11 @@ func (q *Queries) Create(ctx context.Context, arg CreateParams) (*models.Agent, 
 		arg.Description,
 		arg.SecretHash,
 		arg.TokenHint,
-		arg.LastAssignmentRev,
+		arg.Kind,
+		arg.Location,
 		arg.Tags,
 		arg.Config,
-		arg.LastConnectedAt,
+		arg.ProjectID,
 	)
 	var i models.Agent
 	err := row.Scan(
@@ -51,13 +52,15 @@ func (q *Queries) Create(ctx context.Context, arg CreateParams) (*models.Agent, 
 		&i.SecretHash,
 		&i.TokenHint,
 		&i.Fingerprint,
-		&i.LastAssignmentRev,
+		&i.Kind,
 		&i.Status,
 		&i.IsEnabled,
+		&i.Location,
 		&i.Tags,
 		&i.Config,
 		&i.SystemInfo,
-		&i.LastConnectedAt,
+		&i.ProjectID,
+		&i.LastSeenAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -74,7 +77,7 @@ func (q *Queries) Delete(ctx context.Context, id string) error {
 }
 
 const getByID = `-- name: GetByID :one
-SELECT id, name, description, secret_hash, token_hint, fingerprint, last_assignment_rev, status, is_enabled, json(tags), json(config), json(system_info), last_connected_at, created_at, updated_at FROM agents WHERE id=? LIMIT 1
+SELECT id, name, description, secret_hash, token_hint, fingerprint, kind, status, is_enabled, location, tags, config, system_info, project_id, last_seen_at, created_at, updated_at FROM agents WHERE id=? LIMIT 1
 `
 
 func (q *Queries) GetByID(ctx context.Context, id string) (*models.Agent, error) {
@@ -87,13 +90,15 @@ func (q *Queries) GetByID(ctx context.Context, id string) (*models.Agent, error)
 		&i.SecretHash,
 		&i.TokenHint,
 		&i.Fingerprint,
-		&i.LastAssignmentRev,
+		&i.Kind,
 		&i.Status,
 		&i.IsEnabled,
+		&i.Location,
 		&i.Tags,
 		&i.Config,
 		&i.SystemInfo,
-		&i.LastConnectedAt,
+		&i.ProjectID,
+		&i.LastSeenAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

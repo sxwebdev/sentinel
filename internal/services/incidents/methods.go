@@ -42,13 +42,13 @@ func (s *Service) Delete(ctx context.Context, id string) error {
 }
 
 // GetAllUnresolvedByServiceID retrieves all unresolved incidents associated with a specific service ID.
-func (s *Service) GetAllUnresolvedByServiceID(ctx context.Context, serviceID string) ([]*models.Incident, error) {
-	if serviceID == "" {
-		return nil, storecmn.ErrEmptyID
-	}
+// func (s *Service) GetAllUnresolvedByServiceID(ctx context.Context, serviceID string) ([]*models.Incident, error) {
+// 	if serviceID == "" {
+// 		return nil, storecmn.ErrEmptyID
+// 	}
 
-	return s.store.Incidents().GetAllUnresolvedByServiceID(ctx, serviceID)
-}
+// 	return s.store.Incidents().GetAllUnresolvedByMonitorID(ctx, serviceID)
+// }
 
 // ResolveByID resolves a specific incident by its ID.
 func (s *Service) ResolveByID(ctx context.Context, id string, opts ...repos.Option) (*models.Incident, error) {
@@ -69,8 +69,8 @@ func (s *Service) ResolveByID(ctx context.Context, id string, opts ...repos.Opti
 }
 
 type CreateParams struct {
-	ServiceID string `db:"service_id" json:"service_id" validate:"required"`
-	Error     string `db:"error" json:"error" validate:"required"`
+	MonitorID string `validate:"required"`
+	Error     string `validate:"required"`
 }
 
 // Create creates a new incident.
@@ -79,7 +79,11 @@ func (s *Service) Create(ctx context.Context, params CreateParams) (*models.Inci
 		return nil, err
 	}
 
-	return s.store.Incidents().Create(ctx, utils.GenerateULID(), params.ServiceID, params.Error)
+	return s.store.Incidents().Create(ctx, repo_incidents.CreateParams{
+		ID:        utils.GenerateULID(),
+		MonitorID: &params.MonitorID,
+		Summary:   params.Error,
+	})
 }
 
 type FindParams = repo_incidents.FindParams
@@ -95,8 +99,8 @@ func (s *Service) Stats(ctx context.Context) (*repo_incidents.StatsRow, error) {
 }
 
 // StatsByServiceID retrieves statistics about incidents for a specific service within a given time frame.
-func (s *Service) StatsByServiceID(ctx context.Context, serviceID string, startTime time.Time) (*repo_incidents.StatsByServiceIDRow, error) {
-	if serviceID == "" {
+func (s *Service) StatsByServiceID(ctx context.Context, monitorID string, startTime time.Time) (*repo_incidents.StatsByMonitorIDRow, error) {
+	if monitorID == "" {
 		return nil, storecmn.ErrEmptyID
 	}
 
@@ -104,5 +108,5 @@ func (s *Service) StatsByServiceID(ctx context.Context, serviceID string, startT
 		return nil, fmt.Errorf("start time is required")
 	}
 
-	return s.store.Incidents().StatsByServiceID(ctx, serviceID, startTime)
+	return s.store.Incidents().StatsByMonitorID(ctx, &monitorID, startTime)
 }

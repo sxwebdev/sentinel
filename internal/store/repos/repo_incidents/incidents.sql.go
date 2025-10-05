@@ -12,23 +12,23 @@ import (
 	"github.com/sxwebdev/sentinel/internal/models"
 )
 
-const deleteByServiceID = `-- name: DeleteByServiceID :exec
-DELETE FROM incidents WHERE service_id=?
+const deleteByMonitorID = `-- name: DeleteByMonitorID :exec
+DELETE FROM incidents WHERE monitor_id=?
 `
 
-func (q *Queries) DeleteByServiceID(ctx context.Context, serviceID string) error {
-	_, err := q.db.ExecContext(ctx, deleteByServiceID, serviceID)
+func (q *Queries) DeleteByMonitorID(ctx context.Context, monitorID *string) error {
+	_, err := q.db.ExecContext(ctx, deleteByMonitorID, monitorID)
 	return err
 }
 
-const getAllUnresolvedByServiceID = `-- name: GetAllUnresolvedByServiceID :many
-SELECT id, service_id, error, duration, started_at, resolved_at, created_at, updated_at FROM incidents
-WHERE service_id=? AND resolved_at IS NULL
+const getAllUnresolvedByMonitorID = `-- name: GetAllUnresolvedByMonitorID :many
+SELECT id, project_id, origin, monitor_id, resource_id, agent_id, kind, status, severity, summary, first_seen_at, last_seen_at, resolved_at, created_at, updated_at FROM incidents
+WHERE monitor_id=? AND resolved_at IS NULL
 ORDER BY created_at DESC
 `
 
-func (q *Queries) GetAllUnresolvedByServiceID(ctx context.Context, serviceID string) ([]*models.Incident, error) {
-	rows, err := q.db.QueryContext(ctx, getAllUnresolvedByServiceID, serviceID)
+func (q *Queries) GetAllUnresolvedByMonitorID(ctx context.Context, monitorID *string) ([]*models.Incident, error) {
+	rows, err := q.db.QueryContext(ctx, getAllUnresolvedByMonitorID, monitorID)
 	if err != nil {
 		return nil, err
 	}
@@ -38,10 +38,17 @@ func (q *Queries) GetAllUnresolvedByServiceID(ctx context.Context, serviceID str
 		var i models.Incident
 		if err := rows.Scan(
 			&i.ID,
-			&i.ServiceID,
-			&i.Error,
-			&i.Duration,
-			&i.StartedAt,
+			&i.ProjectID,
+			&i.Origin,
+			&i.MonitorID,
+			&i.ResourceID,
+			&i.AgentID,
+			&i.Kind,
+			&i.Status,
+			&i.Severity,
+			&i.Summary,
+			&i.FirstSeenAt,
+			&i.LastSeenAt,
 			&i.ResolvedAt,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -104,7 +111,7 @@ func (q *Queries) Stats(ctx context.Context) (*StatsRow, error) {
 	return &i, err
 }
 
-const statsByServiceID = `-- name: StatsByServiceID :one
+const statsByMonitorID = `-- name: StatsByMonitorID :one
 SELECT
  	COUNT(*) AS total_incidents,
  	SUM(duration) AS total_downtime,
@@ -113,10 +120,10 @@ SELECT
   SUM(CASE WHEN resolved_at IS NULL THEN 1 ELSE 0 END) AS unresolved_incidents,
   ROUND(100.0 - (COALESCE(SUM(duration), 0) * 100.0 / (30 * 24 * 60 * 60 * 1000)), 3) AS uptime_percentage_30d
 FROM incidents
-WHERE service_id=? AND created_at >= ?
+WHERE monitor_id=? AND created_at >= ?
 `
 
-type StatsByServiceIDRow struct {
+type StatsByMonitorIDRow struct {
 	TotalIncidents      int64    `db:"total_incidents" json:"total_incidents"`
 	TotalDowntime       *float64 `db:"total_downtime" json:"total_downtime"`
 	AvgDowntime         *float64 `db:"avg_downtime" json:"avg_downtime"`
@@ -125,9 +132,9 @@ type StatsByServiceIDRow struct {
 	UptimePercentage30d float64  `db:"uptime_percentage_30d" json:"uptime_percentage_30d"`
 }
 
-func (q *Queries) StatsByServiceID(ctx context.Context, serviceID string, createdAt time.Time) (*StatsByServiceIDRow, error) {
-	row := q.db.QueryRowContext(ctx, statsByServiceID, serviceID, createdAt)
-	var i StatsByServiceIDRow
+func (q *Queries) StatsByMonitorID(ctx context.Context, monitorID *string, createdAt time.Time) (*StatsByMonitorIDRow, error) {
+	row := q.db.QueryRowContext(ctx, statsByMonitorID, monitorID, createdAt)
+	var i StatsByMonitorIDRow
 	err := row.Scan(
 		&i.TotalIncidents,
 		&i.TotalDowntime,

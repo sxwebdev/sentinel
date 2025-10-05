@@ -1,0 +1,91 @@
+syntax = "proto3";
+package sentinel.agents.v1;
+
+import "google/protobuf/timestamp.proto";
+import "sentinel/system/v1/service.proto";
+
+// AgentsService is the service for managing agents.
+service AgentsService {
+  rpc AgentsList(AgentsListRequest) returns (AgentsListResponse);
+  rpc AgentsGet(AgentsGetRequest) returns (AgentsGetResponse);
+  rpc AgentsCreate(AgentsCreateRequest) returns (AgentsCreateResponse);
+  rpc AgentsUpdate(AgentsUpdateRequest) returns (AgentsUpdateResponse);
+  rpc AgentsDelete(AgentsDeleteRequest) returns (AgentsDeleteResponse);
+  rpc AgentsSubscribe(AgentsSubscribeRequest)
+      returns (stream AgentsSubscribeResponse);
+}
+
+enum AgentStatus {
+  AGENT_STATUS_UNSPECIFIED = 0;
+  AGENT_STATUS_ACTIVE = 1;
+  AGENT_STATUS_INACTIVE = 2;
+}
+
+message AgentConfig {}
+
+message Agent {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  string token_hint = 4;
+  optional string fingerprint = 5;
+  AgentStatus status = 6;
+  bool is_enabled = 7;
+  repeated string tags = 8;
+  AgentConfig config = 9;
+  system.v1.SystemInfo system_info = 10;
+  google.protobuf.Timestamp last_seen_at = 11;
+  google.protobuf.Timestamp created_at = 12;
+  google.protobuf.Timestamp updated_at = 13;
+}
+
+// AgentsList agents lists all agents.
+message AgentsListRequest {}
+message AgentsListResponse {
+  repeated Agent items = 1;
+  uint32 count = 2;
+}
+
+// AgentsGet agent gets an agent by ID.
+message AgentsGetRequest { string id = 1; }
+message AgentsGetResponse { Agent item = 1; }
+
+// AgentsCreate agent creates a new agent.
+message AgentsCreateRequest {
+  string name = 1;
+  string description = 2;
+  bool is_enabled = 3;
+  repeated string tags = 4;
+  AgentConfig config = 5;
+}
+message AgentsCreateResponse {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  string token = 4;
+  string token_hint = 5;
+  AgentStatus status = 6;
+  bool is_enabled = 7;
+  repeated string tags = 8;
+  AgentConfig config = 9;
+  google.protobuf.Timestamp created_at = 10;
+}
+
+// AgentsUpdate agent updates an existing agent.
+message AgentsUpdateRequest {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  bool is_enabled = 4;
+  repeated string tags = 5;
+  AgentConfig config = 6;
+}
+message AgentsUpdateResponse { Agent item = 1; }
+
+// Delete agent deletes an agent by ID.
+message AgentsDeleteRequest { string id = 1; }
+message AgentsDeleteResponse {}
+
+// AgentsSubscribe subscribes to agent events.
+message AgentsSubscribeRequest {}
+message AgentsSubscribeResponse {}

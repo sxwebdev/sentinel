@@ -9,7 +9,6 @@ import (
 )
 
 type ICustomQuerier interface {
-	Querier
 	GetViewByID(ctx context.Context, id string) (*models.ServiceFullView, error)
 	Update(ctx context.Context, id string, service UpdateServiceRequest) (*models.ServiceFullView, error)
 	FindView(ctx context.Context, params FindParams) (*storecmn.FindResponseWithCount[*models.ServiceFullView], error)

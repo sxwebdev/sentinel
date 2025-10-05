@@ -18,6 +18,9 @@ import (
 type Checker struct {
 	logger logger.Logger
 
+	isHub     bool
+	isStopped bool
+
 	receiver *receiver.Receiver
 
 	// Job management, key is service ID
@@ -65,9 +68,16 @@ func (s *Checker) Start(ctx context.Context) error {
 }
 
 func (s *Checker) Stop(ctx context.Context) error {
+	s.isStopped = true
+
 	s.stopAll()
 	s.wg.Wait()
 	return nil
+}
+
+// SetIsHub sets whether the checker is running in hub mode
+func (s *Checker) SetIsHub(isHub bool) {
+	s.isHub = isHub
 }
 
 // stopAll stops monitoring for all services
@@ -100,13 +110,24 @@ type AddServiceParams struct {
 	Timeout   time.Duration
 	Retries   int64
 	Config    map[string]any
+	FromHub   bool
 }
 
 // AddService adds a service to be monitored
 func (s *Checker) AddService(ctx context.Context, svc AddServiceParams) {
+	if s.isStopped {
+		s.logger.Warnf("Checker is stopped, cannot add service: %s (ID: %s)", svc.Name, svc.ID)
+		return
+	}
+
 	// Only add enabled services to monitoring
 	if !svc.IsEnabled {
 		s.logger.Warnf("Skipping disabled service: %s (ID: %s)", svc.Name, svc.ID)
+		return
+	}
+
+	if s.isHub && !svc.FromHub {
+		s.logger.Warnf("Skipping non-hub service in hub mode: %s (ID: %s)", svc.Name, svc.ID)
 		return
 	}
 
@@ -126,6 +147,21 @@ func (s *Checker) AddService(ctx context.Context, svc AddServiceParams) {
 	}
 
 	s.addJob(ctx, job)
+}
+
+// DeleteService removes a service from monitoring
+func (s *Checker) DeleteService(serviceID string) {
+	s.removeJob(serviceID)
+}
+
+// CheckService manually triggers a check for a specific service
+func (s *Checker) CheckService(serviceID string) error {
+	job, exists := s.jobs.Load(serviceID)
+	if !exists {
+		return ErrServiceNotFound
+	}
+
+	return s.performCheck(job)
 }
 
 // addJob adds a new job to the scheduler
@@ -159,10 +195,10 @@ func (s *Checker) addJob(ctx context.Context, job *job) {
 }
 
 // removeJob removes a service dynamically (for runtime removals)
-func (s *Checker) removeJob(serviceID string) error {
+func (s *Checker) removeJob(serviceID string) {
 	job, exists := s.jobs.Load(serviceID)
 	if !exists {
-		return ErrServiceNotFound
+		return
 	}
 
 	// Cancel any ongoing checks for this job
@@ -183,8 +219,6 @@ func (s *Checker) removeJob(serviceID string) error {
 
 	// Remove from services map
 	s.jobs.Delete(serviceID)
-
-	return nil
 }
 
 // monitorService runs the monitoring loop for a single service
@@ -214,17 +248,11 @@ func (s *Checker) monitorService(ctx context.Context, job *job) {
 	}
 }
 
-// checkService manually triggers a check for a specific service
-func (s *Checker) checkService(serviceID string) error {
-	job, exists := s.jobs.Load(serviceID)
-	if !exists {
-		return ErrServiceNotFound
+func (s *Checker) subscribeEvents(ctx context.Context) error {
+	if s.receiver == nil {
+		return nil
 	}
 
-	return s.performCheck(job)
-}
-
-func (s *Checker) subscribeEvents(ctx context.Context) error {
 	broker := s.receiver.TriggerService()
 	sub := broker.Subscribe()
 	defer broker.Unsubscribe(sub)
@@ -234,7 +262,7 @@ func (s *Checker) subscribeEvents(ctx context.Context) error {
 		case item := <-sub:
 			switch item.EventType {
 			case receiver.TriggerServiceEventTypeCheck:
-				if err := s.checkService(item.Svc.ID); err != nil {
+				if err := s.CheckService(item.Svc.ID); err != nil {
 					s.logger.Errorf("check service error: %v", err)
 				}
 			case receiver.TriggerServiceEventTypeCreated:
@@ -247,14 +275,12 @@ func (s *Checker) subscribeEvents(ctx context.Context) error {
 					Timeout:   time.Duration(item.Svc.Timeout) * time.Millisecond,
 					Retries:   item.Svc.Retries,
 					Config:    item.Svc.Config,
+					FromHub:   true,
 				})
 			case receiver.TriggerServiceEventTypeUpdated:
 				// Check if service was disabled
 				if !item.Svc.IsEnabled {
-					// Remove from monitoring if service is now disabled
-					if err := s.removeJob(item.Svc.ID); err != nil {
-						s.logger.Errorf("remove disabled service error: %v", err)
-					}
+					s.removeJob(item.Svc.ID)
 				} else {
 					// Update or add to monitoring if service is enabled
 					s.AddService(ctx, AddServiceParams{
@@ -266,12 +292,11 @@ func (s *Checker) subscribeEvents(ctx context.Context) error {
 						Timeout:   time.Duration(item.Svc.Timeout) * time.Millisecond,
 						Retries:   item.Svc.Retries,
 						Config:    item.Svc.Config,
+						FromHub:   true,
 					})
 				}
 			case receiver.TriggerServiceEventTypeDeleted:
-				if err := s.removeJob(item.Svc.ID); err != nil {
-					s.logger.Errorf("remove service error: %v", err)
-				}
+				s.removeJob(item.Svc.ID)
 			}
 
 		case <-ctx.Done():

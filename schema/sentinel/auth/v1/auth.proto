@@ -1,0 +1,86 @@
+syntax = "proto3";
+package sentinel.auth.v1;
+
+import "google/protobuf/timestamp.proto";
+
+// AuthService is the service for authentication and authorization.
+service AuthService {
+  /* Auth */
+  rpc Authorization(AuthorizationRequest) returns (AuthorizationResponse) {};
+  rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse) {};
+  rpc Logout(LogoutRequest) returns (LogoutResponse) {};
+
+  /* Sessions */
+  rpc ActiveSessions(ActiveSessionsRequest) returns (ActiveSessionsResponse) {};
+  rpc DeleteSession(DeleteSessionRequest) returns (DeleteSessionResponse) {};
+  rpc TerminateAllSessions(TerminateAllSessionsRequest)
+      returns (TerminateAllSessionsResponse) {};
+}
+
+enum DeviceType {
+  DEVICE_TYPE_UNSPECIFIED = 0;
+  DEVICE_TYPE_WEB = 1;
+}
+
+message DeviceInfo {
+  string device_id = 1;
+  DeviceType device_type = 2;
+  string device_name = 3;
+  string fingerprint = 4;
+  string os_version = 5;
+  string app_version = 6;
+}
+
+message Session {
+  DeviceInfo device_info = 1;
+  string country = 2;
+  string ip = 3;
+  google.protobuf.Timestamp created_at = 4;
+}
+
+// Authorization
+message AuthorizationRequest {
+  string email = 1;
+  string password = 2;
+  DeviceInfo device_info = 4;
+}
+
+message AuthPayload {
+  string access_token = 1;
+  string refresh_token = 2;
+  google.protobuf.Timestamp access_token_expired_at = 3;
+  google.protobuf.Timestamp refresh_token_expired_at = 4;
+  string device_id = 5;
+  optional string organization_id = 6;
+}
+
+message AuthorizationResponse { AuthPayload auth_data = 1; }
+
+// Refresh token
+message RefreshTokenRequest { string refresh_token = 1; }
+message RefreshTokenResponse {
+  string access_token = 1;
+  string refresh_token = 2;
+  google.protobuf.Timestamp access_token_expired_at = 3;
+  google.protobuf.Timestamp refresh_token_expired_at = 4;
+}
+
+// Active sessions
+message ActiveSessionsRequest {}
+message ActiveSessionsResponse { repeated Session sessions = 1; }
+
+// Delete session
+message DeleteSessionRequest { string device_id = 1; }
+message DeleteSessionResponse {}
+
+// Terminate all sessions
+message TerminateAllSessionsRequest {
+  // Current device id. This session will not be terminated.
+  // If not set, all sessions will be terminated.
+  optional string device_id = 1;
+}
+message TerminateAllSessionsResponse {}
+
+// Logout
+message LogoutRequest {}
+message LogoutResponse {}

@@ -1,9 +1,0 @@
-syntax = "proto3";
-package sentinel.common.v1;
-
-enum ServiceStatus {
-  SERVICE_STATUS_UNSPECIFIED = 0;
-  SERVICE_STATUS_UNKNOWN = 1;
-  SERVICE_STATUS_UP = 2;
-  SERVICE_STATUS_DOWN = 3;
-}

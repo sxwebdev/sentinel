@@ -1,17 +1,14 @@
-import { createRootRoute, Outlet } from "@tanstack/react-router";
-import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
+import { createRootRoute } from "@tanstack/react-router";
 import { Toaster } from "sonner";
+// import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 
-import Header from "@/app/layouts/parts/Header";
+import App from "@/app/app";
 
 const RootComponent = () => (
   <>
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 p-6 md:py-8 xl:px-0">
-      <Header />
-      <Outlet />
-    </div>
+    <App />
     <Toaster />
-    <TanStackRouterDevtools />
+    {/* <TanStackRouterDevtools /> */}
   </>
 );
 

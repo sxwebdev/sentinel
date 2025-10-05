@@ -17,9 +17,9 @@ import (
 
 type CreateParams struct {
 	Name        string
-	Description *string
+	Description string
 	Tags        []string
-	Config      map[string]any
+	Config      models.AgentConfig
 }
 
 // Validate
@@ -34,13 +34,13 @@ func (p CreateParams) Validate() error {
 type CreateResponse struct {
 	ID          string                 `json:"id"`
 	Name        string                 `json:"name"`
-	Description *string                `json:"description"`
+	Description string                 `json:"description"`
 	Token       string                 `json:"token"`
 	TokenHint   string                 `json:"token_hint"`
 	Status      models.AgentStatusType `json:"status"`
 	IsEnabled   bool                   `json:"is_enabled"`
 	Tags        []string               `json:"tags"`
-	Config      map[string]any         `json:"config"`
+	Config      models.AgentConfig     `json:"config"`
 	CreatedAt   time.Time              `json:"created_at"`
 }
 
@@ -106,12 +106,20 @@ func (s *Service) Create(ctx context.Context, params CreateParams) (*CreateRespo
 		CreatedAt:   item.CreatedAt,
 	}
 
+	s.dispatcher.Agents().Publish(struct{}{})
+
 	return &result, nil
 }
 
 // Delete an existing agent
 func (s *Service) Delete(ctx context.Context, id string) error {
-	return s.store.Agents().Delete(ctx, id)
+	if err := s.store.Agents().Delete(ctx, id); err != nil {
+		return err
+	}
+
+	s.dispatcher.Agents().Publish(struct{}{})
+
+	return nil
 }
 
 // GetByID retrieves an agent by its ID
@@ -139,16 +147,16 @@ func (s *Service) Find(ctx context.Context, params FindParams) (*storecmn.FindRe
 }
 
 type UpdateParams struct {
-	Name            string
-	Description     *string
-	Fingerprint     *string
-	Status          models.AgentStatusType
-	IsEnabled       bool
-	Tags            []string
-	Config          map[string]any
-	SystemInfo      models.SystemInfo
-	LastConnectedAt *time.Time
-	FieldMask       dbutils.FieldMask[repo_agents.ColumnName]
+	Name        string
+	Description string
+	Fingerprint *string
+	Status      models.AgentStatusType
+	IsEnabled   bool
+	Tags        []string
+	Config      models.AgentConfig
+	SystemInfo  models.SystemInfo
+	LastSeenAt  *time.Time
+	FieldMask   dbutils.FieldMask[repo_agents.ColumnName]
 }
 
 // Validate
@@ -198,20 +206,27 @@ func (s *Service) Update(ctx context.Context, id string, params UpdateParams) (*
 
 	updateParams := repo_agents.UpdateRequest{
 		Agent: models.Agent{
-			Name:            params.Name,
-			Description:     params.Description,
-			Fingerprint:     params.Fingerprint,
-			Status:          params.Status,
-			IsEnabled:       params.IsEnabled,
-			Tags:            tags,
-			Config:          config,
-			SystemInfo:      systemInfo,
-			LastConnectedAt: params.LastConnectedAt,
+			Name:        params.Name,
+			Description: params.Description,
+			Fingerprint: params.Fingerprint,
+			Status:      params.Status,
+			IsEnabled:   params.IsEnabled,
+			Tags:        tags,
+			Config:      config,
+			SystemInfo:  systemInfo,
+			LastSeenAt:  params.LastSeenAt,
 		},
 		FieldMask: params.FieldMask,
 	}
 
-	return s.store.Agents().Update(ctx, id, updateParams)
+	item, err := s.store.Agents().Update(ctx, id, updateParams)
+	if err != nil {
+		return nil, err
+	}
+
+	s.dispatcher.Agents().Publish(struct{}{})
+
+	return item, nil
 }
 
 // CheckAndUpsertFingerprint checks if the fingerprint is unique and updates it if so
@@ -237,15 +252,21 @@ func (s *Service) CheckAndUpsertFingerprint(ctx context.Context, id, fingerprint
 	// Update the agent with the new fingerprint
 	updateParams := repo_agents.UpdateRequest{
 		Agent: models.Agent{
-			Fingerprint:     &fingerprint,
-			LastConnectedAt: utils.Pointer(time.Now()),
+			Fingerprint: &fingerprint,
+			LastSeenAt:  utils.Pointer(time.Now()),
 		},
 		FieldMask: dbutils.FieldMask[repo_agents.ColumnName]{
 			repo_agents.ColumnNameAgentsFingerprint,
-			repo_agents.ColumnNameAgentsLastConnectedAt,
+			repo_agents.ColumnNameAgentsLastSeenAt,
 		},
 	}
 
 	_, err = s.store.Agents().Update(ctx, id, updateParams)
-	return err
+	if err != nil {
+		return err
+	}
+
+	s.dispatcher.Agents().Publish(struct{}{})
+
+	return nil
 }

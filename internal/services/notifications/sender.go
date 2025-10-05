@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/nicholas-fedor/shoutrrr"
+	"github.com/sxwebdev/sentinel/internal/dispatcher"
 	"github.com/sxwebdev/sentinel/internal/models"
 	"github.com/sxwebdev/sentinel/internal/store"
 	"github.com/sxwebdev/sentinel/internal/store/repos/repo_notification_history"
@@ -18,12 +19,15 @@ type Sender struct {
 	logger logger.Logger
 	store  *store.Store
 	looper *loop.Loop
+
+	dispatcher *dispatcher.Dispatcher
 }
 
-func newSender(l logger.Logger, store *store.Store) *Sender {
+func newSender(l logger.Logger, store *store.Store, dispatcher *dispatcher.Dispatcher) *Sender {
 	s := &Sender{
-		logger: l,
-		store:  store,
+		logger:     l,
+		store:      store,
+		dispatcher: dispatcher,
 	}
 
 	s.looper = loop.New(
@@ -73,12 +77,12 @@ func (s *Sender) do(ctx context.Context) error {
 
 	s.logger.Infof("found %d unsent notifications", len(items))
 
-	unsentIncidents := make(map[string]struct{})
+	unsentAlerts := make(map[string]struct{})
 
 	for _, item := range items {
-		if item.IncidentID != nil && *item.IncidentID != "" {
-			if _, exists := unsentIncidents[*item.IncidentID]; exists {
-				s.logger.Infof("skipping notification %s for incident %s as previous attempt failed", item.ID, *item.IncidentID)
+		if item.AlertID != nil && *item.AlertID != "" {
+			if _, exists := unsentAlerts[*item.AlertID]; exists {
+				s.logger.Infof("skipping notification %s for alert %s as previous attempt failed", item.ID, *item.AlertID)
 				continue
 			}
 		}
@@ -101,8 +105,8 @@ func (s *Sender) do(ctx context.Context) error {
 				return incrementErr
 			}
 
-			if item.IncidentID != nil && *item.IncidentID != "" {
-				unsentIncidents[*item.IncidentID] = struct{}{}
+			if item.AlertID != nil && *item.AlertID != "" {
+				unsentAlerts[*item.AlertID] = struct{}{}
 			}
 
 			s.logger.Errorf("failed to send notification %s: %v", item.ID, err)
@@ -114,6 +118,8 @@ func (s *Sender) do(ctx context.Context) error {
 
 			s.logger.Infof("notification %s sent successfully", item.ID)
 		}
+
+		s.dispatcher.Notifications().Publish(struct{}{})
 
 		time.Sleep(500 * time.Millisecond)
 	}

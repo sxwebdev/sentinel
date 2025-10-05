@@ -1,0 +1,72 @@
+syntax = "proto3";
+package sentinel.hub.v1;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+import "sentinel/system/v1/service.proto";
+import "sentinel/service/v1/service.proto";
+import "sentinel/agents/v1/agents.proto";
+
+// HubService is the service for hub management
+service HubService {
+  // Ping is a health check endpoint.
+  rpc Ping(google.protobuf.Empty) returns (google.protobuf.Empty);
+  // Authenticate authenticates the hub and returns an authentication token.
+  rpc Authenticate(AuthenticateRequest) returns (AuthenticateResponse);
+  // ReportSystemInfo reports the system information of the hub.
+  rpc ReportSystemInfo(ReportSystemInfoRequest)
+      returns (ReportSystemInfoResponse) {}
+  // FetchServices fetches the list of services to be monitored by the hub.
+  rpc FetchServices(FetchServicesRequest) returns (FetchServicesResponse);
+  // SubscribeServices subscribes to the service updates.
+  rpc SubscribeServices(SubscribeServicesRequest)
+      returns (stream SubscribeServicesResponse);
+  // StreamChecks streams the check results to the server.
+  rpc StreamChecks(stream StreamChecksRequest)
+      returns (stream StreamChecksResponse);
+}
+
+message ServiceUpsert {
+  string rev = 1;
+  service.v1.Service service = 2;
+}
+
+message ServiceDelete {
+  string rev = 1;
+  string service_id = 2;
+}
+
+message AuthenticateRequest { string fingerprint = 1; }
+message AuthenticateResponse {}
+
+message ReportSystemInfoRequest {
+  agents.v1.AgentStatus status = 1;
+  system.v1.SystemInfo system_info = 2;
+}
+message ReportSystemInfoResponse {}
+
+message FetchServicesRequest {}
+message FetchServicesResponse { repeated service.v1.Service services = 1; }
+
+message SubscribeServicesRequest { string last_rev = 1; }
+message SubscribeServicesResponse {
+  oneof update {
+    ServiceUpsert upsert = 1;
+    ServiceDelete delete = 2;
+  }
+}
+
+message CheckResult {
+  string service_id = 1;
+  service.v1.ServiceStatus status = 2;
+  google.protobuf.Timestamp checked_at = 3;
+  string response_message = 4;
+  string response_error_message = 5;
+  int64 response_time = 6;
+}
+
+message StreamChecksRequest {
+  uint64 seq = 1;
+  repeated CheckResult results = 2;
+}
+message StreamChecksResponse { uint64 upto_seq = 1; }

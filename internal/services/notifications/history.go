@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/sxwebdev/sentinel/internal/dispatcher"
 	"github.com/sxwebdev/sentinel/internal/models"
 	"github.com/sxwebdev/sentinel/internal/store"
 	"github.com/sxwebdev/sentinel/internal/store/repos/repo_notification_history"
@@ -16,18 +17,21 @@ type History struct {
 	logger logger.Logger
 	store  *store.Store
 	sender *Sender
+
+	dispatcher *dispatcher.Dispatcher
 }
 
-func newHistory(l logger.Logger, store *store.Store, sender *Sender) *History {
+func newHistory(l logger.Logger, store *store.Store, sender *Sender, dispatcher *dispatcher.Dispatcher) *History {
 	return &History{
-		logger: l,
-		store:  store,
-		sender: sender,
+		logger:     l,
+		store:      store,
+		sender:     sender,
+		dispatcher: dispatcher,
 	}
 }
 
 // SendAlert sends an alert notification to all enabled providers
-func (s *History) SendAlert(ctx context.Context, serviceID, incidentID, message string) error {
+func (s *History) SendAlert(ctx context.Context, alertID, message string) error {
 	// Get all enabled providers
 	providers, err := s.store.NotificationProviders().GetAllEnabled(ctx)
 	if err != nil {
@@ -41,12 +45,8 @@ func (s *History) SendAlert(ctx context.Context, serviceID, incidentID, message 
 			Message:    message,
 		}
 
-		if serviceID != "" {
-			params.ServiceID = &serviceID
-		}
-
-		if incidentID != "" {
-			params.IncidentID = &incidentID
+		if alertID != "" {
+			params.AlertID = &alertID
 		}
 
 		if _, err := s.Create(ctx, params); err != nil {
@@ -58,10 +58,9 @@ func (s *History) SendAlert(ctx context.Context, serviceID, incidentID, message 
 }
 
 type CreateHistoryParams struct {
-	ProviderID string  `json:"provider_id"`
-	ServiceID  *string `json:"service_id"`
-	IncidentID *string `json:"incident_id"`
-	Message    string  `json:"message"`
+	ProviderID string
+	AlertID    *string
+	Message    string
 }
 
 // Validate validates the CreateHistoryParams fields
@@ -86,8 +85,7 @@ func (s *History) Create(ctx context.Context, params CreateHistoryParams) (*mode
 	createParams := repo_notification_history.CreateParams{
 		ID:         utils.GenerateULID(),
 		ProviderID: params.ProviderID,
-		ServiceID:  params.ServiceID,
-		IncidentID: params.IncidentID,
+		AlertID:    params.AlertID,
 		Message:    params.Message,
 	}
 
@@ -97,6 +95,7 @@ func (s *History) Create(ctx context.Context, params CreateHistoryParams) (*mode
 	}
 
 	s.sender.looper.Trigger(ctx)
+	s.dispatcher.Notifications().Publish(struct{}{})
 
 	return item, nil
 }

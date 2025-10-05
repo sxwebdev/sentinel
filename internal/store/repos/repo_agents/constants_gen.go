@@ -39,21 +39,23 @@ func (s ColumnNames) Strings() []string {
 }
 
 const (
-	ColumnNameAgentsId                ColumnName = "id"
-	ColumnNameAgentsName              ColumnName = "name"
-	ColumnNameAgentsDescription       ColumnName = "description"
-	ColumnNameAgentsSecretHash        ColumnName = "secret_hash"
-	ColumnNameAgentsTokenHint         ColumnName = "token_hint"
-	ColumnNameAgentsFingerprint       ColumnName = "fingerprint"
-	ColumnNameAgentsLastAssignmentRev ColumnName = "last_assignment_rev"
-	ColumnNameAgentsStatus            ColumnName = "status"
-	ColumnNameAgentsIsEnabled         ColumnName = "is_enabled"
-	ColumnNameAgentsTags              ColumnName = "tags"
-	ColumnNameAgentsConfig            ColumnName = "config"
-	ColumnNameAgentsSystemInfo        ColumnName = "system_info"
-	ColumnNameAgentsLastConnectedAt   ColumnName = "last_connected_at"
-	ColumnNameAgentsCreatedAt         ColumnName = "created_at"
-	ColumnNameAgentsUpdatedAt         ColumnName = "updated_at"
+	ColumnNameAgentsId          ColumnName = "id"
+	ColumnNameAgentsName        ColumnName = "name"
+	ColumnNameAgentsDescription ColumnName = "description"
+	ColumnNameAgentsSecretHash  ColumnName = "secret_hash"
+	ColumnNameAgentsTokenHint   ColumnName = "token_hint"
+	ColumnNameAgentsFingerprint ColumnName = "fingerprint"
+	ColumnNameAgentsKind        ColumnName = "kind"
+	ColumnNameAgentsStatus      ColumnName = "status"
+	ColumnNameAgentsIsEnabled   ColumnName = "is_enabled"
+	ColumnNameAgentsLocation    ColumnName = "location"
+	ColumnNameAgentsTags        ColumnName = "tags"
+	ColumnNameAgentsConfig      ColumnName = "config"
+	ColumnNameAgentsSystemInfo  ColumnName = "system_info"
+	ColumnNameAgentsProjectId   ColumnName = "project_id"
+	ColumnNameAgentsLastSeenAt  ColumnName = "last_seen_at"
+	ColumnNameAgentsCreatedAt   ColumnName = "created_at"
+	ColumnNameAgentsUpdatedAt   ColumnName = "updated_at"
 )
 
 func AgentsColumnNames() ColumnNames {
@@ -64,13 +66,15 @@ func AgentsColumnNames() ColumnNames {
 		ColumnNameAgentsSecretHash,
 		ColumnNameAgentsTokenHint,
 		ColumnNameAgentsFingerprint,
-		ColumnNameAgentsLastAssignmentRev,
+		ColumnNameAgentsKind,
 		ColumnNameAgentsStatus,
 		ColumnNameAgentsIsEnabled,
+		ColumnNameAgentsLocation,
 		ColumnNameAgentsTags,
 		ColumnNameAgentsConfig,
 		ColumnNameAgentsSystemInfo,
-		ColumnNameAgentsLastConnectedAt,
+		ColumnNameAgentsProjectId,
+		ColumnNameAgentsLastSeenAt,
 		ColumnNameAgentsCreatedAt,
 		ColumnNameAgentsUpdatedAt,
 	}

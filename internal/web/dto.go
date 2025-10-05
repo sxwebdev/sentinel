@@ -60,6 +60,7 @@ type CreateUpdateServiceRequest struct {
 	Tags      []string                   `json:"tags" example:"web,production"`
 	Config    monitors.Config            `json:"config"`
 	IsEnabled bool                       `json:"is_enabled" example:"true"`
+	AgentIDs  []string                   `json:"agent_ids,omitempty" example:"agent-1,agent-2"`
 }
 
 // ServiceDTO represents a service for API responses

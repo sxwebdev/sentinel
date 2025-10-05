@@ -43,6 +43,7 @@ const (
 	ColumnNameNotificationProvidersProviderType ColumnName = "provider_type"
 	ColumnNameNotificationProvidersConfig       ColumnName = "config"
 	ColumnNameNotificationProvidersIsEnabled    ColumnName = "is_enabled"
+	ColumnNameNotificationProvidersProjectId    ColumnName = "project_id"
 	ColumnNameNotificationProvidersCreatedAt    ColumnName = "created_at"
 	ColumnNameNotificationProvidersUpdatedAt    ColumnName = "updated_at"
 )
@@ -53,6 +54,7 @@ func NotificationProvidersColumnNames() ColumnNames {
 		ColumnNameNotificationProvidersProviderType,
 		ColumnNameNotificationProvidersConfig,
 		ColumnNameNotificationProvidersIsEnabled,
+		ColumnNameNotificationProvidersProjectId,
 		ColumnNameNotificationProvidersCreatedAt,
 		ColumnNameNotificationProvidersUpdatedAt,
 	}

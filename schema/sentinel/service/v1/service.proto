@@ -2,7 +2,20 @@ syntax = "proto3";
 package sentinel.service.v1;
 
 import "google/protobuf/timestamp.proto";
-import "sentinel/common/v1/protocol.proto";
+
+enum ServiceProtocol {
+  SERVICE_PROTOCOL_UNSPECIFIED = 0;
+  SERVICE_PROTOCOL_HTTP = 1;
+  SERVICE_PROTOCOL_TCP = 2;
+  SERVICE_PROTOCOL_GRPC = 3;
+}
+
+enum ServiceStatus {
+  SERVICE_STATUS_UNSPECIFIED = 0;
+  SERVICE_STATUS_UNKNOWN = 1;
+  SERVICE_STATUS_UP = 2;
+  SERVICE_STATUS_DOWN = 3;
+}
 
 message HTTPConfig {
   message EndpointConfig {
@@ -43,7 +56,7 @@ message ServiceConfig {
 message Service {
   string id = 1;
   string name = 2;
-  common.v1.ServiceProtocol protocol = 3;
+  ServiceProtocol protocol = 3;
   int64 interval = 4;
   int64 timeout = 5;
   int64 retries = 6;

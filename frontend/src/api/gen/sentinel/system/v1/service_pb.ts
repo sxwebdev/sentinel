@@ -12,7 +12,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file sentinel/system/v1/service.proto.
  */
 export const file_sentinel_system_v1_service: GenFile = /*@__PURE__*/
-  fileDesc("CiBzZW50aW5lbC9zeXN0ZW0vdjEvc2VydmljZS5wcm90bxISc2VudGluZWwuc3lzdGVtLnYxImIKD0F2YWlsYWJsZVVwZGF0ZRIbChNpc19hdmFpbGFibGVfbWFudWFsGAEgASgIEhAKCHRhZ19uYW1lGAIgASgJEgsKA3VybBgDIAEoCRITCgtkZXNjcmlwdGlvbhgEIAEoCSLmAgoKU3lzdGVtSW5mbxIPCgd2ZXJzaW9uGAEgASgJEhMKC2NvbW1pdF9oYXNoGAIgASgJEhIKCmJ1aWxkX2RhdGUYAyABKAkSEgoKZ29fdmVyc2lvbhgEIAEoCRIWCg5zcWxpdGVfdmVyc2lvbhgFIAEoCRIKCgJvcxgGIAEoCRIMCgRhcmNoGAcgASgJEhAKCGhvc3RuYW1lGAggASgJEhYKDmtlcm5lbF92ZXJzaW9uGAkgASgJEhEKCWNwdV9tb2RlbBgKIAEoCRISCgppcF9hZGRyZXNzGAsgASgJEkIKEGF2YWlsYWJsZV91cGRhdGUYDCABKAsyIy5zZW50aW5lbC5zeXN0ZW0udjEuQXZhaWxhYmxlVXBkYXRlSACIAQESLgoKc3RhcnRlZF9hdBgNIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCEwoRX2F2YWlsYWJsZV91cGRhdGUiFgoUR2V0U3lzdGVtSW5mb1JlcXVlc3QiRQoVR2V0U3lzdGVtSW5mb1Jlc3BvbnNlEiwKBGluZm8YASABKAsyHi5zZW50aW5lbC5zeXN0ZW0udjEuU3lzdGVtSW5mbzJ1Cg1TeXN0ZW1TZXJ2aWNlEmQKDUdldFN5c3RlbUluZm8SKC5zZW50aW5lbC5zeXN0ZW0udjEuR2V0U3lzdGVtSW5mb1JlcXVlc3QaKS5zZW50aW5lbC5zeXN0ZW0udjEuR2V0U3lzdGVtSW5mb1Jlc3BvbnNlQuUBChZjb20uc2VudGluZWwuc3lzdGVtLnYxQgxTZXJ2aWNlUHJvdG9QAVpTZ2l0aHViLmNvbS9zeHdlYmRldi9zZW50aW5lbC9pbnRlcm5hbC9odWIvaHVic2VydmVyL2FwaS9zZW50aW5lbC9zeXN0ZW0vdjE7c3lzdGVtdjGiAgNTU1iqAhJTZW50aW5lbC5TeXN0ZW0uVjHKAhJTZW50aW5lbFxTeXN0ZW1cVjHiAh5TZW50aW5lbFxTeXN0ZW1cVjFcR1BCTWV0YWRhdGHqAhRTZW50aW5lbDo6U3lzdGVtOjpWMWIGcHJvdG8z", [file_google_protobuf_timestamp]);
+  fileDesc("CiBzZW50aW5lbC9zeXN0ZW0vdjEvc2VydmljZS5wcm90bxISc2VudGluZWwuc3lzdGVtLnYxItoBCg9BdmFpbGFibGVVcGRhdGUSFwoPY3VycmVudF92ZXJzaW9uGAEgASgJEhQKDGlzX2F2YWlsYWJsZRgCIAEoCBI8CgdkZXRhaWxzGAMgASgLMisuc2VudGluZWwuc3lzdGVtLnYxLkF2YWlsYWJsZVVwZGF0ZS5EZXRhaWxzGloKB0RldGFpbHMSGwoTaXNfYXZhaWxhYmxlX21hbnVhbBgBIAEoCBIQCgh0YWdfbmFtZRgCIAEoCRILCgN1cmwYAyABKAkSEwoLZGVzY3JpcHRpb24YBCABKAkijQIKClN5c3RlbUluZm8SDwoHdmVyc2lvbhgBIAEoCRITCgtjb21taXRfaGFzaBgCIAEoCRISCgpidWlsZF9kYXRlGAMgASgJEhIKCmdvX3ZlcnNpb24YBCABKAkSFgoOc3FsaXRlX3ZlcnNpb24YBSABKAkSCgoCb3MYBiABKAkSDAoEYXJjaBgHIAEoCRIQCghob3N0bmFtZRgIIAEoCRIWCg5rZXJuZWxfdmVyc2lvbhgJIAEoCRIRCgljcHVfbW9kZWwYCiABKAkSEgoKaXBfYWRkcmVzcxgLIAEoCRIuCgpzdGFydGVkX2F0GAwgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCIbChlDaGVja0lzSW5pdGlhbGl6ZWRSZXF1ZXN0IjQKGkNoZWNrSXNJbml0aWFsaXplZFJlc3BvbnNlEhYKDmlzX2luaXRpYWxpemVkGAEgASgIIjQKEUluaXRpYWxpemVSZXF1ZXN0Eg0KBWVtYWlsGAEgASgJEhAKCHBhc3N3b3JkGAIgASgJIhQKEkluaXRpYWxpemVSZXNwb25zZSIWChRHZXRTeXN0ZW1JbmZvUmVxdWVzdCJFChVHZXRTeXN0ZW1JbmZvUmVzcG9uc2USLAoEaW5mbxgBIAEoCzIeLnNlbnRpbmVsLnN5c3RlbS52MS5TeXN0ZW1JbmZvIhgKFkNoZWNrRm9yVXBkYXRlc1JlcXVlc3QiTAoXQ2hlY2tGb3JVcGRhdGVzUmVzcG9uc2USMQoEaW5mbxgBIAEoCzIjLnNlbnRpbmVsLnN5c3RlbS52MS5BdmFpbGFibGVVcGRhdGUyswMKDVN5c3RlbVNlcnZpY2UScwoSQ2hlY2tJc0luaXRpYWxpemVkEi0uc2VudGluZWwuc3lzdGVtLnYxLkNoZWNrSXNJbml0aWFsaXplZFJlcXVlc3QaLi5zZW50aW5lbC5zeXN0ZW0udjEuQ2hlY2tJc0luaXRpYWxpemVkUmVzcG9uc2USWwoKSW5pdGlhbGl6ZRIlLnNlbnRpbmVsLnN5c3RlbS52MS5Jbml0aWFsaXplUmVxdWVzdBomLnNlbnRpbmVsLnN5c3RlbS52MS5Jbml0aWFsaXplUmVzcG9uc2USZAoNR2V0U3lzdGVtSW5mbxIoLnNlbnRpbmVsLnN5c3RlbS52MS5HZXRTeXN0ZW1JbmZvUmVxdWVzdBopLnNlbnRpbmVsLnN5c3RlbS52MS5HZXRTeXN0ZW1JbmZvUmVzcG9uc2USagoPQ2hlY2tGb3JVcGRhdGVzEiouc2VudGluZWwuc3lzdGVtLnYxLkNoZWNrRm9yVXBkYXRlc1JlcXVlc3QaKy5zZW50aW5lbC5zeXN0ZW0udjEuQ2hlY2tGb3JVcGRhdGVzUmVzcG9uc2VC5QEKFmNvbS5zZW50aW5lbC5zeXN0ZW0udjFCDFNlcnZpY2VQcm90b1ABWlNnaXRodWIuY29tL3N4d2ViZGV2L3NlbnRpbmVsL2ludGVybmFsL2h1Yi9odWJzZXJ2ZXIvYXBpL3NlbnRpbmVsL3N5c3RlbS92MTtzeXN0ZW12MaICA1NTWKoCElNlbnRpbmVsLlN5c3RlbS5WMcoCElNlbnRpbmVsXFN5c3RlbVxWMeICHlNlbnRpbmVsXFN5c3RlbVxWMVxHUEJNZXRhZGF0YeoCFFNlbnRpbmVsOjpTeXN0ZW06OlYxYgZwcm90bzM", [file_google_protobuf_timestamp]);
 
 /**
  * AvailableUpdate represents information about an available update
@@ -20,6 +20,33 @@ export const file_sentinel_system_v1_service: GenFile = /*@__PURE__*/
  * @generated from message sentinel.system.v1.AvailableUpdate
  */
 export type AvailableUpdate = Message<"sentinel.system.v1.AvailableUpdate"> & {
+  /**
+   * @generated from field: string current_version = 1;
+   */
+  currentVersion: string;
+
+  /**
+   * @generated from field: bool is_available = 2;
+   */
+  isAvailable: boolean;
+
+  /**
+   * @generated from field: sentinel.system.v1.AvailableUpdate.Details details = 3;
+   */
+  details?: AvailableUpdate_Details;
+};
+
+/**
+ * Describes the message sentinel.system.v1.AvailableUpdate.
+ * Use `create(AvailableUpdateSchema)` to create a new message.
+ */
+export const AvailableUpdateSchema: GenMessage<AvailableUpdate> = /*@__PURE__*/
+  messageDesc(file_sentinel_system_v1_service, 0);
+
+/**
+ * @generated from message sentinel.system.v1.AvailableUpdate.Details
+ */
+export type AvailableUpdate_Details = Message<"sentinel.system.v1.AvailableUpdate.Details"> & {
   /**
    * @generated from field: bool is_available_manual = 1;
    */
@@ -42,11 +69,11 @@ export type AvailableUpdate = Message<"sentinel.system.v1.AvailableUpdate"> & {
 };
 
 /**
- * Describes the message sentinel.system.v1.AvailableUpdate.
- * Use `create(AvailableUpdateSchema)` to create a new message.
+ * Describes the message sentinel.system.v1.AvailableUpdate.Details.
+ * Use `create(AvailableUpdate_DetailsSchema)` to create a new message.
  */
-export const AvailableUpdateSchema: GenMessage<AvailableUpdate> = /*@__PURE__*/
-  messageDesc(file_sentinel_system_v1_service, 0);
+export const AvailableUpdate_DetailsSchema: GenMessage<AvailableUpdate_Details> = /*@__PURE__*/
+  messageDesc(file_sentinel_system_v1_service, 0, 0);
 
 /**
  * SystemInfo represents information about the server
@@ -110,12 +137,7 @@ export type SystemInfo = Message<"sentinel.system.v1.SystemInfo"> & {
   ipAddress: string;
 
   /**
-   * @generated from field: optional sentinel.system.v1.AvailableUpdate available_update = 12;
-   */
-  availableUpdate?: AvailableUpdate;
-
-  /**
-   * @generated from field: google.protobuf.Timestamp started_at = 13;
+   * @generated from field: google.protobuf.Timestamp started_at = 12;
    */
   startedAt?: Timestamp;
 };
@@ -126,6 +148,75 @@ export type SystemInfo = Message<"sentinel.system.v1.SystemInfo"> & {
  */
 export const SystemInfoSchema: GenMessage<SystemInfo> = /*@__PURE__*/
   messageDesc(file_sentinel_system_v1_service, 1);
+
+/**
+ * CheckIsInitializedRequest
+ *
+ * @generated from message sentinel.system.v1.CheckIsInitializedRequest
+ */
+export type CheckIsInitializedRequest = Message<"sentinel.system.v1.CheckIsInitializedRequest"> & {
+};
+
+/**
+ * Describes the message sentinel.system.v1.CheckIsInitializedRequest.
+ * Use `create(CheckIsInitializedRequestSchema)` to create a new message.
+ */
+export const CheckIsInitializedRequestSchema: GenMessage<CheckIsInitializedRequest> = /*@__PURE__*/
+  messageDesc(file_sentinel_system_v1_service, 2);
+
+/**
+ * @generated from message sentinel.system.v1.CheckIsInitializedResponse
+ */
+export type CheckIsInitializedResponse = Message<"sentinel.system.v1.CheckIsInitializedResponse"> & {
+  /**
+   * @generated from field: bool is_initialized = 1;
+   */
+  isInitialized: boolean;
+};
+
+/**
+ * Describes the message sentinel.system.v1.CheckIsInitializedResponse.
+ * Use `create(CheckIsInitializedResponseSchema)` to create a new message.
+ */
+export const CheckIsInitializedResponseSchema: GenMessage<CheckIsInitializedResponse> = /*@__PURE__*/
+  messageDesc(file_sentinel_system_v1_service, 3);
+
+/**
+ * InitializeRequest
+ *
+ * @generated from message sentinel.system.v1.InitializeRequest
+ */
+export type InitializeRequest = Message<"sentinel.system.v1.InitializeRequest"> & {
+  /**
+   * @generated from field: string email = 1;
+   */
+  email: string;
+
+  /**
+   * @generated from field: string password = 2;
+   */
+  password: string;
+};
+
+/**
+ * Describes the message sentinel.system.v1.InitializeRequest.
+ * Use `create(InitializeRequestSchema)` to create a new message.
+ */
+export const InitializeRequestSchema: GenMessage<InitializeRequest> = /*@__PURE__*/
+  messageDesc(file_sentinel_system_v1_service, 4);
+
+/**
+ * @generated from message sentinel.system.v1.InitializeResponse
+ */
+export type InitializeResponse = Message<"sentinel.system.v1.InitializeResponse"> & {
+};
+
+/**
+ * Describes the message sentinel.system.v1.InitializeResponse.
+ * Use `create(InitializeResponseSchema)` to create a new message.
+ */
+export const InitializeResponseSchema: GenMessage<InitializeResponse> = /*@__PURE__*/
+  messageDesc(file_sentinel_system_v1_service, 5);
 
 /**
  * GetSystemInfoRequest
@@ -140,7 +231,7 @@ export type GetSystemInfoRequest = Message<"sentinel.system.v1.GetSystemInfoRequ
  * Use `create(GetSystemInfoRequestSchema)` to create a new message.
  */
 export const GetSystemInfoRequestSchema: GenMessage<GetSystemInfoRequest> = /*@__PURE__*/
-  messageDesc(file_sentinel_system_v1_service, 2);
+  messageDesc(file_sentinel_system_v1_service, 6);
 
 /**
  * @generated from message sentinel.system.v1.GetSystemInfoResponse
@@ -157,7 +248,39 @@ export type GetSystemInfoResponse = Message<"sentinel.system.v1.GetSystemInfoRes
  * Use `create(GetSystemInfoResponseSchema)` to create a new message.
  */
 export const GetSystemInfoResponseSchema: GenMessage<GetSystemInfoResponse> = /*@__PURE__*/
-  messageDesc(file_sentinel_system_v1_service, 3);
+  messageDesc(file_sentinel_system_v1_service, 7);
+
+/**
+ * CheckForUpdatesRequest
+ *
+ * @generated from message sentinel.system.v1.CheckForUpdatesRequest
+ */
+export type CheckForUpdatesRequest = Message<"sentinel.system.v1.CheckForUpdatesRequest"> & {
+};
+
+/**
+ * Describes the message sentinel.system.v1.CheckForUpdatesRequest.
+ * Use `create(CheckForUpdatesRequestSchema)` to create a new message.
+ */
+export const CheckForUpdatesRequestSchema: GenMessage<CheckForUpdatesRequest> = /*@__PURE__*/
+  messageDesc(file_sentinel_system_v1_service, 8);
+
+/**
+ * @generated from message sentinel.system.v1.CheckForUpdatesResponse
+ */
+export type CheckForUpdatesResponse = Message<"sentinel.system.v1.CheckForUpdatesResponse"> & {
+  /**
+   * @generated from field: sentinel.system.v1.AvailableUpdate info = 1;
+   */
+  info?: AvailableUpdate;
+};
+
+/**
+ * Describes the message sentinel.system.v1.CheckForUpdatesResponse.
+ * Use `create(CheckForUpdatesResponseSchema)` to create a new message.
+ */
+export const CheckForUpdatesResponseSchema: GenMessage<CheckForUpdatesResponse> = /*@__PURE__*/
+  messageDesc(file_sentinel_system_v1_service, 9);
 
 /**
  * SystemService is the service for system information
@@ -166,12 +289,36 @@ export const GetSystemInfoResponseSchema: GenMessage<GetSystemInfoResponse> = /*
  */
 export const SystemService: GenService<{
   /**
+   * @generated from rpc sentinel.system.v1.SystemService.CheckIsInitialized
+   */
+  checkIsInitialized: {
+    methodKind: "unary";
+    input: typeof CheckIsInitializedRequestSchema;
+    output: typeof CheckIsInitializedResponseSchema;
+  },
+  /**
+   * @generated from rpc sentinel.system.v1.SystemService.Initialize
+   */
+  initialize: {
+    methodKind: "unary";
+    input: typeof InitializeRequestSchema;
+    output: typeof InitializeResponseSchema;
+  },
+  /**
    * @generated from rpc sentinel.system.v1.SystemService.GetSystemInfo
    */
   getSystemInfo: {
     methodKind: "unary";
     input: typeof GetSystemInfoRequestSchema;
     output: typeof GetSystemInfoResponseSchema;
+  },
+  /**
+   * @generated from rpc sentinel.system.v1.SystemService.CheckForUpdates
+   */
+  checkForUpdates: {
+    methodKind: "unary";
+    input: typeof CheckForUpdatesRequestSchema;
+    output: typeof CheckForUpdatesResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_sentinel_system_v1_service, 0);

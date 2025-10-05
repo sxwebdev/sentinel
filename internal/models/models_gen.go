@@ -11,48 +11,170 @@ import (
 )
 
 type Agent struct {
-	ID                string             `db:"id" json:"id"`
-	Name              string             `db:"name" json:"name"`
-	Description       *string            `db:"description" json:"description"`
-	SecretHash        string             `db:"secret_hash" json:"secret_hash"`
-	TokenHint         string             `db:"token_hint" json:"token_hint"`
-	Fingerprint       *string            `db:"fingerprint" json:"fingerprint"`
-	LastAssignmentRev *string            `db:"last_assignment_rev" json:"last_assignment_rev"`
-	Status            AgentStatusType    `db:"status" json:"status"`
-	IsEnabled         bool               `db:"is_enabled" json:"is_enabled"`
-	Tags              storecmn.JSONField `db:"tags" json:"tags"`
-	Config            storecmn.JSONField `db:"config" json:"config"`
-	SystemInfo        storecmn.JSONField `db:"system_info" json:"system_info"`
-	LastConnectedAt   *time.Time         `db:"last_connected_at" json:"last_connected_at"`
-	CreatedAt         time.Time          `db:"created_at" json:"created_at"`
-	UpdatedAt         time.Time          `db:"updated_at" json:"updated_at"`
+	ID          string             `db:"id" json:"id"`
+	Name        string             `db:"name" json:"name"`
+	Description string             `db:"description" json:"description"`
+	SecretHash  string             `db:"secret_hash" json:"secret_hash"`
+	TokenHint   string             `db:"token_hint" json:"token_hint"`
+	Fingerprint *string            `db:"fingerprint" json:"fingerprint"`
+	Kind        string             `db:"kind" json:"kind"`
+	Status      AgentStatusType    `db:"status" json:"status"`
+	IsEnabled   bool               `db:"is_enabled" json:"is_enabled"`
+	Location    *string            `db:"location" json:"location"`
+	Tags        storecmn.JSONField `db:"tags" json:"tags"`
+	Config      storecmn.JSONField `db:"config" json:"config"`
+	SystemInfo  storecmn.JSONField `db:"system_info" json:"system_info"`
+	ProjectID   string             `db:"project_id" json:"project_id"`
+	LastSeenAt  *time.Time         `db:"last_seen_at" json:"last_seen_at"`
+	CreatedAt   time.Time          `db:"created_at" json:"created_at"`
+	UpdatedAt   time.Time          `db:"updated_at" json:"updated_at"`
+}
+
+type Alert struct {
+	ID         string    `db:"id" json:"id"`
+	IncidentID string    `db:"incident_id" json:"incident_id"`
+	PolicyID   string    `db:"policy_id" json:"policy_id"`
+	Status     string    `db:"status" json:"status"`
+	CreatedAt  time.Time `db:"created_at" json:"created_at"`
+}
+
+type AlertPolicy struct {
+	ID        string             `db:"id" json:"id"`
+	Name      string             `db:"name" json:"name"`
+	Rules     storecmn.JSONField `db:"rules" json:"rules"`
+	IsEnabled bool               `db:"is_enabled" json:"is_enabled"`
+	ProjectID string             `db:"project_id" json:"project_id"`
+	CreatedAt time.Time          `db:"created_at" json:"created_at"`
+	UpdatedAt time.Time          `db:"updated_at" json:"updated_at"`
+}
+
+type AlertPolicyMonitor struct {
+	PolicyID  string `db:"policy_id" json:"policy_id"`
+	MonitorID string `db:"monitor_id" json:"monitor_id"`
+}
+
+type AlertPolicyResource struct {
+	PolicyID   string `db:"policy_id" json:"policy_id"`
+	ResourceID string `db:"resource_id" json:"resource_id"`
 }
 
 type Incident struct {
-	ID         string     `db:"id" json:"id"`
-	ServiceID  string     `db:"service_id" json:"service_id"`
-	Error      string     `db:"error" json:"error"`
-	Duration   *int64     `db:"duration" json:"duration"`
-	StartedAt  time.Time  `db:"started_at" json:"started_at"`
-	ResolvedAt *time.Time `db:"resolved_at" json:"resolved_at"`
-	CreatedAt  time.Time  `db:"created_at" json:"created_at"`
-	UpdatedAt  time.Time  `db:"updated_at" json:"updated_at"`
+	ID          string     `db:"id" json:"id"`
+	ProjectID   string     `db:"project_id" json:"project_id"`
+	Origin      string     `db:"origin" json:"origin"`
+	MonitorID   *string    `db:"monitor_id" json:"monitor_id"`
+	ResourceID  *string    `db:"resource_id" json:"resource_id"`
+	AgentID     *string    `db:"agent_id" json:"agent_id"`
+	Kind        string     `db:"kind" json:"kind"`
+	Status      string     `db:"status" json:"status"`
+	Severity    int64      `db:"severity" json:"severity"`
+	Summary     string     `db:"summary" json:"summary"`
+	FirstSeenAt time.Time  `db:"first_seen_at" json:"first_seen_at"`
+	LastSeenAt  time.Time  `db:"last_seen_at" json:"last_seen_at"`
+	ResolvedAt  *time.Time `db:"resolved_at" json:"resolved_at"`
+	CreatedAt   time.Time  `db:"created_at" json:"created_at"`
+	UpdatedAt   time.Time  `db:"updated_at" json:"updated_at"`
 }
 
-type IncidentState struct {
-	ID         string    `db:"id" json:"id"`
-	IncidentID string    `db:"incident_id" json:"incident_id"`
-	Status     string    `db:"status" json:"status"`
-	Level      int64     `db:"level" json:"level"`
-	CreatedAt  time.Time `db:"created_at" json:"created_at"`
-	UpdatedAt  time.Time `db:"updated_at" json:"updated_at"`
+type IncidentEvent struct {
+	ID         int64              `db:"id" json:"id"`
+	IncidentID string             `db:"incident_id" json:"incident_id"`
+	CreatedAt  time.Time          `db:"created_at" json:"created_at"`
+	Type       string             `db:"type" json:"type"`
+	Payload    storecmn.JSONField `db:"payload" json:"payload"`
+}
+
+type MaintenanceWindow struct {
+	ID        string    `db:"id" json:"id"`
+	Name      string    `db:"name" json:"name"`
+	StartAt   time.Time `db:"start_at" json:"start_at"`
+	EndAt     time.Time `db:"end_at" json:"end_at"`
+	Reason    *string   `db:"reason" json:"reason"`
+	CreatedAt time.Time `db:"created_at" json:"created_at"`
+	UpdatedAt time.Time `db:"updated_at" json:"updated_at"`
+}
+
+type Monitor struct {
+	ID         string             `db:"id" json:"id"`
+	ProjectID  string             `db:"project_id" json:"project_id"`
+	ResourceID string             `db:"resource_id" json:"resource_id"`
+	Name       string             `db:"name" json:"name"`
+	Kind       string             `db:"kind" json:"kind"`
+	IsEnabled  bool               `db:"is_enabled" json:"is_enabled"`
+	Tags       storecmn.JSONField `db:"tags" json:"tags"`
+	CreatedAt  time.Time          `db:"created_at" json:"created_at"`
+	UpdatedAt  time.Time          `db:"updated_at" json:"updated_at"`
+}
+
+type MonitorAgent struct {
+	ID        string    `db:"id" json:"id"`
+	ProjectID string    `db:"project_id" json:"project_id"`
+	MonitorID string    `db:"monitor_id" json:"monitor_id"`
+	AgentID   string    `db:"agent_id" json:"agent_id"`
+	CreatedAt time.Time `db:"created_at" json:"created_at"`
+}
+
+type MonitorCheck struct {
+	ID           string             `db:"id" json:"id"`
+	ProjectID    string             `db:"project_id" json:"project_id"`
+	MonitorID    string             `db:"monitor_id" json:"monitor_id"`
+	RevisionID   int64              `db:"revision_id" json:"revision_id"`
+	ResourceID   string             `db:"resource_id" json:"resource_id"`
+	AgentID      string             `db:"agent_id" json:"agent_id"`
+	StartedAt    time.Time          `db:"started_at" json:"started_at"`
+	CompletedAt  time.Time          `db:"completed_at" json:"completed_at"`
+	Severity     int64              `db:"severity" json:"severity"`
+	ResponseTime int64              `db:"response_time" json:"response_time"`
+	Evaluation   storecmn.JSONField `db:"evaluation" json:"evaluation"`
+	Meta         storecmn.JSONField `db:"meta" json:"meta"`
+	CreatedAt    time.Time          `db:"created_at" json:"created_at"`
+}
+
+type MonitorRevision struct {
+	ID                int64              `db:"id" json:"id"`
+	MonitorID         string             `db:"monitor_id" json:"monitor_id"`
+	Config            storecmn.JSONField `db:"config" json:"config"`
+	ContentHashUint64 int64              `db:"content_hash_uint64" json:"content_hash_uint64"`
+	IsActive          bool               `db:"is_active" json:"is_active"`
+	CreatedAt         time.Time          `db:"created_at" json:"created_at"`
+}
+
+type MonitorState struct {
+	ID                 string     `db:"id" json:"id"`
+	ProjectID          string     `db:"project_id" json:"project_id"`
+	MonitorID          string     `db:"monitor_id" json:"monitor_id"`
+	ResourceID         string     `db:"resource_id" json:"resource_id"`
+	AgentID            *string    `db:"agent_id" json:"agent_id"`
+	Severity           int64      `db:"severity" json:"severity"`
+	Status             string     `db:"status" json:"status"`
+	LastCheck          *time.Time `db:"last_check" json:"last_check"`
+	LastError          *string    `db:"last_error" json:"last_error"`
+	ConsecutiveFails   int64      `db:"consecutive_fails" json:"consecutive_fails"`
+	ConsecutiveSuccess int64      `db:"consecutive_success" json:"consecutive_success"`
+	TotalChecks        int64      `db:"total_checks" json:"total_checks"`
+	AvgResponseTime    int64      `db:"avg_response_time" json:"avg_response_time"`
+	UpdatedAt          time.Time  `db:"updated_at" json:"updated_at"`
+}
+
+type MwMonitor struct {
+	MwID      string `db:"mw_id" json:"mw_id"`
+	MonitorID string `db:"monitor_id" json:"monitor_id"`
+}
+
+type MwProject struct {
+	MwID      string `db:"mw_id" json:"mw_id"`
+	ProjectID string `db:"project_id" json:"project_id"`
+}
+
+type MwResource struct {
+	MwID       string `db:"mw_id" json:"mw_id"`
+	ResourceID string `db:"resource_id" json:"resource_id"`
 }
 
 type NotificationHistory struct {
 	ID            string     `db:"id" json:"id"`
+	AlertID       *string    `db:"alert_id" json:"alert_id"`
 	ProviderID    string     `db:"provider_id" json:"provider_id"`
-	ServiceID     *string    `db:"service_id" json:"service_id"`
-	IncidentID    *string    `db:"incident_id" json:"incident_id"`
 	Message       string     `db:"message" json:"message"`
 	Status        string     `db:"status" json:"status"`
 	Response      *string    `db:"response" json:"response"`
@@ -69,42 +191,46 @@ type NotificationProvider struct {
 	ProviderType NotificationProviderType `db:"provider_type" json:"provider_type"`
 	Config       storecmn.JSONField       `db:"config" json:"config"`
 	IsEnabled    bool                     `db:"is_enabled" json:"is_enabled"`
+	ProjectID    *string                  `db:"project_id" json:"project_id"`
 	CreatedAt    time.Time                `db:"created_at" json:"created_at"`
 	UpdatedAt    time.Time                `db:"updated_at" json:"updated_at"`
 }
 
-type Service struct {
-	ID                     string              `db:"id" json:"id"`
-	Name                   string              `db:"name" json:"name"`
-	Protocol               ServiceProtocolType `db:"protocol" json:"protocol"`
-	Interval               int64               `db:"interval" json:"interval"`
-	Timeout                int64               `db:"timeout" json:"timeout"`
-	Retries                int64               `db:"retries" json:"retries"`
-	Tags                   storecmn.JSONField  `db:"tags" json:"tags"`
-	Config                 storecmn.JSONField  `db:"config" json:"config"`
-	IsEnabled              bool                `db:"is_enabled" json:"is_enabled"`
-	IsNotificationsEnabled bool                `db:"is_notifications_enabled" json:"is_notifications_enabled"`
-	CreatedAt              time.Time           `db:"created_at" json:"created_at"`
-	UpdatedAt              time.Time           `db:"updated_at" json:"updated_at"`
+type Project struct {
+	ID          string          `db:"id" json:"id" validate:"required"`
+	Name        string          `db:"name" json:"name" validate:"required"`
+	Description string          `db:"description" json:"description"`
+	Settings    ProjectSettings `db:"settings" json:"settings"`
+	CreatedAt   time.Time       `db:"created_at" json:"created_at"`
+	UpdatedAt   time.Time       `db:"updated_at" json:"updated_at"`
 }
 
-type ServiceState struct {
-	ID                 string        `db:"id" json:"id"`
-	ServiceID          string        `db:"service_id" json:"service_id"`
-	Status             ServiceStatus `db:"status" json:"status"`
-	LastCheck          *time.Time    `db:"last_check" json:"last_check"`
-	LastError          *string       `db:"last_error" json:"last_error"`
-	ConsecutiveFails   int64         `db:"consecutive_fails" json:"consecutive_fails"`
-	ConsecutiveSuccess int64         `db:"consecutive_success" json:"consecutive_success"`
-	TotalChecks        int64         `db:"total_checks" json:"total_checks"`
-	AvgResponseTime    *int64        `db:"avg_response_time" json:"avg_response_time"`
-	CreatedAt          time.Time     `db:"created_at" json:"created_at"`
-	UpdatedAt          time.Time     `db:"updated_at" json:"updated_at"`
+type Resource struct {
+	ID          string             `db:"id" json:"id"`
+	ProjectID   string             `db:"project_id" json:"project_id"`
+	Name        string             `db:"name" json:"name"`
+	Description string             `db:"description" json:"description"`
+	Tags        storecmn.JSONField `db:"tags" json:"tags"`
+	Payload     storecmn.JSONField `db:"payload" json:"payload"`
+	CreatedAt   time.Time          `db:"created_at" json:"created_at"`
+	UpdatedAt   time.Time          `db:"updated_at" json:"updated_at"`
 }
 
-type ServicesAgent struct {
-	ID        string `db:"id" json:"id"`
-	ServiceID string `db:"service_id" json:"service_id"`
-	AgentID   string `db:"agent_id" json:"agent_id"`
-	Revision  string `db:"revision" json:"revision"`
+type ResourceAgent struct {
+	ID         string    `db:"id" json:"id"`
+	ResourceID string    `db:"resource_id" json:"resource_id"`
+	AgentID    string    `db:"agent_id" json:"agent_id"`
+	ProjectID  string    `db:"project_id" json:"project_id"`
+	CreatedAt  time.Time `db:"created_at" json:"created_at"`
+}
+
+type User struct {
+	ID        string    `db:"id" json:"id" validate:"required"`
+	Email     string    `db:"email" json:"email" validate:"required,email"`
+	Password  string    `db:"password" json:"password" validate:"required"`
+	FullName  string    `db:"full_name" json:"full_name"`
+	Role      string    `db:"role" json:"role" validate:"required,oneof=root admin user"`
+	Avatar    string    `db:"avatar" json:"avatar"`
+	CreatedAt time.Time `db:"created_at" json:"created_at"`
+	UpdatedAt time.Time `db:"updated_at" json:"updated_at"`
 }
