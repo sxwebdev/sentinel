@@ -6,6 +6,7 @@ import (
 	"connectrpc.com/grpchealth"
 	"github.com/sxwebdev/sentinel/internal/apiserver/connecthealth"
 	"github.com/sxwebdev/sentinel/internal/hub/hubserver/api/sentinel/agents/v1/agentsv1connect"
+	"github.com/sxwebdev/sentinel/internal/hub/hubserver/api/sentinel/auth/v1/authv1connect"
 	"github.com/sxwebdev/sentinel/internal/hub/hubserver/api/sentinel/notifications/v1/notificationsv1connect"
 	"github.com/sxwebdev/sentinel/internal/hub/hubserver/api/sentinel/projects/v1/projectsv1connect"
 	"github.com/sxwebdev/sentinel/internal/hub/hubserver/api/sentinel/system/v1/systemv1connect"
@@ -24,6 +25,11 @@ type Server struct {
 
 	systemServer interface {
 		systemv1connect.SystemServiceHandler
+		connectrpc_transport.ConnectRPCService
+	}
+
+	authServer interface {
+		authv1connect.AuthServiceHandler
 		connectrpc_transport.ConnectRPCService
 	}
 
@@ -52,6 +58,7 @@ func New(
 ) *Server {
 	s := &Server{
 		systemServer:        newSystemServer(bs, systemInfo, availableUpdateData),
+		authServer:          newAuthServer(bs),
 		projectsServer:      newProjectsServer(bs),
 		agentsServer:        newAgentsServer(gCtx, logger, bs),
 		notificationsServer: newNotificationsServer(gCtx, logger, bs),
@@ -66,6 +73,7 @@ func (s *Server) AllServers() []connectrpc_transport.ConnectRPCService {
 	return []connectrpc_transport.ConnectRPCService{
 		s.healthChecker,
 		s.systemServer,
+		s.authServer,
 		s.projectsServer,
 		s.agentsServer,
 		s.notificationsServer,

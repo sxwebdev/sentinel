@@ -22,7 +22,7 @@ func (s *Service) Initialize(ctx context.Context, rootEmail, rootPassword string
 		return nil
 	}
 
-	_, err = s.store.Users().Create(ctx, repo_users.CreateParams{
+	_, err = s.usersService.Create(ctx, repo_users.CreateParams{
 		ID:       utils.GenerateULID(),
 		Email:    rootEmail,
 		Password: rootPassword,

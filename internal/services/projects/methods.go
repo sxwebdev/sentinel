@@ -5,6 +5,7 @@ import (
 
 	"github.com/sxwebdev/sentinel/internal/models"
 	"github.com/sxwebdev/sentinel/internal/store/repos/repo_projects"
+	"github.com/sxwebdev/sentinel/internal/utils"
 )
 
 // GetAll retrieves all projects from the store.
@@ -21,8 +22,22 @@ type CreateParams = repo_projects.CreateParams
 
 // Create adds a new project to the store.
 func (s *Service) Create(ctx context.Context, params CreateParams) (*models.Project, error) {
+	params.ID = utils.GenerateULID()
+
 	if err := s.validator.Struct(params); err != nil {
 		return nil, err
+	}
+
+	if params.Settings.MonitorDefaults.DefaultInterval == 0 {
+		params.Settings.MonitorDefaults.DefaultInterval = 60000
+	}
+
+	if params.Settings.MonitorDefaults.DefaultTimeout == 0 {
+		params.Settings.MonitorDefaults.DefaultTimeout = 10000
+	}
+
+	if params.Settings.MonitorDefaults.DefaultRetries == 0 {
+		params.Settings.MonitorDefaults.DefaultRetries = 10
 	}
 
 	return s.store.Projects().Create(ctx, params)
@@ -34,6 +49,18 @@ type UpdateParams = repo_projects.UpdateParams
 func (s *Service) Update(ctx context.Context, params UpdateParams) (*models.Project, error) {
 	if err := s.validator.Struct(params); err != nil {
 		return nil, err
+	}
+
+	if params.Settings.MonitorDefaults.DefaultInterval == 0 {
+		params.Settings.MonitorDefaults.DefaultInterval = 60000
+	}
+
+	if params.Settings.MonitorDefaults.DefaultTimeout == 0 {
+		params.Settings.MonitorDefaults.DefaultTimeout = 10000
+	}
+
+	if params.Settings.MonitorDefaults.DefaultRetries == 0 {
+		params.Settings.MonitorDefaults.DefaultRetries = 10
 	}
 
 	return s.store.Projects().Update(ctx, params)

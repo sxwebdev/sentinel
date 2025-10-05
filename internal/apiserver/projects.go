@@ -9,6 +9,7 @@ import (
 	"github.com/sxwebdev/sentinel/internal/hub/hubserver/api/sentinel/projects/v1/projectsv1connect"
 	"github.com/sxwebdev/sentinel/internal/servers/ptconverts"
 	"github.com/sxwebdev/sentinel/internal/services/baseservices"
+	"github.com/sxwebdev/sentinel/internal/services/projects"
 )
 
 type ProjectsServer struct {
@@ -50,6 +51,29 @@ func (s *ProjectsServer) ProjectsList(
 
 	res := connect.NewResponse(&projectsv1.ProjectsListResponse{
 		Items: projects,
+	})
+
+	return res, nil
+}
+
+// ProjectCreate creates a new project
+func (s *ProjectsServer) ProjectCreate(
+	ctx context.Context,
+	req *connect.Request[projectsv1.ProjectCreateRequest],
+) (*connect.Response[projectsv1.ProjectCreateResponse], error) {
+	params := projects.CreateParams{
+		Name:        req.Msg.GetName(),
+		Description: req.Msg.GetDescription(),
+		Settings:    ptconverts.ConvertProjectSettingsFromProto(req.Msg.GetSettings()),
+	}
+
+	data, err := s.bs.Projects().Create(ctx, params)
+	if err != nil {
+		return nil, newConnectError(err)
+	}
+
+	res := connect.NewResponse(&projectsv1.ProjectCreateResponse{
+		Item: ptconverts.ConvertProjectToProto(data),
 	})
 
 	return res, nil

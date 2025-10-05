@@ -1,6 +1,10 @@
 package models
 
-import "github.com/sxwebdev/sentinel/internal/store/storecmn"
+import (
+	"database/sql/driver"
+
+	"github.com/sxwebdev/sentinel/internal/store/storecmn"
+)
 
 type ProjectSettings struct {
 	MonitorDefaults ProjectMonitorDefaults `yaml:"monitor_defaults"`
@@ -19,4 +23,13 @@ func (s *ProjectSettings) Scan(value any) error {
 		return err
 	}
 	return jsonField.ConvertToAny(s)
+}
+
+// Value implements the interface for converting struct fields into DB values.
+func (s ProjectSettings) Value() (driver.Value, error) {
+	var jsonField storecmn.JSONField
+	if err := jsonField.UnmarshalFromAny(s); err != nil {
+		return nil, err
+	}
+	return jsonField.Value()
 }

@@ -12,6 +12,7 @@ import (
 	"connectrpc.com/grpchealth"
 	"connectrpc.com/grpcreflect"
 	"github.com/sxwebdev/sentinel/internal/hub/hubserver/api/sentinel/auth/v1/authv1connect"
+	"github.com/sxwebdev/sentinel/internal/hub/hubserver/api/sentinel/system/v1/systemv1connect"
 	"github.com/sxwebdev/sentinel/internal/services/baseservices"
 	"github.com/tkcrm/mx/logger"
 )
@@ -20,6 +21,10 @@ var availableMethodsBeforeAuth = map[string]struct{}{
 	// Auth
 	authv1connect.AuthServiceAuthorizationProcedure: {},
 	authv1connect.AuthServiceRefreshTokenProcedure:  {},
+
+	// System
+	systemv1connect.SystemServiceCheckIsInitializedProcedure: {},
+	systemv1connect.SystemServiceInitializeProcedure:         {},
 }
 
 type AuthInterceptor struct {

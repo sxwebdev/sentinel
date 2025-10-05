@@ -162,7 +162,7 @@ genproto: ## Generate protobuf code
 	rm -rf frontend/src/api/gen/sentinel/hub
 
 grpcui-hub:
-	grpcui --plaintext localhost:9000
+	grpcui --plaintext localhost:8080
 
 grpcui-server:
 	grpcui --plaintext localhost:8080
