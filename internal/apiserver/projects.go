@@ -78,3 +78,65 @@ func (s *ProjectsServer) ProjectCreate(
 
 	return res, nil
 }
+
+// ProjectGet returns a project by ID
+func (s *ProjectsServer) ProjectGet(
+	ctx context.Context,
+	req *connect.Request[projectsv1.ProjectGetRequest],
+) (*connect.Response[projectsv1.ProjectGetResponse], error) {
+	data, err := s.bs.Projects().GetByID(ctx, req.Msg.GetId())
+	if err != nil {
+		return nil, newConnectError(err)
+	}
+	if data == nil {
+		return nil, connect.NewError(connect.CodeNotFound, nil)
+	}
+
+	res := connect.NewResponse(&projectsv1.ProjectGetResponse{
+		Item: ptconverts.ConvertProjectToProto(data),
+	})
+
+	return res, nil
+}
+
+// ProjectUpdate updates a project by ID
+func (s *ProjectsServer) ProjectUpdate(
+	ctx context.Context,
+	req *connect.Request[projectsv1.ProjectUpdateRequest],
+) (*connect.Response[projectsv1.ProjectUpdateResponse], error) {
+	params := projects.UpdateParams{
+		ID:          req.Msg.GetId(),
+		Name:        req.Msg.GetName(),
+		Description: req.Msg.GetDescription(),
+		Settings:    ptconverts.ConvertProjectSettingsFromProto(req.Msg.GetSettings()),
+	}
+
+	data, err := s.bs.Projects().Update(ctx, params)
+	if err != nil {
+		return nil, newConnectError(err)
+	}
+	if data == nil {
+		return nil, connect.NewError(connect.CodeNotFound, nil)
+	}
+
+	res := connect.NewResponse(&projectsv1.ProjectUpdateResponse{
+		Item: ptconverts.ConvertProjectToProto(data),
+	})
+
+	return res, nil
+}
+
+// ProjectDelete deletes a project by ID
+func (s *ProjectsServer) ProjectDelete(
+	ctx context.Context,
+	req *connect.Request[projectsv1.ProjectDeleteRequest],
+) (*connect.Response[projectsv1.ProjectDeleteResponse], error) {
+	err := s.bs.Projects().Delete(ctx, req.Msg.GetId())
+	if err != nil {
+		return nil, newConnectError(err)
+	}
+
+	res := connect.NewResponse(&projectsv1.ProjectDeleteResponse{})
+
+	return res, nil
+}
