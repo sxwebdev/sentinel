@@ -62,13 +62,11 @@ export const useAuthStore = create<AuthStoreState>()(
           const now = Date.now();
           const timeLeft = expiresAt - now;
 
-          console.log("Access token time left (ms):", timeLeft);
-
-          // If less than 2 minutes left, refresh token
-          if (timeLeft < 2 * 60 * 1000) {
+          // If less than 5 minutes left, refresh token
+          if (timeLeft < 5 * 60 * 1000) {
             get().refreshToken();
           }
-        }, 5 * 1000);
+        }, 30 * 1000);
       };
 
       // Start interval immediately

@@ -143,7 +143,7 @@ func hubStartCMD() *cli.Command {
 
 					var badgerDB *badgerdb.DB
 					if conf.KvDbEngine == "badgerdb" {
-						badgerDbPath := filepath.Join(conf.HubDataDir(), "badger", sqliteDBFile)
+						badgerDbPath := filepath.Join(conf.HubDataDir(), "badger")
 						badgerDB, err = badgerdb.New(l, badgerDbPath)
 						if err != nil {
 							return fmt.Errorf("failed to initialize badgerdb: %w", err)
