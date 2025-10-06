@@ -1,8 +1,8 @@
-// src/components/CodeBlock.tsx
 import * as React from "react";
 import { Highlight, themes, Prism, type Language } from "prism-react-renderer";
-import { useTheme } from "../theme-provider";
 import { cn } from "@/shared/lib/utils";
+import { useUserPreferenceStore } from "@/app/stores/userPreferience";
+import { useShallow } from "zustand/react/shallow";
 
 type Props = {
   code: string;
@@ -18,7 +18,9 @@ export function CodeBlock({
   className = "",
 }: Props) {
   const [copied, setCopied] = React.useState(false);
-  const currentTheme = useTheme();
+  const { currentTheme } = useUserPreferenceStore(
+    useShallow((s) => ({ currentTheme: s.theme })),
+  );
 
   const onCopy = async () => {
     try {
@@ -30,8 +32,7 @@ export function CodeBlock({
     }
   };
 
-  // выбираем тему по системе
-  const theme = currentTheme.theme === "dark" ? themes.oneDark : themes.github;
+  const theme = currentTheme === "dark" ? themes.oneDark : themes.github;
 
   return (
     <div
