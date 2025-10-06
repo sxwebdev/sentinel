@@ -47,10 +47,10 @@ func New(
 
 	authService := auth.New(
 		l,
-		st.TokenRepo(),
+		st.Cache(),
 		usersService,
 		authConfig.AccessTokenSecretKey,
-		time.Minute*15,
+		time.Minute*20, // 20 minutes
 		authConfig.RefreshTokenSecretKey,
 		time.Hour*24*30, // 30 days
 	)

@@ -12,7 +12,7 @@ func withCORS(connectHandler http.Handler) http.Handler {
 	exposedHeaders = append(exposedHeaders, "Rpc-Error-Code")
 
 	allowedHeaders := connectcors.AllowedHeaders()
-	allowedHeaders = append(allowedHeaders, "Authorization", "Origin", "Access-Control-Allow-Origin", "Accept", "Options")
+	allowedHeaders = append(allowedHeaders, "Authorization", "Origin", "Access-Control-Allow-Origin", "Accept", "Options", "X-Project-ID")
 
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"}, // Allow all origins

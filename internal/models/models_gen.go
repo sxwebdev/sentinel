@@ -17,7 +17,7 @@ type Agent struct {
 	SecretHash  string             `db:"secret_hash" json:"secret_hash"`
 	TokenHint   string             `db:"token_hint" json:"token_hint"`
 	Fingerprint *string            `db:"fingerprint" json:"fingerprint"`
-	Kind        string             `db:"kind" json:"kind"`
+	Kind        AgentKindType      `db:"kind" json:"kind"`
 	Status      AgentStatusType    `db:"status" json:"status"`
 	IsEnabled   bool               `db:"is_enabled" json:"is_enabled"`
 	Location    *string            `db:"location" json:"location"`

@@ -56,16 +56,37 @@ func (j *JSONField) Scan(value any) error {
 		return nil
 	}
 
+	var data []byte
 	switch v := value.(type) {
 	case string:
-		*j = JSONField(v)
-		return nil
+		data = []byte(v)
 	case []byte:
-		*j = JSONField(v)
-		return nil
+		data = v
 	default:
 		return fmt.Errorf("cannot scan %T into JSONField", value)
 	}
+
+	// Skip empty strings or whitespace-only values
+	trimmed := []byte{}
+	for _, b := range data {
+		if b > 32 { // Skip control characters and spaces
+			trimmed = append(trimmed, b)
+		}
+	}
+
+	if len(trimmed) == 0 {
+		*j = nil
+		return nil
+	}
+
+	// Validate JSON before assigning
+	if !json.Valid(trimmed) {
+		// If invalid, try to recover or log and return error
+		return fmt.Errorf("invalid JSON data in database: %s", string(data))
+	}
+
+	*j = JSONField(trimmed)
+	return nil
 }
 
 // Value implements the driver.Valuer interface for JSONField
@@ -73,6 +94,12 @@ func (j JSONField) Value() (driver.Value, error) {
 	if len(j) == 0 {
 		return nil, nil
 	}
+
+	// Validate that the JSON is valid before storing
+	if !json.Valid(j) {
+		return nil, fmt.Errorf("invalid JSON data")
+	}
+
 	return string(j), nil
 }
 

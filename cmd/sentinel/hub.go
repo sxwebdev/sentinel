@@ -18,12 +18,14 @@ import (
 	"github.com/sxwebdev/sentinel/internal/servers"
 	"github.com/sxwebdev/sentinel/internal/services/baseservices"
 	"github.com/sxwebdev/sentinel/internal/store"
+	"github.com/sxwebdev/sentinel/internal/store/badgerdb"
 	updater "github.com/sxwebdev/sentinel/internal/updated"
 	"github.com/sxwebdev/sentinel/internal/utils"
 	"github.com/sxwebdev/sentinel/pkg/locker"
 	"github.com/sxwebdev/sentinel/pkg/migrations"
 	"github.com/sxwebdev/sentinel/pkg/sqlite"
 	"github.com/sxwebdev/sentinel/sql"
+	"github.com/sxwebdev/tokenmanager"
 	"github.com/tkcrm/mx/launcher"
 	"github.com/tkcrm/mx/logger"
 	"github.com/tkcrm/mx/service"
@@ -128,16 +130,33 @@ func hubStartCMD() *cli.Command {
 						return fmt.Errorf("failed to set timezone: %w", err)
 					}
 
-					dbPath := filepath.Join(conf.HubDataDir(), "sqlite", sqliteDBFile)
+					sqliteDbPath := filepath.Join(conf.HubDataDir(), "sqlite", sqliteDBFile)
 
 					// init sqlite
-					db, err := sqlite.New(ctx, dbPath)
+					sqliteDB, err := sqlite.New(ctx, sqliteDbPath)
 					if err != nil {
 						return fmt.Errorf("failed to initialize sqlite: %w", err)
 					}
 
+					// init badger
+					var kvStore tokenmanager.ITokenStore
+
+					var badgerDB *badgerdb.DB
+					if conf.KvDbEngine == "badgerdb" {
+						badgerDbPath := filepath.Join(conf.HubDataDir(), "badger", sqliteDBFile)
+						badgerDB, err = badgerdb.New(l, badgerDbPath)
+						if err != nil {
+							return fmt.Errorf("failed to initialize badgerdb: %w", err)
+						}
+						kvStore = badgerDB
+					} else {
+						kvStore = tokenmanager.NewMemoryTokenStore()
+					}
+
+					l.Infof("using kv store: %s", conf.KvDbEngine)
+
 					// Print SQLite version if using SQLite storage
-					sqliteVersion, err := db.GetSQLiteVersion(ctx)
+					sqliteVersion, err := sqliteDB.GetSQLiteVersion(ctx)
 					if err != nil {
 						return fmt.Errorf("failed to get SQLite version: %w", err)
 					}
@@ -145,11 +164,11 @@ func hubStartCMD() *cli.Command {
 
 					// check and run all migrations
 					m := migrations.New(l, sql.MigrationsFS, sql.MigrationsPath, datamigrations.Migrations)
-					if err := m.MigrateUpAll(ctx, dbPath); err != nil {
+					if err := m.MigrateUpAll(ctx, sqliteDbPath); err != nil {
 						return fmt.Errorf("failed to run migrations: %w", err)
 					}
 
-					st, err := store.New(db.DB)
+					st, err := store.New(sqliteDB.DB, kvStore)
 					if err != nil {
 						return fmt.Errorf("failed to initialize store: %w", err)
 					}
@@ -184,7 +203,7 @@ func hubStartCMD() *cli.Command {
 					// register services
 					ln.ServicesRunner().Register(
 						service.New(service.WithService(pingpong.New(l))),
-						service.New(service.WithService(db)),
+						service.New(service.WithService(sqliteDB)),
 						service.New(service.WithService(updater)),
 						service.New(service.WithService(rc)),
 						service.New(service.WithService(dispatcher)),
@@ -192,6 +211,10 @@ func hubStartCMD() *cli.Command {
 						service.New(service.WithService(srv)),
 						service.New(service.WithService(baseServices.Notifications().Sender())),
 					)
+
+					if badgerDB != nil {
+						ln.ServicesRunner().Register(service.New(service.WithService(badgerDB)))
+					}
 
 					return ln.Run()
 				},

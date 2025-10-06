@@ -17,15 +17,25 @@ import (
 
 type CreateParams struct {
 	Name        string
+	Kind        models.AgentKindType
 	Description string
 	Tags        []string
 	Config      models.AgentConfig
+	ProjectID   string
 }
 
 // Validate
 func (p CreateParams) Validate() error {
 	if p.Name == "" {
 		return fmt.Errorf("name is required")
+	}
+
+	if err := p.Kind.Validate(); err != nil {
+		return fmt.Errorf("kind is invalid: %w", err)
+	}
+
+	if p.ProjectID == "" {
+		return fmt.Errorf("project_id is required")
 	}
 
 	return nil
@@ -84,8 +94,10 @@ func (s *Service) Create(ctx context.Context, params CreateParams) (*CreateRespo
 		Description: params.Description,
 		SecretHash:  secretHash,
 		TokenHint:   tokenHint,
+		Kind:        params.Kind,
 		Tags:        tags,
 		Config:      config,
+		ProjectID:   params.ProjectID,
 	}
 
 	item, err := s.store.Agents().Create(ctx, createParams)

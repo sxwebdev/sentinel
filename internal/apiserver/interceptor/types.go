@@ -10,6 +10,7 @@ type (
 	userRole        string
 	UserDataContext struct {
 		User        *models.User
+		Project     *models.Project
 		AccessToken string
 		Claims      *tokenmanager.Data[auth.SessionData]
 	}

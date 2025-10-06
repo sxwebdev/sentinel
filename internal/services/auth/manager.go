@@ -122,27 +122,12 @@ func (s *Manager) Authorization(ctx context.Context, userID string, sessionData 
 		sessionData.CreatedAt = time.Now()
 	}
 
-	if sessionData.DeviceInfo.DeviceID != "" { //nolint:nestif
-		existsSession, err := s.sessionStore.Exists(ctx, getSessionKey(userID, sessionData.DeviceInfo.DeviceID))
-		if err != nil {
-			return nil, fmt.Errorf("failed to check session existence: %w", err)
-		}
-
-		if !existsSession {
-			newDeviceID, err := s.GetNewDeviceID(ctx, userID)
-			if err != nil {
-				return nil, fmt.Errorf("failed to generate device ID: %w", err)
-			}
-
-			sessionData.DeviceInfo.DeviceID = newDeviceID
-		}
-	} else {
-		newDeviceID, err := s.GetNewDeviceID(ctx, userID)
+	var err error
+	if sessionData.DeviceInfo.DeviceID == "" {
+		sessionData.DeviceInfo.DeviceID, err = s.GetNewDeviceID(ctx, userID)
 		if err != nil {
 			return nil, fmt.Errorf("failed to generate device ID: %w", err)
 		}
-
-		sessionData.DeviceInfo.DeviceID = newDeviceID
 	}
 
 	if err := s.revokeSessionTokens(ctx, userID, sessionData.DeviceInfo.DeviceID); err != nil {

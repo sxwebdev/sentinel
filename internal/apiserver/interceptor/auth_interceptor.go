@@ -119,5 +119,14 @@ func (s *AuthInterceptor) authorize(ctx context.Context, req *http.Request) (*Us
 		Claims:      claims,
 	}
 
+	projectID := req.Header.Get("X-Project-ID")
+	if projectID != "" {
+		project, err := s.bs.Projects().GetByID(ctx, projectID)
+		if err != nil {
+			return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("get project id: %w", err))
+		}
+		ud.Project = project
+	}
+
 	return ud, nil
 }

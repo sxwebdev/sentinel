@@ -12,6 +12,7 @@ import (
 	"github.com/sxwebdev/sentinel/internal/services/agents"
 	"github.com/sxwebdev/sentinel/internal/services/baseservices"
 	"github.com/sxwebdev/sentinel/internal/store/repos/repo_agents"
+	"github.com/sxwebdev/sentinel/internal/store/storecmn"
 	"github.com/tkcrm/modules/pkg/db/dbutils"
 	"github.com/tkcrm/mx/logger"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -95,11 +96,22 @@ func (s *AgentsServer) AgentsCreate(
 	ctx context.Context,
 	req *connect.Request[agentsv1.AgentsCreateRequest],
 ) (*connect.Response[agentsv1.AgentsCreateResponse], error) {
+	ctxData, err := getUserDataContext(ctx)
+	if err != nil {
+		return nil, newConnectError(err)
+	}
+
+	if ctxData.Project == nil {
+		return nil, newConnectError(storecmn.ErrProjectNotFound)
+	}
+
 	params := agents.CreateParams{
 		Name:        req.Msg.GetName(),
 		Description: req.Msg.Description,
+		Kind:        models.AgentKindTypeAgent,
 		Tags:        append([]string(nil), req.Msg.GetTags()...),
 		Config:      models.AgentConfig{},
+		ProjectID:   ctxData.Project.ID,
 	}
 
 	created, err := s.bs.Agents().Create(ctx, params)

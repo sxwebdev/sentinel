@@ -19,16 +19,16 @@ INSERT INTO agents (id, name, description, secret_hash, token_hint, kind, locati
 `
 
 type CreateParams struct {
-	ID          string             `db:"id" json:"id"`
-	Name        string             `db:"name" json:"name"`
-	Description string             `db:"description" json:"description"`
-	SecretHash  string             `db:"secret_hash" json:"secret_hash"`
-	TokenHint   string             `db:"token_hint" json:"token_hint"`
-	Kind        string             `db:"kind" json:"kind"`
-	Location    *string            `db:"location" json:"location"`
-	Tags        storecmn.JSONField `db:"tags" json:"tags"`
-	Config      storecmn.JSONField `db:"config" json:"config"`
-	ProjectID   string             `db:"project_id" json:"project_id"`
+	ID          string               `db:"id" json:"id"`
+	Name        string               `db:"name" json:"name"`
+	Description string               `db:"description" json:"description"`
+	SecretHash  string               `db:"secret_hash" json:"secret_hash"`
+	TokenHint   string               `db:"token_hint" json:"token_hint"`
+	Kind        models.AgentKindType `db:"kind" json:"kind"`
+	Location    *string              `db:"location" json:"location"`
+	Tags        storecmn.JSONField   `db:"tags" json:"tags"`
+	Config      storecmn.JSONField   `db:"config" json:"config"`
+	ProjectID   string               `db:"project_id" json:"project_id"`
 }
 
 func (q *Queries) Create(ctx context.Context, arg CreateParams) (*models.Agent, error) {

@@ -35,6 +35,9 @@ overrides:
       - column: agents.status
         go_type:
           type: AgentStatusType
+      - column: agents.kind
+        go_type:
+          type: AgentKindType
 
       # notification_providers
       - column: notification_providers.provider_type

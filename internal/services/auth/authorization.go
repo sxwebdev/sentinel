@@ -2,7 +2,10 @@ package auth
 
 import (
 	"context"
+	"errors"
 	"fmt"
+
+	"github.com/sxwebdev/sentinel/internal/store/storecmn"
 )
 
 type AuthResponse[TUser IUser] struct { //nolint:revive
@@ -26,6 +29,9 @@ func (s *Service[TUser]) Authorization(ctx context.Context, email, password stri
 	// get user
 	user, err := s.userStore.GetByEmail(ctx, email)
 	if err != nil {
+		if errors.Is(err, storecmn.ErrNotFound) {
+			return nil, storecmn.ErrUserNotFound
+		}
 		return nil, fmt.Errorf("get user by email error: %w", err)
 	}
 
@@ -46,6 +52,9 @@ func (s *Service[TUser]) AuthorizationByEmail(ctx context.Context, email string,
 	// get user
 	user, err := s.userStore.GetByEmail(ctx, email)
 	if err != nil {
+		if errors.Is(err, storecmn.ErrNotFound) {
+			return nil, storecmn.ErrUserNotFound
+		}
 		return nil, fmt.Errorf("get user by email error: %w", err)
 	}
 

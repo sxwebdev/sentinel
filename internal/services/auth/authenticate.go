@@ -2,7 +2,10 @@ package auth
 
 import (
 	"context"
+	"errors"
 	"fmt"
+
+	"github.com/sxwebdev/sentinel/internal/store/storecmn"
 )
 
 type AuthenticateResponse[TUser IUser] struct {
@@ -23,6 +26,9 @@ func (s *Service[TUser]) Authenticate(ctx context.Context, accessToken string) (
 	// get user
 	user, err := s.userStore.GetByID(ctx, tokenData.UserID)
 	if err != nil {
+		if errors.Is(err, storecmn.ErrNotFound) {
+			return nil, storecmn.ErrUserNotFound
+		}
 		return nil, fmt.Errorf("get user by email error: %w", err)
 	}
 

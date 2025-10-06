@@ -11,12 +11,13 @@ import (
 
 // ConfigHub represents the main configuration structure
 type ConfigHub struct {
-	Log      logger.Config
-	Ops      ops.Config
-	DataDir  string       `yaml:"data_dir" validate:"required" default:"./data"`
-	Server   ServerConfig `yaml:"server"`
-	Timezone string       `yaml:"timezone" default:"UTC"`
-	Upgrader Upgrader     `yaml:"upgrader"`
+	Log        logger.Config
+	Ops        ops.Config
+	DataDir    string       `yaml:"data_dir" validate:"required" default:"./data"`
+	Server     ServerConfig `yaml:"server"`
+	Timezone   string       `yaml:"timezone" default:"UTC"`
+	Upgrader   Upgrader     `yaml:"upgrader"`
+	KvDbEngine string       `yaml:"kv_db_engine" default:"inmemory" example:"inmemory, badgerdb" validate:"oneof=inmemory badgerdb"`
 }
 
 // HubDataDir returns the data directory for the hub
