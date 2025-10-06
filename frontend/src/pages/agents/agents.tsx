@@ -11,7 +11,7 @@ import {
   type Agent,
 } from "@/api/gen/sentinel/agents/v1/agents_pb";
 import { ConfirmDialog } from "@/entities/confirmDialog/confirmDialog";
-import { H4, P } from "@/shared/components/typography";
+import { P } from "@/shared/components/typography";
 import {
   Badge,
   Button,
@@ -42,6 +42,12 @@ import {
   Input,
   Switch,
   DialogClose,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardAction,
 } from "@/shared/components/ui";
 import { Separator } from "@/shared/components/ui/separator";
 import { timestampDate } from "@bufbuild/protobuf/wkt";
@@ -387,148 +393,157 @@ const AgentsPage = () => {
         }}
         createdToken={createdToken}
       />
-      <H4 className="flex justify-between">
-        <span>Agents</span>
-        <Button
-          size="sm"
-          variant="secondary"
-          onClick={() => {
-            setAgent(undefined);
-            setUpsertAgentOpen(true);
-          }}
-        >
-          <PlusIcon size={16} /> Add Agent
-        </Button>
-      </H4>
-      <P className="text-muted-foreground text-sm leading-relaxed">
-        Agents embed into your internal infrastructure, collect data for
-        specified services, and send it to the Sentinel hub.
-        <br />
-        On this page, you can create, update, and delete agents, as well as
-        check their status.
-      </P>
+      <Card className="gap-3">
+        <CardHeader>
+          <CardTitle className="text-2xl">Agents</CardTitle>
+          <CardDescription>Manage application agents</CardDescription>
 
-      <P className="text-muted-foreground text-sm leading-relaxed">
-        To connect an agent to this Sentinel hub, you need to set the following
-        environment variables in your agent's environment:
-      </P>
+          <CardAction>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => {
+                setAgent(undefined);
+                setUpsertAgentOpen(true);
+              }}
+            >
+              <PlusIcon size={16} /> Add Agent
+            </Button>
+          </CardAction>
+        </CardHeader>
+        <CardContent>
+          <Separator className="my-2 hidden md:block" />
+          <P className="text-muted-foreground text-sm leading-relaxed">
+            Agents embed into your internal infrastructure, collect data for
+            specified services, and send it to the Sentinel hub.
+            <br />
+            On this page, you can create, update, and delete agents, as well as
+            check their status.
+          </P>
 
-      <CodeBlock
-        code={environmentsCodeBlock()}
-        language="markup"
-        className="mt-4 text-sm"
-      />
+          <P className="text-muted-foreground text-sm leading-relaxed">
+            To connect an agent to this Sentinel hub, you need to set the
+            following environment variables in your agent's environment:
+          </P>
 
-      <P className="text-muted-foreground text-sm leading-relaxed">
-        Alternatively, you can use a YAML configuration file with the following
-        content:
-      </P>
+          <CodeBlock
+            code={environmentsCodeBlock()}
+            language="markup"
+            className="mt-4 text-sm"
+          />
 
-      <CodeBlock
-        code={yamlCodeBlock()}
-        language="yaml"
-        className="mt-4 text-sm"
-      />
+          <P className="text-muted-foreground text-sm leading-relaxed">
+            Alternatively, you can use a YAML configuration file with the
+            following content:
+          </P>
 
-      <Separator className="my-5" />
+          <CodeBlock
+            code={yamlCodeBlock()}
+            language="yaml"
+            className="mt-4 text-sm"
+          />
 
-      <div className="overflow-hidden rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-muted/50">
-              <TableHead>Name</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Token</TableHead>
-              <TableHead>Is enabled</TableHead>
-              <TableHead>Version</TableHead>
-              <TableHead>Last seen at</TableHead>
-              <TableHead></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {q.data?.items?.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={7} className="h-24 text-center">
-                  No agents found.
-                </TableCell>
-              </TableRow>
-            ) : (
-              q.data?.items?.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell>{item.name}</TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={
-                        item.status === AgentStatus.ACTIVE
-                          ? "success"
-                          : item.status === AgentStatus.INACTIVE
-                            ? "error"
-                            : item.status === AgentStatus.UNSPECIFIED
-                              ? "warning"
-                              : "info"
-                      }
-                    >
-                      {statusTypeName(item.status)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {item.tokenHint ? (
-                      <span className="font-mono">{item.tokenHint}</span>
-                    ) : (
-                      <span className="text-muted-foreground">N/A</span>
-                    )}
-                  </TableCell>
-                  <TableCell>{item.isEnabled ? "Yes" : "No"}</TableCell>
-                  <TableCell>{item.systemInfo?.version || "N/A"}</TableCell>
-                  <TableCell>
-                    {item.lastSeenAt
-                      ? timestampDate(item.lastSeenAt).toLocaleString()
-                      : "N/A"}
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <div className="flex justify-end">
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="shadow-none"
-                            aria-label="Actions"
-                          >
-                            <EllipsisIcon size={16} aria-hidden="true" />
-                          </Button>
-                        </div>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuGroup>
-                          <DropdownMenuItem
-                            onClick={() => {
-                              setAgent(item);
-                              setUpsertAgentOpen(true);
-                            }}
-                          >
-                            Edit
-                          </DropdownMenuItem>
-                          {/* <DropdownMenuItem>Refresh token</DropdownMenuItem> */}
-                        </DropdownMenuGroup>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          className="text-destructive focus:text-destructive"
-                          onClick={() => {
-                            setDeleteAgentId(item?.id);
-                          }}
-                        >
-                          <span>Delete</span>
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+          <Separator className="my-5" />
+
+          <div className="overflow-hidden rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/50">
+                  <TableHead>Name</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Token</TableHead>
+                  <TableHead>Is enabled</TableHead>
+                  <TableHead>Version</TableHead>
+                  <TableHead>Last seen at</TableHead>
+                  <TableHead></TableHead>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+              </TableHeader>
+              <TableBody>
+                {q.data?.items?.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="h-24 text-center">
+                      No agents found.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  q.data?.items?.map((item) => (
+                    <TableRow key={item.id}>
+                      <TableCell>{item.name}</TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={
+                            item.status === AgentStatus.ACTIVE
+                              ? "success"
+                              : item.status === AgentStatus.INACTIVE
+                                ? "error"
+                                : item.status === AgentStatus.UNSPECIFIED
+                                  ? "warning"
+                                  : "info"
+                          }
+                        >
+                          {statusTypeName(item.status)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {item.tokenHint ? (
+                          <span className="font-mono">{item.tokenHint}</span>
+                        ) : (
+                          <span className="text-muted-foreground">N/A</span>
+                        )}
+                      </TableCell>
+                      <TableCell>{item.isEnabled ? "Yes" : "No"}</TableCell>
+                      <TableCell>{item.systemInfo?.version || "N/A"}</TableCell>
+                      <TableCell>
+                        {item.lastSeenAt
+                          ? timestampDate(item.lastSeenAt).toLocaleString()
+                          : "N/A"}
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <div className="flex justify-end">
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="shadow-none"
+                                aria-label="Actions"
+                              >
+                                <EllipsisIcon size={16} aria-hidden="true" />
+                              </Button>
+                            </div>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuGroup>
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setAgent(item);
+                                  setUpsertAgentOpen(true);
+                                }}
+                              >
+                                Edit
+                              </DropdownMenuItem>
+                              {/* <DropdownMenuItem>Refresh token</DropdownMenuItem> */}
+                            </DropdownMenuGroup>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              className="text-destructive focus:text-destructive"
+                              onClick={() => {
+                                setDeleteAgentId(item?.id);
+                              }}
+                            >
+                              <span>Delete</span>
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
     </>
   );
 };

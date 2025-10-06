@@ -1,19 +1,26 @@
 import { RouterProvider } from "@tanstack/react-router";
 
-import { useAuth } from "./providers/auth/context";
-import { AuthProvider } from "./providers/auth";
+import { useAuthStore } from "./stores/auth";
 import { router } from "../router";
-
-function InnerApp() {
-  const auth = useAuth();
-  return <RouterProvider router={router} context={{ auth }} />;
-}
+import { useSystemStore } from "./stores/system";
+import PageLoader from "@/shared/components/pageLoader";
 
 const App = () => {
+  const authStore = useAuthStore();
+  const systemStore = useSystemStore();
+
+  if (systemStore.isLoading || authStore.isLoading) {
+    return <PageLoader />;
+  }
+
   return (
-    <AuthProvider>
-      <InnerApp />
-    </AuthProvider>
+    <RouterProvider
+      router={router}
+      context={{
+        isAuthenticated: authStore.isAuthenticated,
+        isSystemInitialized: systemStore.isSystemInitialized,
+      }}
+    />
   );
 };
 

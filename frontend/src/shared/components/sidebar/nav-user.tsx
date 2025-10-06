@@ -21,8 +21,8 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/shared/components/ui/sidebar";
-import { useAuth } from "@/app/providers/auth/context";
 import { useNavigate } from "@tanstack/react-router";
+import { useAuthStore } from "@/app/stores/auth";
 
 // splitUserFullName
 function splitUserFullName(fullName: string | undefined): string {
@@ -34,7 +34,7 @@ function splitUserFullName(fullName: string | undefined): string {
 export function NavUser() {
   const { isMobile } = useSidebar();
   const navigate = useNavigate();
-  const auth = useAuth();
+  const authStore = useAuthStore();
 
   return (
     <SidebarMenu>
@@ -47,18 +47,20 @@ export function NavUser() {
             >
               <Avatar className="h-8 w-8 rounded-lg">
                 <AvatarImage
-                  src={auth.user?.avatarUrl}
-                  alt={auth.user?.fullName}
+                  src={authStore.user?.avatarUrl}
+                  alt={authStore.user?.fullName}
                 />
                 <AvatarFallback className="rounded-lg">
-                  {splitUserFullName(auth.user?.fullName)}
+                  {splitUserFullName(authStore.user?.fullName)}
                 </AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">
-                  {auth.user?.fullName}
+                  {authStore.user?.fullName}
                 </span>
-                <span className="truncate text-xs">{auth.user?.email}</span>
+                <span className="truncate text-xs">
+                  {authStore.user?.email}
+                </span>
               </div>
               <ChevronsUpDown className="ml-auto size-4" />
             </SidebarMenuButton>
@@ -73,25 +75,27 @@ export function NavUser() {
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
                   <AvatarImage
-                    src={auth.user?.avatarUrl}
-                    alt={auth.user?.fullName}
+                    src={authStore.user?.avatarUrl}
+                    alt={authStore.user?.fullName}
                   />
                   <AvatarFallback className="rounded-lg">
-                    {splitUserFullName(auth.user?.fullName)}
+                    {splitUserFullName(authStore.user?.fullName)}
                   </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">
-                    {auth.user?.fullName}
+                    {authStore.user?.fullName}
                   </span>
-                  <span className="truncate text-xs">{auth.user?.email}</span>
+                  <span className="truncate text-xs">
+                    {authStore.user?.email}
+                  </span>
                 </div>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={() => {
-                auth.logout().finally(() => {
+                authStore.logout().finally(() => {
                   navigate({ to: "/login" });
                 });
               }}

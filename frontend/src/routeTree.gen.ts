@@ -13,6 +13,7 @@ import { Route as PublicRouteImport } from './routes/_public'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as PublicLoginRouteImport } from './routes/_public/login'
+import { Route as PublicInitsystemRouteImport } from './routes/_public/initsystem'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedAgentsRouteImport } from './routes/_authenticated/agents'
 import { Route as AuthenticatedSettingsIndexRouteImport } from './routes/_authenticated/settings/index'
@@ -36,6 +37,11 @@ const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
 const PublicLoginRoute = PublicLoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => PublicRoute,
+} as any)
+const PublicInitsystemRoute = PublicInitsystemRouteImport.update({
+  id: '/initsystem',
+  path: '/initsystem',
   getParentRoute: () => PublicRoute,
 } as any)
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
@@ -76,6 +82,7 @@ const AuthenticatedServiceService_idRoute =
 export interface FileRoutesByFullPath {
   '/agents': typeof AuthenticatedAgentsRoute
   '/settings': typeof AuthenticatedSettingsRouteWithChildren
+  '/initsystem': typeof PublicInitsystemRoute
   '/login': typeof PublicLoginRoute
   '/': typeof AuthenticatedIndexRoute
   '/service/$service_id': typeof AuthenticatedServiceService_idRoute
@@ -85,6 +92,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/agents': typeof AuthenticatedAgentsRoute
+  '/initsystem': typeof PublicInitsystemRoute
   '/login': typeof PublicLoginRoute
   '/': typeof AuthenticatedIndexRoute
   '/service/$service_id': typeof AuthenticatedServiceService_idRoute
@@ -98,6 +106,7 @@ export interface FileRoutesById {
   '/_public': typeof PublicRouteWithChildren
   '/_authenticated/agents': typeof AuthenticatedAgentsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRouteWithChildren
+  '/_public/initsystem': typeof PublicInitsystemRoute
   '/_public/login': typeof PublicLoginRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/service/$service_id': typeof AuthenticatedServiceService_idRoute
@@ -110,6 +119,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/agents'
     | '/settings'
+    | '/initsystem'
     | '/login'
     | '/'
     | '/service/$service_id'
@@ -119,6 +129,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/agents'
+    | '/initsystem'
     | '/login'
     | '/'
     | '/service/$service_id'
@@ -131,6 +142,7 @@ export interface FileRouteTypes {
     | '/_public'
     | '/_authenticated/agents'
     | '/_authenticated/settings'
+    | '/_public/initsystem'
     | '/_public/login'
     | '/_authenticated/'
     | '/_authenticated/service/$service_id'
@@ -172,6 +184,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof PublicLoginRouteImport
+      parentRoute: typeof PublicRoute
+    }
+    '/_public/initsystem': {
+      id: '/_public/initsystem'
+      path: '/initsystem'
+      fullPath: '/initsystem'
+      preLoaderRoute: typeof PublicInitsystemRouteImport
       parentRoute: typeof PublicRoute
     }
     '/_authenticated/settings': {
@@ -257,10 +276,12 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 )
 
 interface PublicRouteChildren {
+  PublicInitsystemRoute: typeof PublicInitsystemRoute
   PublicLoginRoute: typeof PublicLoginRoute
 }
 
 const PublicRouteChildren: PublicRouteChildren = {
+  PublicInitsystemRoute: PublicInitsystemRoute,
   PublicLoginRoute: PublicLoginRoute,
 }
 

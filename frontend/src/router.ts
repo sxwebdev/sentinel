@@ -14,8 +14,8 @@ export const router = createRouter({
   defaultNotFoundComponent: NotFound,
   defaultErrorComponent: ErrorRouter,
   context: {
-    // auth will be passed down from App component
-    auth: undefined!,
+    isSystemInitialized: false,
+    isAuthenticated: false,
   },
 });
 

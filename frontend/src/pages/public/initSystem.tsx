@@ -15,8 +15,9 @@ import { useAuthStore } from "@/app/stores/auth";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { useNavigate } from "@tanstack/react-router";
 import Logo from "@/shared/components/logo";
+import { useSystemStore } from "@/app/stores/system";
 
-export function LoginPage({
+export function InitSystemPage({
   className,
   ...props
 }: React.ComponentProps<"div">) {
@@ -24,6 +25,7 @@ export function LoginPage({
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const authorization = useAuthStore((s) => s.authorization);
+  const systemStore = useSystemStore();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -36,6 +38,7 @@ export function LoginPage({
 
     try {
       setIsLoading(true);
+      await systemStore.initializeSystem(email, password);
       await authorization(email, password);
       navigate({ to: "/" });
     } finally {
@@ -48,9 +51,9 @@ export function LoginPage({
       <Logo className="h-7 w-auto" />
       <Card>
         <CardHeader>
-          <CardTitle>Login to your account</CardTitle>
+          <CardTitle>Initialize system</CardTitle>
           <CardDescription>
-            Enter your email below to login to your account
+            Enter your email below to initialize the system.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -82,7 +85,7 @@ export function LoginPage({
               </Field>
               <Field>
                 <Button type="submit">
-                  {isLoading ? <Spinner /> : "Login"}
+                  {isLoading ? <Spinner /> : "Initialize System"}
                 </Button>
               </Field>
             </FieldGroup>

@@ -44,7 +44,7 @@ export function ProjectCreate({ ...props }: React.ComponentProps<"div">) {
     >
       <div className="w-full max-w-sm">
         <div className="flex flex-col gap-6">
-          <Logo className="h-8 w-auto" />
+          <Logo className="h-7 w-auto" />
           <Card>
             <CardHeader>
               <CardTitle>Create your first project</CardTitle>

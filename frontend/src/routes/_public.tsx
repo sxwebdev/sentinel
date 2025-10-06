@@ -2,7 +2,7 @@ import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_public")({
   beforeLoad: async ({ context }) => {
-    if (context.auth?.isAuthenticated) {
+    if (context.isAuthenticated) {
       throw redirect({ to: "/" });
     }
   },
@@ -10,5 +10,11 @@ export const Route = createFileRoute("/_public")({
 });
 
 function RouteComponent() {
-  return <Outlet />;
+  return (
+    <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
+      <div className="w-full max-w-sm">
+        <Outlet />
+      </div>
+    </div>
+  );
 }
