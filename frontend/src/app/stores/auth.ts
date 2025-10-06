@@ -222,6 +222,7 @@ export const useAuthStore = create<AuthStoreState>()(
           set({ session: newSession, isAuthenticated: true });
           return;
         } catch (e) {
+          console.log("refresh token error", e);
           get().clear();
         }
       },
