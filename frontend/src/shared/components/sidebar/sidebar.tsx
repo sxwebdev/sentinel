@@ -13,7 +13,6 @@ import { ProjectSwitcher } from "./project-switcher";
 import { NavUser } from "./nav-user";
 import { NavMain } from "./nav-main";
 import { UpdateBanner } from "@/features/apiInfo/updateBanner";
-import type { Project } from "@/api/gen/sentinel/projects/v1/projects_pb";
 
 const navMain = [
   {
@@ -49,28 +48,20 @@ const navMain = [
   },
 ];
 
-const user = {
-  name: "admin",
-  email: "admin@google.com",
-  avatar: "https://avatars.githubusercontent.com/u/124599",
-};
+type AppSidebarProps = React.ComponentProps<typeof Sidebar>;
 
-type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
-  projects: Project[];
-};
-
-export function AppSidebar({ projects, ...props }: AppSidebarProps) {
+export function AppSidebar({ ...props }: AppSidebarProps) {
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <ProjectSwitcher projects={projects} />
+        <ProjectSwitcher />
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={navMain} />
       </SidebarContent>
       <SidebarFooter>
         <UpdateBanner />
-        <NavUser user={user} />
+        <NavUser />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

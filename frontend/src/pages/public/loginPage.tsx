@@ -11,8 +11,10 @@ import { Field, FieldGroup, FieldLabel } from "@/shared/components/ui/field";
 import { Input } from "@/shared/components/ui/input";
 import { toast } from "sonner";
 import { useState } from "react";
-import { useAuth } from "@/app/providers/auth/hooks";
+import { useAuth } from "@/app/providers/auth/context";
 import { Spinner } from "@/shared/components/ui/spinner";
+import { useNavigate } from "@tanstack/react-router";
+import Logo from "@/shared/components/logo";
 
 export function LoginPage({
   className,
@@ -22,6 +24,7 @@ export function LoginPage({
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const auth = useAuth();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -34,6 +37,7 @@ export function LoginPage({
     try {
       setIsLoading(true);
       await auth.authorization(email, password);
+      navigate({ to: "/" });
     } finally {
       setIsLoading(false);
     }
@@ -41,6 +45,7 @@ export function LoginPage({
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
+      <Logo className="h-8 w-auto" />
       <Card>
         <CardHeader>
           <CardTitle>Login to your account</CardTitle>
@@ -65,16 +70,6 @@ export function LoginPage({
               <Field>
                 <div className="flex items-center">
                   <FieldLabel htmlFor="password">Password</FieldLabel>
-                  <Button
-                    variant={"link"}
-                    className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      toast.info("come on, remember it :)");
-                    }}
-                  >
-                    Forgot your password?
-                  </Button>
                 </div>
                 <Input
                   id="password"

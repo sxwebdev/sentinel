@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
 import {
   AuthContext,
-  isAuthSession,
+  clearSession,
+  loadSession,
+  saveSession,
   type AuthError,
-  type AuthSession,
-} from "./hooks";
+} from "./context";
 import type { User } from "@/api/gen/sentinel/users/v1/users_pb";
 import { toast } from "sonner";
 import { authClient } from "@/api/api";
@@ -21,8 +22,6 @@ import {
 import { timestampDate } from "@bufbuild/protobuf/wkt";
 import PageLoader from "@/shared/components/pageLoader";
 
-const AUTH_STORE_NAME = "authSession";
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [authError, setAuthError] = useState<AuthError | undefined>(undefined);
   const [user, setUser] = useState<User | undefined>(undefined);
@@ -30,7 +29,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   const clearStore = () => {
-    localStorage.removeItem(AUTH_STORE_NAME);
+    clearSession();
     setIsLoading(false);
     setIsAuthenticated(false);
     setUser(undefined);
@@ -40,22 +39,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Restore auth state on app load
   useEffect(() => {
     const auth = async () => {
-      const sessionStr = localStorage.getItem(AUTH_STORE_NAME);
-      if (sessionStr) {
-        let session: AuthSession | null = null;
+      let session = loadSession();
+      if (!session) {
+        setIsLoading(false);
+        return;
+      }
 
-        try {
-          const parsed = JSON.parse(sessionStr) as unknown;
-          if (isAuthSession(parsed)) session = parsed;
-        } catch {
-          toast.error("failed to parse stored session");
-        }
-
-        if (!session) {
-          clearStore();
-          return;
-        }
-
+      if (session) {
         // Check if access token and refresh token are expired
         if (Date.now() >= new Date(session.refreshTokenExpiredAt).getTime()) {
           clearStore();
@@ -87,7 +77,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               deviceId: session.deviceId,
             };
 
-            localStorage.setItem(AUTH_STORE_NAME, JSON.stringify(session));
+            saveSession(session);
             setIsAuthenticated(true);
           } catch (error) {
             if (error instanceof ConnectError) {
@@ -138,107 +128,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     void auth();
   }, []);
 
-  const logout = async () => {
-    try {
-      await authClient.logout(create(LogoutRequestSchema));
-    } catch (error) {
-      toast.error(
-        "Failed to logout" +
-          (error instanceof ConnectError ? `: ${error.rawMessage}` : ""),
-      );
-    } finally {
-      clearStore();
-    }
-  };
-
-  const authorization = async (email: string, password: string) => {
-    setAuthError(undefined);
-
-    try {
-      // get deviceID from existing session or create a new one
-      let deviceId = "";
-      const sessionStr = localStorage.getItem(AUTH_STORE_NAME);
-      if (sessionStr) {
-        const parsed = JSON.parse(sessionStr) as unknown;
-        if (isAuthSession(parsed)) deviceId = parsed.deviceId;
-      }
-
-      const res = await authClient.authorization(
-        create(AuthorizationRequestSchema, {
-          email,
-          password,
-          deviceInfo: create(DeviceInfoSchema, {
-            deviceId: deviceId,
-            deviceType: DeviceType.WEB,
-            deviceName: navigator.userAgent,
-          }),
-        }),
-      );
-
-      if (
-        !res.authPayload ||
-        !res.authPayload.accessTokenExpiredAt ||
-        !res.authPayload.refreshTokenExpiredAt
-      ) {
-        throw new Error("missing token expiration in response");
-      }
-
-      const session: AuthSession = {
-        accessToken: res.authPayload.accessToken,
-        refreshToken: res.authPayload.refreshToken,
-        accessTokenExpiredAt: timestampDate(
-          res.authPayload.accessTokenExpiredAt,
-        ).toISOString(),
-        refreshTokenExpiredAt: timestampDate(
-          res.authPayload.refreshTokenExpiredAt,
-        ).toISOString(),
-        deviceId: res.authPayload.deviceId,
-      };
-
-      localStorage.setItem(AUTH_STORE_NAME, JSON.stringify(session));
-
-      setUser(res.user);
-      setIsAuthenticated(true);
-    } catch (error) {
-      if (error instanceof ConnectError) {
-        setAuthError({
-          name: error.name,
-          message: error.rawMessage,
-        });
-
-        toast.error(`Authentication error: ${error.rawMessage}`);
-      } else {
-        toast.error(`Unexpected error: ${String(error)}`);
-      }
-      throw error;
-    }
-  };
-
   useEffect(() => {
     const timer = setInterval(async () => {
-      const sessionStr = localStorage.getItem(AUTH_STORE_NAME);
-      if (!sessionStr) {
-        clearStore();
-        return;
-      }
-
-      let session: AuthSession | null = null;
-
-      try {
-        const parsed = JSON.parse(sessionStr) as unknown;
-        if (isAuthSession(parsed)) session = parsed;
-      } catch {
-        toast.error("failed to parse stored session");
-      }
-
+      let session = loadSession();
       if (!session) {
         clearStore();
+        clearInterval(timer);
         return;
       }
 
       // Check if refresh token is expired
       if (Date.now() >= new Date(session.refreshTokenExpiredAt).getTime()) {
         clearStore();
+        clearInterval(timer);
         return;
       }
 
@@ -272,7 +174,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           deviceId: session.deviceId,
         };
 
-        localStorage.setItem(AUTH_STORE_NAME, JSON.stringify(session));
+        saveSession(session);
         setIsAuthenticated(true);
       } catch (error) {
         if (error instanceof ConnectError) {
@@ -289,6 +191,82 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }, 60 * 1000); // every 1 minute
     return () => clearInterval(timer);
   }, [setIsAuthenticated]);
+
+  const authorization = async (email: string, password: string) => {
+    setAuthError(undefined);
+
+    try {
+      // get deviceID from existing session or create a new one
+      let deviceId = "";
+      let session = loadSession();
+
+      if (session) {
+        deviceId = session.deviceId;
+      }
+
+      const res = await authClient.authorization(
+        create(AuthorizationRequestSchema, {
+          email,
+          password,
+          deviceInfo: create(DeviceInfoSchema, {
+            deviceId: deviceId,
+            deviceType: DeviceType.WEB,
+            deviceName: navigator.userAgent,
+          }),
+        }),
+      );
+
+      if (
+        !res.authPayload ||
+        !res.authPayload.accessTokenExpiredAt ||
+        !res.authPayload.refreshTokenExpiredAt
+      ) {
+        throw new Error("missing token expiration in response");
+      }
+
+      session = {
+        accessToken: res.authPayload.accessToken,
+        refreshToken: res.authPayload.refreshToken,
+        accessTokenExpiredAt: timestampDate(
+          res.authPayload.accessTokenExpiredAt,
+        ).toISOString(),
+        refreshTokenExpiredAt: timestampDate(
+          res.authPayload.refreshTokenExpiredAt,
+        ).toISOString(),
+        deviceId: res.authPayload.deviceId,
+      };
+
+      saveSession(session);
+
+      setUser(res.user);
+      setIsAuthenticated(true);
+    } catch (error) {
+      if (error instanceof ConnectError) {
+        setAuthError({
+          name: error.name,
+          message: error.rawMessage,
+        });
+
+        toast.error(`Authentication error: ${error.rawMessage}`);
+      } else {
+        toast.error(`Unexpected error: ${String(error)}`);
+      }
+      throw error;
+    }
+  };
+
+  const logout = async () => {
+    try {
+      await authClient.logout(create(LogoutRequestSchema));
+    } catch (error) {
+      toast.error(
+        "Failed to logout" +
+          (error instanceof ConnectError ? `: ${error.rawMessage}` : ""),
+      );
+    } finally {
+      clearStore();
+    }
+  };
 
   // Show loading state while checking auth
   if (isLoading) {

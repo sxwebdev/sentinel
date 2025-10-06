@@ -1,16 +1,17 @@
+import ProtectedWrapper from "@/app/protected";
 import { createFileRoute, redirect, Outlet } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_authenticated")({
-  beforeLoad: ({ context, location }) => {
+  beforeLoad: ({ context }) => {
     if (!context.auth?.isAuthenticated) {
       throw redirect({
         to: "/login",
-        search: {
-          // Save current location for redirect after login
-          redirect: location.href,
-        },
       });
     }
   },
-  component: () => <Outlet />,
+  component: () => (
+    <ProtectedWrapper>
+      <Outlet />
+    </ProtectedWrapper>
+  ),
 });
