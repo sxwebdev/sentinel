@@ -10,51 +10,43 @@ import {
 
 type SystemStore = {
   isLoading: boolean;
+  error?: unknown;
   isSystemInitialized: boolean;
   initializeSystem: (email: string, password: string) => Promise<void>;
+  checkIsInitialized: () => Promise<void>;
 };
 
-export const useSystemStore = create<SystemStore>()((set) => {
-  const store = {
-    isLoading: true,
-    isSystemInitialized: false,
-    checkIsInitialized: async () => {
-      try {
-        const data = await systemClient.checkIsInitialized(
-          createProto(CheckIsInitializedRequestSchema),
-        );
-        set({ isSystemInitialized: data.isInitialized });
-      } catch (error) {
-        if (error instanceof ConnectError) {
-          toast.error(error.rawMessage);
-        } else {
-          console.error("Failed to check system initialization:", error);
-        }
-      } finally {
-        set({ isLoading: false });
+export const useSystemStore = create<SystemStore>()((set) => ({
+  isLoading: true,
+  isSystemInitialized: false,
+  checkIsInitialized: async () => {
+    try {
+      const data = await systemClient.checkIsInitialized(
+        createProto(CheckIsInitializedRequestSchema),
+      );
+      set({ isSystemInitialized: data.isInitialized });
+    } catch (error) {
+      set({ error: error });
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+  initializeSystem: async (email: string, password: string) => {
+    try {
+      await systemClient.initialize(
+        createProto(InitializeRequestSchema, {
+          email,
+          password,
+        }),
+      );
+      set({ isSystemInitialized: true });
+      toast.success("System initialized successfully");
+    } catch (error) {
+      if (error instanceof ConnectError) {
+        toast.error(error.rawMessage);
+      } else {
+        console.error("Failed to initialize system:", error);
       }
-    },
-    initializeSystem: async (email: string, password: string) => {
-      try {
-        await systemClient.initialize(
-          createProto(InitializeRequestSchema, {
-            email,
-            password,
-          }),
-        );
-        set({ isSystemInitialized: true });
-        toast.success("System initialized successfully");
-      } catch (error) {
-        if (error instanceof ConnectError) {
-          toast.error(error.rawMessage);
-        } else {
-          console.error("Failed to initialize system:", error);
-        }
-      }
-    },
-  };
-
-  store.checkIsInitialized();
-
-  return store;
-});
+    }
+  },
+}));

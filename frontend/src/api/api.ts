@@ -18,33 +18,39 @@ export const VITE_SERVER_API_BASE_URL =
   import.meta.env.VITE_SERVER_API_BASE_URL || window.location.origin + "/api";
 
 const authInterceptor: Interceptor = (next) => async (req) => {
-  const authStore = useAuthStore.getState();
+  const { session, clear } = useAuthStore.getState();
 
-  if (authStore.session?.accessToken) {
-    req.header.set("Authorization", `Bearer ${authStore.session.accessToken}`);
+  if (session?.accessToken) {
+    req.header.set("Authorization", `Bearer ${session.accessToken}`);
   }
+
+  // try {
+  //   return await next(req);
+  // } catch (error) {
+  //   if (error instanceof ConnectError && error.code === Code.Unauthenticated) {
+  //     try {
+  //       await refreshToken();
+  //       if (!session?.accessToken) {
+  //         throw new Error("No access token");
+  //       }
+
+  //       req.header.set("Authorization", `Bearer ${session?.accessToken}`);
+  //       return await next(req);
+  //     } catch (refreshError) {
+  //       console.error("Failed to refresh token:", refreshError);
+  //       clear();
+  //       throw refreshError;
+  //     }
+  //   }
+  //   throw error;
+  // }
 
   try {
     return await next(req);
   } catch (error) {
     if (error instanceof ConnectError && error.code === Code.Unauthenticated) {
-      try {
-        await authStore.refreshToken();
-        req.header.set(
-          "Authorization",
-          `Bearer ${authStore.session?.accessToken}`,
-        );
-        return await next(req);
-      } catch (refreshError) {
-        // if (
-        //   refreshError instanceof ConnectError &&
-        //   refreshError.code === Code.Unauthenticated
-        // ) {
-        //   authStore.logout();
-        // }
-        console.error("Failed to refresh token:", refreshError);
-        throw refreshError;
-      }
+      clear();
+      window.location.href = "/login";
     }
     throw error;
   }

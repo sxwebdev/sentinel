@@ -1,6 +1,6 @@
-import { useRouter, type ErrorRouteComponent } from "@tanstack/react-router";
 import { Button } from "@/shared/components/ui";
 import { ConnectError } from "@connectrpc/connect";
+import React from "react";
 
 export type ErrorData = {
   status: number;
@@ -8,32 +8,31 @@ export type ErrorData = {
   details?: string;
 };
 
-// TanStack Router provides the error as a generic Error. We narrow to AxiosError when possible.
-const ErrorRouter: ErrorRouteComponent = ({ error, reset }) => {
-  const router = useRouter();
+interface PageErrorProps {
+  error: Error | ConnectError | ErrorData;
+  onReload?: () => void;
+}
 
-  const errorData: ErrorData = {
+export const AppError: React.FC<PageErrorProps> = ({ error, onReload }) => {
+  let errorData: ErrorData = {
     status: 500,
-    message: error.name,
-    details: error.message,
+    message: "Unknown error",
+    details: undefined,
   };
 
   if (error instanceof ConnectError) {
     errorData.status = error.code;
     errorData.message = error.rawMessage || error.message || "Unknown error";
-    errorData.details = error.details.join(", ") || undefined;
+    errorData.details = error.details?.join(", ") || undefined;
+  } else if (error instanceof Error) {
+    errorData.message = error.message;
+    errorData.details = error.stack;
+  } else if (typeof error === "object" && error !== null) {
+    errorData = { ...errorData, ...error };
   }
 
-  const handleReload = async () => {
-    // Prefer built-in reset if provided (clears error boundary), then invalidate route data
-    if (reset) {
-      reset();
-    }
-    await router.invalidate();
-  };
-
   return (
-    <div className="flex flex-col items-center gap-4 py-10 text-center">
+    <div className="flex min-h-screen flex-col items-center justify-center gap-4 py-10 text-center">
       <div className="text-4xl font-bold">{errorData.status}</div>
       <div className="text-2xl font-semibold">Something went wrong</div>
       <div className="text-muted-foreground max-w-md text-sm break-words">
@@ -43,10 +42,12 @@ const ErrorRouter: ErrorRouteComponent = ({ error, reset }) => {
         )}
       </div>
       <div className="flex gap-2">
-        <Button onClick={handleReload}>Reload page</Button>
+        <Button onClick={onReload || (() => window.location.reload())}>
+          Reload page
+        </Button>
       </div>
     </div>
   );
 };
 
-export default ErrorRouter;
+export default AppError;

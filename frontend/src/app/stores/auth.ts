@@ -15,6 +15,7 @@ import { create as createMsg } from "@bufbuild/protobuf";
 import { timestampDate } from "@bufbuild/protobuf/wkt";
 
 import { authClient } from "@/api/api";
+import { toast } from "sonner";
 
 export type AuthSession = {
   accessToken: string;
@@ -34,13 +35,11 @@ export interface AuthStoreState {
   isLoading: boolean;
   isAuthenticated: boolean;
   user?: User;
-  authError?: AuthError;
   session?: AuthSession | null;
 
   // actions
   init: () => Promise<void>;
   authorization: (email: string, password: string) => Promise<void>;
-  authenticate: (accessToken: string) => Promise<User | undefined>;
   refreshToken: () => Promise<void>;
   logout: () => Promise<void>;
   clear: () => void;
@@ -49,10 +48,9 @@ export interface AuthStoreState {
 export const useAuthStore = create<AuthStoreState>()(
   persist(
     (set, get) => ({
-      isLoading: true,
+      isLoading: false,
       isAuthenticated: false,
       user: undefined,
-      authError: undefined,
       session: null,
 
       clear: () => {
@@ -60,15 +58,16 @@ export const useAuthStore = create<AuthStoreState>()(
           isLoading: false,
           isAuthenticated: false,
           user: undefined,
-          authError: undefined,
           session: null,
         });
       },
 
       init: async () => {
+        set({ isLoading: true });
+
         const session = get().session;
         if (!session) {
-          set({ isLoading: false, isAuthenticated: false });
+          get().clear();
           return;
         }
 
@@ -106,9 +105,11 @@ export const useAuthStore = create<AuthStoreState>()(
             set({ session: currentSession, isAuthenticated: true });
           } catch (e) {
             if (e instanceof ConnectError) {
-              set({ authError: { name: e.name, message: e.rawMessage } });
+              if (e.code === Code.Unauthenticated) {
+                get().clear();
+              }
+              toast.error(e.rawMessage);
             }
-            get().clear();
             return;
           }
         }
@@ -127,29 +128,15 @@ export const useAuthStore = create<AuthStoreState>()(
               get().clear();
               return;
             }
-            set({ authError: { name: e.name, message: e.rawMessage } });
+            toast.error(e.rawMessage);
+          } else {
+            toast.error(`Failed to authenticate user ${(e as Error)?.message}`);
           }
           set({ isLoading: false });
         }
       },
 
-      authenticate: async (accessToken: string) => {
-        try {
-          const res = await authClient.authenticate(
-            createMsg(AuthenticateRequestSchema, { accessToken }),
-          );
-          set({ user: res.user, isAuthenticated: true });
-          return res.user;
-        } catch (e) {
-          if (e instanceof ConnectError) {
-            set({ authError: { name: e.name, message: e.rawMessage } });
-          }
-          return undefined;
-        }
-      },
-
       authorization: async (email: string, password: string) => {
-        set({ authError: undefined });
         try {
           const res: AuthorizationResponse = await authClient.authorization(
             createMsg(AuthorizationRequestSchema, {
@@ -183,9 +170,11 @@ export const useAuthStore = create<AuthStoreState>()(
           set({ session, user: res.user, isAuthenticated: true });
         } catch (e) {
           if (e instanceof ConnectError) {
-            set({ authError: { name: e.name, message: e.rawMessage } });
+            toast.error(e.rawMessage);
           } else if (e instanceof Error) {
-            set({ authError: { name: e.name, message: e.message } });
+            toast.error(e.message);
+          } else {
+            toast.error("An unknown error occurred during authorization");
           }
           throw e;
         }
@@ -193,7 +182,11 @@ export const useAuthStore = create<AuthStoreState>()(
 
       refreshToken: async (): Promise<void> => {
         const session = get().session;
-        if (!session) {
+        if (
+          !session ||
+          !session.refreshToken ||
+          !session.refreshTokenExpiredAt
+        ) {
           get().clear();
           return;
         }
@@ -210,9 +203,11 @@ export const useAuthStore = create<AuthStoreState>()(
               refreshToken: session.refreshToken,
             }),
           );
+
           if (!res.accessTokenExpiredAt || !res.refreshTokenExpiredAt) {
             throw new Error("missing token expiration in response");
           }
+
           const newSession: AuthSession = {
             accessToken: res.accessToken,
             refreshToken: res.refreshToken,
@@ -227,10 +222,7 @@ export const useAuthStore = create<AuthStoreState>()(
           set({ session: newSession, isAuthenticated: true });
           return;
         } catch (e) {
-          if (e instanceof ConnectError && e.code === Code.Unauthenticated) {
-            // Only clear on explicit Unauthenticated when called by interceptor per requirement
-            get().clear();
-          }
+          get().clear();
         }
       },
 
@@ -248,14 +240,6 @@ export const useAuthStore = create<AuthStoreState>()(
       name: "authStore",
       version: 1,
       partialize: (state) => ({ session: state.session }),
-      onRehydrateStorage: () => (state) => {
-        // After hydration, kick off init to validate tokens and fetch user
-        if (state) {
-          state.init().catch(() => {
-            state.clear();
-          });
-        }
-      },
     },
   ),
 );

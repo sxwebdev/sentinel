@@ -13,17 +13,25 @@ const App = () => {
     useShallow((s) => ({ initTheme: s.initTheme })),
   );
 
-  const authStore = useAuthStore(
+  const {
+    isLoading: isSystemLoading,
+    isSystemInitialized,
+    checkIsInitialized,
+    error,
+  } = useSystemStore(
     useShallow((s) => ({
       isLoading: s.isLoading,
-      isAuthenticated: s.isAuthenticated,
+      error: s.error,
+      isSystemInitialized: s.isSystemInitialized,
+      checkIsInitialized: s.checkIsInitialized,
     })),
   );
 
-  const systemStore = useSystemStore(
+  const { isLoading, isAuthenticated, init } = useAuthStore(
     useShallow((s) => ({
       isLoading: s.isLoading,
-      isSystemInitialized: s.isSystemInitialized,
+      isAuthenticated: s.isAuthenticated,
+      init: s.init,
     })),
   );
 
@@ -32,7 +40,22 @@ const App = () => {
     initTheme();
   }, [initTheme]);
 
-  if (systemStore.isLoading || authStore.isLoading) {
+  // Initialize system state on app load
+  useEffect(() => {
+    checkIsInitialized();
+  }, [checkIsInitialized]);
+
+  // Initialize auth on app load
+  useEffect(() => {
+    if (!isSystemLoading) return;
+    init();
+  }, [isSystemLoading, init]);
+
+  if (error) {
+    throw error;
+  }
+
+  if (isSystemLoading || isLoading) {
     return <PageLoader />;
   }
 
@@ -40,8 +63,8 @@ const App = () => {
     <RouterProvider
       router={router}
       context={{
-        isAuthenticated: authStore.isAuthenticated,
-        isSystemInitialized: systemStore.isSystemInitialized,
+        isAuthenticated: isAuthenticated,
+        isSystemInitialized: isSystemInitialized,
       }}
     />
   );

@@ -1,5 +1,4 @@
 import { createRootRouteWithContext, Outlet } from "@tanstack/react-router";
-import { Toaster } from "sonner";
 // import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 
 interface RouterContext {
@@ -11,7 +10,6 @@ export const Route = createRootRouteWithContext<RouterContext>()({
   component: () => (
     <>
       <Outlet />
-      <Toaster />
       {/* <TanStackRouterDevtools /> */}
     </>
   ),
