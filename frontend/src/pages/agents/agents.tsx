@@ -32,16 +32,14 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogClose,
   DialogFooter,
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
   Input,
   Switch,
-  DialogClose,
   Card,
   CardContent,
   CardHeader,
@@ -55,9 +53,8 @@ import { useQuery, useMutation } from "@connectrpc/connect-query";
 import { EllipsisIcon, PlusIcon } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { useForm, type Resolver } from "react-hook-form";
-import { z } from "zod/v3";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "@tanstack/react-form";
+import * as z from "zod";
 import InputTag from "@/shared/components/ui/inputTag";
 import {
   Alert,
@@ -94,16 +91,25 @@ token: ${token}`;
 
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters long"),
-  description: z.string().optional(),
-  isEnabled: z.boolean().default(true),
-  tags: z.array(z.string()).default([]),
+  description: z.union([z.string(), z.undefined()]),
+  isEnabled: z.boolean(),
+  tags: z.array(z.string()),
 });
+
+const formInitialValues = (agent?: Agent) => {
+  return {
+    name: agent?.name || "",
+    description: agent?.description,
+    isEnabled: agent?.isEnabled ?? true,
+    tags: agent?.tags || [],
+  };
+};
 
 type UpsertAgentProps = {
   open: boolean;
   agent?: Agent;
   onClose: () => void;
-  onSubmit: (data: z.infer<typeof formSchema>) => void;
+  onSubmit: (data: z.infer<typeof formSchema>) => Promise<void>;
   createdToken?: string;
 };
 
@@ -114,26 +120,22 @@ const UpsertAgent = ({
   onSubmit,
   createdToken,
 }: UpsertAgentProps) => {
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema) as Resolver<z.infer<typeof formSchema>>,
-    defaultValues: {
-      name: agent?.name || "",
-      description: agent?.description || "",
-      isEnabled: agent?.isEnabled ?? true,
-      tags: agent?.tags || [],
+  const form = useForm({
+    defaultValues: formInitialValues(agent),
+    validators: {
+      onSubmit: formSchema,
+    },
+    onSubmit: ({ formApi, value }) => {
+      onSubmit(value).then(() => formApi.reset());
     },
   });
 
-  // Reset form values when opening the dialog or switching the agent to edit
   useEffect(() => {
-    if (!open) return;
-    form.reset({
-      name: agent?.name ?? "",
-      description: agent?.description ?? "",
-      isEnabled: agent?.isEnabled ?? true,
-      tags: agent?.tags ?? [],
-    });
-  }, [agent, open, form]);
+    if (open) {
+      form.reset(formInitialValues(agent));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, agent?.id]);
 
   // If we are in create mode (no agent) and have a created token, show instructions instead of form
   const isCreateMode = !agent;
@@ -189,93 +191,120 @@ const UpsertAgent = ({
           </>
         ) : (
           <>
-            <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit(onSubmit)}
-                className="space-y-8"
-              >
-                <FormField
-                  control={form.control}
+            <form
+              id="upsert-agent-form"
+              onSubmit={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                form.handleSubmit();
+              }}
+              className="space-y-8"
+            >
+              <FieldGroup>
+                <form.Field
                   name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Agent name" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  children={(field) => {
+                    const isInvalid =
+                      field.state.meta.isTouched && !field.state.meta.isValid;
+                    return (
+                      <Field data-invalid={isInvalid}>
+                        <FieldLabel htmlFor={field.name}>Name</FieldLabel>
+                        <Input
+                          id={field.name}
+                          name={field.name}
+                          value={field.state.value}
+                          onBlur={field.handleBlur}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          aria-invalid={isInvalid}
+                          placeholder="Agent name"
+                          autoComplete="off"
+                        />
+                        {isInvalid && (
+                          <FieldError errors={field.state.meta.errors} />
+                        )}
+                      </Field>
+                    );
+                  }}
                 />
-                <FormField
-                  control={form.control}
+
+                <form.Field
                   name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Description</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Agent description" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  children={(field) => {
+                    const isInvalid =
+                      field.state.meta.isTouched && !field.state.meta.isValid;
+                    return (
+                      <Field data-invalid={isInvalid}>
+                        <FieldLabel htmlFor={field.name}>
+                          Description
+                        </FieldLabel>
+                        <Input
+                          id={field.name}
+                          name={field.name}
+                          value={field.state.value}
+                          onBlur={field.handleBlur}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          aria-invalid={isInvalid}
+                          placeholder="Agent description"
+                          autoComplete="off"
+                        />
+                        {isInvalid && (
+                          <FieldError errors={field.state.meta.errors} />
+                        )}
+                      </Field>
+                    );
+                  }}
                 />
-                <FormField
-                  control={form.control}
+
+                <form.Field
                   name="isEnabled"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between">
-                      <FormLabel>Is enabled</FormLabel>
-                      <FormControl>
+                  children={(field) => (
+                    <Field>
+                      <div className="flex flex-row items-center justify-between">
+                        <FieldLabel htmlFor={field.name}>Is enabled</FieldLabel>
                         <Switch
-                          checked={field.value}
+                          id={field.name}
+                          name={field.name}
+                          checked={field.state.value}
                           onCheckedChange={(checked) =>
-                            field.onChange(!!checked)
+                            field.handleChange(!!checked)
                           }
                         />
-                      </FormControl>
-                    </FormItem>
+                      </div>
+                    </Field>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="tags"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Tags</FormLabel>
-                      <FormControl>
-                        <InputTag
-                          tags={field.value.map(
-                            (tag: string, index: number) => ({
-                              id: index.toString(),
-                              text: tag,
-                            }),
-                          )}
-                          setTags={(tags) => {
-                            const items: string[] = [];
-                            for (const tag of tags as { text: string }[]) {
-                              items.push(tag.text);
-                            }
 
-                            field.onChange(items);
-                          }}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                <form.Field
+                  name="tags"
+                  children={(field) => (
+                    <Field>
+                      <FieldLabel htmlFor={field.name}>Tags</FieldLabel>
+                      <InputTag
+                        tags={field.state.value.map(
+                          (tag: string, index: number) => ({
+                            id: index.toString(),
+                            text: tag,
+                          }),
+                        )}
+                        setTags={(tags) => {
+                          const items: string[] = [];
+                          for (const tag of tags as { text: string }[]) {
+                            items.push(tag.text);
+                          }
+
+                          field.handleChange(items);
+                        }}
+                      />
+                    </Field>
                   )}
                 />
-                <Button type="submit" className="hidden" />
-              </form>
-            </Form>
-            <DialogFooter>
+              </FieldGroup>
+            </form>
+            <DialogFooter className="mt-2">
               <DialogClose asChild>
                 <Button variant="outline">Cancel</Button>
               </DialogClose>
-              <Button
-                onClick={form.handleSubmit(onSubmit)}
-                disabled={!form.formState.isValid}
-              >
+              <Button disabled={!form.state.isValid} form="upsert-agent-form">
                 {agent ? "Update" : "Create"}
               </Button>
             </DialogFooter>

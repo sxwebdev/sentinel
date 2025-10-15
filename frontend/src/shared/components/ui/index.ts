@@ -16,7 +16,7 @@ export * from "./progress";
 export * from "./inputTag";
 export * from "./selectWithClear";
 export * from "./multiselect";
-export * from "./form";
+export * from "./field";
 export * from "./switch";
 export * from "./separator";
 export * from "./alert-dialog";

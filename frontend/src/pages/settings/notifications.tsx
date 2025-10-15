@@ -31,13 +31,12 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogClose,
   DialogFooter,
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
   Input,
   Switch,
 } from "@/shared/components/ui";
@@ -53,11 +52,10 @@ import {
 } from "@/shared/components/ui/table";
 import { useMutation, useQuery } from "@connectrpc/connect-query";
 import { EllipsisIcon, PlusIcon } from "lucide-react";
-import { useForm, type Resolver } from "react-hook-form";
+import { useForm } from "@tanstack/react-form";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { z } from "zod/v3";
-import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 
 const configByProviderType = (type: ProviderType, config?: ProviderConfig) => {
   switch (type) {
@@ -85,15 +83,22 @@ const providerTypeName = (type: ProviderType): string => {
 };
 
 const formSchema = z.object({
-  url: z.string(),
-  isEnabled: z.boolean().default(true),
+  url: z.string().min(1, "URL is required"),
+  isEnabled: z.boolean(),
 });
+
+const formInitialValues = (provider?: Provider) => {
+  return {
+    url: provider?.config?.config?.value?.url || "",
+    isEnabled: provider?.isEnabled ?? true,
+  };
+};
 
 type UpsertProviderProps = {
   open: boolean;
   provider?: Provider;
   onClose: () => void;
-  onSubmit: (data: z.infer<typeof formSchema>) => void;
+  onSubmit: (data: z.infer<typeof formSchema>) => Promise<void>;
 };
 
 const UpsertProvider = ({
@@ -102,22 +107,22 @@ const UpsertProvider = ({
   onClose,
   onSubmit,
 }: UpsertProviderProps) => {
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema) as Resolver<z.infer<typeof formSchema>>,
-    defaultValues: {
-      url: provider?.config?.config?.value?.url || "",
-      isEnabled: provider?.isEnabled ?? true,
+  const form = useForm({
+    defaultValues: formInitialValues(provider),
+    validators: {
+      onSubmit: formSchema,
+    },
+    onSubmit: ({ formApi, value }) => {
+      onSubmit(value).then(() => formApi.reset());
     },
   });
 
-  // Reset form values when opening the dialog or switching the provider to edit
   useEffect(() => {
-    if (!open) return;
-    form.reset({
-      url: provider?.config?.config?.value?.url || "",
-      isEnabled: provider?.isEnabled ?? true,
-    });
-  }, [provider, open, form]);
+    if (open) {
+      form.reset(formInitialValues(provider));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, provider?.id]);
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -132,48 +137,67 @@ const UpsertProvider = ({
               : "Fill out the form below to create a new provider."}
           </DialogDescription>
         </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            <FormField
-              control={form.control}
+        <form
+          id="upsert-provider-form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            form.handleSubmit();
+          }}
+          className="space-y-8"
+        >
+          <FieldGroup>
+            <form.Field
               name="url"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>URL</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Provider URL" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="isEnabled"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between">
-                  <FormLabel>Is enabled</FormLabel>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={(checked) => field.onChange(!!checked)}
+              children={(field) => {
+                const isInvalid =
+                  field.state.meta.isTouched && !field.state.meta.isValid;
+                return (
+                  <Field data-invalid={isInvalid}>
+                    <FieldLabel htmlFor={field.name}>URL</FieldLabel>
+                    <Input
+                      id={field.name}
+                      name={field.name}
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      aria-invalid={isInvalid}
+                      placeholder="Provider URL"
+                      autoComplete="off"
                     />
-                  </FormControl>
-                </FormItem>
-              )}
+                    {isInvalid && (
+                      <FieldError errors={field.state.meta.errors} />
+                    )}
+                  </Field>
+                );
+              }}
             />
 
-            <Button type="submit" className="hidden" />
-          </form>
-        </Form>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button
-            onClick={form.handleSubmit(onSubmit)}
-            disabled={!form.formState.isValid}
-          >
+            <form.Field
+              name="isEnabled"
+              children={(field) => (
+                <Field>
+                  <div className="flex flex-row items-center justify-between">
+                    <FieldLabel htmlFor={field.name}>Is enabled</FieldLabel>
+                    <Switch
+                      id={field.name}
+                      name={field.name}
+                      checked={field.state.value}
+                      onCheckedChange={(checked) =>
+                        field.handleChange(!!checked)
+                      }
+                    />
+                  </div>
+                </Field>
+              )}
+            />
+          </FieldGroup>
+        </form>
+        <DialogFooter className="mt-2">
+          <DialogClose asChild>
+            <Button variant="outline">Cancel</Button>
+          </DialogClose>
+          <Button disabled={!form.state.isValid} form="upsert-provider-form">
             {provider ? "Update" : "Create"}
           </Button>
         </DialogFooter>
@@ -200,6 +224,7 @@ const NotificationsPage = () => {
       toast.error((error as Error).message || "Failed to create provider");
     },
   });
+
   const updateMutation = useMutation(providerUpdate, {
     onSuccess: () => {
       toast.success("Provider updated successfully");
@@ -209,6 +234,7 @@ const NotificationsPage = () => {
       toast.error((error as Error).message || "Failed to update provider");
     },
   });
+
   const deleteMutation = useMutation(providerDelete, {
     onSuccess: () => {
       toast.success("Provider deleted successfully");
@@ -219,6 +245,7 @@ const NotificationsPage = () => {
       toast.error((error as Error).message || "Failed to delete provider");
     },
   });
+
   const testMutation = useMutation(providerTest, {
     onSuccess: () => {
       toast.success("Test notification sent successfully");
