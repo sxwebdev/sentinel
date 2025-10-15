@@ -1,1 +1,0 @@
-replace storecmn.JSONField map[string]any
