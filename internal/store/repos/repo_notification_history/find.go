@@ -34,18 +34,16 @@ func (s *CustomQueries) Find(ctx context.Context, params FindParams) (*storecmn.
 	for i := range columns {
 		columns[i] = "h." + columns[i]
 	}
-	columns = append(columns, "s.name AS service_name")
+	// columns = append(columns, "s.name AS service_name")
 
 	sb := findBuilder(params, columns...)
-	sb.JoinWithOption(sqlbuilder.LeftJoin, "services s", "h.service_id is not null and h.service_id = s.id")
+	// sb.JoinWithOption(sqlbuilder.LeftJoin, "monitors m", "h.monitor_id is not null and h.monitor_id = m.id")
 
-	if params.OrderBy != "" {
-		sb.OrderBy(params.OrderBy)
-	} else {
-		sb.OrderBy("h.created_at")
+	if params.OrderBy == "" {
+		params.OrderBy = "created_at"
 	}
 
-	sb.Desc()
+	sb.OrderByDesc("h." + params.OrderBy)
 
 	limit, offset, err := storecmn.Pagination(params.Page, params.PageSize)
 	if err != nil {

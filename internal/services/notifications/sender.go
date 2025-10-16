@@ -119,7 +119,9 @@ func (s *Sender) do(ctx context.Context) error {
 			s.logger.Infof("notification %s sent successfully", item.ID)
 		}
 
-		s.dispatcher.Notifications().Publish(struct{}{})
+		if item.ProjectID != nil && *item.ProjectID != "" {
+			s.dispatcher.NotificationHistory().Publish(dispatcher.NewBaseMessage(dispatcher.EventTypeUpdate, *item.ProjectID))
+		}
 
 		time.Sleep(500 * time.Millisecond)
 	}

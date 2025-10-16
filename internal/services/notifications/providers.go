@@ -44,14 +44,15 @@ func (s *Providers) GetByID(ctx context.Context, id string) (*models.Notificatio
 }
 
 // GetAll retrieves all service states
-func (s *Providers) GetAll(ctx context.Context) ([]*models.NotificationProvider, error) {
-	return s.store.NotificationProviders().GetAll(ctx)
+func (s *Providers) GetAll(ctx context.Context, projectID string) ([]*models.NotificationProvider, error) {
+	return s.store.NotificationProviders().GetAll(ctx, projectID)
 }
 
 type CreateProviderParams struct {
 	ProviderType models.NotificationProviderType `json:"provider_type" example:"shoutrrr"`
 	Config       map[string]any                  `json:"config" example:"{\"urls\": [\"slack://hooks.slack.com/services/...\"]}"`
 	IsEnabled    bool                            `json:"is_enabled" example:"true"`
+	ProjectID    string                          `json:"project_id" example:"project-123"`
 }
 
 // Validate
@@ -68,6 +69,10 @@ func (s CreateProviderParams) Validate() error {
 
 	if err := validateProviderConfig(s.ProviderType, config); err != nil {
 		return err
+	}
+
+	if s.ProjectID == "" {
+		return storecmn.ErrEmptyProjectID
 	}
 
 	return nil
@@ -90,6 +95,7 @@ func (s *Providers) Create(ctx context.Context, params CreateProviderParams) (*m
 		ProviderType: params.ProviderType,
 		Config:       config,
 		IsEnabled:    params.IsEnabled,
+		ProjectID:    params.ProjectID,
 	}
 
 	return s.store.NotificationProviders().Create(ctx, createParams)

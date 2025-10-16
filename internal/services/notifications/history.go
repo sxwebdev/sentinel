@@ -31,9 +31,9 @@ func newHistory(l logger.Logger, store *store.Store, sender *Sender, dispatcher 
 }
 
 // SendAlert sends an alert notification to all enabled providers
-func (s *History) SendAlert(ctx context.Context, alertID, message string) error {
+func (s *History) SendAlert(ctx context.Context, projectID, alertID, message string) error {
 	// Get all enabled providers
-	providers, err := s.store.NotificationProviders().GetAllEnabled(ctx)
+	providers, err := s.store.NotificationProviders().GetAllEnabled(ctx, projectID)
 	if err != nil {
 		return fmt.Errorf("failed to get enabled providers: %w", err)
 	}
@@ -82,6 +82,12 @@ func (s *History) Create(ctx context.Context, params CreateHistoryParams) (*mode
 		return nil, err
 	}
 
+	// Get provider to ensure it exists
+	provider, err := s.store.NotificationProviders().GetByID(ctx, params.ProviderID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get provider by ID: %w", err)
+	}
+
 	createParams := repo_notification_history.CreateParams{
 		ID:         utils.GenerateULID(),
 		ProviderID: params.ProviderID,
@@ -95,7 +101,8 @@ func (s *History) Create(ctx context.Context, params CreateHistoryParams) (*mode
 	}
 
 	s.sender.looper.Trigger(ctx)
-	s.dispatcher.Notifications().Publish(struct{}{})
+
+	s.dispatcher.NotificationHistory().Publish(dispatcher.NewBaseMessage(dispatcher.EventTypeCreate, provider.ProjectID))
 
 	return item, nil
 }

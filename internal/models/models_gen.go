@@ -191,7 +191,7 @@ type NotificationProvider struct {
 	ProviderType NotificationProviderType `db:"provider_type" json:"provider_type"`
 	Config       storecmn.JSONField       `db:"config" json:"config"`
 	IsEnabled    bool                     `db:"is_enabled" json:"is_enabled"`
-	ProjectID    *string                  `db:"project_id" json:"project_id"`
+	ProjectID    string                   `db:"project_id" json:"project_id"`
 	CreatedAt    time.Time                `db:"created_at" json:"created_at"`
 	UpdatedAt    time.Time                `db:"updated_at" json:"updated_at"`
 }

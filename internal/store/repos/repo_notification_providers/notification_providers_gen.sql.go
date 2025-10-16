@@ -23,7 +23,7 @@ type CreateParams struct {
 	ProviderType models.NotificationProviderType `db:"provider_type" json:"provider_type"`
 	Config       storecmn.JSONField              `db:"config" json:"config"`
 	IsEnabled    bool                            `db:"is_enabled" json:"is_enabled"`
-	ProjectID    *string                         `db:"project_id" json:"project_id"`
+	ProjectID    string                          `db:"project_id" json:"project_id"`
 }
 
 func (q *Queries) Create(ctx context.Context, arg CreateParams) (*models.NotificationProvider, error) {
@@ -57,11 +57,11 @@ func (q *Queries) Delete(ctx context.Context, id string) error {
 }
 
 const getAll = `-- name: GetAll :many
-SELECT id, provider_type, config, is_enabled, project_id, created_at, updated_at FROM notification_providers
+SELECT id, provider_type, config, is_enabled, project_id, created_at, updated_at FROM notification_providers WHERE project_id=?
 `
 
-func (q *Queries) GetAll(ctx context.Context) ([]*models.NotificationProvider, error) {
-	rows, err := q.db.QueryContext(ctx, getAll)
+func (q *Queries) GetAll(ctx context.Context, projectID string) ([]*models.NotificationProvider, error) {
+	rows, err := q.db.QueryContext(ctx, getAll, projectID)
 	if err != nil {
 		return nil, err
 	}

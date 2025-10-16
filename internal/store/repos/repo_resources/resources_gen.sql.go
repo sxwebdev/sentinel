@@ -60,11 +60,11 @@ func (q *Queries) Delete(ctx context.Context, id string) error {
 }
 
 const getAll = `-- name: GetAll :many
-SELECT id, project_id, name, description, tags, payload, created_at, updated_at FROM resources
+SELECT id, project_id, name, description, tags, payload, created_at, updated_at FROM resources WHERE project_id=?
 `
 
-func (q *Queries) GetAll(ctx context.Context) ([]*models.Resource, error) {
-	rows, err := q.db.QueryContext(ctx, getAll)
+func (q *Queries) GetAll(ctx context.Context, projectID string) ([]*models.Resource, error) {
+	rows, err := q.db.QueryContext(ctx, getAll, projectID)
 	if err != nil {
 		return nil, err
 	}

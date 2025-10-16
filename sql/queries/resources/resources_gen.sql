@@ -7,7 +7,7 @@ INSERT INTO resources (id, project_id, name, description, tags, payload)
 DELETE FROM resources WHERE id=?;
 
 -- name: GetAll :many
-SELECT * FROM resources;
+SELECT * FROM resources WHERE project_id=?;
 
 -- name: GetByID :one
 SELECT * FROM resources WHERE id=? LIMIT 1;

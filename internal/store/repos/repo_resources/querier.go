@@ -13,7 +13,7 @@ import (
 type Querier interface {
 	Create(ctx context.Context, arg CreateParams) (*models.Resource, error)
 	Delete(ctx context.Context, id string) error
-	GetAll(ctx context.Context) ([]*models.Resource, error)
+	GetAll(ctx context.Context, projectID string) ([]*models.Resource, error)
 	GetByID(ctx context.Context, id string) (*models.Resource, error)
 }
 

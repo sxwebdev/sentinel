@@ -1,0 +1,22 @@
+# Working directory
+root = "."
+tmp_dir = ".tmp"
+
+[build]
+# Just plain old shell command. You could use `make` as well.
+cmd = "make build"
+# Binary file yields from `cmd`.
+full_bin = "build/sentinel hub start -c ./config.yaml"
+# This log file places in your tmp_dir.
+log = "air_errors.log"
+# Watch these filename extensions.
+include_ext = ["go"]
+# Ignore these filename extensions or directories.
+exclude_dir = [".tmp", "sql", "frontend", "data", "schema", "scripts"]
+# It's not necessary to trigger build each time file changes if it's too frequent.
+delay = 1000           # ms
+send_interrupt = true
+kill_delay = 500000000
+
+[log]
+time = true

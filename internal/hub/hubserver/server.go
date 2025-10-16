@@ -87,16 +87,19 @@ func (s *Server) ReportSystemInfo(ctx context.Context, req *connect.Request[hubv
 		return nil, connect.NewError(connect.CodeUnauthenticated, err)
 	}
 
-	if _, err := s.baseservices.Agents().Update(ctx, agentData.Agent.ID, agents.UpdateParams{
-		Status:     ptconverts.ConvertAgentStatusFromProto(req.Msg.Status),
-		SystemInfo: ptconverts.ConvertSystemInfoFromProto(req.Msg.SystemInfo),
-		LastSeenAt: utils.Pointer(time.Now()),
-		FieldMask: dbutils.FieldMask[repo_agents.ColumnName]{
-			repo_agents.ColumnNameAgentsStatus,
-			repo_agents.ColumnNameAgentsSystemInfo,
-			repo_agents.ColumnNameAgentsLastSeenAt,
-		},
-	}); err != nil {
+	if _, err := s.baseservices.Agents().Update(ctx,
+		agentData.Agent.ID,
+		agentData.Agent.ProjectID,
+		agents.UpdateParams{
+			Status:     ptconverts.ConvertAgentStatusFromProto(req.Msg.Status),
+			SystemInfo: ptconverts.ConvertSystemInfoFromProto(req.Msg.SystemInfo),
+			LastSeenAt: utils.Pointer(time.Now()),
+			FieldMask: dbutils.FieldMask[repo_agents.ColumnName]{
+				repo_agents.ColumnNameAgentsStatus,
+				repo_agents.ColumnNameAgentsSystemInfo,
+				repo_agents.ColumnNameAgentsLastSeenAt,
+			},
+		}); err != nil {
 		return nil, err
 	}
 
@@ -141,23 +144,29 @@ func (s *Server) SubscribeServices(
 	}
 
 	s.authorizedAgents.Store(agentData.Agent.ID, agentData.Agent.Name)
-	if _, err := s.baseservices.Agents().Update(ctx, agentData.Agent.ID, agents.UpdateParams{
-		Status: models.AgentStatusTypeActive,
-		FieldMask: dbutils.FieldMask[repo_agents.ColumnName]{
-			repo_agents.ColumnNameAgentsStatus,
-		},
-	}); err != nil {
+	if _, err := s.baseservices.Agents().Update(ctx,
+		agentData.Agent.ID,
+		agentData.Agent.ProjectID,
+		agents.UpdateParams{
+			Status: models.AgentStatusTypeActive,
+			FieldMask: dbutils.FieldMask[repo_agents.ColumnName]{
+				repo_agents.ColumnNameAgentsStatus,
+			},
+		}); err != nil {
 		return connect.NewError(connect.CodeInternal, err)
 	}
 
 	s.logger.Infoln("agent connected:", agentData.Agent.ID, agentData.Agent.Name)
 	defer func() {
-		if _, err := s.baseservices.Agents().Update(context.Background(), agentData.Agent.ID, agents.UpdateParams{
-			Status: models.AgentStatusTypeInactive,
-			FieldMask: dbutils.FieldMask[repo_agents.ColumnName]{
-				repo_agents.ColumnNameAgentsStatus,
-			},
-		}); err != nil {
+		if _, err := s.baseservices.Agents().Update(context.Background(),
+			agentData.Agent.ID,
+			agentData.Agent.ProjectID,
+			agents.UpdateParams{
+				Status: models.AgentStatusTypeInactive,
+				FieldMask: dbutils.FieldMask[repo_agents.ColumnName]{
+					repo_agents.ColumnNameAgentsStatus,
+				},
+			}); err != nil {
 			s.logger.Errorf("failed to set agent status to inactive: %s", err)
 		}
 

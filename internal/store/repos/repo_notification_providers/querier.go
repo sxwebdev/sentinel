@@ -13,8 +13,8 @@ import (
 type Querier interface {
 	Create(ctx context.Context, arg CreateParams) (*models.NotificationProvider, error)
 	Delete(ctx context.Context, id string) error
-	GetAll(ctx context.Context) ([]*models.NotificationProvider, error)
-	GetAllEnabled(ctx context.Context) ([]*models.NotificationProvider, error)
+	GetAll(ctx context.Context, projectID string) ([]*models.NotificationProvider, error)
+	GetAllEnabled(ctx context.Context, projectID string) ([]*models.NotificationProvider, error)
 	GetByID(ctx context.Context, id string) (*models.NotificationProvider, error)
 	Update(ctx context.Context, arg UpdateParams) error
 }

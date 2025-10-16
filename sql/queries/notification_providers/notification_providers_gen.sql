@@ -7,7 +7,7 @@ INSERT INTO notification_providers (id, provider_type, config, is_enabled, proje
 DELETE FROM notification_providers WHERE id=?;
 
 -- name: GetAll :many
-SELECT * FROM notification_providers;
+SELECT * FROM notification_providers WHERE project_id=?;
 
 -- name: GetByID :one
 SELECT * FROM notification_providers WHERE id=? LIMIT 1;

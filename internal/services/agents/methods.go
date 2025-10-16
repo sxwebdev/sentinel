@@ -8,6 +8,7 @@ import (
 	"slices"
 	"time"
 
+	"github.com/sxwebdev/sentinel/internal/dispatcher"
 	"github.com/sxwebdev/sentinel/internal/models"
 	"github.com/sxwebdev/sentinel/internal/store/repos/repo_agents"
 	"github.com/sxwebdev/sentinel/internal/store/storecmn"
@@ -118,18 +119,18 @@ func (s *Service) Create(ctx context.Context, params CreateParams) (*CreateRespo
 		CreatedAt:   item.CreatedAt,
 	}
 
-	s.dispatcher.Agents().Publish(struct{}{})
+	s.dispatcher.Agents().Publish(dispatcher.NewBaseMessage(dispatcher.EventTypeCreate, params.ProjectID))
 
 	return &result, nil
 }
 
 // Delete an existing agent
-func (s *Service) Delete(ctx context.Context, id string) error {
+func (s *Service) Delete(ctx context.Context, id, projectID string) error {
 	if err := s.store.Agents().Delete(ctx, id); err != nil {
 		return err
 	}
 
-	s.dispatcher.Agents().Publish(struct{}{})
+	s.dispatcher.Agents().Publish(dispatcher.NewBaseMessage(dispatcher.EventTypeDelete, projectID))
 
 	return nil
 }
@@ -185,7 +186,7 @@ func (p UpdateParams) Validate() error {
 }
 
 // Update an existing agent
-func (s *Service) Update(ctx context.Context, id string, params UpdateParams) (*models.Agent, error) {
+func (s *Service) Update(ctx context.Context, id, projectID string, params UpdateParams) (*models.Agent, error) {
 	if id == "" {
 		return nil, storecmn.ErrEmptyID
 	}
@@ -236,7 +237,7 @@ func (s *Service) Update(ctx context.Context, id string, params UpdateParams) (*
 		return nil, err
 	}
 
-	s.dispatcher.Agents().Publish(struct{}{})
+	s.dispatcher.Agents().Publish(dispatcher.NewBaseMessage(dispatcher.EventTypeUpdate, projectID))
 
 	return item, nil
 }
@@ -278,7 +279,9 @@ func (s *Service) CheckAndUpsertFingerprint(ctx context.Context, id, fingerprint
 		return err
 	}
 
-	s.dispatcher.Agents().Publish(struct{}{})
+	s.dispatcher.Agents().Publish(
+		dispatcher.NewBaseMessage(dispatcher.EventTypeUpdate, existingAgent.ProjectID),
+	)
 
 	return nil
 }

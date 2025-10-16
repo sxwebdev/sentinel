@@ -7,14 +7,16 @@ import (
 )
 
 type Dispatcher struct {
-	agents        *broker.Broker[struct{}]
-	notifications *broker.Broker[struct{}]
+	agents                *broker.Broker[BaseMessage]
+	notificationProviders *broker.Broker[BaseMessage]
+	notificationHistory   *broker.Broker[BaseMessage]
 }
 
 func New() *Dispatcher {
 	return &Dispatcher{
-		agents:        broker.NewBroker[struct{}](),
-		notifications: broker.NewBroker[struct{}](),
+		agents:                broker.NewBroker[BaseMessage](),
+		notificationProviders: broker.NewBroker[BaseMessage](),
+		notificationHistory:   broker.NewBroker[BaseMessage](),
 	}
 }
 
@@ -22,18 +24,25 @@ func (s *Dispatcher) Name() string { return "dispatcher" }
 
 func (s *Dispatcher) Start(_ context.Context) error {
 	go s.agents.Start()
-	go s.notifications.Start()
+	go s.notificationProviders.Start()
+	go s.notificationHistory.Start()
 	return nil
 }
 
 func (s *Dispatcher) Stop(_ context.Context) error {
 	s.agents.Stop()
-	s.notifications.Stop()
+	s.notificationProviders.Stop()
+	s.notificationHistory.Stop()
 	return nil
 }
 
 // Agents returns the agents broker
-func (s *Dispatcher) Agents() *broker.Broker[struct{}] { return s.agents }
+func (s *Dispatcher) Agents() *broker.Broker[BaseMessage] { return s.agents }
 
-// Notifications returns the notifications broker
-func (s *Dispatcher) Notifications() *broker.Broker[struct{}] { return s.notifications }
+// NotificationProviders returns the notification providers broker
+func (s *Dispatcher) NotificationProviders() *broker.Broker[BaseMessage] {
+	return s.notificationProviders
+}
+
+// NotificationHistory returns the notification history broker
+func (s *Dispatcher) NotificationHistory() *broker.Broker[BaseMessage] { return s.notificationHistory }

@@ -1,7 +1,10 @@
 package models
 
 import (
+	"errors"
 	"fmt"
+
+	"github.com/nicholas-fedor/shoutrrr"
 )
 
 type NotificationProviderType string
@@ -34,10 +37,15 @@ func (n NotificationProviderShoutrrrConfig) Validate() error {
 		return fmt.Errorf("empty shoutrrr url")
 	}
 
+	_, err := shoutrrr.CreateSender(n.URL)
+	if err != nil {
+		return errors.New("invalid shoutrrr url")
+	}
+
 	return nil
 }
 
 type NotificationHistoryView struct {
 	NotificationHistory
-	ServiceName *string `json:"service_name"`
+	MonitorName *string `json:"monitor_name"`
 }

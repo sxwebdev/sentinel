@@ -210,6 +210,9 @@ CREATE INDEX IF NOT EXISTS idx_incidents_status       ON incidents(status);
 CREATE INDEX IF NOT EXISTS idx_incidents_first_seen   ON incidents(first_seen_at DESC);
 CREATE INDEX IF NOT EXISTS idx_incidents_resolved_at  ON incidents(resolved_at);
 
+-- =========================
+-- Incident events (history of state changes)
+-- =========================
 CREATE TABLE IF NOT EXISTS incident_events (
   id           INTEGER PRIMARY KEY AUTOINCREMENT,
   incident_id  TEXT NOT NULL REFERENCES incidents(id) ON DELETE CASCADE,
@@ -221,14 +224,14 @@ CREATE INDEX IF NOT EXISTS idx_incident_events_incident ON incident_events(incid
 CREATE INDEX IF NOT EXISTS idx_incident_events_time     ON incident_events(created_at DESC);
 
 -- =========================
--- Alerting: providers, policies, links, alerts, history
+-- Notification providers
 -- =========================
 CREATE TABLE IF NOT EXISTS notification_providers (
   id            TEXT PRIMARY KEY,
   provider_type TEXT NOT NULL,
   config        JSONB NOT NULL DEFAULT (jsonb('{}')),
   is_enabled    BOOLEAN NOT NULL DEFAULT 1,
-  project_id    TEXT REFERENCES projects(id) ON DELETE CASCADE,
+  project_id    TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
   created_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

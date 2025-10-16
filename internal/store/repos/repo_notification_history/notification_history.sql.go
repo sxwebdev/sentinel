@@ -17,7 +17,8 @@ const getAllUnsent = `-- name: GetAllUnsent :many
 SELECT
     h.id, h.alert_id, h.provider_id, h.message, h.status, h.response, h.attempts, h.error_message, h.last_attempt_at, h.sent_at, h.created_at, h.updated_at,
     p.provider_type,
-    p.config
+    p.config,
+    p.project_id
   FROM notification_history h
   LEFT JOIN notification_providers p ON p.id = h.provider_id
   WHERE
@@ -42,6 +43,7 @@ type GetAllUnsentRow struct {
 	UpdatedAt     time.Time                       `db:"updated_at" json:"updated_at"`
 	ProviderType  models.NotificationProviderType `db:"provider_type" json:"provider_type"`
 	Config        storecmn.JSONField              `db:"config" json:"config"`
+	ProjectID     *string                         `db:"project_id" json:"project_id"`
 }
 
 func (q *Queries) GetAllUnsent(ctx context.Context) ([]*GetAllUnsentRow, error) {
@@ -68,6 +70,7 @@ func (q *Queries) GetAllUnsent(ctx context.Context) ([]*GetAllUnsentRow, error) 
 			&i.UpdatedAt,
 			&i.ProviderType,
 			&i.Config,
+			&i.ProjectID,
 		); err != nil {
 			return nil, err
 		}

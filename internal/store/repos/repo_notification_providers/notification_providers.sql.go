@@ -13,11 +13,11 @@ import (
 )
 
 const getAllEnabled = `-- name: GetAllEnabled :many
-SELECT id, provider_type, config, is_enabled, project_id, created_at, updated_at FROM notification_providers WHERE is_enabled=true
+SELECT id, provider_type, config, is_enabled, project_id, created_at, updated_at FROM notification_providers WHERE is_enabled=true AND project_id = ?
 `
 
-func (q *Queries) GetAllEnabled(ctx context.Context) ([]*models.NotificationProvider, error) {
-	rows, err := q.db.QueryContext(ctx, getAllEnabled)
+func (q *Queries) GetAllEnabled(ctx context.Context, projectID string) ([]*models.NotificationProvider, error) {
+	rows, err := q.db.QueryContext(ctx, getAllEnabled, projectID)
 	if err != nil {
 		return nil, err
 	}

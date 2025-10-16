@@ -16,6 +16,7 @@ type FindParams struct {
 	IsEnabled *bool
 	Tags      []string
 	Status    string
+	ProjectID string
 	OrderBy   string
 	Page      *uint32
 	PageSize  *uint32
@@ -24,7 +25,8 @@ type FindParams struct {
 func findBuilder(params FindParams, col ...string) *sqlbuilder.SelectBuilder {
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select(col...)
-	sb.From(TableNameAgents.String())
+	sb.From(TableNameAgents.String()).
+		Where(sb.Equal(ColumnNameAgentsProjectId.String(), params.ProjectID))
 
 	if params.Name != "" {
 		sb.Where(sb.Like("name", "%"+params.Name+"%"))
@@ -58,13 +60,11 @@ func findBuilder(params FindParams, col ...string) *sqlbuilder.SelectBuilder {
 func (s *CustomQueries) Find(ctx context.Context, params FindParams) (*storecmn.FindResponseWithCount[*models.Agent], error) {
 	sb := findBuilder(params, AgentsColumnNames().Strings()...)
 
-	if params.OrderBy != "" {
-		sb.OrderBy(params.OrderBy)
-	} else {
-		sb.OrderBy("name")
+	if params.OrderBy == "" {
+		params.OrderBy = "name"
 	}
 
-	sb.Desc()
+	sb.OrderByDesc(params.OrderBy)
 
 	limit, offset, err := storecmn.Pagination(params.Page, params.PageSize)
 	if err != nil {

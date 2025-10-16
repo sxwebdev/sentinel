@@ -101,6 +101,8 @@ sqlc:
               name: GetByID
             find:
               name: GetAll
+              where:
+                project_id:
 
         # resource_agents
         resource_agents:
@@ -242,6 +244,8 @@ sqlc:
               name: GetByID
             find:
               name: GetAll
+              where:
+                project_id:
 
         # notification_history
         notification_history:

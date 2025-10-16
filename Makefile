@@ -30,6 +30,9 @@ migrateup:
 migratedown:
 	go run $(SENTINEL_PATH) migrations down -db-path ./data/hub/sqlite/db.sqlite
 
+air:
+	air -c .air.toml
+
 run: build ## Build and run the application
 	./$(BUILD_DIR)/$(BINARY_NAME)
 
@@ -40,20 +43,19 @@ front:
 	cd frontend && pnpm dev
 
 # Build targets
-build: deps ## Build the application
-	@mkdir -p $(BUILD_DIR)
-	go build $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME) $(MAIN_PATH)
+build:
+	go build $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME) $(SENTINEL_PATH)
 
 
 build-linux: deps ## Build for Linux
 	@mkdir -p $(BUILD_DIR)
-	GOOS=linux GOARCH=amd64 go build $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME)-linux $(MAIN_PATH)
+	GOOS=linux GOARCH=amd64 go build $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME)-linux $(SENTINEL_PATH)
 
 build-all: deps ## Build for all platforms
 	@mkdir -p $(BUILD_DIR)
-	GOOS=linux GOARCH=amd64 go build $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME)-linux-amd64 $(MAIN_PATH)
-	GOOS=darwin GOARCH=amd64 go build $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME)-darwin-amd64 $(MAIN_PATH)
-	GOOS=windows GOARCH=amd64 go build $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME)-windows-amd64.exe $(MAIN_PATH)
+	GOOS=linux GOARCH=amd64 go build $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME)-linux-amd64 $(SENTINEL_PATH)
+	GOOS=darwin GOARCH=amd64 go build $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME)-darwin-amd64 $(SENTINEL_PATH)
+	GOOS=windows GOARCH=amd64 go build $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME)-windows-amd64.exe $(SENTINEL_PATH)
 
 # Dependencies
 deps: ## Download dependencies

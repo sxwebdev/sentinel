@@ -2,7 +2,8 @@
 SELECT
     h.*,
     p.provider_type,
-    p.config
+    p.config,
+    p.project_id
   FROM notification_history h
   LEFT JOIN notification_providers p ON p.id = h.provider_id
   WHERE

@@ -49,6 +49,7 @@ const AddProject = ({ open, setOpen }: AddProjectProps) => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    e.stopPropagation();
 
     if (!name) {
       toast.error("Please fill in all required fields");

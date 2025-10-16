@@ -1,5 +1,5 @@
 -- name: GetAllEnabled :many
-SELECT * FROM notification_providers WHERE is_enabled=true;
+SELECT * FROM notification_providers WHERE is_enabled=true AND project_id = ?;
 
 -- name: Update :exec
 UPDATE notification_providers

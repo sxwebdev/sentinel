@@ -24,7 +24,10 @@ export const useProjectStore = create<ProjectStore>()(
     (set, get) => ({
       isLoading: true,
       projects: [],
-      selectProject: (id: string) => set({ selectedProjectId: id }),
+      selectProject: (id: string) => {
+        set({ selectedProjectId: id });
+        window.location.reload();
+      },
       selectedProject: () => {
         const { selectedProjectId, projects } = get();
         const selectedProject = projects.find(
@@ -69,11 +72,11 @@ export const useProjectStore = create<ProjectStore>()(
             }),
           );
 
-          set({ selectedProjectId: res.item?.id });
-
           await get().loadProjects();
 
-          toast.success("Project created successfully");
+          set({ selectedProjectId: res.item?.id });
+
+          window.location.reload();
         } catch (error) {
           if (error instanceof ConnectError) {
             toast.error(error.rawMessage);

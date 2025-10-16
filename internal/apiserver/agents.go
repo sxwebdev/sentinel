@@ -12,7 +12,6 @@ import (
 	"github.com/sxwebdev/sentinel/internal/services/agents"
 	"github.com/sxwebdev/sentinel/internal/services/baseservices"
 	"github.com/sxwebdev/sentinel/internal/store/repos/repo_agents"
-	"github.com/sxwebdev/sentinel/internal/store/storecmn"
 	"github.com/tkcrm/modules/pkg/db/dbutils"
 	"github.com/tkcrm/mx/logger"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -52,7 +51,14 @@ func (s *AgentsServer) AgentsList(
 	ctx context.Context,
 	_ *connect.Request[agentsv1.AgentsListRequest],
 ) (*connect.Response[agentsv1.AgentsListResponse], error) {
-	data, err := s.bs.Agents().Find(ctx, agents.FindParams{})
+	ctxData, err := getUserDataContext(ctx)
+	if err != nil {
+		return nil, newConnectError(err)
+	}
+
+	data, err := s.bs.Agents().Find(ctx, agents.FindParams{
+		ProjectID: ctxData.Project.ID,
+	})
 	if err != nil {
 		return nil, newConnectError(err)
 	}
@@ -101,10 +107,6 @@ func (s *AgentsServer) AgentsCreate(
 		return nil, newConnectError(err)
 	}
 
-	if ctxData.Project == nil {
-		return nil, newConnectError(storecmn.ErrProjectNotFound)
-	}
-
 	params := agents.CreateParams{
 		Name:        req.Msg.GetName(),
 		Description: req.Msg.Description,
@@ -145,6 +147,11 @@ func (s *AgentsServer) AgentsUpdate(
 	ctx context.Context,
 	req *connect.Request[agentsv1.AgentsUpdateRequest],
 ) (*connect.Response[agentsv1.AgentsUpdateResponse], error) {
+	ctxData, err := getUserDataContext(ctx)
+	if err != nil {
+		return nil, newConnectError(err)
+	}
+
 	params := agents.UpdateParams{
 		Name:        req.Msg.GetName(),
 		Description: req.Msg.Description,
@@ -160,7 +167,7 @@ func (s *AgentsServer) AgentsUpdate(
 		},
 	}
 
-	item, err := s.bs.Agents().Update(ctx, req.Msg.GetId(), params)
+	item, err := s.bs.Agents().Update(ctx, req.Msg.GetId(), ctxData.Project.ID, params)
 	if err != nil {
 		return nil, newConnectError(err)
 	}
@@ -178,7 +185,12 @@ func (s *AgentsServer) AgentsDelete(
 	ctx context.Context,
 	req *connect.Request[agentsv1.AgentsDeleteRequest],
 ) (*connect.Response[agentsv1.AgentsDeleteResponse], error) {
-	if err := s.bs.Agents().Delete(ctx, req.Msg.GetId()); err != nil {
+	ctxData, err := getUserDataContext(ctx)
+	if err != nil {
+		return nil, newConnectError(err)
+	}
+
+	if err := s.bs.Agents().Delete(ctx, req.Msg.GetId(), ctxData.Project.ID); err != nil {
 		return nil, newConnectError(err)
 	}
 	return connect.NewResponse(&agentsv1.AgentsDeleteResponse{}), nil
@@ -189,13 +201,22 @@ func (s *AgentsServer) AgentsSubscribe(
 	req *connect.Request[agentsv1.AgentsSubscribeRequest],
 	stream *connect.ServerStream[agentsv1.AgentsSubscribeResponse],
 ) error {
+	ctxData, err := getUserDataContext(ctx)
+	if err != nil {
+		return newConnectError(err)
+	}
+
 	broker := s.bs.Dispatcher().Agents()
 	sub := broker.Subscribe()
 	defer broker.Unsubscribe(sub)
 
 	for ctx.Err() == nil {
 		select {
-		case <-sub:
+		case msg := <-sub:
+			if msg.ProjectID != ctxData.Project.ID {
+				continue
+			}
+
 			if err := stream.Send(&agentsv1.AgentsSubscribeResponse{}); err != nil {
 				s.logger.Errorf("failed to send agent subscription update: %v", err)
 			}

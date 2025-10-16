@@ -50,7 +50,12 @@ func (s *NotificationsServer) ProvidersList(
 	ctx context.Context,
 	_ *connect.Request[notificationsv1.ProvidersListRequest],
 ) (*connect.Response[notificationsv1.ProvidersListResponse], error) {
-	data, err := s.bs.Notifications().Providers().GetAll(ctx)
+	ctxData, err := getUserDataContext(ctx)
+	if err != nil {
+		return nil, newConnectError(err)
+	}
+
+	data, err := s.bs.Notifications().Providers().GetAll(ctx, ctxData.Project.ID)
 	if err != nil {
 		return nil, newConnectError(err)
 	}
@@ -75,7 +80,14 @@ func (s *NotificationsServer) ProviderCreate(
 	ctx context.Context,
 	req *connect.Request[notificationsv1.ProviderCreateRequest],
 ) (*connect.Response[notificationsv1.ProviderCreateResponse], error) {
+	ctxData, err := getUserDataContext(ctx)
+	if err != nil {
+		return nil, newConnectError(err)
+	}
+
 	params := buildCreateParamsFromProto(req.Msg)
+	params.ProjectID = ctxData.Project.ID
+
 	created, err := s.bs.Notifications().Providers().Create(ctx, params)
 	if err != nil {
 		return nil, newConnectError(err)
@@ -256,6 +268,7 @@ func buildUpdateParamsFromProto(req *notificationsv1.ProviderUpdateRequest) (not
 			}
 		}
 	}
+
 	jf := storecmn.JSONField("{}")
 	if err := jf.UnmarshalFromAny(m); err != nil {
 		return notifications.UpdateProviderParams{}, err
@@ -274,13 +287,22 @@ func (s *NotificationsServer) HistorySubscribe(
 	req *connect.Request[notificationsv1.HistorySubscribeRequest],
 	stream *connect.ServerStream[notificationsv1.HistorySubscribeResponse],
 ) error {
-	broker := s.bs.Dispatcher().Notifications()
+	ctxData, err := getUserDataContext(ctx)
+	if err != nil {
+		return newConnectError(err)
+	}
+
+	broker := s.bs.Dispatcher().NotificationHistory()
 	sub := broker.Subscribe()
 	defer broker.Unsubscribe(sub)
 
 	for ctx.Err() == nil {
 		select {
-		case <-sub:
+		case msg := <-sub:
+			if msg.ProjectID != ctxData.Project.ID {
+				continue
+			}
+
 			if err := stream.Send(&notificationsv1.HistorySubscribeResponse{}); err != nil {
 				s.logger.Errorf("failed to send notification history update: %v", err)
 			}
