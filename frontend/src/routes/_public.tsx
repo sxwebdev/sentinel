@@ -13,9 +13,9 @@ export const Route = createFileRoute("/_public")({
 function RouteComponent() {
   return (
     <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
-      <div className="absolute top-4 right-4 md:top-5 md:right-5">
+      <header className="absolute top-0 z-10 flex h-16 w-full shrink-0 items-center justify-end gap-2 border-b border-b-transparent px-4 transition-[width,height] ease-linear">
         <ThemeToggle />
-      </div>
+      </header>
       <div className="w-full max-w-sm">
         <Outlet />
       </div>
