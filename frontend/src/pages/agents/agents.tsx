@@ -520,7 +520,11 @@ const AgentsPage = () => {
                           <span className="text-muted-foreground">N/A</span>
                         )}
                       </TableCell>
-                      <TableCell>{item.isEnabled ? "Yes" : "No"}</TableCell>
+                      <TableCell>
+                        <Badge variant={item.isEnabled ? "success" : "warning"}>
+                          {item.isEnabled ? "enabled" : "disabled"}
+                        </Badge>
+                      </TableCell>
                       <TableCell>{item.systemInfo?.version || "N/A"}</TableCell>
                       <TableCell>
                         {item.lastSeenAt

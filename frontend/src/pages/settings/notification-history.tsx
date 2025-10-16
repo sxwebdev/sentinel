@@ -71,9 +71,9 @@ const NotificationHistoryPage = () => {
           <TableBody>
             {q.data?.items.length === 0 ? (
               <TableRow>
-                <TableHead colSpan={5} className="h-24 text-center">
+                <TableCell colSpan={5} className="h-24 text-center">
                   No notifications found.
-                </TableHead>
+                </TableCell>
               </TableRow>
             ) : (
               q.data?.items?.map((item) => (

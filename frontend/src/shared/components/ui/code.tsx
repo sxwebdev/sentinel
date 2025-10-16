@@ -44,7 +44,7 @@ export function CodeBlock({
       <button
         onClick={onCopy}
         aria-label="Copy code"
-        className="absolute top-2 right-2 z-10 cursor-pointer rounded-md bg-[#ebeced] px-2 py-1 text-xs transition hover:bg-[#dedfe1] dark:bg-[#3d4148] dark:hover:bg-[#54565d]"
+        className="absolute top-2 right-2 z-10 cursor-pointer rounded-md bg-[#ebeced] px-2 py-1 text-xs font-medium transition hover:bg-[#dedfe1] dark:bg-[#3d4148] dark:hover:bg-[#54565d]"
         type="button"
       >
         {copied ? "Copied" : "Copy"}

@@ -43,7 +43,7 @@ export function NavMain({ items }: NavMainProps) {
                   key={option.main.to}
                   {...option}
                   to={option.main.to}
-                  className="text-sm/6"
+                  className="text-sm/6 font-medium"
                   activeProps={{
                     className: cn(
                       "bg-sidebar-accent text-sidebar-accent-foreground hover:bg-sidebar-accent/70",
