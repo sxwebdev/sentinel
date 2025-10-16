@@ -13,7 +13,7 @@ type ProjectStore = {
   isLoading: boolean;
   selectedProjectId?: string;
   projects: Project[];
-  selectProject: (id: string) => void;
+  selectProject: (id: string | undefined) => void;
   selectedProject: () => Project | undefined;
   loadProjects: () => Promise<void>;
   createProject: (name: string, description: string) => Promise<void>;
@@ -24,7 +24,7 @@ export const useProjectStore = create<ProjectStore>()(
     (set, get) => ({
       isLoading: true,
       projects: [],
-      selectProject: (id: string) => {
+      selectProject: (id: string | undefined) => {
         set({ selectedProjectId: id });
         window.location.reload();
       },

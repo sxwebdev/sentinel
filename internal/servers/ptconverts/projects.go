@@ -26,9 +26,9 @@ func ConvertProjectToProto(p *models.Project) *projectsv1.Project {
 func ConvertProjectSettingsToProto(ps models.ProjectSettings) *projectsv1.ProjectSettings {
 	return &projectsv1.ProjectSettings{
 		MonitorDefaults: &projectsv1.ProjectMonitorDefaults{
-			Interval: ps.MonitorDefaults.DefaultInterval,
-			Timeout:  ps.MonitorDefaults.DefaultTimeout,
-			Retries:  ps.MonitorDefaults.DefaultRetries,
+			Interval: ps.MonitorDefaults.Interval,
+			Timeout:  ps.MonitorDefaults.Timeout,
+			Retries:  ps.MonitorDefaults.Retries,
 		},
 	}
 }
@@ -42,9 +42,9 @@ func ConvertProjectSettingsFromProto(ps *projectsv1.ProjectSettings) models.Proj
 	monitorDefaults := models.ProjectMonitorDefaults{}
 	if ps.MonitorDefaults != nil {
 		monitorDefaults = models.ProjectMonitorDefaults{
-			DefaultInterval: ps.MonitorDefaults.Interval,
-			DefaultTimeout:  ps.MonitorDefaults.Timeout,
-			DefaultRetries:  ps.MonitorDefaults.Retries,
+			Interval: ps.MonitorDefaults.Interval,
+			Timeout:  ps.MonitorDefaults.Timeout,
+			Retries:  ps.MonitorDefaults.Retries,
 		}
 	}
 

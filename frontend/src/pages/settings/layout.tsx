@@ -99,7 +99,7 @@ const SettingsLayout = () => {
             </div>
 
             {/* Desktop View */}
-            <nav className="sticky top-6 hidden gap-1 md:grid">
+            <nav className="sticky top-22 hidden gap-1 md:grid">
               {menuItems.map((option) => (
                 <Link
                   key={option.to}

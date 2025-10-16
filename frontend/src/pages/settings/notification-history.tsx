@@ -3,7 +3,7 @@ import { historyList } from "@/api/gen/sentinel/notifications/v1/notifications-N
 import { HistorySubscribeRequestSchema } from "@/api/gen/sentinel/notifications/v1/notifications_pb";
 import PaginationTable from "@/shared/components/paginationTable";
 import { H4, P } from "@/shared/components/typography";
-import { Badge } from "@/shared/components/ui";
+import { Badge, Button } from "@/shared/components/ui";
 import {
   Popover,
   PopoverContent,
@@ -24,6 +24,7 @@ import { useQuery } from "@connectrpc/connect-query";
 import { useRef, useState } from "react";
 import { useSubscriptionRefetch } from "@/shared/hooks/useSubscriptionRefetch";
 import { toast } from "sonner";
+import { TrashIcon } from "lucide-react";
 
 const NotificationHistoryPage = () => {
   const [filters, setFilters] = useState({ page: 1, pageSize: 10 });
@@ -49,7 +50,18 @@ const NotificationHistoryPage = () => {
 
   return (
     <>
-      <H4 className="flex justify-between">Notification history</H4>
+      <H4 className="flex justify-between">
+        <span> Notification history</span>
+        <Button
+          size="sm"
+          variant="destructive"
+          onClick={() => {
+            toast.info("Not implemented yet");
+          }}
+        >
+          <TrashIcon size={16} /> Delete all notifications
+        </Button>
+      </H4>
       <P className="text-muted-foreground text-sm leading-relaxed">
         On this page you can view the history of notifications sent by the
         system.

@@ -87,7 +87,7 @@ const formSchema = z.object({
   isEnabled: z.boolean(),
 });
 
-const formInitialValues = (provider?: Provider) => {
+const formInitialValues = (provider?: Provider): z.infer<typeof formSchema> => {
   return {
     url: provider?.config?.config?.value?.url || "",
     isEnabled: provider?.isEnabled ?? true,

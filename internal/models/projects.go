@@ -7,13 +7,13 @@ import (
 )
 
 type ProjectSettings struct {
-	MonitorDefaults ProjectMonitorDefaults `yaml:"monitor_defaults"`
+	MonitorDefaults ProjectMonitorDefaults `json:"monitor_defaults"`
 }
 
 type ProjectMonitorDefaults struct {
-	DefaultInterval int64 `yaml:"interval" default:"60000"` // in milliseconds
-	DefaultTimeout  int64 `yaml:"timeout" default:"10000"`  // in milliseconds
-	DefaultRetries  int64 `yaml:"retries" default:"10"`
+	Interval int64 `json:"interval" default:"60000"` // in milliseconds
+	Timeout  int64 `json:"timeout" default:"10000"`  // in milliseconds
+	Retries  int64 `json:"retries" default:"10"`
 }
 
 // Scan implements the interface for scanning DB values into struct fields.

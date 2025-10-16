@@ -96,7 +96,7 @@ const formSchema = z.object({
   tags: z.array(z.string()),
 });
 
-const formInitialValues = (agent?: Agent) => {
+const formInitialValues = (agent?: Agent): z.infer<typeof formSchema> => {
   return {
     name: agent?.name || "",
     description: agent?.description,

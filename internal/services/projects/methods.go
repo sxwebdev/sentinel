@@ -28,16 +28,16 @@ func (s *Service) Create(ctx context.Context, params CreateParams) (*models.Proj
 		return nil, err
 	}
 
-	if params.Settings.MonitorDefaults.DefaultInterval == 0 {
-		params.Settings.MonitorDefaults.DefaultInterval = 60000
+	if params.Settings.MonitorDefaults.Interval == 0 {
+		params.Settings.MonitorDefaults.Interval = 60000
 	}
 
-	if params.Settings.MonitorDefaults.DefaultTimeout == 0 {
-		params.Settings.MonitorDefaults.DefaultTimeout = 10000
+	if params.Settings.MonitorDefaults.Timeout == 0 {
+		params.Settings.MonitorDefaults.Timeout = 10000
 	}
 
-	if params.Settings.MonitorDefaults.DefaultRetries == 0 {
-		params.Settings.MonitorDefaults.DefaultRetries = 10
+	if params.Settings.MonitorDefaults.Retries == 0 {
+		params.Settings.MonitorDefaults.Retries = 10
 	}
 
 	return s.store.Projects().Create(ctx, params)
@@ -51,16 +51,16 @@ func (s *Service) Update(ctx context.Context, params UpdateParams) (*models.Proj
 		return nil, err
 	}
 
-	if params.Settings.MonitorDefaults.DefaultInterval == 0 {
-		params.Settings.MonitorDefaults.DefaultInterval = 60000
+	if params.Settings.MonitorDefaults.Interval == 0 {
+		params.Settings.MonitorDefaults.Interval = 60000
 	}
 
-	if params.Settings.MonitorDefaults.DefaultTimeout == 0 {
-		params.Settings.MonitorDefaults.DefaultTimeout = 10000
+	if params.Settings.MonitorDefaults.Timeout == 0 {
+		params.Settings.MonitorDefaults.Timeout = 10000
 	}
 
-	if params.Settings.MonitorDefaults.DefaultRetries == 0 {
-		params.Settings.MonitorDefaults.DefaultRetries = 10
+	if params.Settings.MonitorDefaults.Retries == 0 {
+		params.Settings.MonitorDefaults.Retries = 10
 	}
 
 	return s.store.Projects().Update(ctx, params)
