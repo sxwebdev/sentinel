@@ -28,6 +28,7 @@ export function LoginPage({
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    e.stopPropagation();
 
     if (!email || !password) {
       toast.error("Please fill in all fields");
@@ -50,17 +51,18 @@ export function LoginPage({
         <CardHeader>
           <CardTitle>Login to your account</CardTitle>
           <CardDescription>
-            Enter your email below to login to your account
+            Enter your credentials to login to your account
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit}>
+          <form id="login-form" onSubmit={handleSubmit}>
             <FieldGroup>
               <Field>
                 <FieldLabel htmlFor="email">Email</FieldLabel>
                 <Input
                   id="email"
                   type="email"
+                  name="email"
                   placeholder="email@example.com"
                   required
                   value={email}
@@ -68,25 +70,26 @@ export function LoginPage({
                 />
               </Field>
               <Field>
-                <div className="flex items-center">
-                  <FieldLabel htmlFor="password">Password</FieldLabel>
-                </div>
+                <FieldLabel htmlFor="password">Password</FieldLabel>
                 <Input
                   id="password"
                   type="password"
+                  name="password"
                   placeholder="Password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
               </Field>
-              <Field>
-                <Button type="submit">
-                  {isLoading ? <Spinner /> : "Login"}
-                </Button>
-              </Field>
             </FieldGroup>
           </form>
+          <Button
+            form="login-form"
+            className="mt-8 w-full"
+            disabled={isLoading}
+          >
+            {isLoading ? <Spinner /> : "Login"}
+          </Button>
         </CardContent>
       </Card>
     </div>
