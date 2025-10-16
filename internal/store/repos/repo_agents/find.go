@@ -61,7 +61,7 @@ func (s *CustomQueries) Find(ctx context.Context, params FindParams) (*storecmn.
 	sb := findBuilder(params, AgentsColumnNames().Strings()...)
 
 	if params.OrderBy == "" {
-		params.OrderBy = "name"
+		params.OrderBy = "created_at"
 	}
 
 	sb.OrderByDesc(params.OrderBy)

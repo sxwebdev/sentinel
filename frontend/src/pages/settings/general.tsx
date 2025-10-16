@@ -201,7 +201,7 @@ const GeneralSettingsPage = () => {
                     return (
                       <Field data-invalid={isInvalid}>
                         <FieldLabel htmlFor={field.name}>
-                          Default Interval
+                          Default Interval (ms)
                         </FieldLabel>
                         <Input
                           id={field.name}
@@ -231,7 +231,7 @@ const GeneralSettingsPage = () => {
                     return (
                       <Field data-invalid={isInvalid}>
                         <FieldLabel htmlFor={field.name}>
-                          Default Timeout
+                          Default Timeout (ms)
                         </FieldLabel>
                         <Input
                           id={field.name}

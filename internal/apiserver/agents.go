@@ -113,6 +113,7 @@ func (s *AgentsServer) AgentsCreate(
 		Kind:        models.AgentKindTypeExternal,
 		Tags:        append([]string(nil), req.Msg.GetTags()...),
 		Config:      models.AgentConfig{},
+		IsEnabled:   req.Msg.GetIsEnabled(),
 		ProjectID:   ctxData.Project.ID,
 	}
 

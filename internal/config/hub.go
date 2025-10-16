@@ -16,7 +16,7 @@ type ConfigHub struct {
 	DataDir    string       `yaml:"data_dir" validate:"required" default:"./data"`
 	Server     ServerConfig `yaml:"server"`
 	Timezone   string       `yaml:"timezone" default:"UTC"`
-	Upgrader   Upgrader     `yaml:"upgrader"`
+	Updater    Updater      `yaml:"updater"`
 	KvDbEngine string       `yaml:"kv_db_engine" default:"inmemory" example:"inmemory, badgerdb" validate:"oneof=inmemory badgerdb"`
 }
 
@@ -43,7 +43,7 @@ type UserAuth struct {
 	Password string `yaml:"password"`
 }
 
-type Upgrader struct {
+type Updater struct {
 	IsEnabled bool   `yaml:"is_enabled"`
 	Command   string `yaml:"command"`
 }

@@ -61,6 +61,7 @@ CREATE TABLE IF NOT EXISTS resources (
   project_id  TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
   name        TEXT NOT NULL,
   description TEXT NOT NULL,
+  kind        TEXT NOT NULL CHECK (kind != ''),
   tags        JSONB NOT NULL DEFAULT (jsonb('[]')),
   payload     JSONB NOT NULL DEFAULT (jsonb('{}')),
   created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,

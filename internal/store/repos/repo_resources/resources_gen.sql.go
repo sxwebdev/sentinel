@@ -9,22 +9,22 @@ import (
 	"context"
 
 	"github.com/sxwebdev/sentinel/internal/models"
-	"github.com/sxwebdev/sentinel/internal/store/storecmn"
 )
 
 const create = `-- name: Create :one
-INSERT INTO resources (id, project_id, name, description, tags, payload)
-	VALUES (?, ?, ?, ?, ?, ?)
-	RETURNING id, project_id, name, description, tags, payload, created_at, updated_at
+INSERT INTO resources (id, project_id, name, description, kind, tags, payload)
+	VALUES (?, ?, ?, ?, ?, ?, ?)
+	RETURNING id, project_id, name, description, kind, tags, payload, created_at, updated_at
 `
 
 type CreateParams struct {
-	ID          string             `db:"id" json:"id"`
-	ProjectID   string             `db:"project_id" json:"project_id"`
-	Name        string             `db:"name" json:"name"`
-	Description string             `db:"description" json:"description"`
-	Tags        storecmn.JSONField `db:"tags" json:"tags"`
-	Payload     storecmn.JSONField `db:"payload" json:"payload"`
+	ID          string                  `db:"id" json:"id"`
+	ProjectID   string                  `db:"project_id" json:"project_id"`
+	Name        string                  `db:"name" json:"name"`
+	Description string                  `db:"description" json:"description"`
+	Kind        models.ResourceKindType `db:"kind" json:"kind"`
+	Tags        models.Tags             `db:"tags" json:"tags"`
+	Payload     models.ResourcePayload  `db:"payload" json:"payload"`
 }
 
 func (q *Queries) Create(ctx context.Context, arg CreateParams) (*models.Resource, error) {
@@ -33,6 +33,7 @@ func (q *Queries) Create(ctx context.Context, arg CreateParams) (*models.Resourc
 		arg.ProjectID,
 		arg.Name,
 		arg.Description,
+		arg.Kind,
 		arg.Tags,
 		arg.Payload,
 	)
@@ -42,6 +43,7 @@ func (q *Queries) Create(ctx context.Context, arg CreateParams) (*models.Resourc
 		&i.ProjectID,
 		&i.Name,
 		&i.Description,
+		&i.Kind,
 		&i.Tags,
 		&i.Payload,
 		&i.CreatedAt,
@@ -60,7 +62,7 @@ func (q *Queries) Delete(ctx context.Context, id string) error {
 }
 
 const getAll = `-- name: GetAll :many
-SELECT id, project_id, name, description, tags, payload, created_at, updated_at FROM resources WHERE project_id=?
+SELECT id, project_id, name, description, kind, tags, payload, created_at, updated_at FROM resources WHERE project_id=?
 `
 
 func (q *Queries) GetAll(ctx context.Context, projectID string) ([]*models.Resource, error) {
@@ -77,6 +79,7 @@ func (q *Queries) GetAll(ctx context.Context, projectID string) ([]*models.Resou
 			&i.ProjectID,
 			&i.Name,
 			&i.Description,
+			&i.Kind,
 			&i.Tags,
 			&i.Payload,
 			&i.CreatedAt,
@@ -96,7 +99,7 @@ func (q *Queries) GetAll(ctx context.Context, projectID string) ([]*models.Resou
 }
 
 const getByID = `-- name: GetByID :one
-SELECT id, project_id, name, description, tags, payload, created_at, updated_at FROM resources WHERE id=? LIMIT 1
+SELECT id, project_id, name, description, kind, tags, payload, created_at, updated_at FROM resources WHERE id=? LIMIT 1
 `
 
 func (q *Queries) GetByID(ctx context.Context, id string) (*models.Resource, error) {
@@ -107,6 +110,7 @@ func (q *Queries) GetByID(ctx context.Context, id string) (*models.Resource, err
 		&i.ProjectID,
 		&i.Name,
 		&i.Description,
+		&i.Kind,
 		&i.Tags,
 		&i.Payload,
 		&i.CreatedAt,

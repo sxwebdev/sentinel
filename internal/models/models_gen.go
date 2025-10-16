@@ -11,23 +11,23 @@ import (
 )
 
 type Agent struct {
-	ID          string             `db:"id" json:"id"`
-	Name        string             `db:"name" json:"name"`
-	Description string             `db:"description" json:"description"`
-	SecretHash  string             `db:"secret_hash" json:"secret_hash"`
-	TokenHint   string             `db:"token_hint" json:"token_hint"`
-	Fingerprint *string            `db:"fingerprint" json:"fingerprint"`
-	Kind        AgentKindType      `db:"kind" json:"kind"`
-	Status      AgentStatusType    `db:"status" json:"status"`
-	IsEnabled   bool               `db:"is_enabled" json:"is_enabled"`
-	Location    *string            `db:"location" json:"location"`
-	Tags        storecmn.JSONField `db:"tags" json:"tags"`
-	Config      storecmn.JSONField `db:"config" json:"config"`
-	SystemInfo  SystemInfo         `db:"system_info" json:"system_info"`
-	ProjectID   string             `db:"project_id" json:"project_id"`
-	LastSeenAt  *time.Time         `db:"last_seen_at" json:"last_seen_at"`
-	CreatedAt   time.Time          `db:"created_at" json:"created_at"`
-	UpdatedAt   time.Time          `db:"updated_at" json:"updated_at"`
+	ID          string          `db:"id" json:"id"`
+	Name        string          `db:"name" json:"name"`
+	Description string          `db:"description" json:"description"`
+	SecretHash  string          `db:"secret_hash" json:"secret_hash"`
+	TokenHint   string          `db:"token_hint" json:"token_hint"`
+	Fingerprint *string         `db:"fingerprint" json:"fingerprint"`
+	Kind        AgentKindType   `db:"kind" json:"kind"`
+	Status      AgentStatusType `db:"status" json:"status"`
+	IsEnabled   bool            `db:"is_enabled" json:"is_enabled"`
+	Location    *string         `db:"location" json:"location"`
+	Tags        Tags            `db:"tags" json:"tags"`
+	Config      AgentConfig     `db:"config" json:"config"`
+	SystemInfo  SystemInfo      `db:"system_info" json:"system_info"`
+	ProjectID   string          `db:"project_id" json:"project_id"`
+	LastSeenAt  *time.Time      `db:"last_seen_at" json:"last_seen_at"`
+	CreatedAt   time.Time       `db:"created_at" json:"created_at"`
+	UpdatedAt   time.Time       `db:"updated_at" json:"updated_at"`
 }
 
 type Alert struct {
@@ -206,14 +206,15 @@ type Project struct {
 }
 
 type Resource struct {
-	ID          string             `db:"id" json:"id"`
-	ProjectID   string             `db:"project_id" json:"project_id"`
-	Name        string             `db:"name" json:"name"`
-	Description string             `db:"description" json:"description"`
-	Tags        storecmn.JSONField `db:"tags" json:"tags"`
-	Payload     storecmn.JSONField `db:"payload" json:"payload"`
-	CreatedAt   time.Time          `db:"created_at" json:"created_at"`
-	UpdatedAt   time.Time          `db:"updated_at" json:"updated_at"`
+	ID          string           `db:"id" json:"id"`
+	ProjectID   string           `db:"project_id" json:"project_id"`
+	Name        string           `db:"name" json:"name"`
+	Description string           `db:"description" json:"description"`
+	Kind        ResourceKindType `db:"kind" json:"kind"`
+	Tags        Tags             `db:"tags" json:"tags"`
+	Payload     ResourcePayload  `db:"payload" json:"payload"`
+	CreatedAt   time.Time        `db:"created_at" json:"created_at"`
+	UpdatedAt   time.Time        `db:"updated_at" json:"updated_at"`
 }
 
 type ResourceAgent struct {

@@ -193,7 +193,7 @@ func hubStartCMD() *cli.Command {
 					availableUpdateData := locker.New(models.AvailableUpdate{})
 
 					// Initialize upgrader if configured
-					updater, err := updater.New(l, conf.Upgrader, version, availableUpdateData)
+					updater, err := updater.New(l, conf.Updater, version, availableUpdateData)
 					if err != nil {
 						return fmt.Errorf("failed to initialize upgrader: %w", err)
 					}

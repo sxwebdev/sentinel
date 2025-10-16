@@ -5,7 +5,6 @@ import (
 
 	agentsv1 "github.com/sxwebdev/sentinel/internal/hub/hubserver/api/sentinel/agents/v1"
 	"github.com/sxwebdev/sentinel/internal/models"
-	"github.com/sxwebdev/sentinel/internal/store/storecmn"
 	"github.com/sxwebdev/sentinel/internal/utils"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -13,11 +12,10 @@ import (
 
 // ConvertAgentToProto converts a models.Agent to its protobuf representation
 func ConvertAgentToProto(a *models.Agent) (*agentsv1.Agent, error) {
-	tags := []string{}
-	_ = a.Tags.ConvertToAny(&tags)
-
 	config := &agentsv1.AgentConfig{}
-	_ = protojson.Unmarshal(a.Config, config)
+	if err := ConvertAnyToProto(a.Config, config); err != nil {
+		return nil, err
+	}
 
 	res := &agentsv1.Agent{
 		Id:          a.ID,
@@ -29,7 +27,7 @@ func ConvertAgentToProto(a *models.Agent) (*agentsv1.Agent, error) {
 		Kind:        ConvertAgentKindToProto(a.Kind),
 		IsEnabled:   a.IsEnabled,
 		Location:    a.Location,
-		Tags:        tags,
+		Tags:        a.Tags,
 		Config:      config,
 		SystemInfo:  ConvertSystemInfoToProto(a.SystemInfo),
 		CreatedAt:   timestamppb.New(a.CreatedAt),
@@ -45,10 +43,10 @@ func ConvertAgentToProto(a *models.Agent) (*agentsv1.Agent, error) {
 
 // ConvertAgentFromProto converts a protobuf representation of an agent to its models.Agent representation
 func ConvertAgentFromProto(a *agentsv1.Agent) (*models.Agent, error) {
-	var tags storecmn.JSONField
-	tags, _ = json.Marshal(a.Tags)
-
-	config, _ := protojson.Marshal(a.Config)
+	config, err := ConvertAnyFromProto[models.AgentConfig](a.Config)
+	if err != nil {
+		return nil, err
+	}
 
 	res := &models.Agent{
 		ID:          a.Id,
@@ -60,7 +58,7 @@ func ConvertAgentFromProto(a *agentsv1.Agent) (*models.Agent, error) {
 		Kind:        ConvertAgentKindFromProto(a.Kind),
 		Location:    a.Location,
 		IsEnabled:   a.IsEnabled,
-		Tags:        tags,
+		Tags:        a.Tags,
 		Config:      config,
 		CreatedAt:   a.CreatedAt.AsTime(),
 		UpdatedAt:   a.UpdatedAt.AsTime(),
@@ -73,18 +71,6 @@ func ConvertAgentFromProto(a *agentsv1.Agent) (*models.Agent, error) {
 	return res, nil
 }
 
-// ConvertAgentStatusFromProto converts models.AgentStatusType to its protobuf representation
-func ConvertAgentStatusFromProto(status agentsv1.AgentStatus) models.AgentStatusType {
-	switch status {
-	case agentsv1.AgentStatus_AGENT_STATUS_ACTIVE:
-		return models.AgentStatusTypeActive
-	case agentsv1.AgentStatus_AGENT_STATUS_INACTIVE:
-		return models.AgentStatusTypeInactive
-	default:
-		return models.AgentStatusTypeUnknown
-	}
-}
-
 // ConvertAgentStatusToProto converts models.AgentStatusType to its protobuf representation
 func ConvertAgentStatusToProto(status models.AgentStatusType) agentsv1.AgentStatus {
 	switch status {
@@ -94,6 +80,18 @@ func ConvertAgentStatusToProto(status models.AgentStatusType) agentsv1.AgentStat
 		return agentsv1.AgentStatus_AGENT_STATUS_INACTIVE
 	default:
 		return agentsv1.AgentStatus_AGENT_STATUS_UNSPECIFIED
+	}
+}
+
+// ConvertAgentStatusFromProto converts models.AgentStatusType to its protobuf representation
+func ConvertAgentStatusFromProto(status agentsv1.AgentStatus) models.AgentStatusType {
+	switch status {
+	case agentsv1.AgentStatus_AGENT_STATUS_ACTIVE:
+		return models.AgentStatusTypeActive
+	case agentsv1.AgentStatus_AGENT_STATUS_INACTIVE:
+		return models.AgentStatusTypeInactive
+	default:
+		return models.AgentStatusTypeUnknown
 	}
 }
 

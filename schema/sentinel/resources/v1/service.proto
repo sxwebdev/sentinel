@@ -1,0 +1,72 @@
+syntax = "proto3";
+package sentinel.resources.v1;
+
+import "google/protobuf/timestamp.proto";
+import "sentinel/common/v1/common.proto";
+
+// ResourcesService is the service for managing resources.
+service ResourcesService {
+  rpc ResourcesList(ResourcesListRequest) returns (ResourcesListResponse);
+  rpc ResourceGet(ResourceGetRequest) returns (ResourceGetResponse);
+  rpc ResourceCreate(ResourceCreateRequest) returns (ResourceCreateResponse);
+  rpc ResourceUpdate(ResourceUpdateRequest) returns (ResourceUpdateResponse);
+  rpc ResourceDelete(ResourceDeleteRequest) returns (ResourceDeleteResponse);
+}
+
+message Payload {}
+
+enum ResourceKind {
+  RESOURCE_KIND_UNSPECIFIED = 0;
+  RESOURCE_KIND_SERVICE = 1;
+  RESOURCE_KIND_SERVER = 2;
+}
+
+message Resource {
+  string id = 1;
+  string project_id = 2;
+  string name = 3;
+  string description = 4;
+  ResourceKind kind = 5;
+  repeated string tags = 6;
+  Payload payload = 7;
+  google.protobuf.Timestamp created_at = 8;
+  google.protobuf.Timestamp updated_at = 9;
+}
+
+// ResourcesList requests a list of resources.
+message ResourcesListRequest { common.v1.FindRequestCommon common = 1; }
+message ResourcesListResponse {
+  repeated Resource items = 1;
+  uint32 count = 2;
+}
+
+// ResourceGet requests a resource by ID.
+message ResourceGetRequest { string id = 1; }
+message ResourceGetResponse { Resource item = 1; }
+
+// ResourceCreate creates a new resource.
+message ResourceCreateRequest {
+  string project_id = 1;
+  repeated string agent_ids = 2;
+  string name = 3;
+  string description = 4;
+  ResourceKind kind = 5;
+  repeated string tags = 6;
+  Payload payload = 7;
+}
+message ResourceCreateResponse { Resource item = 1; }
+
+// ResourceUpdate updates an existing resource.
+message ResourceUpdateRequest {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  repeated string tags = 4;
+  Payload payload = 5;
+  repeated string agent_ids = 6;
+}
+message ResourceUpdateResponse { Resource item = 1; }
+
+// ResourceDelete deletes a resource by ID.
+message ResourceDeleteRequest { string id = 1; }
+message ResourceDeleteResponse {}

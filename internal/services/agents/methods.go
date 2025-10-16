@@ -57,6 +57,7 @@ type CreateParams struct {
 	Description string
 	Tags        []string
 	Config      models.AgentConfig
+	IsEnabled   bool
 	ProjectID   string
 }
 
@@ -100,18 +101,6 @@ func (s *Service) Create(ctx context.Context, params CreateParams, opts ...repos
 		return nil, fmt.Errorf("validation error: %w", err)
 	}
 
-	// Convert tags to JSONField
-	tags := storecmn.JSONField("[]")
-	if err := tags.UnmarshalFromAny(params.Tags); err != nil {
-		return nil, fmt.Errorf("failed to convert tags to json raw message: %w", err)
-	}
-
-	// Convert config to JSONField
-	config := storecmn.JSONField("{}")
-	if err := config.UnmarshalFromAny(params.Config); err != nil {
-		return nil, fmt.Errorf("failed to convert config to json raw message: %w", err)
-	}
-
 	id := utils.GenerateULID()
 	token, secret, tokenHint, err := NewAgentToken(id)
 	if err != nil {
@@ -131,8 +120,9 @@ func (s *Service) Create(ctx context.Context, params CreateParams, opts ...repos
 		SecretHash:  secretHash,
 		TokenHint:   tokenHint,
 		Kind:        params.Kind,
-		Tags:        tags,
-		Config:      config,
+		Tags:        params.Tags,
+		IsEnabled:   params.IsEnabled,
+		Config:      params.Config,
 		ProjectID:   params.ProjectID,
 	}
 
@@ -246,18 +236,6 @@ func (s *Service) Update(ctx context.Context, id, projectID string, params Updat
 		slices.Sort(params.Tags)
 	}
 
-	// Convert tags to JSONField
-	tags := storecmn.JSONField("[]")
-	if err := tags.UnmarshalFromAny(params.Tags); err != nil {
-		return nil, fmt.Errorf("failed to convert tags to json raw message: %w", err)
-	}
-
-	// Convert config to JSONField
-	config := storecmn.JSONField("{}")
-	if err := config.UnmarshalFromAny(params.Config); err != nil {
-		return nil, fmt.Errorf("failed to convert config to json raw message: %w", err)
-	}
-
 	updateParams := repo_agents.UpdateRequest{
 		Agent: models.Agent{
 			Name:        params.Name,
@@ -265,8 +243,8 @@ func (s *Service) Update(ctx context.Context, id, projectID string, params Updat
 			Fingerprint: params.Fingerprint,
 			Status:      params.Status,
 			IsEnabled:   params.IsEnabled,
-			Tags:        tags,
-			Config:      config,
+			Tags:        params.Tags,
+			Config:      params.Config,
 			SystemInfo:  params.SystemInfo,
 			LastSeenAt:  params.LastSeenAt,
 		},

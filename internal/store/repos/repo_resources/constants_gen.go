@@ -43,6 +43,7 @@ const (
 	ColumnNameResourcesProjectId   ColumnName = "project_id"
 	ColumnNameResourcesName        ColumnName = "name"
 	ColumnNameResourcesDescription ColumnName = "description"
+	ColumnNameResourcesKind        ColumnName = "kind"
 	ColumnNameResourcesTags        ColumnName = "tags"
 	ColumnNameResourcesPayload     ColumnName = "payload"
 	ColumnNameResourcesCreatedAt   ColumnName = "created_at"
@@ -55,6 +56,7 @@ func ResourcesColumnNames() ColumnNames {
 		ColumnNameResourcesProjectId,
 		ColumnNameResourcesName,
 		ColumnNameResourcesDescription,
+		ColumnNameResourcesKind,
 		ColumnNameResourcesTags,
 		ColumnNameResourcesPayload,
 		ColumnNameResourcesCreatedAt,

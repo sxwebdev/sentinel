@@ -11,7 +11,7 @@ import (
 
 type Updater struct {
 	logger logger.Logger
-	config config.Upgrader
+	config config.Updater
 
 	version             string
 	availableUpdateData *locker.Locker[models.AvailableUpdate]
@@ -19,7 +19,7 @@ type Updater struct {
 
 func New(
 	l logger.Logger,
-	cfg config.Upgrader,
+	cfg config.Updater,
 	version string,
 	availableUpdateData *locker.Locker[models.AvailableUpdate],
 ) (*Updater, error) {
@@ -36,6 +36,11 @@ func (u *Updater) Name() string { return "updater" }
 
 // Start starts the updater
 func (u *Updater) Start(ctx context.Context) error {
+	if !u.config.IsEnabled {
+		u.logger.Info("updater is disabled")
+		return nil
+	}
+
 	go u.checkNewVersionWrapper(ctx)
 
 	return nil

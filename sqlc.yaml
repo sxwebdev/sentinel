@@ -41,6 +41,23 @@ overrides:
       - column: agents.system_info
         go_type:
           type: SystemInfo
+      - column: agents.tags
+        go_type:
+          type: Tags
+      - column: agents.config
+        go_type:
+          type: AgentConfig
+
+      # resources
+      - column: resources.kind
+        go_type:
+          type: ResourceKindType
+      - column: resources.tags
+        go_type:
+          type: Tags
+      - column: resources.payload
+        go_type:
+          type: ResourcePayload
 
       # notification_providers
       - column: notification_providers.provider_type

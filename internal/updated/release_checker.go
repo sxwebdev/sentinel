@@ -47,12 +47,12 @@ func (s *Updater) checkNewVersion() error {
 	// Get multiple pages of releases to ensure we don't miss any
 	resp, err := httpClient.Get("https://api.github.com/repos/sxwebdev/sentinel/releases?per_page=100")
 	if err != nil {
-		return nil
+		return fmt.Errorf("failed to fetch releases: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil
+		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 	}
 
 	var releases []struct {
@@ -63,7 +63,7 @@ func (s *Updater) checkNewVersion() error {
 		Prerelease  bool   `json:"prerelease"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&releases); err != nil {
-		return nil
+		return fmt.Errorf("failed to decode releases: %w", err)
 	}
 
 	// Parse current version

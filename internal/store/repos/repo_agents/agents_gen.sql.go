@@ -9,12 +9,11 @@ import (
 	"context"
 
 	"github.com/sxwebdev/sentinel/internal/models"
-	"github.com/sxwebdev/sentinel/internal/store/storecmn"
 )
 
 const create = `-- name: Create :one
-INSERT INTO agents (id, name, description, secret_hash, token_hint, kind, location, tags, config, project_id)
-	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+INSERT INTO agents (id, name, description, secret_hash, token_hint, kind, is_enabled, location, tags, config, project_id)
+	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	RETURNING id, name, description, secret_hash, token_hint, fingerprint, kind, status, is_enabled, location, tags, config, system_info, project_id, last_seen_at, created_at, updated_at
 `
 
@@ -25,9 +24,10 @@ type CreateParams struct {
 	SecretHash  string               `db:"secret_hash" json:"secret_hash"`
 	TokenHint   string               `db:"token_hint" json:"token_hint"`
 	Kind        models.AgentKindType `db:"kind" json:"kind"`
+	IsEnabled   bool                 `db:"is_enabled" json:"is_enabled"`
 	Location    *string              `db:"location" json:"location"`
-	Tags        storecmn.JSONField   `db:"tags" json:"tags"`
-	Config      storecmn.JSONField   `db:"config" json:"config"`
+	Tags        models.Tags          `db:"tags" json:"tags"`
+	Config      models.AgentConfig   `db:"config" json:"config"`
 	ProjectID   string               `db:"project_id" json:"project_id"`
 }
 
@@ -39,6 +39,7 @@ func (q *Queries) Create(ctx context.Context, arg CreateParams) (*models.Agent, 
 		arg.SecretHash,
 		arg.TokenHint,
 		arg.Kind,
+		arg.IsEnabled,
 		arg.Location,
 		arg.Tags,
 		arg.Config,

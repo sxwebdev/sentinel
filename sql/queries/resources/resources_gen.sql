@@ -1,6 +1,6 @@
 -- name: Create :one
-INSERT INTO resources (id, project_id, name, description, tags, payload)
-	VALUES (?, ?, ?, ?, ?, ?)
+INSERT INTO resources (id, project_id, name, description, kind, tags, payload)
+	VALUES (?, ?, ?, ?, ?, ?, ?)
 	RETURNING *;
 
 -- name: Delete :exec

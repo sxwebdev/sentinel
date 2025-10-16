@@ -124,10 +124,6 @@ clean: ## Clean build artifacts
 	rm -f coverage.out coverage.html
 	docker-compose down --volumes --remove-orphans || true
 
-# Database
-init-db: ## Initialize database directory
-	mkdir -p data
-
 # db-create-migration:
 # 	migrate create -ext sql -format unix -dir "$(MIGRATIONS_DIR)" $(filter-out $@,$(MAKECMDGOALS))
 
