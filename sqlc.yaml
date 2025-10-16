@@ -38,6 +38,9 @@ overrides:
       - column: agents.kind
         go_type:
           type: AgentKindType
+      - column: agents.system_info
+        go_type:
+          type: SystemInfo
 
       # notification_providers
       - column: notification_providers.provider_type

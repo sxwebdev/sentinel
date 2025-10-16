@@ -4,7 +4,7 @@ INSERT INTO agents (id, name, description, secret_hash, token_hint, kind, locati
 	RETURNING *;
 
 -- name: Delete :exec
-DELETE FROM agents WHERE id=?;
+DELETE FROM agents WHERE id=? AND project_id=?;
 
 -- name: GetByID :one
 SELECT * FROM agents WHERE id=? LIMIT 1;

@@ -21,6 +21,12 @@ enum AgentStatus {
   AGENT_STATUS_INACTIVE = 2;
 }
 
+enum AgentKind {
+  AGENT_KIND_UNSPECIFIED = 0;
+  AGENT_KIND_HUB = 1;
+  AGENT_KIND_EXTERNAL = 2;
+}
+
 message AgentConfig {}
 
 message Agent {
@@ -29,14 +35,16 @@ message Agent {
   string description = 3;
   string token_hint = 4;
   optional string fingerprint = 5;
-  AgentStatus status = 6;
-  bool is_enabled = 7;
-  repeated string tags = 8;
-  AgentConfig config = 9;
-  system.v1.SystemInfo system_info = 10;
-  google.protobuf.Timestamp last_seen_at = 11;
-  google.protobuf.Timestamp created_at = 12;
-  google.protobuf.Timestamp updated_at = 13;
+  AgentKind kind = 6;
+  AgentStatus status = 7;
+  bool is_enabled = 8;
+  optional string location = 9;
+  repeated string tags = 10;
+  AgentConfig config = 11;
+  system.v1.SystemInfo system_info = 12;
+  google.protobuf.Timestamp last_seen_at = 13;
+  google.protobuf.Timestamp created_at = 14;
+  google.protobuf.Timestamp updated_at = 15;
 }
 
 // AgentsList agents lists all agents.
@@ -65,10 +73,12 @@ message AgentsCreateResponse {
   string token = 4;
   string token_hint = 5;
   AgentStatus status = 6;
-  bool is_enabled = 7;
-  repeated string tags = 8;
-  AgentConfig config = 9;
-  google.protobuf.Timestamp created_at = 10;
+  AgentKind kind = 7;
+  bool is_enabled = 8;
+  optional string location = 9;
+  repeated string tags = 10;
+  AgentConfig config = 11;
+  google.protobuf.Timestamp created_at = 12;
 }
 
 // AgentsUpdate agent updates an existing agent.
@@ -77,8 +87,9 @@ message AgentsUpdateRequest {
   string name = 2;
   string description = 3;
   bool is_enabled = 4;
-  repeated string tags = 5;
-  AgentConfig config = 6;
+  optional string location = 5;
+  repeated string tags = 6;
+  AgentConfig config = 7;
 }
 message AgentsUpdateResponse { Agent item = 1; }
 

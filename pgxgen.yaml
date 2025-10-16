@@ -83,6 +83,8 @@ sqlc:
                 - updated_at
               returning: "*"
             delete:
+              where:
+                project_id:
             get:
               name: GetByID
 

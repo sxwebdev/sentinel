@@ -23,7 +23,7 @@ type Agent struct {
 	Location    *string            `db:"location" json:"location"`
 	Tags        storecmn.JSONField `db:"tags" json:"tags"`
 	Config      storecmn.JSONField `db:"config" json:"config"`
-	SystemInfo  storecmn.JSONField `db:"system_info" json:"system_info"`
+	SystemInfo  SystemInfo         `db:"system_info" json:"system_info"`
 	ProjectID   string             `db:"project_id" json:"project_id"`
 	LastSeenAt  *time.Time         `db:"last_seen_at" json:"last_seen_at"`
 	CreatedAt   time.Time          `db:"created_at" json:"created_at"`

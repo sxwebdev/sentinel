@@ -1,12 +1,14 @@
 package models
 
 import (
+	"database/sql/driver"
 	"os"
 	"runtime"
 	"time"
 
 	"github.com/shirou/gopsutil/v4/cpu"
 	"github.com/shirou/gopsutil/v4/host"
+	"github.com/sxwebdev/sentinel/internal/store/storecmn"
 	"github.com/sxwebdev/sentinel/internal/utils"
 )
 
@@ -36,6 +38,24 @@ type AvailableUpdate struct {
 	CurrentVersion string                 `json:"current_version"`
 	IsAvailable    bool                   `json:"is_available"`
 	Details        AvailableUpdateDetails `json:"details,omitempty"`
+}
+
+// Scan implements the interface for scanning DB values into struct fields.
+func (s *SystemInfo) Scan(value any) error {
+	var jsonField storecmn.JSONField
+	if err := jsonField.Scan(value); err != nil {
+		return err
+	}
+	return jsonField.ConvertToAny(s)
+}
+
+// Value implements the interface for converting struct fields into DB values.
+func (s SystemInfo) Value() (driver.Value, error) {
+	var jsonField storecmn.JSONField
+	if err := jsonField.UnmarshalFromAny(s); err != nil {
+		return nil, err
+	}
+	return jsonField.Value()
 }
 
 var startedAt = time.Now()

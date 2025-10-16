@@ -173,22 +173,22 @@ func hubStartCMD() *cli.Command {
 						return fmt.Errorf("failed to initialize store: %w", err)
 					}
 
+					systemInfo := models.GetSystemInfo(version, commitHash, buildDate)
+					systemInfo.SqliteVersion = sqliteVersion
+
 					// Init receiver
 					rc := receiver.New()
 
 					// Initialize dispatcher
 					dispatcher := dispatcher.New()
 
-					baseServices := baseservices.New(l, st, authConfig, rc, dispatcher)
+					baseServices := baseservices.New(l, st, authConfig, rc, dispatcher, systemInfo)
 
 					// init alert resolver
 					ar := alertresolver.New(l, baseServices)
 
 					// Initialize scheduler
 					sched := scheduler.New(l, rc, baseServices, ar)
-
-					systemInfo := models.GetSystemInfo(version, commitHash, buildDate)
-					systemInfo.SqliteVersion = sqliteVersion
 
 					availableUpdateData := locker.New(models.AvailableUpdate{})
 

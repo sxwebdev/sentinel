@@ -14,7 +14,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file sentinel/agents/v1/agents.proto.
  */
 export const file_sentinel_agents_v1_agents: GenFile = /*@__PURE__*/
-  fileDesc("Ch9zZW50aW5lbC9hZ2VudHMvdjEvYWdlbnRzLnByb3RvEhJzZW50aW5lbC5hZ2VudHMudjEiDQoLQWdlbnRDb25maWcivwMKBUFnZW50EgoKAmlkGAEgASgJEgwKBG5hbWUYAiABKAkSEwoLZGVzY3JpcHRpb24YAyABKAkSEgoKdG9rZW5faGludBgEIAEoCRIYCgtmaW5nZXJwcmludBgFIAEoCUgAiAEBEi8KBnN0YXR1cxgGIAEoDjIfLnNlbnRpbmVsLmFnZW50cy52MS5BZ2VudFN0YXR1cxISCgppc19lbmFibGVkGAcgASgIEgwKBHRhZ3MYCCADKAkSLwoGY29uZmlnGAkgASgLMh8uc2VudGluZWwuYWdlbnRzLnYxLkFnZW50Q29uZmlnEjMKC3N5c3RlbV9pbmZvGAogASgLMh4uc2VudGluZWwuc3lzdGVtLnYxLlN5c3RlbUluZm8SMAoMbGFzdF9zZWVuX2F0GAsgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIuCgpjcmVhdGVkX2F0GAwgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIuCgp1cGRhdGVkX2F0GA0gASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIOCgxfZmluZ2VycHJpbnQiEwoRQWdlbnRzTGlzdFJlcXVlc3QiTQoSQWdlbnRzTGlzdFJlc3BvbnNlEigKBWl0ZW1zGAEgAygLMhkuc2VudGluZWwuYWdlbnRzLnYxLkFnZW50Eg0KBWNvdW50GAIgASgNIh4KEEFnZW50c0dldFJlcXVlc3QSCgoCaWQYASABKAkiPAoRQWdlbnRzR2V0UmVzcG9uc2USJwoEaXRlbRgBIAEoCzIZLnNlbnRpbmVsLmFnZW50cy52MS5BZ2VudCKLAQoTQWdlbnRzQ3JlYXRlUmVxdWVzdBIMCgRuYW1lGAEgASgJEhMKC2Rlc2NyaXB0aW9uGAIgASgJEhIKCmlzX2VuYWJsZWQYAyABKAgSDAoEdGFncxgEIAMoCRIvCgZjb25maWcYBSABKAsyHy5zZW50aW5lbC5hZ2VudHMudjEuQWdlbnRDb25maWcinAIKFEFnZW50c0NyZWF0ZVJlc3BvbnNlEgoKAmlkGAEgASgJEgwKBG5hbWUYAiABKAkSEwoLZGVzY3JpcHRpb24YAyABKAkSDQoFdG9rZW4YBCABKAkSEgoKdG9rZW5faGludBgFIAEoCRIvCgZzdGF0dXMYBiABKA4yHy5zZW50aW5lbC5hZ2VudHMudjEuQWdlbnRTdGF0dXMSEgoKaXNfZW5hYmxlZBgHIAEoCBIMCgR0YWdzGAggAygJEi8KBmNvbmZpZxgJIAEoCzIfLnNlbnRpbmVsLmFnZW50cy52MS5BZ2VudENvbmZpZxIuCgpjcmVhdGVkX2F0GAogASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCKXAQoTQWdlbnRzVXBkYXRlUmVxdWVzdBIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEhMKC2Rlc2NyaXB0aW9uGAMgASgJEhIKCmlzX2VuYWJsZWQYBCABKAgSDAoEdGFncxgFIAMoCRIvCgZjb25maWcYBiABKAsyHy5zZW50aW5lbC5hZ2VudHMudjEuQWdlbnRDb25maWciPwoUQWdlbnRzVXBkYXRlUmVzcG9uc2USJwoEaXRlbRgBIAEoCzIZLnNlbnRpbmVsLmFnZW50cy52MS5BZ2VudCIhChNBZ2VudHNEZWxldGVSZXF1ZXN0EgoKAmlkGAEgASgJIhYKFEFnZW50c0RlbGV0ZVJlc3BvbnNlIhgKFkFnZW50c1N1YnNjcmliZVJlcXVlc3QiGQoXQWdlbnRzU3Vic2NyaWJlUmVzcG9uc2UqXwoLQWdlbnRTdGF0dXMSHAoYQUdFTlRfU1RBVFVTX1VOU1BFQ0lGSUVEEAASFwoTQUdFTlRfU1RBVFVTX0FDVElWRRABEhkKFUFHRU5UX1NUQVRVU19JTkFDVElWRRACMt0ECg1BZ2VudHNTZXJ2aWNlElsKCkFnZW50c0xpc3QSJS5zZW50aW5lbC5hZ2VudHMudjEuQWdlbnRzTGlzdFJlcXVlc3QaJi5zZW50aW5lbC5hZ2VudHMudjEuQWdlbnRzTGlzdFJlc3BvbnNlElgKCUFnZW50c0dldBIkLnNlbnRpbmVsLmFnZW50cy52MS5BZ2VudHNHZXRSZXF1ZXN0GiUuc2VudGluZWwuYWdlbnRzLnYxLkFnZW50c0dldFJlc3BvbnNlEmEKDEFnZW50c0NyZWF0ZRInLnNlbnRpbmVsLmFnZW50cy52MS5BZ2VudHNDcmVhdGVSZXF1ZXN0Giguc2VudGluZWwuYWdlbnRzLnYxLkFnZW50c0NyZWF0ZVJlc3BvbnNlEmEKDEFnZW50c1VwZGF0ZRInLnNlbnRpbmVsLmFnZW50cy52MS5BZ2VudHNVcGRhdGVSZXF1ZXN0Giguc2VudGluZWwuYWdlbnRzLnYxLkFnZW50c1VwZGF0ZVJlc3BvbnNlEmEKDEFnZW50c0RlbGV0ZRInLnNlbnRpbmVsLmFnZW50cy52MS5BZ2VudHNEZWxldGVSZXF1ZXN0Giguc2VudGluZWwuYWdlbnRzLnYxLkFnZW50c0RlbGV0ZVJlc3BvbnNlEmwKD0FnZW50c1N1YnNjcmliZRIqLnNlbnRpbmVsLmFnZW50cy52MS5BZ2VudHNTdWJzY3JpYmVSZXF1ZXN0Gisuc2VudGluZWwuYWdlbnRzLnYxLkFnZW50c1N1YnNjcmliZVJlc3BvbnNlMAFC5AEKFmNvbS5zZW50aW5lbC5hZ2VudHMudjFCC0FnZW50c1Byb3RvUAFaU2dpdGh1Yi5jb20vc3h3ZWJkZXYvc2VudGluZWwvaW50ZXJuYWwvaHViL2h1YnNlcnZlci9hcGkvc2VudGluZWwvYWdlbnRzL3YxO2FnZW50c3YxogIDU0FYqgISU2VudGluZWwuQWdlbnRzLlYxygISU2VudGluZWxcQWdlbnRzXFYx4gIeU2VudGluZWxcQWdlbnRzXFYxXEdQQk1ldGFkYXRh6gIUU2VudGluZWw6OkFnZW50czo6VjFiBnByb3RvMw", [file_google_protobuf_timestamp, file_sentinel_system_v1_service]);
+  fileDesc("Ch9zZW50aW5lbC9hZ2VudHMvdjEvYWdlbnRzLnByb3RvEhJzZW50aW5lbC5hZ2VudHMudjEiDQoLQWdlbnRDb25maWcikAQKBUFnZW50EgoKAmlkGAEgASgJEgwKBG5hbWUYAiABKAkSEwoLZGVzY3JpcHRpb24YAyABKAkSEgoKdG9rZW5faGludBgEIAEoCRIYCgtmaW5nZXJwcmludBgFIAEoCUgAiAEBEisKBGtpbmQYBiABKA4yHS5zZW50aW5lbC5hZ2VudHMudjEuQWdlbnRLaW5kEi8KBnN0YXR1cxgHIAEoDjIfLnNlbnRpbmVsLmFnZW50cy52MS5BZ2VudFN0YXR1cxISCgppc19lbmFibGVkGAggASgIEhUKCGxvY2F0aW9uGAkgASgJSAGIAQESDAoEdGFncxgKIAMoCRIvCgZjb25maWcYCyABKAsyHy5zZW50aW5lbC5hZ2VudHMudjEuQWdlbnRDb25maWcSMwoLc3lzdGVtX2luZm8YDCABKAsyHi5zZW50aW5lbC5zeXN0ZW0udjEuU3lzdGVtSW5mbxIwCgxsYXN0X3NlZW5fYXQYDSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi4KCmNyZWF0ZWRfYXQYDiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi4KCnVwZGF0ZWRfYXQYDyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQg4KDF9maW5nZXJwcmludEILCglfbG9jYXRpb24iEwoRQWdlbnRzTGlzdFJlcXVlc3QiTQoSQWdlbnRzTGlzdFJlc3BvbnNlEigKBWl0ZW1zGAEgAygLMhkuc2VudGluZWwuYWdlbnRzLnYxLkFnZW50Eg0KBWNvdW50GAIgASgNIh4KEEFnZW50c0dldFJlcXVlc3QSCgoCaWQYASABKAkiPAoRQWdlbnRzR2V0UmVzcG9uc2USJwoEaXRlbRgBIAEoCzIZLnNlbnRpbmVsLmFnZW50cy52MS5BZ2VudCKLAQoTQWdlbnRzQ3JlYXRlUmVxdWVzdBIMCgRuYW1lGAEgASgJEhMKC2Rlc2NyaXB0aW9uGAIgASgJEhIKCmlzX2VuYWJsZWQYAyABKAgSDAoEdGFncxgEIAMoCRIvCgZjb25maWcYBSABKAsyHy5zZW50aW5lbC5hZ2VudHMudjEuQWdlbnRDb25maWci7QIKFEFnZW50c0NyZWF0ZVJlc3BvbnNlEgoKAmlkGAEgASgJEgwKBG5hbWUYAiABKAkSEwoLZGVzY3JpcHRpb24YAyABKAkSDQoFdG9rZW4YBCABKAkSEgoKdG9rZW5faGludBgFIAEoCRIvCgZzdGF0dXMYBiABKA4yHy5zZW50aW5lbC5hZ2VudHMudjEuQWdlbnRTdGF0dXMSKwoEa2luZBgHIAEoDjIdLnNlbnRpbmVsLmFnZW50cy52MS5BZ2VudEtpbmQSEgoKaXNfZW5hYmxlZBgIIAEoCBIVCghsb2NhdGlvbhgJIAEoCUgAiAEBEgwKBHRhZ3MYCiADKAkSLwoGY29uZmlnGAsgASgLMh8uc2VudGluZWwuYWdlbnRzLnYxLkFnZW50Q29uZmlnEi4KCmNyZWF0ZWRfYXQYDCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQgsKCV9sb2NhdGlvbiK7AQoTQWdlbnRzVXBkYXRlUmVxdWVzdBIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEhMKC2Rlc2NyaXB0aW9uGAMgASgJEhIKCmlzX2VuYWJsZWQYBCABKAgSFQoIbG9jYXRpb24YBSABKAlIAIgBARIMCgR0YWdzGAYgAygJEi8KBmNvbmZpZxgHIAEoCzIfLnNlbnRpbmVsLmFnZW50cy52MS5BZ2VudENvbmZpZ0ILCglfbG9jYXRpb24iPwoUQWdlbnRzVXBkYXRlUmVzcG9uc2USJwoEaXRlbRgBIAEoCzIZLnNlbnRpbmVsLmFnZW50cy52MS5BZ2VudCIhChNBZ2VudHNEZWxldGVSZXF1ZXN0EgoKAmlkGAEgASgJIhYKFEFnZW50c0RlbGV0ZVJlc3BvbnNlIhgKFkFnZW50c1N1YnNjcmliZVJlcXVlc3QiGQoXQWdlbnRzU3Vic2NyaWJlUmVzcG9uc2UqXwoLQWdlbnRTdGF0dXMSHAoYQUdFTlRfU1RBVFVTX1VOU1BFQ0lGSUVEEAASFwoTQUdFTlRfU1RBVFVTX0FDVElWRRABEhkKFUFHRU5UX1NUQVRVU19JTkFDVElWRRACKlQKCUFnZW50S2luZBIaChZBR0VOVF9LSU5EX1VOU1BFQ0lGSUVEEAASEgoOQUdFTlRfS0lORF9IVUIQARIXChNBR0VOVF9LSU5EX0VYVEVSTkFMEAIy3QQKDUFnZW50c1NlcnZpY2USWwoKQWdlbnRzTGlzdBIlLnNlbnRpbmVsLmFnZW50cy52MS5BZ2VudHNMaXN0UmVxdWVzdBomLnNlbnRpbmVsLmFnZW50cy52MS5BZ2VudHNMaXN0UmVzcG9uc2USWAoJQWdlbnRzR2V0EiQuc2VudGluZWwuYWdlbnRzLnYxLkFnZW50c0dldFJlcXVlc3QaJS5zZW50aW5lbC5hZ2VudHMudjEuQWdlbnRzR2V0UmVzcG9uc2USYQoMQWdlbnRzQ3JlYXRlEicuc2VudGluZWwuYWdlbnRzLnYxLkFnZW50c0NyZWF0ZVJlcXVlc3QaKC5zZW50aW5lbC5hZ2VudHMudjEuQWdlbnRzQ3JlYXRlUmVzcG9uc2USYQoMQWdlbnRzVXBkYXRlEicuc2VudGluZWwuYWdlbnRzLnYxLkFnZW50c1VwZGF0ZVJlcXVlc3QaKC5zZW50aW5lbC5hZ2VudHMudjEuQWdlbnRzVXBkYXRlUmVzcG9uc2USYQoMQWdlbnRzRGVsZXRlEicuc2VudGluZWwuYWdlbnRzLnYxLkFnZW50c0RlbGV0ZVJlcXVlc3QaKC5zZW50aW5lbC5hZ2VudHMudjEuQWdlbnRzRGVsZXRlUmVzcG9uc2USbAoPQWdlbnRzU3Vic2NyaWJlEiouc2VudGluZWwuYWdlbnRzLnYxLkFnZW50c1N1YnNjcmliZVJlcXVlc3QaKy5zZW50aW5lbC5hZ2VudHMudjEuQWdlbnRzU3Vic2NyaWJlUmVzcG9uc2UwAULkAQoWY29tLnNlbnRpbmVsLmFnZW50cy52MUILQWdlbnRzUHJvdG9QAVpTZ2l0aHViLmNvbS9zeHdlYmRldi9zZW50aW5lbC9pbnRlcm5hbC9odWIvaHVic2VydmVyL2FwaS9zZW50aW5lbC9hZ2VudHMvdjE7YWdlbnRzdjGiAgNTQViqAhJTZW50aW5lbC5BZ2VudHMuVjHKAhJTZW50aW5lbFxBZ2VudHNcVjHiAh5TZW50aW5lbFxBZ2VudHNcVjFcR1BCTWV0YWRhdGHqAhRTZW50aW5lbDo6QWdlbnRzOjpWMWIGcHJvdG8z", [file_google_protobuf_timestamp, file_sentinel_system_v1_service]);
 
 /**
  * @generated from message sentinel.agents.v1.AgentConfig
@@ -59,42 +59,52 @@ export type Agent = Message<"sentinel.agents.v1.Agent"> & {
   fingerprint?: string;
 
   /**
-   * @generated from field: sentinel.agents.v1.AgentStatus status = 6;
+   * @generated from field: sentinel.agents.v1.AgentKind kind = 6;
+   */
+  kind: AgentKind;
+
+  /**
+   * @generated from field: sentinel.agents.v1.AgentStatus status = 7;
    */
   status: AgentStatus;
 
   /**
-   * @generated from field: bool is_enabled = 7;
+   * @generated from field: bool is_enabled = 8;
    */
   isEnabled: boolean;
 
   /**
-   * @generated from field: repeated string tags = 8;
+   * @generated from field: optional string location = 9;
+   */
+  location?: string;
+
+  /**
+   * @generated from field: repeated string tags = 10;
    */
   tags: string[];
 
   /**
-   * @generated from field: sentinel.agents.v1.AgentConfig config = 9;
+   * @generated from field: sentinel.agents.v1.AgentConfig config = 11;
    */
   config?: AgentConfig;
 
   /**
-   * @generated from field: sentinel.system.v1.SystemInfo system_info = 10;
+   * @generated from field: sentinel.system.v1.SystemInfo system_info = 12;
    */
   systemInfo?: SystemInfo;
 
   /**
-   * @generated from field: google.protobuf.Timestamp last_seen_at = 11;
+   * @generated from field: google.protobuf.Timestamp last_seen_at = 13;
    */
   lastSeenAt?: Timestamp;
 
   /**
-   * @generated from field: google.protobuf.Timestamp created_at = 12;
+   * @generated from field: google.protobuf.Timestamp created_at = 14;
    */
   createdAt?: Timestamp;
 
   /**
-   * @generated from field: google.protobuf.Timestamp updated_at = 13;
+   * @generated from field: google.protobuf.Timestamp updated_at = 15;
    */
   updatedAt?: Timestamp;
 };
@@ -253,22 +263,32 @@ export type AgentsCreateResponse = Message<"sentinel.agents.v1.AgentsCreateRespo
   status: AgentStatus;
 
   /**
-   * @generated from field: bool is_enabled = 7;
+   * @generated from field: sentinel.agents.v1.AgentKind kind = 7;
+   */
+  kind: AgentKind;
+
+  /**
+   * @generated from field: bool is_enabled = 8;
    */
   isEnabled: boolean;
 
   /**
-   * @generated from field: repeated string tags = 8;
+   * @generated from field: optional string location = 9;
+   */
+  location?: string;
+
+  /**
+   * @generated from field: repeated string tags = 10;
    */
   tags: string[];
 
   /**
-   * @generated from field: sentinel.agents.v1.AgentConfig config = 9;
+   * @generated from field: sentinel.agents.v1.AgentConfig config = 11;
    */
   config?: AgentConfig;
 
   /**
-   * @generated from field: google.protobuf.Timestamp created_at = 10;
+   * @generated from field: google.protobuf.Timestamp created_at = 12;
    */
   createdAt?: Timestamp;
 };
@@ -307,12 +327,17 @@ export type AgentsUpdateRequest = Message<"sentinel.agents.v1.AgentsUpdateReques
   isEnabled: boolean;
 
   /**
-   * @generated from field: repeated string tags = 5;
+   * @generated from field: optional string location = 5;
+   */
+  location?: string;
+
+  /**
+   * @generated from field: repeated string tags = 6;
    */
   tags: string[];
 
   /**
-   * @generated from field: sentinel.agents.v1.AgentConfig config = 6;
+   * @generated from field: sentinel.agents.v1.AgentConfig config = 7;
    */
   config?: AgentConfig;
 };
@@ -426,6 +451,32 @@ export enum AgentStatus {
  */
 export const AgentStatusSchema: GenEnum<AgentStatus> = /*@__PURE__*/
   enumDesc(file_sentinel_agents_v1_agents, 0);
+
+/**
+ * @generated from enum sentinel.agents.v1.AgentKind
+ */
+export enum AgentKind {
+  /**
+   * @generated from enum value: AGENT_KIND_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: AGENT_KIND_HUB = 1;
+   */
+  HUB = 1,
+
+  /**
+   * @generated from enum value: AGENT_KIND_EXTERNAL = 2;
+   */
+  EXTERNAL = 2,
+}
+
+/**
+ * Describes the enum sentinel.agents.v1.AgentKind.
+ */
+export const AgentKindSchema: GenEnum<AgentKind> = /*@__PURE__*/
+  enumDesc(file_sentinel_agents_v1_agents, 1);
 
 /**
  * AgentsService is the service for managing agents.

@@ -19,8 +19,8 @@ type AgentConfig struct{}
 type AgentKindType string
 
 const (
-	AgentKindTypeHub   AgentKindType = "hub"
-	AgentKindTypeAgent AgentKindType = "agent"
+	AgentKindTypeHub      AgentKindType = "hub"
+	AgentKindTypeExternal AgentKindType = "external"
 )
 
 func (s AgentKindType) String() string {
@@ -30,7 +30,7 @@ func (s AgentKindType) String() string {
 // Validate agent kind
 func (s AgentKindType) Validate() error {
 	switch s {
-	case AgentKindTypeHub, AgentKindTypeAgent:
+	case AgentKindTypeHub, AgentKindTypeExternal:
 		return nil
 	default:
 		return fmt.Errorf("invalid agent kind: %s", s)

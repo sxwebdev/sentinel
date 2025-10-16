@@ -72,6 +72,55 @@ func (AgentStatus) EnumDescriptor() ([]byte, []int) {
 	return file_sentinel_agents_v1_agents_proto_rawDescGZIP(), []int{0}
 }
 
+type AgentKind int32
+
+const (
+	AgentKind_AGENT_KIND_UNSPECIFIED AgentKind = 0
+	AgentKind_AGENT_KIND_HUB         AgentKind = 1
+	AgentKind_AGENT_KIND_EXTERNAL    AgentKind = 2
+)
+
+// Enum value maps for AgentKind.
+var (
+	AgentKind_name = map[int32]string{
+		0: "AGENT_KIND_UNSPECIFIED",
+		1: "AGENT_KIND_HUB",
+		2: "AGENT_KIND_EXTERNAL",
+	}
+	AgentKind_value = map[string]int32{
+		"AGENT_KIND_UNSPECIFIED": 0,
+		"AGENT_KIND_HUB":         1,
+		"AGENT_KIND_EXTERNAL":    2,
+	}
+)
+
+func (x AgentKind) Enum() *AgentKind {
+	p := new(AgentKind)
+	*p = x
+	return p
+}
+
+func (x AgentKind) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (AgentKind) Descriptor() protoreflect.EnumDescriptor {
+	return file_sentinel_agents_v1_agents_proto_enumTypes[1].Descriptor()
+}
+
+func (AgentKind) Type() protoreflect.EnumType {
+	return &file_sentinel_agents_v1_agents_proto_enumTypes[1]
+}
+
+func (x AgentKind) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use AgentKind.Descriptor instead.
+func (AgentKind) EnumDescriptor() ([]byte, []int) {
+	return file_sentinel_agents_v1_agents_proto_rawDescGZIP(), []int{1}
+}
+
 type AgentConfig struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -115,14 +164,16 @@ type Agent struct {
 	Description   string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
 	TokenHint     string                 `protobuf:"bytes,4,opt,name=token_hint,json=tokenHint,proto3" json:"token_hint,omitempty"`
 	Fingerprint   *string                `protobuf:"bytes,5,opt,name=fingerprint,proto3,oneof" json:"fingerprint,omitempty"`
-	Status        AgentStatus            `protobuf:"varint,6,opt,name=status,proto3,enum=sentinel.agents.v1.AgentStatus" json:"status,omitempty"`
-	IsEnabled     bool                   `protobuf:"varint,7,opt,name=is_enabled,json=isEnabled,proto3" json:"is_enabled,omitempty"`
-	Tags          []string               `protobuf:"bytes,8,rep,name=tags,proto3" json:"tags,omitempty"`
-	Config        *AgentConfig           `protobuf:"bytes,9,opt,name=config,proto3" json:"config,omitempty"`
-	SystemInfo    *v1.SystemInfo         `protobuf:"bytes,10,opt,name=system_info,json=systemInfo,proto3" json:"system_info,omitempty"`
-	LastSeenAt    *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=last_seen_at,json=lastSeenAt,proto3" json:"last_seen_at,omitempty"`
-	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,12,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,13,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	Kind          AgentKind              `protobuf:"varint,6,opt,name=kind,proto3,enum=sentinel.agents.v1.AgentKind" json:"kind,omitempty"`
+	Status        AgentStatus            `protobuf:"varint,7,opt,name=status,proto3,enum=sentinel.agents.v1.AgentStatus" json:"status,omitempty"`
+	IsEnabled     bool                   `protobuf:"varint,8,opt,name=is_enabled,json=isEnabled,proto3" json:"is_enabled,omitempty"`
+	Location      *string                `protobuf:"bytes,9,opt,name=location,proto3,oneof" json:"location,omitempty"`
+	Tags          []string               `protobuf:"bytes,10,rep,name=tags,proto3" json:"tags,omitempty"`
+	Config        *AgentConfig           `protobuf:"bytes,11,opt,name=config,proto3" json:"config,omitempty"`
+	SystemInfo    *v1.SystemInfo         `protobuf:"bytes,12,opt,name=system_info,json=systemInfo,proto3" json:"system_info,omitempty"`
+	LastSeenAt    *timestamppb.Timestamp `protobuf:"bytes,13,opt,name=last_seen_at,json=lastSeenAt,proto3" json:"last_seen_at,omitempty"`
+	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,14,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,15,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -192,6 +243,13 @@ func (x *Agent) GetFingerprint() string {
 	return ""
 }
 
+func (x *Agent) GetKind() AgentKind {
+	if x != nil {
+		return x.Kind
+	}
+	return AgentKind_AGENT_KIND_UNSPECIFIED
+}
+
 func (x *Agent) GetStatus() AgentStatus {
 	if x != nil {
 		return x.Status
@@ -204,6 +262,13 @@ func (x *Agent) GetIsEnabled() bool {
 		return x.IsEnabled
 	}
 	return false
+}
+
+func (x *Agent) GetLocation() string {
+	if x != nil && x.Location != nil {
+		return *x.Location
+	}
+	return ""
 }
 
 func (x *Agent) GetTags() []string {
@@ -511,10 +576,12 @@ type AgentsCreateResponse struct {
 	Token         string                 `protobuf:"bytes,4,opt,name=token,proto3" json:"token,omitempty"`
 	TokenHint     string                 `protobuf:"bytes,5,opt,name=token_hint,json=tokenHint,proto3" json:"token_hint,omitempty"`
 	Status        AgentStatus            `protobuf:"varint,6,opt,name=status,proto3,enum=sentinel.agents.v1.AgentStatus" json:"status,omitempty"`
-	IsEnabled     bool                   `protobuf:"varint,7,opt,name=is_enabled,json=isEnabled,proto3" json:"is_enabled,omitempty"`
-	Tags          []string               `protobuf:"bytes,8,rep,name=tags,proto3" json:"tags,omitempty"`
-	Config        *AgentConfig           `protobuf:"bytes,9,opt,name=config,proto3" json:"config,omitempty"`
-	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	Kind          AgentKind              `protobuf:"varint,7,opt,name=kind,proto3,enum=sentinel.agents.v1.AgentKind" json:"kind,omitempty"`
+	IsEnabled     bool                   `protobuf:"varint,8,opt,name=is_enabled,json=isEnabled,proto3" json:"is_enabled,omitempty"`
+	Location      *string                `protobuf:"bytes,9,opt,name=location,proto3,oneof" json:"location,omitempty"`
+	Tags          []string               `protobuf:"bytes,10,rep,name=tags,proto3" json:"tags,omitempty"`
+	Config        *AgentConfig           `protobuf:"bytes,11,opt,name=config,proto3" json:"config,omitempty"`
+	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,12,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -591,11 +658,25 @@ func (x *AgentsCreateResponse) GetStatus() AgentStatus {
 	return AgentStatus_AGENT_STATUS_UNSPECIFIED
 }
 
+func (x *AgentsCreateResponse) GetKind() AgentKind {
+	if x != nil {
+		return x.Kind
+	}
+	return AgentKind_AGENT_KIND_UNSPECIFIED
+}
+
 func (x *AgentsCreateResponse) GetIsEnabled() bool {
 	if x != nil {
 		return x.IsEnabled
 	}
 	return false
+}
+
+func (x *AgentsCreateResponse) GetLocation() string {
+	if x != nil && x.Location != nil {
+		return *x.Location
+	}
+	return ""
 }
 
 func (x *AgentsCreateResponse) GetTags() []string {
@@ -626,8 +707,9 @@ type AgentsUpdateRequest struct {
 	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	Description   string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
 	IsEnabled     bool                   `protobuf:"varint,4,opt,name=is_enabled,json=isEnabled,proto3" json:"is_enabled,omitempty"`
-	Tags          []string               `protobuf:"bytes,5,rep,name=tags,proto3" json:"tags,omitempty"`
-	Config        *AgentConfig           `protobuf:"bytes,6,opt,name=config,proto3" json:"config,omitempty"`
+	Location      *string                `protobuf:"bytes,5,opt,name=location,proto3,oneof" json:"location,omitempty"`
+	Tags          []string               `protobuf:"bytes,6,rep,name=tags,proto3" json:"tags,omitempty"`
+	Config        *AgentConfig           `protobuf:"bytes,7,opt,name=config,proto3" json:"config,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -688,6 +770,13 @@ func (x *AgentsUpdateRequest) GetIsEnabled() bool {
 		return x.IsEnabled
 	}
 	return false
+}
+
+func (x *AgentsUpdateRequest) GetLocation() string {
+	if x != nil && x.Location != nil {
+		return *x.Location
+	}
+	return ""
 }
 
 func (x *AgentsUpdateRequest) GetTags() []string {
@@ -907,29 +996,32 @@ var File_sentinel_agents_v1_agents_proto protoreflect.FileDescriptor
 const file_sentinel_agents_v1_agents_proto_rawDesc = "" +
 	"\n" +
 	"\x1fsentinel/agents/v1/agents.proto\x12\x12sentinel.agents.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a sentinel/system/v1/service.proto\"\r\n" +
-	"\vAgentConfig\"\xbd\x04\n" +
+	"\vAgentConfig\"\x9e\x05\n" +
 	"\x05Agent\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
 	"\vdescription\x18\x03 \x01(\tR\vdescription\x12\x1d\n" +
 	"\n" +
 	"token_hint\x18\x04 \x01(\tR\ttokenHint\x12%\n" +
-	"\vfingerprint\x18\x05 \x01(\tH\x00R\vfingerprint\x88\x01\x01\x127\n" +
-	"\x06status\x18\x06 \x01(\x0e2\x1f.sentinel.agents.v1.AgentStatusR\x06status\x12\x1d\n" +
+	"\vfingerprint\x18\x05 \x01(\tH\x00R\vfingerprint\x88\x01\x01\x121\n" +
+	"\x04kind\x18\x06 \x01(\x0e2\x1d.sentinel.agents.v1.AgentKindR\x04kind\x127\n" +
+	"\x06status\x18\a \x01(\x0e2\x1f.sentinel.agents.v1.AgentStatusR\x06status\x12\x1d\n" +
 	"\n" +
-	"is_enabled\x18\a \x01(\bR\tisEnabled\x12\x12\n" +
-	"\x04tags\x18\b \x03(\tR\x04tags\x127\n" +
-	"\x06config\x18\t \x01(\v2\x1f.sentinel.agents.v1.AgentConfigR\x06config\x12?\n" +
-	"\vsystem_info\x18\n" +
-	" \x01(\v2\x1e.sentinel.system.v1.SystemInfoR\n" +
+	"is_enabled\x18\b \x01(\bR\tisEnabled\x12\x1f\n" +
+	"\blocation\x18\t \x01(\tH\x01R\blocation\x88\x01\x01\x12\x12\n" +
+	"\x04tags\x18\n" +
+	" \x03(\tR\x04tags\x127\n" +
+	"\x06config\x18\v \x01(\v2\x1f.sentinel.agents.v1.AgentConfigR\x06config\x12?\n" +
+	"\vsystem_info\x18\f \x01(\v2\x1e.sentinel.system.v1.SystemInfoR\n" +
 	"systemInfo\x12<\n" +
-	"\flast_seen_at\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"\flast_seen_at\x18\r \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"lastSeenAt\x129\n" +
 	"\n" +
-	"created_at\x18\f \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
+	"created_at\x18\x0e \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
-	"updated_at\x18\r \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAtB\x0e\n" +
-	"\f_fingerprint\"\x13\n" +
+	"updated_at\x18\x0f \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAtB\x0e\n" +
+	"\f_fingerprintB\v\n" +
+	"\t_location\"\x13\n" +
 	"\x11AgentsListRequest\"[\n" +
 	"\x12AgentsListResponse\x12/\n" +
 	"\x05items\x18\x01 \x03(\v2\x19.sentinel.agents.v1.AgentR\x05items\x12\x14\n" +
@@ -944,7 +1036,7 @@ const file_sentinel_agents_v1_agents_proto_rawDesc = "" +
 	"\n" +
 	"is_enabled\x18\x03 \x01(\bR\tisEnabled\x12\x12\n" +
 	"\x04tags\x18\x04 \x03(\tR\x04tags\x127\n" +
-	"\x06config\x18\x05 \x01(\v2\x1f.sentinel.agents.v1.AgentConfigR\x06config\"\xf1\x02\n" +
+	"\x06config\x18\x05 \x01(\v2\x1f.sentinel.agents.v1.AgentConfigR\x06config\"\xd2\x03\n" +
 	"\x14AgentsCreateResponse\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
@@ -952,22 +1044,27 @@ const file_sentinel_agents_v1_agents_proto_rawDesc = "" +
 	"\x05token\x18\x04 \x01(\tR\x05token\x12\x1d\n" +
 	"\n" +
 	"token_hint\x18\x05 \x01(\tR\ttokenHint\x127\n" +
-	"\x06status\x18\x06 \x01(\x0e2\x1f.sentinel.agents.v1.AgentStatusR\x06status\x12\x1d\n" +
+	"\x06status\x18\x06 \x01(\x0e2\x1f.sentinel.agents.v1.AgentStatusR\x06status\x121\n" +
+	"\x04kind\x18\a \x01(\x0e2\x1d.sentinel.agents.v1.AgentKindR\x04kind\x12\x1d\n" +
 	"\n" +
-	"is_enabled\x18\a \x01(\bR\tisEnabled\x12\x12\n" +
-	"\x04tags\x18\b \x03(\tR\x04tags\x127\n" +
-	"\x06config\x18\t \x01(\v2\x1f.sentinel.agents.v1.AgentConfigR\x06config\x129\n" +
+	"is_enabled\x18\b \x01(\bR\tisEnabled\x12\x1f\n" +
+	"\blocation\x18\t \x01(\tH\x00R\blocation\x88\x01\x01\x12\x12\n" +
+	"\x04tags\x18\n" +
+	" \x03(\tR\x04tags\x127\n" +
+	"\x06config\x18\v \x01(\v2\x1f.sentinel.agents.v1.AgentConfigR\x06config\x129\n" +
 	"\n" +
-	"created_at\x18\n" +
-	" \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"\xc7\x01\n" +
+	"created_at\x18\f \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAtB\v\n" +
+	"\t_location\"\xf5\x01\n" +
 	"\x13AgentsUpdateRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
 	"\vdescription\x18\x03 \x01(\tR\vdescription\x12\x1d\n" +
 	"\n" +
-	"is_enabled\x18\x04 \x01(\bR\tisEnabled\x12\x12\n" +
-	"\x04tags\x18\x05 \x03(\tR\x04tags\x127\n" +
-	"\x06config\x18\x06 \x01(\v2\x1f.sentinel.agents.v1.AgentConfigR\x06config\"E\n" +
+	"is_enabled\x18\x04 \x01(\bR\tisEnabled\x12\x1f\n" +
+	"\blocation\x18\x05 \x01(\tH\x00R\blocation\x88\x01\x01\x12\x12\n" +
+	"\x04tags\x18\x06 \x03(\tR\x04tags\x127\n" +
+	"\x06config\x18\a \x01(\v2\x1f.sentinel.agents.v1.AgentConfigR\x06configB\v\n" +
+	"\t_location\"E\n" +
 	"\x14AgentsUpdateResponse\x12-\n" +
 	"\x04item\x18\x01 \x01(\v2\x19.sentinel.agents.v1.AgentR\x04item\"%\n" +
 	"\x13AgentsDeleteRequest\x12\x0e\n" +
@@ -978,7 +1075,11 @@ const file_sentinel_agents_v1_agents_proto_rawDesc = "" +
 	"\vAgentStatus\x12\x1c\n" +
 	"\x18AGENT_STATUS_UNSPECIFIED\x10\x00\x12\x17\n" +
 	"\x13AGENT_STATUS_ACTIVE\x10\x01\x12\x19\n" +
-	"\x15AGENT_STATUS_INACTIVE\x10\x022\xdd\x04\n" +
+	"\x15AGENT_STATUS_INACTIVE\x10\x02*T\n" +
+	"\tAgentKind\x12\x1a\n" +
+	"\x16AGENT_KIND_UNSPECIFIED\x10\x00\x12\x12\n" +
+	"\x0eAGENT_KIND_HUB\x10\x01\x12\x17\n" +
+	"\x13AGENT_KIND_EXTERNAL\x10\x022\xdd\x04\n" +
 	"\rAgentsService\x12[\n" +
 	"\n" +
 	"AgentsList\x12%.sentinel.agents.v1.AgentsListRequest\x1a&.sentinel.agents.v1.AgentsListResponse\x12X\n" +
@@ -1001,59 +1102,62 @@ func file_sentinel_agents_v1_agents_proto_rawDescGZIP() []byte {
 	return file_sentinel_agents_v1_agents_proto_rawDescData
 }
 
-var file_sentinel_agents_v1_agents_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_sentinel_agents_v1_agents_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
 var file_sentinel_agents_v1_agents_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
 var file_sentinel_agents_v1_agents_proto_goTypes = []any{
 	(AgentStatus)(0),                // 0: sentinel.agents.v1.AgentStatus
-	(*AgentConfig)(nil),             // 1: sentinel.agents.v1.AgentConfig
-	(*Agent)(nil),                   // 2: sentinel.agents.v1.Agent
-	(*AgentsListRequest)(nil),       // 3: sentinel.agents.v1.AgentsListRequest
-	(*AgentsListResponse)(nil),      // 4: sentinel.agents.v1.AgentsListResponse
-	(*AgentsGetRequest)(nil),        // 5: sentinel.agents.v1.AgentsGetRequest
-	(*AgentsGetResponse)(nil),       // 6: sentinel.agents.v1.AgentsGetResponse
-	(*AgentsCreateRequest)(nil),     // 7: sentinel.agents.v1.AgentsCreateRequest
-	(*AgentsCreateResponse)(nil),    // 8: sentinel.agents.v1.AgentsCreateResponse
-	(*AgentsUpdateRequest)(nil),     // 9: sentinel.agents.v1.AgentsUpdateRequest
-	(*AgentsUpdateResponse)(nil),    // 10: sentinel.agents.v1.AgentsUpdateResponse
-	(*AgentsDeleteRequest)(nil),     // 11: sentinel.agents.v1.AgentsDeleteRequest
-	(*AgentsDeleteResponse)(nil),    // 12: sentinel.agents.v1.AgentsDeleteResponse
-	(*AgentsSubscribeRequest)(nil),  // 13: sentinel.agents.v1.AgentsSubscribeRequest
-	(*AgentsSubscribeResponse)(nil), // 14: sentinel.agents.v1.AgentsSubscribeResponse
-	(*v1.SystemInfo)(nil),           // 15: sentinel.system.v1.SystemInfo
-	(*timestamppb.Timestamp)(nil),   // 16: google.protobuf.Timestamp
+	(AgentKind)(0),                  // 1: sentinel.agents.v1.AgentKind
+	(*AgentConfig)(nil),             // 2: sentinel.agents.v1.AgentConfig
+	(*Agent)(nil),                   // 3: sentinel.agents.v1.Agent
+	(*AgentsListRequest)(nil),       // 4: sentinel.agents.v1.AgentsListRequest
+	(*AgentsListResponse)(nil),      // 5: sentinel.agents.v1.AgentsListResponse
+	(*AgentsGetRequest)(nil),        // 6: sentinel.agents.v1.AgentsGetRequest
+	(*AgentsGetResponse)(nil),       // 7: sentinel.agents.v1.AgentsGetResponse
+	(*AgentsCreateRequest)(nil),     // 8: sentinel.agents.v1.AgentsCreateRequest
+	(*AgentsCreateResponse)(nil),    // 9: sentinel.agents.v1.AgentsCreateResponse
+	(*AgentsUpdateRequest)(nil),     // 10: sentinel.agents.v1.AgentsUpdateRequest
+	(*AgentsUpdateResponse)(nil),    // 11: sentinel.agents.v1.AgentsUpdateResponse
+	(*AgentsDeleteRequest)(nil),     // 12: sentinel.agents.v1.AgentsDeleteRequest
+	(*AgentsDeleteResponse)(nil),    // 13: sentinel.agents.v1.AgentsDeleteResponse
+	(*AgentsSubscribeRequest)(nil),  // 14: sentinel.agents.v1.AgentsSubscribeRequest
+	(*AgentsSubscribeResponse)(nil), // 15: sentinel.agents.v1.AgentsSubscribeResponse
+	(*v1.SystemInfo)(nil),           // 16: sentinel.system.v1.SystemInfo
+	(*timestamppb.Timestamp)(nil),   // 17: google.protobuf.Timestamp
 }
 var file_sentinel_agents_v1_agents_proto_depIdxs = []int32{
-	0,  // 0: sentinel.agents.v1.Agent.status:type_name -> sentinel.agents.v1.AgentStatus
-	1,  // 1: sentinel.agents.v1.Agent.config:type_name -> sentinel.agents.v1.AgentConfig
-	15, // 2: sentinel.agents.v1.Agent.system_info:type_name -> sentinel.system.v1.SystemInfo
-	16, // 3: sentinel.agents.v1.Agent.last_seen_at:type_name -> google.protobuf.Timestamp
-	16, // 4: sentinel.agents.v1.Agent.created_at:type_name -> google.protobuf.Timestamp
-	16, // 5: sentinel.agents.v1.Agent.updated_at:type_name -> google.protobuf.Timestamp
-	2,  // 6: sentinel.agents.v1.AgentsListResponse.items:type_name -> sentinel.agents.v1.Agent
-	2,  // 7: sentinel.agents.v1.AgentsGetResponse.item:type_name -> sentinel.agents.v1.Agent
-	1,  // 8: sentinel.agents.v1.AgentsCreateRequest.config:type_name -> sentinel.agents.v1.AgentConfig
-	0,  // 9: sentinel.agents.v1.AgentsCreateResponse.status:type_name -> sentinel.agents.v1.AgentStatus
-	1,  // 10: sentinel.agents.v1.AgentsCreateResponse.config:type_name -> sentinel.agents.v1.AgentConfig
-	16, // 11: sentinel.agents.v1.AgentsCreateResponse.created_at:type_name -> google.protobuf.Timestamp
-	1,  // 12: sentinel.agents.v1.AgentsUpdateRequest.config:type_name -> sentinel.agents.v1.AgentConfig
-	2,  // 13: sentinel.agents.v1.AgentsUpdateResponse.item:type_name -> sentinel.agents.v1.Agent
-	3,  // 14: sentinel.agents.v1.AgentsService.AgentsList:input_type -> sentinel.agents.v1.AgentsListRequest
-	5,  // 15: sentinel.agents.v1.AgentsService.AgentsGet:input_type -> sentinel.agents.v1.AgentsGetRequest
-	7,  // 16: sentinel.agents.v1.AgentsService.AgentsCreate:input_type -> sentinel.agents.v1.AgentsCreateRequest
-	9,  // 17: sentinel.agents.v1.AgentsService.AgentsUpdate:input_type -> sentinel.agents.v1.AgentsUpdateRequest
-	11, // 18: sentinel.agents.v1.AgentsService.AgentsDelete:input_type -> sentinel.agents.v1.AgentsDeleteRequest
-	13, // 19: sentinel.agents.v1.AgentsService.AgentsSubscribe:input_type -> sentinel.agents.v1.AgentsSubscribeRequest
-	4,  // 20: sentinel.agents.v1.AgentsService.AgentsList:output_type -> sentinel.agents.v1.AgentsListResponse
-	6,  // 21: sentinel.agents.v1.AgentsService.AgentsGet:output_type -> sentinel.agents.v1.AgentsGetResponse
-	8,  // 22: sentinel.agents.v1.AgentsService.AgentsCreate:output_type -> sentinel.agents.v1.AgentsCreateResponse
-	10, // 23: sentinel.agents.v1.AgentsService.AgentsUpdate:output_type -> sentinel.agents.v1.AgentsUpdateResponse
-	12, // 24: sentinel.agents.v1.AgentsService.AgentsDelete:output_type -> sentinel.agents.v1.AgentsDeleteResponse
-	14, // 25: sentinel.agents.v1.AgentsService.AgentsSubscribe:output_type -> sentinel.agents.v1.AgentsSubscribeResponse
-	20, // [20:26] is the sub-list for method output_type
-	14, // [14:20] is the sub-list for method input_type
-	14, // [14:14] is the sub-list for extension type_name
-	14, // [14:14] is the sub-list for extension extendee
-	0,  // [0:14] is the sub-list for field type_name
+	1,  // 0: sentinel.agents.v1.Agent.kind:type_name -> sentinel.agents.v1.AgentKind
+	0,  // 1: sentinel.agents.v1.Agent.status:type_name -> sentinel.agents.v1.AgentStatus
+	2,  // 2: sentinel.agents.v1.Agent.config:type_name -> sentinel.agents.v1.AgentConfig
+	16, // 3: sentinel.agents.v1.Agent.system_info:type_name -> sentinel.system.v1.SystemInfo
+	17, // 4: sentinel.agents.v1.Agent.last_seen_at:type_name -> google.protobuf.Timestamp
+	17, // 5: sentinel.agents.v1.Agent.created_at:type_name -> google.protobuf.Timestamp
+	17, // 6: sentinel.agents.v1.Agent.updated_at:type_name -> google.protobuf.Timestamp
+	3,  // 7: sentinel.agents.v1.AgentsListResponse.items:type_name -> sentinel.agents.v1.Agent
+	3,  // 8: sentinel.agents.v1.AgentsGetResponse.item:type_name -> sentinel.agents.v1.Agent
+	2,  // 9: sentinel.agents.v1.AgentsCreateRequest.config:type_name -> sentinel.agents.v1.AgentConfig
+	0,  // 10: sentinel.agents.v1.AgentsCreateResponse.status:type_name -> sentinel.agents.v1.AgentStatus
+	1,  // 11: sentinel.agents.v1.AgentsCreateResponse.kind:type_name -> sentinel.agents.v1.AgentKind
+	2,  // 12: sentinel.agents.v1.AgentsCreateResponse.config:type_name -> sentinel.agents.v1.AgentConfig
+	17, // 13: sentinel.agents.v1.AgentsCreateResponse.created_at:type_name -> google.protobuf.Timestamp
+	2,  // 14: sentinel.agents.v1.AgentsUpdateRequest.config:type_name -> sentinel.agents.v1.AgentConfig
+	3,  // 15: sentinel.agents.v1.AgentsUpdateResponse.item:type_name -> sentinel.agents.v1.Agent
+	4,  // 16: sentinel.agents.v1.AgentsService.AgentsList:input_type -> sentinel.agents.v1.AgentsListRequest
+	6,  // 17: sentinel.agents.v1.AgentsService.AgentsGet:input_type -> sentinel.agents.v1.AgentsGetRequest
+	8,  // 18: sentinel.agents.v1.AgentsService.AgentsCreate:input_type -> sentinel.agents.v1.AgentsCreateRequest
+	10, // 19: sentinel.agents.v1.AgentsService.AgentsUpdate:input_type -> sentinel.agents.v1.AgentsUpdateRequest
+	12, // 20: sentinel.agents.v1.AgentsService.AgentsDelete:input_type -> sentinel.agents.v1.AgentsDeleteRequest
+	14, // 21: sentinel.agents.v1.AgentsService.AgentsSubscribe:input_type -> sentinel.agents.v1.AgentsSubscribeRequest
+	5,  // 22: sentinel.agents.v1.AgentsService.AgentsList:output_type -> sentinel.agents.v1.AgentsListResponse
+	7,  // 23: sentinel.agents.v1.AgentsService.AgentsGet:output_type -> sentinel.agents.v1.AgentsGetResponse
+	9,  // 24: sentinel.agents.v1.AgentsService.AgentsCreate:output_type -> sentinel.agents.v1.AgentsCreateResponse
+	11, // 25: sentinel.agents.v1.AgentsService.AgentsUpdate:output_type -> sentinel.agents.v1.AgentsUpdateResponse
+	13, // 26: sentinel.agents.v1.AgentsService.AgentsDelete:output_type -> sentinel.agents.v1.AgentsDeleteResponse
+	15, // 27: sentinel.agents.v1.AgentsService.AgentsSubscribe:output_type -> sentinel.agents.v1.AgentsSubscribeResponse
+	22, // [22:28] is the sub-list for method output_type
+	16, // [16:22] is the sub-list for method input_type
+	16, // [16:16] is the sub-list for extension type_name
+	16, // [16:16] is the sub-list for extension extendee
+	0,  // [0:16] is the sub-list for field type_name
 }
 
 func init() { file_sentinel_agents_v1_agents_proto_init() }
@@ -1062,12 +1166,14 @@ func file_sentinel_agents_v1_agents_proto_init() {
 		return
 	}
 	file_sentinel_agents_v1_agents_proto_msgTypes[1].OneofWrappers = []any{}
+	file_sentinel_agents_v1_agents_proto_msgTypes[7].OneofWrappers = []any{}
+	file_sentinel_agents_v1_agents_proto_msgTypes[8].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_sentinel_agents_v1_agents_proto_rawDesc), len(file_sentinel_agents_v1_agents_proto_rawDesc)),
-			NumEnums:      1,
+			NumEnums:      2,
 			NumMessages:   14,
 			NumExtensions: 0,
 			NumServices:   1,

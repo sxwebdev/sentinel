@@ -73,7 +73,7 @@ func (s *Server) Authenticate(ctx context.Context, req *connect.Request[hubv1.Au
 		return nil, connect.NewError(connect.CodeUnauthenticated, err)
 	}
 
-	if err := s.baseservices.Agents().CheckAndUpsertFingerprint(ctx, agentData.Agent.ID, req.Msg.Fingerprint); err != nil {
+	if err := s.baseservices.Agents().CheckAndUpsertFingerprint(ctx, agentData.Agent.ID, agentData.Agent.ProjectID, req.Msg.Fingerprint); err != nil {
 		return nil, connect.NewError(connect.CodeUnauthenticated, err)
 	}
 

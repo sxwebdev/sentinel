@@ -40,6 +40,7 @@ func New(
 	authConfig config.AuthConfig,
 	receiver *receiver.Receiver,
 	dispatcher *dispatcher.Dispatcher,
+	systemInfo *models.SystemInfo,
 ) *BaseServices {
 	usersService := users.New(st)
 
@@ -55,8 +56,8 @@ func New(
 		time.Hour*24*30, // 30 days
 	)
 
-	projectsService := projects.New(st)
-	agentsService := agents.New(st, dispatcher)
+	agentsService := agents.New(st, dispatcher, systemInfo)
+	projectsService := projects.New(st, agentsService)
 	servicesService := service.New(st, receiver)
 	serviceStateService := servicestate.New(st)
 	incidentsService := incidents.New(st)

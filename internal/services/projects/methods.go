@@ -2,9 +2,13 @@ package projects
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/sxwebdev/sentinel/internal/models"
+	"github.com/sxwebdev/sentinel/internal/services/agents"
+	"github.com/sxwebdev/sentinel/internal/store/repos"
 	"github.com/sxwebdev/sentinel/internal/store/repos/repo_projects"
+	"github.com/sxwebdev/sentinel/internal/store/storecmn"
 	"github.com/sxwebdev/sentinel/internal/utils"
 )
 
@@ -40,7 +44,32 @@ func (s *Service) Create(ctx context.Context, params CreateParams) (*models.Proj
 		params.Settings.MonitorDefaults.Retries = 10
 	}
 
-	return s.store.Projects().Create(ctx, params)
+	var project *models.Project
+	if err := storecmn.WrapTx(ctx, s.store.SQLite(), func(tx *sql.Tx) error {
+		// Create project
+		var err error
+		project, err = s.store.Projects(repos.WithTx(tx)).Create(ctx, params)
+		if err != nil {
+			return err
+		}
+
+		// Create hub agent
+		_, err = s.agentsService.Create(ctx, agents.CreateParams{
+			Name:        "Internal Hub Agent",
+			Kind:        models.AgentKindTypeHub,
+			Description: "Hub agent",
+			ProjectID:   project.ID,
+		}, repos.WithTx(tx))
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	return project, nil
 }
 
 type UpdateParams = repo_projects.UpdateParams

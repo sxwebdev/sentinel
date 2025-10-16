@@ -12,9 +12,10 @@ import (
 
 type Querier interface {
 	Create(ctx context.Context, arg CreateParams) (*models.Agent, error)
-	Delete(ctx context.Context, id string) error
+	Delete(ctx context.Context, iD string, projectID string) error
 	Exist(ctx context.Context, id string) (int64, error)
 	GetByID(ctx context.Context, id string) (*models.Agent, error)
+	GetByIDAndProjectID(ctx context.Context, iD string, projectID string) (*models.Agent, error)
 }
 
 var _ Querier = (*Queries)(nil)

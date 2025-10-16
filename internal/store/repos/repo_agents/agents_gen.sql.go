@@ -68,11 +68,11 @@ func (q *Queries) Create(ctx context.Context, arg CreateParams) (*models.Agent, 
 }
 
 const delete = `-- name: Delete :exec
-DELETE FROM agents WHERE id=?
+DELETE FROM agents WHERE id=? AND project_id=?
 `
 
-func (q *Queries) Delete(ctx context.Context, id string) error {
-	_, err := q.db.ExecContext(ctx, delete, id)
+func (q *Queries) Delete(ctx context.Context, iD string, projectID string) error {
+	_, err := q.db.ExecContext(ctx, delete, iD, projectID)
 	return err
 }
 

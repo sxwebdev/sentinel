@@ -10,11 +10,46 @@ import (
 
 	"github.com/sxwebdev/sentinel/internal/dispatcher"
 	"github.com/sxwebdev/sentinel/internal/models"
+	"github.com/sxwebdev/sentinel/internal/store/repos"
 	"github.com/sxwebdev/sentinel/internal/store/repos/repo_agents"
 	"github.com/sxwebdev/sentinel/internal/store/storecmn"
 	"github.com/sxwebdev/sentinel/internal/utils"
 	"github.com/tkcrm/modules/pkg/db/dbutils"
 )
+
+// GetByID retrieves an agent by its ID
+func (s *Service) GetByID(ctx context.Context, id string) (*models.Agent, error) {
+	if id == "" {
+		return nil, storecmn.ErrEmptyID
+	}
+
+	agent, err := s.store.Agents().GetByID(ctx, id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, storecmn.ErrNotFound
+		}
+		return nil, err
+	}
+
+	return agent, nil
+}
+
+// GetByIDAndProjectID retrieves an agent by its ID
+func (s *Service) GetByIDAndProjectID(ctx context.Context, id string, projectID string) (*models.Agent, error) {
+	if id == "" {
+		return nil, storecmn.ErrEmptyID
+	}
+
+	agent, err := s.store.Agents().GetByIDAndProjectID(ctx, id, projectID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, storecmn.ErrNotFound
+		}
+		return nil, err
+	}
+
+	return agent, nil
+}
 
 type CreateParams struct {
 	Name        string
@@ -56,7 +91,7 @@ type CreateResponse struct {
 }
 
 // Create a new agent
-func (s *Service) Create(ctx context.Context, params CreateParams) (*CreateResponse, error) {
+func (s *Service) Create(ctx context.Context, params CreateParams, opts ...repos.Option) (*CreateResponse, error) {
 	if len(params.Tags) > 0 {
 		slices.Sort(params.Tags)
 	}
@@ -101,7 +136,7 @@ func (s *Service) Create(ctx context.Context, params CreateParams) (*CreateRespo
 		ProjectID:   params.ProjectID,
 	}
 
-	item, err := s.store.Agents().Create(ctx, createParams)
+	item, err := s.store.Agents(opts...).Create(ctx, createParams)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create agent: %w", err)
 	}
@@ -126,7 +161,22 @@ func (s *Service) Create(ctx context.Context, params CreateParams) (*CreateRespo
 
 // Delete an existing agent
 func (s *Service) Delete(ctx context.Context, id, projectID string) error {
-	if err := s.store.Agents().Delete(ctx, id); err != nil {
+	if id == "" {
+		return storecmn.ErrEmptyID
+	}
+
+	// get agent
+	agent, err := s.store.Agents().GetByIDAndProjectID(ctx, id, projectID)
+	if err != nil {
+		return err
+	}
+
+	// prevent deleting hub agents
+	if agent.Kind == models.AgentKindTypeHub {
+		return fmt.Errorf("hub agents cannot be deleted")
+	}
+
+	if err := s.store.Agents().Delete(ctx, id, projectID); err != nil {
 		return err
 	}
 
@@ -135,28 +185,25 @@ func (s *Service) Delete(ctx context.Context, id, projectID string) error {
 	return nil
 }
 
-// GetByID retrieves an agent by its ID
-func (s *Service) GetByID(ctx context.Context, id string) (*models.Agent, error) {
-	if id == "" {
-		return nil, storecmn.ErrEmptyID
-	}
-
-	agent, err := s.store.Agents().GetByID(ctx, id)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, storecmn.ErrNotFound
-		}
-		return nil, err
-	}
-
-	return agent, nil
-}
-
 type FindParams = repo_agents.FindParams
 
 // Find all agents with given filters and pagination
 func (s *Service) Find(ctx context.Context, params FindParams) (*storecmn.FindResponseWithCount[*models.Agent], error) {
-	return s.store.Agents().Find(ctx, params)
+	agents, err := s.store.Agents().Find(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, agent := range agents.Items {
+		if agent.Kind == models.AgentKindTypeHub {
+			agent.TokenHint = "-"
+			agent.Status = models.AgentStatusTypeActive
+			agent.LastSeenAt = utils.Pointer(time.Now())
+			agent.SystemInfo = *s.systemInfo
+		}
+	}
+
+	return agents, nil
 }
 
 type UpdateParams struct {
@@ -211,12 +258,6 @@ func (s *Service) Update(ctx context.Context, id, projectID string, params Updat
 		return nil, fmt.Errorf("failed to convert config to json raw message: %w", err)
 	}
 
-	// Convert system info to JSONField
-	systemInfo := storecmn.JSONField("{}")
-	if err := systemInfo.UnmarshalFromAny(params.SystemInfo); err != nil {
-		return nil, fmt.Errorf("failed to convert system info to json raw message: %w", err)
-	}
-
 	updateParams := repo_agents.UpdateRequest{
 		Agent: models.Agent{
 			Name:        params.Name,
@@ -226,7 +267,7 @@ func (s *Service) Update(ctx context.Context, id, projectID string, params Updat
 			IsEnabled:   params.IsEnabled,
 			Tags:        tags,
 			Config:      config,
-			SystemInfo:  systemInfo,
+			SystemInfo:  params.SystemInfo,
 			LastSeenAt:  params.LastSeenAt,
 		},
 		FieldMask: params.FieldMask,
@@ -243,7 +284,7 @@ func (s *Service) Update(ctx context.Context, id, projectID string, params Updat
 }
 
 // CheckAndUpsertFingerprint checks if the fingerprint is unique and updates it if so
-func (s *Service) CheckAndUpsertFingerprint(ctx context.Context, id, fingerprint string) error {
+func (s *Service) CheckAndUpsertFingerprint(ctx context.Context, id, projectID, fingerprint string) error {
 	if id == "" {
 		return storecmn.ErrEmptyID
 	}
@@ -253,7 +294,7 @@ func (s *Service) CheckAndUpsertFingerprint(ctx context.Context, id, fingerprint
 	}
 
 	// Check if the fingerprint is already used by another agent
-	existingAgent, err := s.GetByID(ctx, id)
+	existingAgent, err := s.GetByIDAndProjectID(ctx, id, projectID)
 	if err != nil {
 		return err
 	}

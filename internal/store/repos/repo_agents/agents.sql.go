@@ -7,6 +7,8 @@ package repo_agents
 
 import (
 	"context"
+
+	"github.com/sxwebdev/sentinel/internal/models"
 )
 
 const exist = `-- name: Exist :one
@@ -18,4 +20,33 @@ func (q *Queries) Exist(ctx context.Context, id string) (int64, error) {
 	var column_1 int64
 	err := row.Scan(&column_1)
 	return column_1, err
+}
+
+const getByIDAndProjectID = `-- name: GetByIDAndProjectID :one
+SELECT id, name, description, secret_hash, token_hint, fingerprint, kind, status, is_enabled, location, tags, config, system_info, project_id, last_seen_at, created_at, updated_at FROM agents WHERE id=? AND project_id=? LIMIT 1
+`
+
+func (q *Queries) GetByIDAndProjectID(ctx context.Context, iD string, projectID string) (*models.Agent, error) {
+	row := q.db.QueryRowContext(ctx, getByIDAndProjectID, iD, projectID)
+	var i models.Agent
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Description,
+		&i.SecretHash,
+		&i.TokenHint,
+		&i.Fingerprint,
+		&i.Kind,
+		&i.Status,
+		&i.IsEnabled,
+		&i.Location,
+		&i.Tags,
+		&i.Config,
+		&i.SystemInfo,
+		&i.ProjectID,
+		&i.LastSeenAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return &i, err
 }

@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS agents (
   secret_hash   TEXT NOT NULL,
   token_hint    TEXT NOT NULL,
   fingerprint   TEXT,
-  kind          TEXT NOT NULL DEFAULT 'agent' CHECK (kind IN ('hub','agent')),
+  kind          TEXT NOT NULL DEFAULT 'agent' CHECK (kind IN ('hub', 'external')),
   status        TEXT NOT NULL DEFAULT 'unknown',
   is_enabled    BOOLEAN NOT NULL DEFAULT 1,
   "location"    TEXT,

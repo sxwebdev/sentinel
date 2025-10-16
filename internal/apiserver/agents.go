@@ -110,7 +110,7 @@ func (s *AgentsServer) AgentsCreate(
 	params := agents.CreateParams{
 		Name:        req.Msg.GetName(),
 		Description: req.Msg.Description,
-		Kind:        models.AgentKindTypeAgent,
+		Kind:        models.AgentKindTypeExternal,
 		Tags:        append([]string(nil), req.Msg.GetTags()...),
 		Config:      models.AgentConfig{},
 		ProjectID:   ctxData.Project.ID,

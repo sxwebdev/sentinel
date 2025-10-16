@@ -6,6 +6,7 @@ import {
   agentsUpdate,
 } from "@/api/gen/sentinel/agents/v1/agents-AgentsService_connectquery";
 import {
+  AgentKind,
   AgentsSubscribeRequestSchema,
   AgentStatus,
   type Agent,
@@ -73,6 +74,17 @@ const statusTypeName = (type: AgentStatus): string => {
       return "inactive";
     case AgentStatus.UNSPECIFIED:
       return "unspecified";
+    default:
+      return "unknown";
+  }
+};
+
+const kindTypeName = (type: AgentKind): string => {
+  switch (type) {
+    case AgentKind.HUB:
+      return "hub";
+    case AgentKind.EXTERNAL:
+      return "external";
     default:
       return "unknown";
   }
@@ -479,6 +491,7 @@ const AgentsPage = () => {
               <TableHeader>
                 <TableRow className="bg-muted/50">
                   <TableHead>Name</TableHead>
+                  <TableHead>Kind</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Token</TableHead>
                   <TableHead>Is enabled</TableHead>
@@ -490,7 +503,7 @@ const AgentsPage = () => {
               <TableBody>
                 {q.data?.items?.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="h-24 text-center">
+                    <TableCell colSpan={8} className="h-24 text-center">
                       No agents found.
                     </TableCell>
                   </TableRow>
@@ -498,6 +511,17 @@ const AgentsPage = () => {
                   q.data?.items?.map((item) => (
                     <TableRow key={item.id}>
                       <TableCell>{item.name}</TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={
+                            item.kind === AgentKind.HUB
+                              ? "secondary"
+                              : "outline"
+                          }
+                        >
+                          {kindTypeName(item.kind)}
+                        </Badge>
+                      </TableCell>
                       <TableCell>
                         <Badge
                           variant={
@@ -557,15 +581,20 @@ const AgentsPage = () => {
                               </DropdownMenuItem>
                               {/* <DropdownMenuItem>Refresh token</DropdownMenuItem> */}
                             </DropdownMenuGroup>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              className="text-destructive focus:text-destructive"
-                              onClick={() => {
-                                setDeleteAgentId(item?.id);
-                              }}
-                            >
-                              <span>Delete</span>
-                            </DropdownMenuItem>
+
+                            {item.kind != AgentKind.HUB && (
+                              <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  className="text-destructive focus:text-destructive"
+                                  onClick={() => {
+                                    setDeleteAgentId(item?.id);
+                                  }}
+                                >
+                                  <span>Delete</span>
+                                </DropdownMenuItem>
+                              </>
+                            )}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
