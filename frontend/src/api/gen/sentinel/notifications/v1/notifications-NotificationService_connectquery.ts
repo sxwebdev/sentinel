@@ -33,3 +33,8 @@ export const providerTest = NotificationService.method.providerTest;
  * @generated from rpc sentinel.notifications.v1.NotificationService.HistoryList
  */
 export const historyList = NotificationService.method.historyList;
+
+/**
+ * @generated from rpc sentinel.notifications.v1.NotificationService.HistoryDeleteAll
+ */
+export const historyDeleteAll = NotificationService.method.historyDeleteAll;

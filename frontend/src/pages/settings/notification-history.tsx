@@ -1,5 +1,8 @@
 import { notificationsClient } from "@/api/api";
-import { historyList } from "@/api/gen/sentinel/notifications/v1/notifications-NotificationService_connectquery";
+import {
+  historyDeleteAll,
+  historyList,
+} from "@/api/gen/sentinel/notifications/v1/notifications-NotificationService_connectquery";
 import { HistorySubscribeRequestSchema } from "@/api/gen/sentinel/notifications/v1/notifications_pb";
 import PaginationTable from "@/shared/components/paginationTable";
 import { H4, P } from "@/shared/components/typography";
@@ -20,7 +23,7 @@ import {
 } from "@/shared/components/ui/table";
 import { create } from "@bufbuild/protobuf";
 import { timestampDate } from "@bufbuild/protobuf/wkt";
-import { useQuery } from "@connectrpc/connect-query";
+import { useMutation, useQuery } from "@connectrpc/connect-query";
 import { useRef, useState } from "react";
 import { useSubscriptionRefetch } from "@/shared/hooks/useSubscriptionRefetch";
 import { toast } from "sonner";
@@ -30,6 +33,16 @@ const NotificationHistoryPage = () => {
   const [filters, setFilters] = useState({ page: 1, pageSize: 10 });
   const q = useQuery(historyList, {
     common: { page: filters.page, pageSize: filters.pageSize },
+  });
+
+  const deleteAllMutation = useMutation(historyDeleteAll, {
+    onSuccess: () => {
+      toast.success("All notifications deleted successfully");
+      void q.refetch();
+    },
+    onError: (error) => {
+      toast.error((error as Error).message || "Failed to delete notifications");
+    },
   });
 
   // setup subscription to refetch on new events
@@ -56,7 +69,7 @@ const NotificationHistoryPage = () => {
           size="sm"
           variant="destructive"
           onClick={() => {
-            toast.info("Not implemented yet");
+            deleteAllMutation.mutate({});
           }}
         >
           <TrashIcon size={16} /> Delete all notifications

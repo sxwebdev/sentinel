@@ -230,7 +230,7 @@ type User struct {
 	Email     string    `db:"email" json:"email" validate:"required,email"`
 	Password  string    `db:"password" json:"password" validate:"required"`
 	FullName  string    `db:"full_name" json:"full_name"`
-	Role      string    `db:"role" json:"role" validate:"required,oneof=root admin user"`
+	Role      UserRole  `db:"role" json:"role" validate:"required,oneof=root admin user"`
 	Avatar    string    `db:"avatar" json:"avatar"`
 	CreatedAt time.Time `db:"created_at" json:"created_at"`
 	UpdatedAt time.Time `db:"updated_at" json:"updated_at"`

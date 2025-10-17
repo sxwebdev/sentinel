@@ -20,6 +20,8 @@ overrides:
       - column: users.password
         go_struct_tag: validate:"required"
       - column: users.role
+        go_type:
+          type: UserRole
         go_struct_tag: validate:"required,oneof=root admin user"
 
       # projects

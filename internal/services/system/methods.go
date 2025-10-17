@@ -2,7 +2,9 @@ package system
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/sxwebdev/sentinel/internal/models"
 	"github.com/sxwebdev/sentinel/internal/store/repos/repo_users"
 	"github.com/sxwebdev/sentinel/internal/utils"
 )
@@ -19,7 +21,7 @@ func (s *Service) Initialize(ctx context.Context, rootEmail, rootPassword string
 		return err
 	}
 	if exists {
-		return nil
+		return fmt.Errorf("system already initialized")
 	}
 
 	// Create user
@@ -27,7 +29,7 @@ func (s *Service) Initialize(ctx context.Context, rootEmail, rootPassword string
 		ID:       utils.GenerateULID(),
 		Email:    rootEmail,
 		Password: rootPassword,
-		Role:     "root",
+		Role:     models.UserRoleRoot,
 	})
 	if err != nil {
 		return err

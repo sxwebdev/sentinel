@@ -33,3 +33,9 @@ UPDATE notification_history
     sent_at = CURRENT_TIMESTAMP,
     updated_at = CURRENT_TIMESTAMP
   WHERE id = ?;
+
+-- name: DeleteAllByProjectID :exec
+DELETE FROM notification_history
+  WHERE provider_id in (
+    SELECT id FROM notification_providers WHERE project_id = ?
+  );

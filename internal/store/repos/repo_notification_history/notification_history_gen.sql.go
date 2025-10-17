@@ -48,12 +48,3 @@ func (q *Queries) Create(ctx context.Context, arg CreateParams) (*models.Notific
 	)
 	return &i, err
 }
-
-const delete = `-- name: Delete :exec
-DELETE FROM notification_history WHERE id=?
-`
-
-func (q *Queries) Delete(ctx context.Context, id string) error {
-	_, err := q.db.ExecContext(ctx, delete, id)
-	return err
-}

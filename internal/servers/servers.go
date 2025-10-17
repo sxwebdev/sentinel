@@ -5,15 +5,16 @@ import (
 	"net/http"
 	"time"
 
+	"connectrpc.com/authn"
 	"connectrpc.com/connect"
 	"connectrpc.com/grpcreflect"
 	"github.com/sxwebdev/sentinel/internal/alertresolver"
 	"github.com/sxwebdev/sentinel/internal/apiserver"
-	"github.com/sxwebdev/sentinel/internal/apiserver/interceptor"
 	"github.com/sxwebdev/sentinel/internal/hub/hubserver"
 	"github.com/sxwebdev/sentinel/internal/models"
 	"github.com/sxwebdev/sentinel/internal/services/baseservices"
 	"github.com/sxwebdev/sentinel/pkg/locker"
+	"github.com/sxwebdev/sentinel/pkg/rbacconnect"
 	"github.com/tkcrm/mx/logger"
 	"go.akshayshah.org/connectproto"
 	"golang.org/x/net/http2"
@@ -35,6 +36,7 @@ func New(
 	availableUpdateData *locker.Locker[models.AvailableUpdate],
 ) *Servers {
 	as := apiserver.New(gCtx, l, bs, systemInfo, availableUpdateData)
+
 	hs := hubserver.New(gCtx, l, bs, ar)
 
 	mux := http.NewServeMux()
@@ -62,15 +64,37 @@ func New(
 		),
 	)
 
-	apiInterceptor := interceptor.New(l, bs)
+	rbacProvider := rbacconnect.NewProvider(apiserver.UserPolicy())
+	rbacRoleExtractor := rbacconnect.RoleExtractorFunc(func(ctx context.Context) ([]rbacconnect.Role, error) {
+		ud, ok := authn.GetInfo(ctx).(*apiserver.UserDataContext)
+		if !ok || ud == nil || ud.User == nil {
+			return []rbacconnect.Role{apiserver.UserRoleAnonymous}, nil
+		}
+
+		roles := []rbacconnect.Role{ud.User.Role}
+
+		if ud.Project == nil {
+			roles = append(roles, apiserver.UserRoleSetup)
+		}
+
+		return roles, nil
+	})
+
+	rbacInterceptor := rbacconnect.NewInterceptor(rbacProvider, rbacconnect.Options{
+		RoleExtractor: rbacRoleExtractor,
+	})
+
+	asMiddlewares := apiserver.NewMiddlewares(bs, rbacProvider)
 
 	// register all apiserver handlers
 	for _, srv := range as.AllServers() {
-		path, h := srv.RegisterHandler(opts...)
+		path, h := srv.RegisterHandler(
+			append(opts, connect.WithInterceptors(rbacInterceptor))...,
+		)
 		rpcBases = append(rpcBases, path)
 		mux.Handle(
 			"/api"+path,
-			withCORS(http.StripPrefix("/api", apiInterceptor.ConnectRPCAuthMiddleware().Wrap(h))),
+			withCORS(http.StripPrefix("/api", asMiddlewares.Auth().Wrap(h))),
 		)
 	}
 

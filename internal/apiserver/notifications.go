@@ -281,6 +281,24 @@ func buildUpdateParamsFromProto(req *notificationsv1.ProviderUpdateRequest) (not
 	}, nil
 }
 
+// HistoryDeleteAll deletes all notification history items
+func (s *NotificationsServer) HistoryDeleteAll(
+	ctx context.Context,
+	_ *connect.Request[notificationsv1.HistoryDeleteAllRequest],
+) (*connect.Response[notificationsv1.HistoryDeleteAllResponse], error) {
+	ctxData, err := getUserDataContext(ctx)
+	if err != nil {
+		return nil, newConnectError(err)
+	}
+
+	if err := s.bs.Notifications().History().DeleteAllByProjectID(ctx, ctxData.Project.ID); err != nil {
+		return nil, newConnectError(err)
+	}
+
+	res := connect.NewResponse(&notificationsv1.HistoryDeleteAllResponse{})
+	return res, nil
+}
+
 // HistorySubscribe streams real-time notification history updates to the client
 func (s *NotificationsServer) HistorySubscribe(
 	ctx context.Context,

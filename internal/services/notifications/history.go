@@ -107,13 +107,13 @@ func (s *History) Create(ctx context.Context, params CreateHistoryParams) (*mode
 	return item, nil
 }
 
-// Delete deletes a notification history record by ID
-func (s *History) Delete(ctx context.Context, id string) error {
-	if id == "" {
+// DeleteAllByProjectID deletes all notification history records by project ID
+func (s *History) DeleteAllByProjectID(ctx context.Context, projectID string) error {
+	if projectID == "" {
 		return storecmn.ErrEmptyID
 	}
 
-	return s.store.NotificationHistory().Delete(ctx, id)
+	return s.store.NotificationHistory().DeleteAllByProjectID(ctx, projectID)
 }
 
 type FindHistoryParams struct {

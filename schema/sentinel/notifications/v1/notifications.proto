@@ -13,6 +13,8 @@ service NotificationService {
   rpc ProviderDelete(ProviderDeleteRequest) returns (ProviderDeleteResponse);
   rpc ProviderTest(ProviderTestRequest) returns (ProviderTestResponse);
   rpc HistoryList(HistoryListRequest) returns (HistoryListResponse);
+  rpc HistoryDeleteAll(HistoryDeleteAllRequest)
+      returns (HistoryDeleteAllResponse);
   rpc HistorySubscribe(HistorySubscribeRequest)
       returns (stream HistorySubscribeResponse);
 }
@@ -88,6 +90,10 @@ message HistoryListResponse {
   repeated HistoryItem items = 1;
   uint32 count = 2;
 }
+
+// HistoryDeleteAll deletes all notification history items.
+message HistoryDeleteAllRequest {}
+message HistoryDeleteAllResponse {}
 
 // HistorySubscribe subscribes to real-time notification history updates.
 message HistorySubscribeRequest {}

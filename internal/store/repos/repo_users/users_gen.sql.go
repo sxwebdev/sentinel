@@ -18,12 +18,12 @@ INSERT INTO users (id, email, password, full_name, role, avatar)
 `
 
 type CreateParams struct {
-	ID       string `db:"id" json:"id" validate:"required"`
-	Email    string `db:"email" json:"email" validate:"required,email"`
-	Password string `db:"password" json:"password" validate:"required"`
-	FullName string `db:"full_name" json:"full_name"`
-	Role     string `db:"role" json:"role" validate:"required,oneof=root admin user"`
-	Avatar   string `db:"avatar" json:"avatar"`
+	ID       string          `db:"id" json:"id" validate:"required"`
+	Email    string          `db:"email" json:"email" validate:"required,email"`
+	Password string          `db:"password" json:"password" validate:"required"`
+	FullName string          `db:"full_name" json:"full_name"`
+	Role     models.UserRole `db:"role" json:"role" validate:"required,oneof=root admin user"`
+	Avatar   string          `db:"avatar" json:"avatar"`
 }
 
 func (q *Queries) Create(ctx context.Context, arg CreateParams) (*models.User, error) {

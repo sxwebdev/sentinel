@@ -33,7 +33,7 @@ func ConvertUserFromProto(u *usersv1.User) *models.User {
 		ID:        u.Id,
 		Email:     u.Email,
 		FullName:  u.FullName,
-		Role:      u.Role,
+		Role:      models.UserRole(u.Role),
 		Avatar:    u.AvatarUrl,
 		CreatedAt: u.CreatedAt.AsTime(),
 		UpdatedAt: u.UpdatedAt.AsTime(),

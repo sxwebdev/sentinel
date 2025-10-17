@@ -945,6 +945,79 @@ func (x *HistoryListResponse) GetCount() uint32 {
 	return 0
 }
 
+// HistoryDeleteAll deletes all notification history items.
+type HistoryDeleteAllRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *HistoryDeleteAllRequest) Reset() {
+	*x = HistoryDeleteAllRequest{}
+	mi := &file_sentinel_notifications_v1_notifications_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HistoryDeleteAllRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HistoryDeleteAllRequest) ProtoMessage() {}
+
+func (x *HistoryDeleteAllRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_sentinel_notifications_v1_notifications_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HistoryDeleteAllRequest.ProtoReflect.Descriptor instead.
+func (*HistoryDeleteAllRequest) Descriptor() ([]byte, []int) {
+	return file_sentinel_notifications_v1_notifications_proto_rawDescGZIP(), []int{16}
+}
+
+type HistoryDeleteAllResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *HistoryDeleteAllResponse) Reset() {
+	*x = HistoryDeleteAllResponse{}
+	mi := &file_sentinel_notifications_v1_notifications_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HistoryDeleteAllResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HistoryDeleteAllResponse) ProtoMessage() {}
+
+func (x *HistoryDeleteAllResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_sentinel_notifications_v1_notifications_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HistoryDeleteAllResponse.ProtoReflect.Descriptor instead.
+func (*HistoryDeleteAllResponse) Descriptor() ([]byte, []int) {
+	return file_sentinel_notifications_v1_notifications_proto_rawDescGZIP(), []int{17}
+}
+
 // HistorySubscribe subscribes to real-time notification history updates.
 type HistorySubscribeRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -954,7 +1027,7 @@ type HistorySubscribeRequest struct {
 
 func (x *HistorySubscribeRequest) Reset() {
 	*x = HistorySubscribeRequest{}
-	mi := &file_sentinel_notifications_v1_notifications_proto_msgTypes[16]
+	mi := &file_sentinel_notifications_v1_notifications_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -966,7 +1039,7 @@ func (x *HistorySubscribeRequest) String() string {
 func (*HistorySubscribeRequest) ProtoMessage() {}
 
 func (x *HistorySubscribeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sentinel_notifications_v1_notifications_proto_msgTypes[16]
+	mi := &file_sentinel_notifications_v1_notifications_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -979,7 +1052,7 @@ func (x *HistorySubscribeRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HistorySubscribeRequest.ProtoReflect.Descriptor instead.
 func (*HistorySubscribeRequest) Descriptor() ([]byte, []int) {
-	return file_sentinel_notifications_v1_notifications_proto_rawDescGZIP(), []int{16}
+	return file_sentinel_notifications_v1_notifications_proto_rawDescGZIP(), []int{18}
 }
 
 type HistorySubscribeResponse struct {
@@ -990,7 +1063,7 @@ type HistorySubscribeResponse struct {
 
 func (x *HistorySubscribeResponse) Reset() {
 	*x = HistorySubscribeResponse{}
-	mi := &file_sentinel_notifications_v1_notifications_proto_msgTypes[17]
+	mi := &file_sentinel_notifications_v1_notifications_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1002,7 +1075,7 @@ func (x *HistorySubscribeResponse) String() string {
 func (*HistorySubscribeResponse) ProtoMessage() {}
 
 func (x *HistorySubscribeResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sentinel_notifications_v1_notifications_proto_msgTypes[17]
+	mi := &file_sentinel_notifications_v1_notifications_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1015,7 +1088,7 @@ func (x *HistorySubscribeResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HistorySubscribeResponse.ProtoReflect.Descriptor instead.
 func (*HistorySubscribeResponse) Descriptor() ([]byte, []int) {
-	return file_sentinel_notifications_v1_notifications_proto_rawDescGZIP(), []int{17}
+	return file_sentinel_notifications_v1_notifications_proto_rawDescGZIP(), []int{19}
 }
 
 var File_sentinel_notifications_v1_notifications_proto protoreflect.FileDescriptor
@@ -1084,18 +1157,21 @@ const file_sentinel_notifications_v1_notifications_proto_rawDesc = "" +
 	"\x13HistoryListResponse\x12<\n" +
 	"\x05items\x18\x01 \x03(\v2&.sentinel.notifications.v1.HistoryItemR\x05items\x12\x14\n" +
 	"\x05count\x18\x02 \x01(\rR\x05count\"\x19\n" +
+	"\x17HistoryDeleteAllRequest\"\x1a\n" +
+	"\x18HistoryDeleteAllResponse\"\x19\n" +
 	"\x17HistorySubscribeRequest\"\x1a\n" +
 	"\x18HistorySubscribeResponse*I\n" +
 	"\fProviderType\x12\x1d\n" +
 	"\x19PROVIDER_TYPE_UNSPECIFIED\x10\x00\x12\x1a\n" +
-	"\x16PROVIDER_TYPE_SHOUTRRR\x10\x012\xcc\x06\n" +
+	"\x16PROVIDER_TYPE_SHOUTRRR\x10\x012\xc9\a\n" +
 	"\x13NotificationService\x12r\n" +
 	"\rProvidersList\x12/.sentinel.notifications.v1.ProvidersListRequest\x1a0.sentinel.notifications.v1.ProvidersListResponse\x12u\n" +
 	"\x0eProviderCreate\x120.sentinel.notifications.v1.ProviderCreateRequest\x1a1.sentinel.notifications.v1.ProviderCreateResponse\x12u\n" +
 	"\x0eProviderUpdate\x120.sentinel.notifications.v1.ProviderUpdateRequest\x1a1.sentinel.notifications.v1.ProviderUpdateResponse\x12u\n" +
 	"\x0eProviderDelete\x120.sentinel.notifications.v1.ProviderDeleteRequest\x1a1.sentinel.notifications.v1.ProviderDeleteResponse\x12o\n" +
 	"\fProviderTest\x12..sentinel.notifications.v1.ProviderTestRequest\x1a/.sentinel.notifications.v1.ProviderTestResponse\x12l\n" +
-	"\vHistoryList\x12-.sentinel.notifications.v1.HistoryListRequest\x1a..sentinel.notifications.v1.HistoryListResponse\x12}\n" +
+	"\vHistoryList\x12-.sentinel.notifications.v1.HistoryListRequest\x1a..sentinel.notifications.v1.HistoryListResponse\x12{\n" +
+	"\x10HistoryDeleteAll\x122.sentinel.notifications.v1.HistoryDeleteAllRequest\x1a3.sentinel.notifications.v1.HistoryDeleteAllResponse\x12}\n" +
 	"\x10HistorySubscribe\x122.sentinel.notifications.v1.HistorySubscribeRequest\x1a3.sentinel.notifications.v1.HistorySubscribeResponse0\x01B\x9c\x02\n" +
 	"\x1dcom.sentinel.notifications.v1B\x12NotificationsProtoP\x01Zagithub.com/sxwebdev/sentinel/internal/hub/hubserver/api/sentinel/notifications/v1;notificationsv1\xa2\x02\x03SNX\xaa\x02\x19Sentinel.Notifications.V1\xca\x02\x19Sentinel\\Notifications\\V1\xe2\x02%Sentinel\\Notifications\\V1\\GPBMetadata\xea\x02\x1bSentinel::Notifications::V1b\x06proto3"
 
@@ -1112,7 +1188,7 @@ func file_sentinel_notifications_v1_notifications_proto_rawDescGZIP() []byte {
 }
 
 var file_sentinel_notifications_v1_notifications_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_sentinel_notifications_v1_notifications_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
+var file_sentinel_notifications_v1_notifications_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
 var file_sentinel_notifications_v1_notifications_proto_goTypes = []any{
 	(ProviderType)(0),                // 0: sentinel.notifications.v1.ProviderType
 	(*ShoutrrrConfig)(nil),           // 1: sentinel.notifications.v1.ShoutrrrConfig
@@ -1131,21 +1207,23 @@ var file_sentinel_notifications_v1_notifications_proto_goTypes = []any{
 	(*ProviderTestResponse)(nil),     // 14: sentinel.notifications.v1.ProviderTestResponse
 	(*HistoryListRequest)(nil),       // 15: sentinel.notifications.v1.HistoryListRequest
 	(*HistoryListResponse)(nil),      // 16: sentinel.notifications.v1.HistoryListResponse
-	(*HistorySubscribeRequest)(nil),  // 17: sentinel.notifications.v1.HistorySubscribeRequest
-	(*HistorySubscribeResponse)(nil), // 18: sentinel.notifications.v1.HistorySubscribeResponse
-	(*timestamppb.Timestamp)(nil),    // 19: google.protobuf.Timestamp
-	(*v1.FindRequestCommon)(nil),     // 20: sentinel.common.v1.FindRequestCommon
+	(*HistoryDeleteAllRequest)(nil),  // 17: sentinel.notifications.v1.HistoryDeleteAllRequest
+	(*HistoryDeleteAllResponse)(nil), // 18: sentinel.notifications.v1.HistoryDeleteAllResponse
+	(*HistorySubscribeRequest)(nil),  // 19: sentinel.notifications.v1.HistorySubscribeRequest
+	(*HistorySubscribeResponse)(nil), // 20: sentinel.notifications.v1.HistorySubscribeResponse
+	(*timestamppb.Timestamp)(nil),    // 21: google.protobuf.Timestamp
+	(*v1.FindRequestCommon)(nil),     // 22: sentinel.common.v1.FindRequestCommon
 }
 var file_sentinel_notifications_v1_notifications_proto_depIdxs = []int32{
 	1,  // 0: sentinel.notifications.v1.ProviderConfig.shoutrrr:type_name -> sentinel.notifications.v1.ShoutrrrConfig
 	0,  // 1: sentinel.notifications.v1.Provider.type:type_name -> sentinel.notifications.v1.ProviderType
 	2,  // 2: sentinel.notifications.v1.Provider.config:type_name -> sentinel.notifications.v1.ProviderConfig
-	19, // 3: sentinel.notifications.v1.Provider.created_at:type_name -> google.protobuf.Timestamp
-	19, // 4: sentinel.notifications.v1.Provider.updated_at:type_name -> google.protobuf.Timestamp
-	19, // 5: sentinel.notifications.v1.HistoryItem.last_attempt_at:type_name -> google.protobuf.Timestamp
-	19, // 6: sentinel.notifications.v1.HistoryItem.sent_at:type_name -> google.protobuf.Timestamp
-	19, // 7: sentinel.notifications.v1.HistoryItem.created_at:type_name -> google.protobuf.Timestamp
-	19, // 8: sentinel.notifications.v1.HistoryItem.updated_at:type_name -> google.protobuf.Timestamp
+	21, // 3: sentinel.notifications.v1.Provider.created_at:type_name -> google.protobuf.Timestamp
+	21, // 4: sentinel.notifications.v1.Provider.updated_at:type_name -> google.protobuf.Timestamp
+	21, // 5: sentinel.notifications.v1.HistoryItem.last_attempt_at:type_name -> google.protobuf.Timestamp
+	21, // 6: sentinel.notifications.v1.HistoryItem.sent_at:type_name -> google.protobuf.Timestamp
+	21, // 7: sentinel.notifications.v1.HistoryItem.created_at:type_name -> google.protobuf.Timestamp
+	21, // 8: sentinel.notifications.v1.HistoryItem.updated_at:type_name -> google.protobuf.Timestamp
 	3,  // 9: sentinel.notifications.v1.ProvidersListResponse.items:type_name -> sentinel.notifications.v1.Provider
 	0,  // 10: sentinel.notifications.v1.ProviderCreateRequest.type:type_name -> sentinel.notifications.v1.ProviderType
 	2,  // 11: sentinel.notifications.v1.ProviderCreateRequest.config:type_name -> sentinel.notifications.v1.ProviderConfig
@@ -1153,7 +1231,7 @@ var file_sentinel_notifications_v1_notifications_proto_depIdxs = []int32{
 	0,  // 13: sentinel.notifications.v1.ProviderUpdateRequest.type:type_name -> sentinel.notifications.v1.ProviderType
 	2,  // 14: sentinel.notifications.v1.ProviderUpdateRequest.config:type_name -> sentinel.notifications.v1.ProviderConfig
 	3,  // 15: sentinel.notifications.v1.ProviderUpdateResponse.item:type_name -> sentinel.notifications.v1.Provider
-	20, // 16: sentinel.notifications.v1.HistoryListRequest.common:type_name -> sentinel.common.v1.FindRequestCommon
+	22, // 16: sentinel.notifications.v1.HistoryListRequest.common:type_name -> sentinel.common.v1.FindRequestCommon
 	4,  // 17: sentinel.notifications.v1.HistoryListResponse.items:type_name -> sentinel.notifications.v1.HistoryItem
 	5,  // 18: sentinel.notifications.v1.NotificationService.ProvidersList:input_type -> sentinel.notifications.v1.ProvidersListRequest
 	7,  // 19: sentinel.notifications.v1.NotificationService.ProviderCreate:input_type -> sentinel.notifications.v1.ProviderCreateRequest
@@ -1161,16 +1239,18 @@ var file_sentinel_notifications_v1_notifications_proto_depIdxs = []int32{
 	11, // 21: sentinel.notifications.v1.NotificationService.ProviderDelete:input_type -> sentinel.notifications.v1.ProviderDeleteRequest
 	13, // 22: sentinel.notifications.v1.NotificationService.ProviderTest:input_type -> sentinel.notifications.v1.ProviderTestRequest
 	15, // 23: sentinel.notifications.v1.NotificationService.HistoryList:input_type -> sentinel.notifications.v1.HistoryListRequest
-	17, // 24: sentinel.notifications.v1.NotificationService.HistorySubscribe:input_type -> sentinel.notifications.v1.HistorySubscribeRequest
-	6,  // 25: sentinel.notifications.v1.NotificationService.ProvidersList:output_type -> sentinel.notifications.v1.ProvidersListResponse
-	8,  // 26: sentinel.notifications.v1.NotificationService.ProviderCreate:output_type -> sentinel.notifications.v1.ProviderCreateResponse
-	10, // 27: sentinel.notifications.v1.NotificationService.ProviderUpdate:output_type -> sentinel.notifications.v1.ProviderUpdateResponse
-	12, // 28: sentinel.notifications.v1.NotificationService.ProviderDelete:output_type -> sentinel.notifications.v1.ProviderDeleteResponse
-	14, // 29: sentinel.notifications.v1.NotificationService.ProviderTest:output_type -> sentinel.notifications.v1.ProviderTestResponse
-	16, // 30: sentinel.notifications.v1.NotificationService.HistoryList:output_type -> sentinel.notifications.v1.HistoryListResponse
-	18, // 31: sentinel.notifications.v1.NotificationService.HistorySubscribe:output_type -> sentinel.notifications.v1.HistorySubscribeResponse
-	25, // [25:32] is the sub-list for method output_type
-	18, // [18:25] is the sub-list for method input_type
+	17, // 24: sentinel.notifications.v1.NotificationService.HistoryDeleteAll:input_type -> sentinel.notifications.v1.HistoryDeleteAllRequest
+	19, // 25: sentinel.notifications.v1.NotificationService.HistorySubscribe:input_type -> sentinel.notifications.v1.HistorySubscribeRequest
+	6,  // 26: sentinel.notifications.v1.NotificationService.ProvidersList:output_type -> sentinel.notifications.v1.ProvidersListResponse
+	8,  // 27: sentinel.notifications.v1.NotificationService.ProviderCreate:output_type -> sentinel.notifications.v1.ProviderCreateResponse
+	10, // 28: sentinel.notifications.v1.NotificationService.ProviderUpdate:output_type -> sentinel.notifications.v1.ProviderUpdateResponse
+	12, // 29: sentinel.notifications.v1.NotificationService.ProviderDelete:output_type -> sentinel.notifications.v1.ProviderDeleteResponse
+	14, // 30: sentinel.notifications.v1.NotificationService.ProviderTest:output_type -> sentinel.notifications.v1.ProviderTestResponse
+	16, // 31: sentinel.notifications.v1.NotificationService.HistoryList:output_type -> sentinel.notifications.v1.HistoryListResponse
+	18, // 32: sentinel.notifications.v1.NotificationService.HistoryDeleteAll:output_type -> sentinel.notifications.v1.HistoryDeleteAllResponse
+	20, // 33: sentinel.notifications.v1.NotificationService.HistorySubscribe:output_type -> sentinel.notifications.v1.HistorySubscribeResponse
+	26, // [26:34] is the sub-list for method output_type
+	18, // [18:26] is the sub-list for method input_type
 	18, // [18:18] is the sub-list for extension type_name
 	18, // [18:18] is the sub-list for extension extendee
 	0,  // [0:18] is the sub-list for field type_name
@@ -1191,7 +1271,7 @@ func file_sentinel_notifications_v1_notifications_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_sentinel_notifications_v1_notifications_proto_rawDesc), len(file_sentinel_notifications_v1_notifications_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   18,
+			NumMessages:   20,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

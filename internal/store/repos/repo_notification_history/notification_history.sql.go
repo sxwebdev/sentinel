@@ -13,6 +13,18 @@ import (
 	"github.com/sxwebdev/sentinel/internal/store/storecmn"
 )
 
+const deleteAllByProjectID = `-- name: DeleteAllByProjectID :exec
+DELETE FROM notification_history
+  WHERE provider_id in (
+    SELECT id FROM notification_providers WHERE project_id = ?
+  )
+`
+
+func (q *Queries) DeleteAllByProjectID(ctx context.Context, projectID string) error {
+	_, err := q.db.ExecContext(ctx, deleteAllByProjectID, projectID)
+	return err
+}
+
 const getAllUnsent = `-- name: GetAllUnsent :many
 SELECT
     h.id, h.alert_id, h.provider_id, h.message, h.status, h.response, h.attempts, h.error_message, h.last_attempt_at, h.sent_at, h.created_at, h.updated_at,

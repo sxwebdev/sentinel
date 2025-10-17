@@ -51,6 +51,9 @@ const (
 	// NotificationServiceHistoryListProcedure is the fully-qualified name of the NotificationService's
 	// HistoryList RPC.
 	NotificationServiceHistoryListProcedure = "/sentinel.notifications.v1.NotificationService/HistoryList"
+	// NotificationServiceHistoryDeleteAllProcedure is the fully-qualified name of the
+	// NotificationService's HistoryDeleteAll RPC.
+	NotificationServiceHistoryDeleteAllProcedure = "/sentinel.notifications.v1.NotificationService/HistoryDeleteAll"
 	// NotificationServiceHistorySubscribeProcedure is the fully-qualified name of the
 	// NotificationService's HistorySubscribe RPC.
 	NotificationServiceHistorySubscribeProcedure = "/sentinel.notifications.v1.NotificationService/HistorySubscribe"
@@ -65,6 +68,7 @@ type NotificationServiceClient interface {
 	ProviderDelete(context.Context, *connect.Request[v1.ProviderDeleteRequest]) (*connect.Response[v1.ProviderDeleteResponse], error)
 	ProviderTest(context.Context, *connect.Request[v1.ProviderTestRequest]) (*connect.Response[v1.ProviderTestResponse], error)
 	HistoryList(context.Context, *connect.Request[v1.HistoryListRequest]) (*connect.Response[v1.HistoryListResponse], error)
+	HistoryDeleteAll(context.Context, *connect.Request[v1.HistoryDeleteAllRequest]) (*connect.Response[v1.HistoryDeleteAllResponse], error)
 	HistorySubscribe(context.Context, *connect.Request[v1.HistorySubscribeRequest]) (*connect.ServerStreamForClient[v1.HistorySubscribeResponse], error)
 }
 
@@ -116,6 +120,12 @@ func NewNotificationServiceClient(httpClient connect.HTTPClient, baseURL string,
 			connect.WithSchema(notificationServiceMethods.ByName("HistoryList")),
 			connect.WithClientOptions(opts...),
 		),
+		historyDeleteAll: connect.NewClient[v1.HistoryDeleteAllRequest, v1.HistoryDeleteAllResponse](
+			httpClient,
+			baseURL+NotificationServiceHistoryDeleteAllProcedure,
+			connect.WithSchema(notificationServiceMethods.ByName("HistoryDeleteAll")),
+			connect.WithClientOptions(opts...),
+		),
 		historySubscribe: connect.NewClient[v1.HistorySubscribeRequest, v1.HistorySubscribeResponse](
 			httpClient,
 			baseURL+NotificationServiceHistorySubscribeProcedure,
@@ -133,6 +143,7 @@ type notificationServiceClient struct {
 	providerDelete   *connect.Client[v1.ProviderDeleteRequest, v1.ProviderDeleteResponse]
 	providerTest     *connect.Client[v1.ProviderTestRequest, v1.ProviderTestResponse]
 	historyList      *connect.Client[v1.HistoryListRequest, v1.HistoryListResponse]
+	historyDeleteAll *connect.Client[v1.HistoryDeleteAllRequest, v1.HistoryDeleteAllResponse]
 	historySubscribe *connect.Client[v1.HistorySubscribeRequest, v1.HistorySubscribeResponse]
 }
 
@@ -166,6 +177,11 @@ func (c *notificationServiceClient) HistoryList(ctx context.Context, req *connec
 	return c.historyList.CallUnary(ctx, req)
 }
 
+// HistoryDeleteAll calls sentinel.notifications.v1.NotificationService.HistoryDeleteAll.
+func (c *notificationServiceClient) HistoryDeleteAll(ctx context.Context, req *connect.Request[v1.HistoryDeleteAllRequest]) (*connect.Response[v1.HistoryDeleteAllResponse], error) {
+	return c.historyDeleteAll.CallUnary(ctx, req)
+}
+
 // HistorySubscribe calls sentinel.notifications.v1.NotificationService.HistorySubscribe.
 func (c *notificationServiceClient) HistorySubscribe(ctx context.Context, req *connect.Request[v1.HistorySubscribeRequest]) (*connect.ServerStreamForClient[v1.HistorySubscribeResponse], error) {
 	return c.historySubscribe.CallServerStream(ctx, req)
@@ -180,6 +196,7 @@ type NotificationServiceHandler interface {
 	ProviderDelete(context.Context, *connect.Request[v1.ProviderDeleteRequest]) (*connect.Response[v1.ProviderDeleteResponse], error)
 	ProviderTest(context.Context, *connect.Request[v1.ProviderTestRequest]) (*connect.Response[v1.ProviderTestResponse], error)
 	HistoryList(context.Context, *connect.Request[v1.HistoryListRequest]) (*connect.Response[v1.HistoryListResponse], error)
+	HistoryDeleteAll(context.Context, *connect.Request[v1.HistoryDeleteAllRequest]) (*connect.Response[v1.HistoryDeleteAllResponse], error)
 	HistorySubscribe(context.Context, *connect.Request[v1.HistorySubscribeRequest], *connect.ServerStream[v1.HistorySubscribeResponse]) error
 }
 
@@ -226,6 +243,12 @@ func NewNotificationServiceHandler(svc NotificationServiceHandler, opts ...conne
 		connect.WithSchema(notificationServiceMethods.ByName("HistoryList")),
 		connect.WithHandlerOptions(opts...),
 	)
+	notificationServiceHistoryDeleteAllHandler := connect.NewUnaryHandler(
+		NotificationServiceHistoryDeleteAllProcedure,
+		svc.HistoryDeleteAll,
+		connect.WithSchema(notificationServiceMethods.ByName("HistoryDeleteAll")),
+		connect.WithHandlerOptions(opts...),
+	)
 	notificationServiceHistorySubscribeHandler := connect.NewServerStreamHandler(
 		NotificationServiceHistorySubscribeProcedure,
 		svc.HistorySubscribe,
@@ -246,6 +269,8 @@ func NewNotificationServiceHandler(svc NotificationServiceHandler, opts ...conne
 			notificationServiceProviderTestHandler.ServeHTTP(w, r)
 		case NotificationServiceHistoryListProcedure:
 			notificationServiceHistoryListHandler.ServeHTTP(w, r)
+		case NotificationServiceHistoryDeleteAllProcedure:
+			notificationServiceHistoryDeleteAllHandler.ServeHTTP(w, r)
 		case NotificationServiceHistorySubscribeProcedure:
 			notificationServiceHistorySubscribeHandler.ServeHTTP(w, r)
 		default:
@@ -279,6 +304,10 @@ func (UnimplementedNotificationServiceHandler) ProviderTest(context.Context, *co
 
 func (UnimplementedNotificationServiceHandler) HistoryList(context.Context, *connect.Request[v1.HistoryListRequest]) (*connect.Response[v1.HistoryListResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("sentinel.notifications.v1.NotificationService.HistoryList is not implemented"))
+}
+
+func (UnimplementedNotificationServiceHandler) HistoryDeleteAll(context.Context, *connect.Request[v1.HistoryDeleteAllRequest]) (*connect.Response[v1.HistoryDeleteAllResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("sentinel.notifications.v1.NotificationService.HistoryDeleteAll is not implemented"))
 }
 
 func (UnimplementedNotificationServiceHandler) HistorySubscribe(context.Context, *connect.Request[v1.HistorySubscribeRequest], *connect.ServerStream[v1.HistorySubscribeResponse]) error {
