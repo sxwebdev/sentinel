@@ -102,8 +102,6 @@ github.com/jackc/puddle/v2 v2.2.2 h1:PR8nw+E/1w0GLuRFSmiioY6UooMp6KJv0/61nB7icHo
 github.com/jackc/puddle/v2 v2.2.2/go.mod h1:vriiEXHvEE654aYKXXjOvZM39qJ0q+azkZFrfEOc3H4=
 github.com/jarcoal/httpmock v1.4.1 h1:0Ju+VCFuARfFlhVXFc2HxlcQkfB+Xq12/EotHko+x2A=
 github.com/jarcoal/httpmock v1.4.1/go.mod h1:ftW1xULwo+j0R0JJkJIIi7UKigZUXCLLanykgjwBXL0=
-github.com/joho/godotenv v1.5.1 h1:7eLL/+HRGLY0ldzfGMeQkb7vMd0as4CfYvUVzLqw0N0=
-github.com/joho/godotenv v1.5.1/go.mod h1:f4LDr5Voq0i2e/R5DDNOoa2zzDfwtkZa6DnEwAbqwq4=
 github.com/klauspost/compress v1.18.0 h1:c/Cqfb0r+Yi+JtIEq73FWXVkRonBlf0CRNYc8Zttxdo=
 github.com/klauspost/compress v1.18.0/go.mod h1:2Pp+KzxcywXVXMr50+X0Q/Lsb43OQHYWRCY2AiWywWQ=
 github.com/kr/pretty v0.3.1 h1:flRD4NNwYAUpkphVc1HcthR4KEIFJ65n8Mw5qdRn3LE=
@@ -173,8 +171,8 @@ github.com/sxwebdev/tokenmanager v0.0.0-20251005001529-91c1410e16c1 h1:YSJn9p8ui
 github.com/sxwebdev/tokenmanager v0.0.0-20251005001529-91c1410e16c1/go.mod h1:VNajdCRMIriyhiVwU+JCX/XqS+7gOM1OyFghRFxXtoc=
 github.com/sxwebdev/xconfig v0.0.0-20250917185517-9fc0b932f57a h1:3QsG+FAmZ9V7MI16p49yqhLoMDaI5k/Ci5pInO5xl5E=
 github.com/sxwebdev/xconfig v0.0.0-20250917185517-9fc0b932f57a/go.mod h1:G0LSWAtUyWR4RdvDarnbgM1/LCYSB23hr4tm6HBhfUQ=
-github.com/sxwebdev/xconfig/decoders/xconfigdotenv v0.0.0-20250917185517-9fc0b932f57a h1:F2SOCSeCMBDiprV1OkJ2COBK2XRLT8C3j8x5K1gHCEQ=
-github.com/sxwebdev/xconfig/decoders/xconfigdotenv v0.0.0-20250917185517-9fc0b932f57a/go.mod h1:NTNcUc35LpkCP8dPdvOWTbq9SLGC7eS1FDAHqzwSMrk=
+github.com/sxwebdev/xconfig v0.2.0 h1:1HR26pcIiVaUUaO5qLMdHuIFLkewSWo5IFvYhAfBF+4=
+github.com/sxwebdev/xconfig v0.2.0/go.mod h1:G0LSWAtUyWR4RdvDarnbgM1/LCYSB23hr4tm6HBhfUQ=
 github.com/sxwebdev/xconfig/decoders/xconfigyaml v0.0.0-20250917185517-9fc0b932f57a h1:ZJ0xDxSDwo9GzhwfkNZl0ZdnBBqe7alWetKF+860Ohw=
 github.com/sxwebdev/xconfig/decoders/xconfigyaml v0.0.0-20250917185517-9fc0b932f57a/go.mod h1:cGLysNNHvnNHKYFVsHfudRZ7BbjXlaDBjFQXiBN4B30=
 github.com/tkcrm/modules v0.0.0-20250909093305-a0b86c209cc5 h1:rqtgAZFbz/Vdnyf6GvoUEP4DWgqvj6/PsI3Gce81h5A=

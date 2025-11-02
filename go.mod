@@ -24,8 +24,7 @@ require (
 	github.com/shirou/gopsutil/v4 v4.25.9
 	github.com/stretchr/testify v1.11.1
 	github.com/sxwebdev/tokenmanager v0.0.0-20251005001529-91c1410e16c1
-	github.com/sxwebdev/xconfig v0.0.0-20250917185517-9fc0b932f57a
-	github.com/sxwebdev/xconfig/decoders/xconfigdotenv v0.0.0-20250917185517-9fc0b932f57a
+	github.com/sxwebdev/xconfig v0.2.0
 	github.com/sxwebdev/xconfig/decoders/xconfigyaml v0.0.0-20250917185517-9fc0b932f57a
 	github.com/tkcrm/modules v0.0.0-20250909093305-a0b86c209cc5
 	github.com/tkcrm/mx v0.2.34
@@ -63,7 +62,6 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/huandu/go-clone v1.7.3 // indirect
 	github.com/huandu/xstrings v1.5.0 // indirect
-	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/klauspost/compress v1.18.0 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/lib/pq v1.10.9 // indirect
