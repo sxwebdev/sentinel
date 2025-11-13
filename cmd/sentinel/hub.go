@@ -22,7 +22,7 @@ import (
 	updater "github.com/sxwebdev/sentinel/internal/updated"
 	"github.com/sxwebdev/sentinel/internal/utils"
 	"github.com/sxwebdev/sentinel/pkg/locker"
-	"github.com/sxwebdev/sentinel/pkg/migrations"
+	"github.com/sxwebdev/sentinel/pkg/migrator"
 	"github.com/sxwebdev/sentinel/pkg/sqlite"
 	"github.com/sxwebdev/sentinel/sql"
 	"github.com/sxwebdev/tokenmanager"
@@ -163,7 +163,7 @@ func hubStartCMD() *cli.Command {
 					l.Infof("SQLite version: %s", sqliteVersion)
 
 					// check and run all migrations
-					m := migrations.New(l, sql.MigrationsFS, sql.MigrationsPath, datamigrations.Migrations)
+					m := migrator.New(l, sql.MigrationsFS, sql.MigrationsPath, datamigrations.Migrations)
 					if err := m.MigrateUpAll(ctx, sqliteDbPath); err != nil {
 						return fmt.Errorf("failed to run migrations: %w", err)
 					}

@@ -1,5 +1,5 @@
 package datamigrations
 
-import "github.com/sxwebdev/sentinel/pkg/migrations"
+import "github.com/sxwebdev/sentinel/pkg/migrator"
 
-var Migrations = migrations.DataMigrations{}
+var Migrations = migrator.DataMigrations{}
