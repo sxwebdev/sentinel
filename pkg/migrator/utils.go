@@ -3,6 +3,7 @@ package migrator
 import (
 	"fmt"
 	"os"
+	"strings"
 )
 
 func GetMaxVersion(path string) (int, error) {
@@ -14,6 +15,11 @@ func GetMaxVersion(path string) (int, error) {
 	var maxVersion int
 	for _, entry := range entries {
 		if entry.IsDir() {
+			continue
+		}
+
+		// Skip non-SQL files
+		if !strings.HasSuffix(entry.Name(), ".sql") {
 			continue
 		}
 
