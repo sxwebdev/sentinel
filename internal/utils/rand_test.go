@@ -15,6 +15,7 @@ func TestGenerateRandomString(t *testing.T) {
 		{"length 0", 0, ""},
 		{"length 1 default alphabet", 1, ""},
 		{"length 10 default alphabet", 10, ""},
+		{"length 64 default alphabet", 64, ""},
 		{"length 100 default alphabet", 100, ""},
 		{"length 1000 default alphabet", 1000, ""},
 		{"length 100 custom alphabet", 100, "abc"},
@@ -39,6 +40,14 @@ func TestGenerateRandomString(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGenerateRandomString64(t *testing.T) {
+	s, err := GenerateRandomString(64, "")
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+	fmt.Println(s)
 }
 
 func TestGenerateRandomNumber(t *testing.T) {
