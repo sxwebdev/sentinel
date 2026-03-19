@@ -29,8 +29,8 @@ import {
 import { toast } from "sonner";
 import { useServiceTableStore } from "../store/useServiceTableStore";
 import { ActivityIndicatorSVG } from "@/entities/ActivityIndicatorSVG/ActivityIndicatorSVG";
-import { getServices } from "@/shared/api/services/services";
-import { getTags } from "@/shared/api/tags/tags";
+import { getServices } from "@/shared/api/gen/services/services";
+import { getTags } from "@/shared/api/gen/tags/tags";
 import type { WebServiceDTO } from "@/shared/types/model";
 
 export const useServiceTable = () => {
@@ -105,7 +105,7 @@ export const useServiceTable = () => {
         },
       },
       {
-        header: "Service ",
+        header: "Service",
         accessorKey: "service",
         cell: ({ row }) => {
           return (
@@ -128,10 +128,11 @@ export const useServiceTable = () => {
               className={cn(
                 "text-xs font-semibold",
                 row.original?.status === "up" &&
-                  "bg-emerald-100 text-emerald-600",
-                row.original?.status === "down" && "bg-rose-100 text-rose-600",
+                  "bg-emerald-100 text-emerald-600 dark:bg-emerald-600 dark:text-emerald-100",
+                row.original?.status === "down" &&
+                  "bg-rose-100 text-rose-600 dark:bg-rose-600 dark:text-rose-100",
                 row.original?.status === "unknown" &&
-                  "bg-yellow-100 text-yellow-600",
+                  "bg-yellow-100 text-yellow-600 dark:bg-yellow-600 dark:text-yellow-100",
               )}
             >
               {row.original?.status?.toUpperCase()}

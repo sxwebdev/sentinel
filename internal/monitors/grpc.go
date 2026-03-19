@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/sxwebdev/sentinel/internal/storage"
+	"github.com/sxwebdev/sentinel/internal/models"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"
 	"google.golang.org/grpc/credentials"
@@ -25,18 +25,18 @@ type GRPCConfig struct {
 
 // GRPCMonitor monitors gRPC services
 type GRPCMonitor struct {
-	BaseMonitor
+	baseMonitor
 	conf GRPCConfig
 	conn *grpc.ClientConn
 }
 
-// NewGRPCMonitor creates a new gRPC monitor
-func NewGRPCMonitor(cfg storage.Service) (*GRPCMonitor, error) {
+// newGRPCMonitor creates a new gRPC monitor
+func newGRPCMonitor(params MonitorParams) (*GRPCMonitor, error) {
 	monitor := &GRPCMonitor{
-		BaseMonitor: NewBaseMonitor(cfg),
+		baseMonitor: newBaseMonitor(params.ServiceName, params.Protocol, params.Timeout),
 	}
 
-	conf, err := GetConfig[GRPCConfig](cfg.Config, storage.ServiceProtocolTypeGRPC)
+	conf, err := GetConfig[GRPCConfig](params.Config, models.ServiceProtocolTypeGRPC)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get gRPC config: %w", err)
 	}

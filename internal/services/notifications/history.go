@@ -1,0 +1,136 @@
+package notifications
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/sxwebdev/sentinel/internal/dispatcher"
+	"github.com/sxwebdev/sentinel/internal/models"
+	"github.com/sxwebdev/sentinel/internal/store"
+	"github.com/sxwebdev/sentinel/internal/store/repos/repo_notification_history"
+	"github.com/sxwebdev/sentinel/internal/store/storecmn"
+	"github.com/sxwebdev/sentinel/internal/utils"
+	"github.com/tkcrm/mx/logger"
+)
+
+type History struct {
+	logger logger.Logger
+	store  *store.Store
+	sender *Sender
+
+	dispatcher *dispatcher.Dispatcher
+}
+
+func newHistory(l logger.Logger, store *store.Store, sender *Sender, dispatcher *dispatcher.Dispatcher) *History {
+	return &History{
+		logger:     l,
+		store:      store,
+		sender:     sender,
+		dispatcher: dispatcher,
+	}
+}
+
+// SendAlert sends an alert notification to all enabled providers
+func (s *History) SendAlert(ctx context.Context, projectID, alertID, message string) error {
+	// Get all enabled providers
+	providers, err := s.store.NotificationProviders().GetAllEnabled(ctx, projectID)
+	if err != nil {
+		return fmt.Errorf("failed to get enabled providers: %w", err)
+	}
+
+	// Send alert to each provider
+	for _, provider := range providers {
+		params := CreateHistoryParams{
+			ProviderID: provider.ID,
+			Message:    message,
+		}
+
+		if alertID != "" {
+			params.AlertID = &alertID
+		}
+
+		if _, err := s.Create(ctx, params); err != nil {
+			return fmt.Errorf("failed to send alert to provider %s: %v", provider.ID, err)
+		}
+	}
+
+	return nil
+}
+
+type CreateHistoryParams struct {
+	ProviderID string
+	AlertID    *string
+	Message    string
+}
+
+// Validate validates the CreateHistoryParams fields
+func (s CreateHistoryParams) Validate() error {
+	if s.ProviderID == "" {
+		return storecmn.ErrEmptyID
+	}
+
+	if s.Message == "" {
+		return fmt.Errorf("empty message")
+	}
+
+	return nil
+}
+
+// Create creates a new notification history record
+func (s *History) Create(ctx context.Context, params CreateHistoryParams) (*models.NotificationHistory, error) {
+	if err := params.Validate(); err != nil {
+		return nil, err
+	}
+
+	// Get provider to ensure it exists
+	provider, err := s.store.NotificationProviders().GetByID(ctx, params.ProviderID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get provider by ID: %w", err)
+	}
+
+	createParams := repo_notification_history.CreateParams{
+		ID:         utils.GenerateULID(),
+		ProviderID: params.ProviderID,
+		AlertID:    params.AlertID,
+		Message:    params.Message,
+	}
+
+	item, err := s.store.NotificationHistory().Create(ctx, createParams)
+	if err != nil {
+		return nil, err
+	}
+
+	s.sender.looper.Trigger(ctx)
+
+	s.dispatcher.NotificationHistory().Publish(dispatcher.NewBaseMessage(dispatcher.EventTypeCreate, provider.ProjectID))
+
+	return item, nil
+}
+
+// DeleteAllByProjectID deletes all notification history records by project ID
+func (s *History) DeleteAllByProjectID(ctx context.Context, projectID string) error {
+	if projectID == "" {
+		return storecmn.ErrEmptyID
+	}
+
+	return s.store.NotificationHistory().DeleteAllByProjectID(ctx, projectID)
+}
+
+type FindHistoryParams struct {
+	Status   string  `query:"status"`
+	OrderBy  string  `query:"order_by"`
+	Page     *uint32 `query:"page"`
+	PageSize *uint32 `query:"page_size"`
+}
+
+// Find returns list of notification histories by given filters with pagination
+func (s *History) Find(ctx context.Context, params FindHistoryParams) (*storecmn.FindResponseWithCount[*models.NotificationHistoryView], error) {
+	p := repo_notification_history.FindParams{
+		Status:   params.Status,
+		OrderBy:  params.OrderBy,
+		Page:     params.Page,
+		PageSize: params.PageSize,
+	}
+
+	return s.store.NotificationHistory().Find(ctx, p)
+}

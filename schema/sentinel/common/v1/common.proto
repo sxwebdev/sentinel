@@ -1,0 +1,9 @@
+syntax = "proto3";
+package sentinel.common.v1;
+
+message FindRequestCommon {
+  optional uint32 page = 1;
+  optional uint32 page_size = 2;
+  optional string order_by = 3;
+  bool is_asc_order = 4;
+}

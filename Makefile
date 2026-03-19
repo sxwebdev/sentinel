@@ -4,10 +4,11 @@
 
 # Variables
 BINARY_NAME=sentinel
-MAIN_PATH=./cmd/sentinel
+SENTINEL_PATH=./cmd/sentinel
 BUILD_DIR=./build
 VERSION?=dev
 LDFLAGS=-ldflags="-w -s -X main.version=${VERSION}"
+MIGRATIONS_DIR	 = ./sql/migrations/
 
 # Default target
 help: ## Show this help message
@@ -17,36 +18,44 @@ help: ## Show this help message
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  %-15s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
 # Development
-dev: ## Run in development mode with auto-reload
-	go run $(MAIN_PATH) start
+hub: ## Run in development mode with auto-reload
+	go run $(SENTINEL_PATH) hub start -c ./config.yaml
+
+agent: ## Run in development mode with auto-reload
+	go run $(SENTINEL_PATH) agent start -c ./config-agent.yaml
+
+migrateup:
+	go run $(SENTINEL_PATH) migrations up -db-path ./data/hub/sqlite/db.sqlite
+
+migratedown:
+	go run $(SENTINEL_PATH) migrations down -db-path ./data/hub/sqlite/db.sqlite
+
+air:
+	air -c .air.toml
 
 run: build ## Build and run the application
 	./$(BUILD_DIR)/$(BINARY_NAME)
 
-runtcpserver:
-	go run ./cmd/tcpserver
-
-rungrpcserver:
-	go run ./cmd/grpcserver
+runtestservers:
+	go run ./cmd/testserver -http -grpc -tcp
 
 front:
 	cd frontend && pnpm dev
 
 # Build targets
-build: deps ## Build the application
-	@mkdir -p $(BUILD_DIR)
-	go build $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME) $(MAIN_PATH)
+build:
+	go build $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME) $(SENTINEL_PATH)
 
 
 build-linux: deps ## Build for Linux
 	@mkdir -p $(BUILD_DIR)
-	GOOS=linux GOARCH=amd64 go build $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME)-linux $(MAIN_PATH)
+	GOOS=linux GOARCH=amd64 go build $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME)-linux $(SENTINEL_PATH)
 
 build-all: deps ## Build for all platforms
 	@mkdir -p $(BUILD_DIR)
-	GOOS=linux GOARCH=amd64 go build $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME)-linux-amd64 $(MAIN_PATH)
-	GOOS=darwin GOARCH=amd64 go build $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME)-darwin-amd64 $(MAIN_PATH)
-	GOOS=windows GOARCH=amd64 go build $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME)-windows-amd64.exe $(MAIN_PATH)
+	GOOS=linux GOARCH=amd64 go build $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME)-linux-amd64 $(SENTINEL_PATH)
+	GOOS=darwin GOARCH=amd64 go build $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME)-darwin-amd64 $(SENTINEL_PATH)
+	GOOS=windows GOARCH=amd64 go build $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME)-windows-amd64.exe $(SENTINEL_PATH)
 
 # Dependencies
 deps: ## Download dependencies
@@ -72,6 +81,9 @@ lint: ## Run linter
 format: ## Format code
 	go fmt ./...
 	goimports -w .
+
+fmt:
+	gofumpt -l -w .
 
 docker-push: ## Build and push Docker image
 	docker buildx build --platform linux/amd64 --push \
@@ -115,9 +127,11 @@ clean: ## Clean build artifacts
 	rm -f coverage.out coverage.html
 	docker-compose down --volumes --remove-orphans || true
 
-# Database
-init-db: ## Initialize database directory
-	mkdir -p data
+# db-create-migration:
+# 	migrate create -ext sql -format unix -dir "$(MIGRATIONS_DIR)" $(filter-out $@,$(MAKECMDGOALS))
+
+db-create-migration:
+	go run ./cmd/sentinel migrations create -p ./sql/migrations -name $(filter-out $@,$(MAKECMDGOALS))
 
 # Configuration
 init-config: ## Copy example configuration
@@ -133,3 +147,26 @@ genswagger:
 	rm -rf ./docs/*
 	swag fmt -d ./internal/web
 	swag init -o docs/docsv1 --dir ./internal/web -g handlers.go --parseDependency
+
+genenvs:
+	go run ./cmd/sentinel config genenvs
+
+gensql:
+	pgxgen crud
+	pgxgen sqlc generate
+
+genproto: ## Generate protobuf code
+	buf lint
+	rm -rf ./internal/hub/hubserver/api/*
+	rm -rf frontend/src/api/gen/*
+	buf generate
+	rm -rf frontend/src/api/gen/sentinel/hub
+
+grpcui-hub:
+	grpcui --plaintext localhost:8080
+
+grpcui-server:
+	grpcui --plaintext localhost:8080
+
+%:
+	@:

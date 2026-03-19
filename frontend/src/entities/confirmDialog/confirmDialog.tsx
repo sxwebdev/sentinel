@@ -1,12 +1,13 @@
 import {
-  Dialog,
-  DialogTitle,
-  DialogHeader,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  Button,
-} from "@/shared/components/ui";
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from "@/shared/components/ui/alert-dialog";
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -28,25 +29,30 @@ export const ConfirmDialog = ({
   content,
 }: ConfirmDialogProps) => {
   return (
-    <Dialog open={open} onOpenChange={() => setOpen(null)}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>{description}</DialogDescription>
-        </DialogHeader>
+    <AlertDialog open={open} onOpenChange={() => setOpen(null)}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{title}</AlertDialogTitle>
+          <AlertDialogDescription>{description}</AlertDialogDescription>
+        </AlertDialogHeader>
         {content && content}
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(null)}>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={() => setOpen(null)}>
             Cancel
-          </Button>
+          </AlertDialogCancel>
           {type === "delete" && (
-            <Button variant="destructive" onClick={onSubmit}>
+            <AlertDialogAction
+              className="bg-destructive hover:bg-destructive/90 dark:text-white"
+              onClick={onSubmit}
+            >
               Delete
-            </Button>
+            </AlertDialogAction>
           )}
-          {type === "default" && <Button onClick={onSubmit}>Submit</Button>}
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          {type === "default" && (
+            <AlertDialogAction onClick={onSubmit}></AlertDialogAction>
+          )}
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 };

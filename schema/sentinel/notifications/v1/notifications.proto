@@ -1,0 +1,100 @@
+syntax = "proto3";
+package sentinel.notifications.v1;
+
+import "google/protobuf/timestamp.proto";
+import "sentinel/common/v1/common.proto";
+
+// NotificationService is the service for managing notification providers and
+// history.
+service NotificationService {
+  rpc ProvidersList(ProvidersListRequest) returns (ProvidersListResponse);
+  rpc ProviderCreate(ProviderCreateRequest) returns (ProviderCreateResponse);
+  rpc ProviderUpdate(ProviderUpdateRequest) returns (ProviderUpdateResponse);
+  rpc ProviderDelete(ProviderDeleteRequest) returns (ProviderDeleteResponse);
+  rpc ProviderTest(ProviderTestRequest) returns (ProviderTestResponse);
+  rpc HistoryList(HistoryListRequest) returns (HistoryListResponse);
+  rpc HistoryDeleteAll(HistoryDeleteAllRequest)
+      returns (HistoryDeleteAllResponse);
+  rpc HistorySubscribe(HistorySubscribeRequest)
+      returns (stream HistorySubscribeResponse);
+}
+
+enum ProviderType {
+  PROVIDER_TYPE_UNSPECIFIED = 0;
+  PROVIDER_TYPE_SHOUTRRR = 1;
+}
+
+message ShoutrrrConfig { string url = 1; }
+
+message ProviderConfig {
+  oneof config { ShoutrrrConfig shoutrrr = 1; }
+}
+
+message Provider {
+  string id = 1;
+  ProviderType type = 2;
+  ProviderConfig config = 3;
+  bool is_enabled = 4;
+  google.protobuf.Timestamp created_at = 5;
+  google.protobuf.Timestamp updated_at = 6;
+}
+
+message HistoryItem {
+  string id = 1;
+  string message = 2;
+  string status = 3;
+  optional string response = 4;
+  int64 attempts = 5;
+  optional string error_message = 6;
+  google.protobuf.Timestamp last_attempt_at = 7;
+  google.protobuf.Timestamp sent_at = 8;
+  google.protobuf.Timestamp created_at = 9;
+  google.protobuf.Timestamp updated_at = 10;
+}
+
+// ProvidersList lists all notification providers.
+message ProvidersListRequest {}
+message ProvidersListResponse { repeated Provider items = 1; }
+
+// ProviderCreate creates a new notification provider.
+message ProviderCreateRequest {
+  ProviderType type = 1;
+  ProviderConfig config = 2;
+  bool is_enabled = 3;
+}
+message ProviderCreateResponse { Provider item = 1; }
+
+// ProviderUpdate updates an existing notification provider.
+message ProviderUpdateRequest {
+  string id = 1;
+  ProviderType type = 2;
+  ProviderConfig config = 3;
+  bool is_enabled = 4;
+}
+message ProviderUpdateResponse { Provider item = 1; }
+
+// ProviderDelete deletes a notification provider.
+message ProviderDeleteRequest { string id = 1; }
+message ProviderDeleteResponse {}
+
+// ProviderTest sends a test notification using the specified provider.
+message ProviderTestRequest { string id = 1; }
+message ProviderTestResponse {}
+
+// History retrieves the notification history with optional filters.
+message HistoryListRequest {
+  common.v1.FindRequestCommon common = 1;
+  string status = 2;
+}
+message HistoryListResponse {
+  repeated HistoryItem items = 1;
+  uint32 count = 2;
+}
+
+// HistoryDeleteAll deletes all notification history items.
+message HistoryDeleteAllRequest {}
+message HistoryDeleteAllResponse {}
+
+// HistorySubscribe subscribes to real-time notification history updates.
+message HistorySubscribeRequest {}
+message HistorySubscribeResponse {}

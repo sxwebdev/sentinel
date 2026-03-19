@@ -8,15 +8,15 @@ import (
 
 	"github.com/goccy/go-yaml"
 	"github.com/sxwebdev/sentinel/internal/config"
+	"github.com/sxwebdev/xconfig"
 	"github.com/urfave/cli/v3"
 )
 
-func cfgPathsFlag() *cli.StringFlag {
-	return &cli.StringFlag{
+func cfgPathsFlag() *cli.StringSliceFlag {
+	return &cli.StringSliceFlag{
 		Name:    "config",
 		Aliases: []string{"c"},
-		Value:   "config.yaml",
-		Usage:   "allows you to use your own paths to configuration files. by default it uses config.yaml",
+		Usage:   "allows you to use your own paths to configuration files",
 	}
 }
 
@@ -29,23 +29,40 @@ func configCMD() *cli.Command {
 				Name:  "genenvs",
 				Usage: "generate config yaml template",
 				Action: func(_ context.Context, _ *cli.Command) error {
-					conf := new(config.Config)
-
-					conf, err := config.Load("")
-					if err != nil {
-						return fmt.Errorf("failed to load config: %w", err)
+					data := []struct {
+						fileName  string
+						envPrefix string
+						conf      any
+					}{
+						{
+							fileName:  "config.template.yaml",
+							envPrefix: envHubPrefix,
+							conf:      new(config.ConfigHub),
+						},
+						{
+							fileName:  "config-agent.template.yaml",
+							envPrefix: envAgentPrefix,
+							conf:      new(config.ConfigAgent),
+						},
 					}
 
-					buf := bytes.NewBuffer(nil)
-					enc := yaml.NewEncoder(buf, yaml.Indent(2))
-					defer enc.Close()
+					for _, d := range data {
+						_, err := xconfig.Load(d.conf, xconfig.WithEnvPrefix(d.envPrefix))
+						if err != nil {
+							return fmt.Errorf("failed to generate markdown: %w", err)
+						}
 
-					if err := enc.Encode(conf); err != nil {
-						return fmt.Errorf("failed to encode yaml: %w", err)
-					}
+						buf := bytes.NewBuffer(nil)
+						enc := yaml.NewEncoder(buf, yaml.Indent(2))
+						defer enc.Close()
 
-					if err := os.WriteFile("config.template.yaml", buf.Bytes(), 0o600); err != nil {
-						return fmt.Errorf("failed to write file: %w", err)
+						if err := enc.Encode(d.conf); err != nil {
+							return fmt.Errorf("failed to encode yaml: %w", err)
+						}
+
+						if err := os.WriteFile(d.fileName, buf.Bytes(), 0o600); err != nil {
+							return fmt.Errorf("failed to write file: %w", err)
+						}
 					}
 
 					return nil

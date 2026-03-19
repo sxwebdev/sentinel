@@ -3,25 +3,24 @@ package web
 import (
 	"time"
 
+	"github.com/sxwebdev/sentinel/internal/models"
 	"github.com/sxwebdev/sentinel/internal/monitors"
-	"github.com/sxwebdev/sentinel/internal/storage"
 )
 
 // DashboardStats represents dashboard statistics
 //
 //	@Description	Dashboard statistics
 type DashboardStats struct {
-	TotalServices    int                                 `json:"total_services" example:"10"`
-	ServicesUp       int                                 `json:"services_up" example:"8"`
-	ServicesDown     int                                 `json:"services_down" example:"1"`
-	ServicesUnknown  int                                 `json:"services_unknown" example:"1"`
-	Protocols        map[storage.ServiceProtocolType]int `json:"protocols"`
-	ActiveIncidents  int                                 `json:"active_incidents" example:"2"`
-	AvgResponseTime  int64                               `json:"avg_response_time" example:"150"`
-	TotalChecks      int                                 `json:"total_checks" example:"1000"`
-	UptimePercentage float64                             `json:"uptime_percentage" example:"95.5"`
-	LastCheckTime    *time.Time                          `json:"last_check_time"`
-	ChecksPerMinute  int                                 `json:"checks_per_minute" example:"60"`
+	TotalServices    int64                              `json:"total_services" example:"10"`
+	ServicesUp       int64                              `json:"services_up" example:"8"`
+	ServicesDown     int64                              `json:"services_down" example:"1"`
+	ServicesUnknown  int64                              `json:"services_unknown" example:"1"`
+	ActiveIncidents  int64                              `json:"active_incidents" example:"2"`
+	AvgResponseTime  int64                              `json:"avg_response_time" example:"150"`
+	TotalChecks      int64                              `json:"total_checks" example:"1000"`
+	UptimePercentage float64                            `json:"uptime_percentage" example:"95.5"`
+	ChecksPerMinute  int64                              `json:"checks_per_minute" example:"60"`
+	Protocols        map[models.ServiceProtocolType]int `json:"protocols"`
 }
 
 // Incident represents an incident
@@ -53,46 +52,62 @@ type ServiceStats struct {
 
 // CreateUpdateServiceRequest represents a request to create or update a service
 type CreateUpdateServiceRequest struct {
-	Name      string                      `json:"name" example:"Web Server"`
-	Protocol  storage.ServiceProtocolType `json:"protocol" example:"http"`
-	Interval  uint32                      `json:"interval" swaggertype:"primitive,integer" example:"60000"`
-	Timeout   uint32                      `json:"timeout" swaggertype:"primitive,integer" example:"10000"`
-	Retries   int                         `json:"retries" example:"5"`
-	Tags      []string                    `json:"tags" example:"web,production"`
-	Config    monitors.Config             `json:"config"`
-	IsEnabled bool                        `json:"is_enabled" example:"true"`
+	Name      string                     `json:"name" example:"Web Server"`
+	Protocol  models.ServiceProtocolType `json:"protocol" example:"http"`
+	Interval  int64                      `json:"interval" swaggertype:"primitive,integer" example:"60000"`
+	Timeout   int64                      `json:"timeout" swaggertype:"primitive,integer" example:"10000"`
+	Retries   int64                      `json:"retries" example:"5"`
+	Tags      []string                   `json:"tags" example:"web,production"`
+	Config    monitors.Config            `json:"config"`
+	IsEnabled bool                       `json:"is_enabled" example:"true"`
+	AgentIDs  []string                   `json:"agent_ids,omitempty" example:"agent-1,agent-2"`
 }
 
 // ServiceDTO represents a service for API responses
 type ServiceDTO struct {
-	ID                 string                      `json:"id" example:"service-1"`
-	Name               string                      `json:"name" example:"Web Server"`
-	Protocol           storage.ServiceProtocolType `json:"protocol" example:"http"`
-	Interval           uint32                      `json:"interval" swaggertype:"primitive,integer" example:"60000"`
-	Timeout            uint32                      `json:"timeout" swaggertype:"primitive,integer" example:"10000"`
-	Retries            int                         `json:"retries" example:"5"`
-	Tags               []string                    `json:"tags" example:"web,production"`
-	Config             monitors.Config             `json:"config"`
-	IsEnabled          bool                        `json:"is_enabled" example:"true"`
-	ActiveIncidents    int                         `json:"active_incidents" example:"2"`
-	TotalIncidents     int                         `json:"total_incidents" example:"10"`
-	Status             storage.ServiceStatus       `json:"status" example:"up / down / unknown"`
-	LastCheck          *time.Time                  `json:"last_check,omitempty" example:"2023-10-01T12:00:00Z"`
-	NextCheck          *time.Time                  `json:"next_check,omitempty" example:"2023-10-01T12:05:00Z"`
-	LastError          *string                     `json:"last_error,omitempty" example:"Connection timeout"`
-	ConsecutiveFails   int                         `json:"consecutive_fails" example:"1"`
-	ConsecutiveSuccess int                         `json:"consecutive_success" example:"5"`
-	TotalChecks        int                         `json:"total_checks" example:"100"`
-	ResponseTime       uint32                      `json:"response_time" swaggertype:"primitive,integer" example:"150000000"`
+	ID                 string                     `json:"id" example:"service-1"`
+	Name               string                     `json:"name" example:"Web Server"`
+	Protocol           models.ServiceProtocolType `json:"protocol" example:"http"`
+	Interval           int64                      `json:"interval"`
+	Timeout            int64                      `json:"timeout"`
+	Retries            int64                      `json:"retries" example:"5"`
+	Tags               []string                   `json:"tags" example:"web,production"`
+	Config             monitors.Config            `json:"config"`
+	IsEnabled          bool                       `json:"is_enabled" example:"true"`
+	ActiveIncidents    int                        `json:"active_incidents" example:"2"`
+	TotalIncidents     int                        `json:"total_incidents" example:"10"`
+	Status             models.ServiceStatus       `json:"status" example:"up / down / unknown"`
+	LastCheck          *time.Time                 `json:"last_check,omitempty" example:"2023-10-01T12:00:00Z"`
+	LastError          *string                    `json:"last_error,omitempty" example:"Connection timeout"`
+	ConsecutiveFails   int                        `json:"consecutive_fails" example:"1"`
+	ConsecutiveSuccess int                        `json:"consecutive_success" example:"5"`
+	TotalChecks        int                        `json:"total_checks" example:"100"`
+	AvgResponseTime    *int64                     `json:"avg_response_time"`
 }
 
 type ServerInfoResponse struct {
-	Version         string           `json:"version" example:"1.0.0"`
-	CommitHash      string           `json:"commit_hash" example:"abc123def456"`
-	BuildDate       string           `json:"build_date" example:"2023-10-01T12:00:00Z"`
-	GoVersion       string           `json:"go_version" example:"go1.24.4"`
-	SqliteVersion   string           `json:"sqlite_version" example:"3.50.1"`
-	OS              string           `json:"os" example:"linux"`
-	Arch            string           `json:"arch" example:"amd64"`
-	AvailableUpdate *AvailableUpdate `json:"available_update,omitempty"`
+	Version         string                  `json:"version" example:"1.0.0"`
+	CommitHash      string                  `json:"commit_hash" example:"abc123def456"`
+	BuildDate       string                  `json:"build_date" example:"2023-10-01T12:00:00Z"`
+	GoVersion       string                  `json:"go_version" example:"go1.24.4"`
+	SqliteVersion   string                  `json:"sqlite_version" example:"3.50.1"`
+	OS              string                  `json:"os" example:"linux"`
+	Arch            string                  `json:"arch" example:"amd64"`
+	AvailableUpdate *models.AvailableUpdate `json:"available_update,omitempty"`
+}
+
+type AgentDTO struct {
+	ID              string                 `json:"id"`
+	Name            string                 `json:"name"`
+	Description     *string                `json:"description"`
+	TokenHint       string                 `json:"token_hint"`
+	Fingerprint     *string                `json:"fingerprint"`
+	Status          models.AgentStatusType `json:"status"`
+	IsEnabled       bool                   `json:"is_enabled"`
+	Tags            []string               `json:"tags" example:"tag1,tag2"`
+	Config          map[string]any         `json:"config"`
+	SystemInfo      models.SystemInfo      `json:"system_info"`
+	LastConnectedAt *time.Time             `json:"last_connected_at" example:"2023-10-01T12:00:00Z"`
+	CreatedAt       time.Time              `json:"created_at"`
+	UpdatedAt       time.Time              `json:"updated_at"`
 }

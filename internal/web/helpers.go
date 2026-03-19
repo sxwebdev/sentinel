@@ -1,17 +1,14 @@
 package web
 
 import (
-	"context"
 	"fmt"
-	"time"
 
+	"github.com/sxwebdev/sentinel/internal/models"
 	"github.com/sxwebdev/sentinel/internal/monitors"
-	"github.com/sxwebdev/sentinel/internal/storage"
-	"github.com/sxwebdev/sentinel/internal/utils"
 )
 
-// convertServiceToDTO converts a storage.Service to ServiceDTO
-func convertServiceToDTO(service *storage.Service) (ServiceDTO, error) {
+// convertServiceToDTO converts a models.Service to ServiceDTO
+func convertServiceToDTO(service *models.ServiceFullView) (ServiceDTO, error) {
 	config := monitors.Config{}
 	if service.Config != nil {
 		var err error
@@ -25,8 +22,8 @@ func convertServiceToDTO(service *storage.Service) (ServiceDTO, error) {
 		ID:                 service.ID,
 		Name:               service.Name,
 		Protocol:           service.Protocol,
-		Interval:           uint32(service.Interval.Milliseconds()),
-		Timeout:            uint32(service.Timeout.Milliseconds()),
+		Interval:           service.Interval,
+		Timeout:            service.Timeout,
 		Retries:            service.Retries,
 		Tags:               service.Tags,
 		Config:             config,
@@ -35,140 +32,102 @@ func convertServiceToDTO(service *storage.Service) (ServiceDTO, error) {
 		TotalIncidents:     service.TotalIncidents,
 		Status:             service.Status,
 		LastCheck:          service.LastCheck,
-		NextCheck:          service.NextCheck,
 		LastError:          service.LastError,
 		ConsecutiveFails:   service.ConsecutiveFails,
 		ConsecutiveSuccess: service.ConsecutiveSuccess,
 		TotalChecks:        service.TotalChecks,
-	}
-
-	if service.ResponseTime != nil {
-		dto.ResponseTime = uint32(service.ResponseTime.Milliseconds())
+		AvgResponseTime:    service.AvgResponseTime,
 	}
 
 	return dto, nil
 }
 
 // getDashboardStats calculates dashboard statistics
-func (s *Server) getDashboardStats(ctx context.Context) (*DashboardStats, error) {
-	// Get all services with their states
-	services, err := s.monitorService.FindServices(ctx, storage.FindServicesParams{})
-	if err != nil {
-		return nil, err
-	}
+// func (s *Server) getDashboardStats(ctx context.Context) (*DashboardStats, error) {
+// 	// Get all services with their states
+// 	services, err := s.baseServices.Services().GetAllEnabled(ctx)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	// Get recent incidents
-	activeIncidentsCount, err := s.storage.IncidentsCount(ctx, storage.FindIncidentsParams{
-		Resolved: utils.Pointer(false),
-	})
-	if err != nil {
-		return nil, err
-	}
+// 	incidentsStatsData, err := s.baseServices.Incidents().Stats(ctx)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	// Get all service states
-	serviceStates, err := s.storage.GetAllServiceStates(ctx)
-	if err != nil {
-		return nil, err
-	}
+// 	servicesStatsData, err := s.baseServices.ServiceStates().Stats(ctx)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	// Create a map for quick lookup of service states by service ID
-	stateMap := make(map[string]*storage.ServiceStateRecord)
-	for _, state := range serviceStates {
-		stateMap[state.ServiceID] = state
-	}
+// 	incidentsStats := incidentsStatsData.ToDomain()
+// 	servicesStats := servicesStatsData.ToDomain()
 
-	// Initialize stats
-	stats := DashboardStats{
-		TotalServices:    int(services.Count),
-		ServicesUp:       0,
-		ServicesDown:     0,
-		ServicesUnknown:  0,
-		UptimePercentage: 0.0,
-		AvgResponseTime:  0,
-		TotalChecks:      0,
-		ActiveIncidents:  0,
-		LastCheckTime:    nil,
-		ChecksPerMinute:  0,
-		Protocols:        make(map[storage.ServiceProtocolType]int),
-	}
+// 	var totalUptimeAtomic atomic.Value
+// 	totalUptimeAtomic.Store(float64(0))
 
-	// Calculate statistics
-	totalChecks := 0
-	upServices := 0
-	var lastCheckTime *time.Time
-	var totalResponseTimeMs int64
-	var responseTimeCount int64
+// 	since := time.Now().AddDate(0, -1, 0)
 
-	for _, service := range services.Items {
-		if !service.IsEnabled {
-			continue
-		}
+// 	eg, gCtx := errgroup.WithContext(ctx)
+// 	for _, svc := range services {
+// 		eg.Go(func() error {
+// 			svcIncidentsStatsData, err := s.baseServices.Incidents().StatsByServiceID(gCtx, svc.ID, since)
+// 			if err != nil {
+// 				return err
+// 			}
 
-		// Get service state
-		serviceState := stateMap[service.ID]
+// 			svcIncidentsStats := svcIncidentsStatsData.ToDomain()
 
-		// Count by status
-		if serviceState != nil {
-			switch serviceState.Status {
-			case storage.StatusUp:
-				stats.ServicesUp++
-				upServices++
-			case storage.StatusDown:
-				stats.ServicesDown++
-			case storage.StatusUnknown:
-				stats.ServicesUnknown++
-			}
+// 			totalUptimeAtomic.Store(totalUptimeAtomic.Load().(float64) + svcIncidentsStats.UptimePercentage30d)
 
-			// Add response time to total (only from services that have response time data)
-			if serviceState.ResponseTimeNS != nil && *serviceState.ResponseTimeNS > 0 {
-				totalResponseTimeMs += *serviceState.ResponseTimeNS / 1000000 // Convert to milliseconds
-				responseTimeCount++
-			}
-			totalChecks += serviceState.TotalChecks
+// 			return nil
+// 		})
+// 	}
 
-			// Track last check time
-			if serviceState.LastCheck != nil {
-				if lastCheckTime == nil || serviceState.LastCheck.After(*lastCheckTime) {
-					lastCheckTime = serviceState.LastCheck
-				}
-			}
-		}
+// 	if err := eg.Wait(); err != nil {
+// 		return nil, err
+// 	}
 
-		// Count by protocol
-		protocol := service.Protocol
-		if protocol == "" {
-			protocol = "unknown"
-		}
-		stats.Protocols[protocol]++
-	}
+// 	var avgUptime float64
+// 	totalUptime := totalUptimeAtomic.Load().(float64)
+// 	if totalUptime > 0 {
+// 		avgUptime = totalUptime / float64(len(services))
+// 	}
 
-	// Calculate averages
-	if upServices > 0 {
-		stats.UptimePercentage = float64(upServices) / float64(len(services.Items)) * 100
-	}
-	if responseTimeCount > 0 {
-		stats.AvgResponseTime = totalResponseTimeMs / responseTimeCount
-	}
-	stats.TotalChecks = totalChecks
+// 	// Initialize stats
+// 	stats := DashboardStats{
+// 		TotalServices:    servicesStats.TotalServices,
+// 		ServicesUp:       servicesStats.ServicesUp,
+// 		ServicesDown:     servicesStats.ServicesDown,
+// 		ServicesUnknown:  servicesStats.ServicesUnknown,
+// 		UptimePercentage: avgUptime,
+// 		AvgResponseTime:  servicesStats.AvgResponseTime,
+// 		TotalChecks:      servicesStats.TotalChecks,
+// 		ActiveIncidents:  incidentsStats.UnresolvedIncidents,
+// 		ChecksPerMinute:  0,
+// 		Protocols:        make(map[models.ServiceProtocolType]int),
+// 	}
 
-	// Count active incidents
-	stats.ActiveIncidents = int(activeIncidentsCount)
+// 	// Calculate statistics
 
-	// Set last check time
-	stats.LastCheckTime = lastCheckTime
+// 	for _, service := range services {
+// 		// Count by protocol
+// 		protocol := service.Protocol
+// 		if protocol == "" {
+// 			protocol = "unknown"
+// 		}
 
-	// Calculate checks per minute (estimate based on intervals)
-	checksPerMinute := 0
-	for _, service := range services.Items {
-		if !service.IsEnabled {
-			continue
-		}
+// 		stats.Protocols[protocol]++
+// 	}
 
-		if service.Interval > 0 {
-			checksPerMinute += int(time.Minute / service.Interval)
-		}
-	}
-	stats.ChecksPerMinute = checksPerMinute
+// 	// Calculate checks per minute (estimate based on intervals)
+// 	var checksPerMinute int64
+// 	for _, service := range services {
+// 		if service.Interval > 0 {
+// 			checksPerMinute += int64(60000 / service.Interval)
+// 		}
+// 	}
+// 	stats.ChecksPerMinute = checksPerMinute
 
-	return &stats, nil
-}
+// 	return &stats, nil
+// }

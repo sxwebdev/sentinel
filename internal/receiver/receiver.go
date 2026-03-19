@@ -3,8 +3,8 @@ package receiver
 import (
 	"context"
 
-	"github.com/sxwebdev/sentinel/internal/storage"
-	"github.com/sxwebdev/sentinel/pkg/broker"
+	"github.com/sxwebdev/sentinel/internal/models"
+	"github.com/sxwebdev/xutils/broker"
 )
 
 type TriggerServiceEventType int
@@ -38,12 +38,12 @@ func (e TriggerServiceEventType) String() string {
 
 type TriggerServiceData struct {
 	EventType TriggerServiceEventType
-	Svc       *storage.Service
+	Svc       *models.ServiceFullView
 }
 
 func NewTriggerServiceData(
 	eventType TriggerServiceEventType,
-	svc *storage.Service,
+	svc *models.ServiceFullView,
 ) *TriggerServiceData {
 	return &TriggerServiceData{
 		EventType: eventType,

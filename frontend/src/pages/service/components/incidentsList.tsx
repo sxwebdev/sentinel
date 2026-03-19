@@ -17,17 +17,17 @@ import { ExpandableText } from "@/shared/components/expandableText";
 import { formatDuration } from "@/shared/utils";
 import PaginationTable from "@/shared/components/paginationTable";
 import type {
-  DbutilsFindResponseWithCountStorageIncident,
+  StorecmnFindResponseWithCountModelsIncident,
   GetServicesIdIncidentsParams,
-  StorageIncident,
+  ModelsIncident,
 } from "@/shared/types/model";
 
 interface IncidentsListProps {
-  incidentsData: DbutilsFindResponseWithCountStorageIncident;
+  incidentsData: StorecmnFindResponseWithCountModelsIncident;
   incidentsCount: number | null;
   filters: GetServicesIdIncidentsParams;
   setFilters: (filters: Partial<GetServicesIdIncidentsParams>) => void;
-  setDeleteIncident: (incident: StorageIncident) => void;
+  setDeleteIncident: (incident: ModelsIncident) => void;
 }
 
 export const IncidentsList = ({
@@ -71,7 +71,7 @@ export const IncidentsList = ({
           </div>
         ) : (
           <div className="space-y-3">
-            {incidentsData?.items?.map((incident: StorageIncident) => (
+            {incidentsData?.items?.map((incident: ModelsIncident) => (
               <div
                 key={incident.id}
                 className="bg-card flex items-center gap-4 rounded-lg border p-4 transition-shadow hover:shadow-sm"
@@ -84,7 +84,7 @@ export const IncidentsList = ({
                         <div
                           className={cn(
                             "h-2.5 w-2.5 rounded-full",
-                            incident.resolved
+                            incident.resolved_at
                               ? "bg-emerald-400"
                               : "bg-rose-400",
                           )}
@@ -92,7 +92,7 @@ export const IncidentsList = ({
                       </TooltipTrigger>
                       <TooltipContent>
                         <p>
-                          {incident.resolved
+                          {incident.resolved_at
                             ? "Incident resolved"
                             : "Active incident"}
                         </p>
@@ -143,14 +143,10 @@ export const IncidentsList = ({
                     </TooltipProvider>
 
                     <Badge
-                      variant={incident.resolved ? "default" : "destructive"}
-                      className={cn(
-                        "text-xs font-medium",
-                        incident.resolved && "bg-emerald-100 text-emerald-600",
-                        !incident.resolved && "bg-rose-100 text-rose-600",
-                      )}
+                      variant={incident.resolved_at ? "success" : "error"}
+                      className="text-xs font-medium"
                     >
-                      {incident.resolved ? "Resolved" : "Active"}
+                      {incident.resolved_at ? "Resolved" : "Active"}
                     </Badge>
                   </div>
 
@@ -165,22 +161,22 @@ export const IncidentsList = ({
                     <div>
                       <span className="font-medium">Started:</span>{" "}
                       {new Date(
-                        incident?.start_time ?? "",
+                        incident?.started_at ?? "",
                       ).toLocaleDateString()}{" "}
                       at{" "}
                       {new Date(
-                        incident?.start_time ?? "",
+                        incident?.started_at ?? "",
                       ).toLocaleTimeString()}
                     </div>
-                    {incident?.end_time && (
+                    {incident?.resolved_at && (
                       <div>
                         <span className="font-medium">Ended:</span>{" "}
                         {new Date(
-                          incident?.end_time ?? "",
+                          incident?.resolved_at ?? "",
                         ).toLocaleDateString()}{" "}
                         at{" "}
                         {new Date(
-                          incident?.end_time ?? "",
+                          incident?.resolved_at ?? "",
                         ).toLocaleTimeString()}
                       </div>
                     )}

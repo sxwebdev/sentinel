@@ -1,20 +1,16 @@
-import { createRootRoute, Outlet } from "@tanstack/react-router";
-import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
-import { Toaster } from "sonner";
+import { createRootRouteWithContext, Outlet } from "@tanstack/react-router";
+// import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 
-import Header from "@/app/layouts/parts/Header";
+interface RouterContext {
+  isSystemInitialized: boolean;
+  isAuthenticated: boolean;
+}
 
-const RootComponent = () => (
-  <>
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 p-6 md:py-8 xl:px-0">
-      <Header />
+export const Route = createRootRouteWithContext<RouterContext>()({
+  component: () => (
+    <>
       <Outlet />
-    </div>
-    <Toaster />
-    <TanStackRouterDevtools />
-  </>
-);
-
-export const Route = createRootRoute({
-  component: RootComponent,
+      {/* <TanStackRouterDevtools /> */}
+    </>
+  ),
 });

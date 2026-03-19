@@ -1,9 +1,12 @@
 import { InfoCardStats } from "@/entities/infoStatsCard/infoCardStats";
-import type { WebServiceDTO, StorageServiceStats } from "@/shared/types/model";
+import type {
+  WebServiceDTO,
+  ServiceStats as ModelServiceStats,
+} from "@/shared/types/model";
 
 interface ServiceStatsProps {
   serviceDetailData: WebServiceDTO;
-  serviceStatsData: StorageServiceStats;
+  serviceStatsData: ModelServiceStats;
 }
 
 export const ServiceStats = ({
@@ -22,14 +25,14 @@ export const ServiceStats = ({
       description: "Total Checks",
     },
     {
-      value: `${((serviceStatsData?.avg_response_time ?? 0) / 1000000).toFixed(1)} ms`,
+      value: `${(serviceStatsData?.avg_response_time ?? 0).toFixed(1)} ms`,
       key: "avg_response_time",
       description: "Avg Response Time",
     },
     {
       value: `${(serviceStatsData?.uptime_percentage ?? 0).toFixed(1)}%`,
       key: "uptime",
-      description: "Uptime",
+      description: "Uptime (last 30 days)",
     },
     {
       value: serviceDetailData?.consecutive_success,
@@ -44,7 +47,7 @@ export const ServiceStats = ({
   ];
 
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+    <div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-6">
       {cardStats.map((stat) => (
         <InfoCardStats
           key={stat.key}

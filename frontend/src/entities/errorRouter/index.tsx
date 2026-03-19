@@ -1,9 +1,8 @@
 import { useRouter, type ErrorRouteComponent } from "@tanstack/react-router";
 import { Button } from "@/shared/components/ui";
-import { isAxiosError, type AxiosError } from "axios";
-import type { WebErrorResponse } from "@/shared/types/model/webErrorResponse";
+import { ConnectError } from "@connectrpc/connect";
 
-type errorData = {
+export type ErrorData = {
   status: number;
   message: string;
   details?: string;
@@ -13,20 +12,16 @@ type errorData = {
 const ErrorRouter: ErrorRouteComponent = ({ error, reset }) => {
   const router = useRouter();
 
-  const errorData: errorData = {
+  const errorData: ErrorData = {
     status: 500,
     message: error.name,
     details: error.message,
   };
 
-  const axiosErr: AxiosError<WebErrorResponse> | undefined = isAxiosError(error)
-    ? error
-    : undefined;
-
-  if (axiosErr) {
-    errorData.status = axiosErr.response?.status || 500;
-    errorData.message = axiosErr.message || "Unknown error";
-    errorData.details = axiosErr.response?.data.error;
+  if (error instanceof ConnectError) {
+    errorData.status = error.code;
+    errorData.message = error.rawMessage || error.message || "Unknown error";
+    errorData.details = error.details.join(", ") || undefined;
   }
 
   const handleReload = async () => {

@@ -1,0 +1,61 @@
+syntax = "proto3";
+package sentinel.system.v1;
+
+import "google/protobuf/timestamp.proto";
+
+// SystemService is the service for system information
+service SystemService {
+  rpc CheckIsInitialized(CheckIsInitializedRequest)
+      returns (CheckIsInitializedResponse);
+  rpc Initialize(InitializeRequest) returns (InitializeResponse);
+  rpc GetSystemInfo(GetSystemInfoRequest) returns (GetSystemInfoResponse);
+  rpc CheckForUpdates(CheckForUpdatesRequest) returns (CheckForUpdatesResponse);
+}
+
+// AvailableUpdate represents information about an available update
+message AvailableUpdate {
+  string current_version = 1;
+  bool is_available = 2;
+  message Details {
+    bool is_available_manual = 1;
+    string tag_name = 2;
+    string url = 3;
+    string description = 4;
+  }
+  Details details = 3;
+}
+
+// SystemInfo represents information about the server
+message SystemInfo {
+  string version = 1;
+  string commit_hash = 2;
+  string build_date = 3;
+  string go_version = 4;
+  string sqlite_version = 5;
+  string os = 6;
+  string arch = 7;
+  string hostname = 8;
+  string kernel_version = 9;
+  string cpu_model = 10;
+  string ip_address = 11;
+  google.protobuf.Timestamp started_at = 12;
+}
+
+// CheckIsInitializedRequest
+message CheckIsInitializedRequest {}
+message CheckIsInitializedResponse { bool is_initialized = 1; }
+
+// InitializeRequest
+message InitializeRequest {
+  string email = 1;
+  string password = 2;
+}
+message InitializeResponse {}
+
+// GetSystemInfoRequest
+message GetSystemInfoRequest {}
+message GetSystemInfoResponse { SystemInfo info = 1; }
+
+// CheckForUpdatesRequest
+message CheckForUpdatesRequest {}
+message CheckForUpdatesResponse { AvailableUpdate info = 1; }

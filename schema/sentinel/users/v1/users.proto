@@ -1,0 +1,14 @@
+syntax = "proto3";
+package sentinel.users.v1;
+
+import "google/protobuf/timestamp.proto";
+
+message User {
+  string id = 1;
+  string email = 2;
+  string full_name = 3;
+  string role = 4;
+  string avatar_url = 5;
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp updated_at = 7;
+}

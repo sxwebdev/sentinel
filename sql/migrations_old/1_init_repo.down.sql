@@ -1,0 +1,3 @@
+DROP TABLE IF EXISTS incidents;
+DROP TABLE IF EXISTS service_states;
+DROP TABLE IF EXISTS services;

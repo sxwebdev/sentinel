@@ -1,0 +1,33 @@
+log:
+  format: json
+  level: info
+  console_colored: false
+  trace: fatal
+  with_caller: false
+  with_stack_trace: false
+ops:
+  enabled: false
+  network: tcp
+  tracing_enabled: false
+  metrics:
+    enabled: false
+    path: /metrics
+    port: "10000"
+    basic_auth:
+      enabled: false
+      username: ""
+      password: ""
+  healthy:
+    enabled: false
+    path: /healthy
+    port: "10000"
+  profiler:
+    enabled: false
+    path: /debug/pprof
+    port: "10000"
+    write_timeout: 60
+hub_server:
+  name: connectrpc-client
+  addr: ""
+data_dir: ./data
+token: ""

@@ -123,9 +123,6 @@ monitoring:
     default_timeout: 10s
     default_retries: 5
 
-database:
-  path: "./data/db.sqlite"
-
 notifications:
   enabled: true
   urls:
@@ -218,7 +215,7 @@ The gRPC monitor supports three types of checks:
 
 ## Notification Setup
 
-Sentinel uses [Shoutrrr](https://github.com/containrrr/shoutrrr) for notifications, which supports multiple providers
+Sentinel uses [Shoutrrr](https://github.com/nicholas-fedor/shoutrrr) for notifications, which supports multiple providers
 
 You can configure multiple notification providers simultaneously. If one provider fails, notifications will still be sent to the others:
 

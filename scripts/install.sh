@@ -332,15 +332,6 @@ monitoring:
     default_retries: 3
 
 timezone: UTC
-
-database:
-  path: "$DATA_DIR/db.sqlite"
-
-notifications:
-  enabled: false
-  urls:
-    # Telegram
-    # - "telegram://token@telegram?chats=@channel-1[,chat-id-1,...]&preview=false"
 EOF
 
     chown "$SERVICE_USER:$SERVICE_USER" "$CONFIG_FILE"
@@ -363,7 +354,7 @@ Wants=network.target
 Type=simple
 User=$SERVICE_USER
 Group=$SERVICE_USER
-ExecStart=$BINARY_PATH start --config $CONFIG_FILE
+ExecStart=$BINARY_PATH hub start --config $CONFIG_FILE
 WorkingDirectory=$CONFIG_DIR
 
 # Restart policy

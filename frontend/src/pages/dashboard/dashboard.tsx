@@ -9,11 +9,11 @@ import {
 import { useDashboardLogic } from "./hooks/useDashboardLogic";
 import { InfoCardStats } from "@/entities/infoStatsCard/infoCardStats";
 import { Loader } from "@/entities/loader/loader";
-import type { GetDashboardStatsResult } from "@/shared/api/dashboard/dashboard";
+import type { GetDashboardStatsResult } from "@/shared/api/gen/dashboard/dashboard";
 import { getProtocolDisplayName } from "@/shared/lib/getProtocolDisplayName";
 import { ServiceTable } from "../service/serviceTable";
 import { useWsLogic } from "./hooks/useWsLogic";
-import { ChartIncidentsStats } from "./incidents-stats";
+import { ChartIncidentsStats } from "./incidentStats";
 
 const formatNumber = (value: number) => {
   return Intl.NumberFormat().format(value);
@@ -26,7 +26,7 @@ const infoKeysDashboard = [
   { key: "active_incidents", label: "Active incidents" },
   {
     key: "avg_response_time",
-    label: "Average response time (ms)",
+    label: "Avg response time",
     valueFormatter: (value: string) => `${formatNumber(Number(value))}ms`,
   },
   {
@@ -36,7 +36,7 @@ const infoKeysDashboard = [
   },
   {
     key: "uptime_percentage",
-    label: "Uptime",
+    label: "Uptime (last 30 days)",
     valueFormatter: (value: string) => `${Number(value).toFixed(1)}%`,
   },
   {
@@ -54,7 +54,7 @@ const Dashboard = () => {
 
   return (
     <div className="flex flex-col gap-4 lg:gap-6">
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 md:gap-6 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 md:grid-cols-3 md:gap-6 lg:grid-cols-4">
         {infoKeysDashboard.map((item) => {
           const value =
             dashboardInfo[

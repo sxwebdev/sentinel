@@ -11,12 +11,11 @@ import (
 	"time"
 
 	"github.com/dop251/goja"
-	"github.com/sxwebdev/sentinel/internal/storage"
+	"github.com/sxwebdev/sentinel/internal/models"
 )
 
 // HTTPConfig represents configuration for HTTP monitoring
 type HTTPConfig struct {
-	Timeout   uint64           `json:"timeout" swaggertype:"primitive,integer" example:"30000"`
 	Endpoints []EndpointConfig `json:"endpoints" validate:"required,min=1,dive"`
 	Condition string           `json:"condition"`
 }
@@ -34,8 +33,8 @@ type EndpointConfig struct {
 	Password       string            `json:"password"`  // Basic Auth password
 }
 
-// EndpointResult represents result from a single endpoint
-type EndpointResult struct {
+// endpointResult represents result from a single endpoint
+type endpointResult struct {
 	Name     string        `json:"name"`
 	URL      string        `json:"url"`
 	Success  bool          `json:"success"`
@@ -47,22 +46,20 @@ type EndpointResult struct {
 
 // HTTPMonitor monitors HTTP/HTTPS endpoints
 type HTTPMonitor struct {
-	BaseMonitor
-	conf    HTTPConfig
-	retries int
+	baseMonitor
+	conf HTTPConfig
 }
 
-// NewHTTPMonitor creates a new HTTP monitor
-func NewHTTPMonitor(cfg storage.Service) (*HTTPMonitor, error) {
-	conf, err := GetConfig[HTTPConfig](cfg.Config, storage.ServiceProtocolTypeHTTP)
+// newHTTPMonitor creates a new HTTP monitor
+func newHTTPMonitor(params MonitorParams) (*HTTPMonitor, error) {
+	conf, err := GetConfig[HTTPConfig](params.Config, models.ServiceProtocolTypeHTTP)
 	if err != nil {
 		return nil, fmt.Errorf("HTTP config not found")
 	}
 
 	monitor := &HTTPMonitor{
-		BaseMonitor: NewBaseMonitor(cfg),
+		baseMonitor: newBaseMonitor(params.ServiceName, params.Protocol, params.Timeout),
 		conf:        conf,
-		retries:     cfg.Retries,
 	}
 
 	return monitor, nil
@@ -81,22 +78,22 @@ func (h *HTTPMonitor) Close() error {
 // checkEndpoints performs health checks on multiple endpoints and evaluates conditions
 func (h *HTTPMonitor) checkEndpoints(ctx context.Context) error {
 	config := h.conf.Endpoints
-	results := make([]EndpointResult, 0, len(config))
+	results := make([]endpointResult, 0, len(config))
 
 	// Check all endpoints concurrently
-	type endpointResult struct {
-		result EndpointResult
+	type checkResult struct {
+		result endpointResult
 		index  int
 	}
 
-	resultChan := make(chan endpointResult, len(config))
+	resultChan := make(chan checkResult, len(config))
 
 	// Start all endpoint checks
 	for i, endpoint := range config {
 		go func(ep EndpointConfig, idx int) {
 			result := h.checkEndpoint(ctx, ep)
 			select {
-			case resultChan <- endpointResult{result: result, index: idx}:
+			case resultChan <- checkResult{result: result, index: idx}:
 			case <-ctx.Done():
 				// Context cancelled, don't block on channel send
 			}
@@ -142,15 +139,15 @@ func (h *HTTPMonitor) checkEndpoints(ctx context.Context) error {
 }
 
 // checkEndpoint performs a health check on a single endpoint
-func (h *HTTPMonitor) checkEndpoint(ctx context.Context, endpoint EndpointConfig) EndpointResult {
+func (h *HTTPMonitor) checkEndpoint(ctx context.Context, endpoint EndpointConfig) endpointResult {
 	start := time.Now()
 
 	client := &http.Client{}
-	client.Timeout = h.config.Timeout
+	client.Timeout = h.timeout
 
 	req, err := http.NewRequestWithContext(ctx, endpoint.Method, endpoint.URL, strings.NewReader(endpoint.Body))
 	if err != nil {
-		return EndpointResult{
+		return endpointResult{
 			Name:     endpoint.Name,
 			URL:      endpoint.URL,
 			Success:  false,
@@ -178,7 +175,7 @@ func (h *HTTPMonitor) checkEndpoint(ctx context.Context, endpoint EndpointConfig
 	duration := time.Since(start)
 
 	if err != nil {
-		return EndpointResult{
+		return endpointResult{
 			Name:     endpoint.Name,
 			URL:      endpoint.URL,
 			Success:  false,
@@ -191,7 +188,7 @@ func (h *HTTPMonitor) checkEndpoint(ctx context.Context, endpoint EndpointConfig
 	// Read response body
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return EndpointResult{
+		return endpointResult{
 			Name:     endpoint.Name,
 			URL:      endpoint.URL,
 			Success:  false,
@@ -201,7 +198,7 @@ func (h *HTTPMonitor) checkEndpoint(ctx context.Context, endpoint EndpointConfig
 	}
 
 	if endpoint.ExpectedStatus != 0 && resp.StatusCode != endpoint.ExpectedStatus {
-		return EndpointResult{
+		return endpointResult{
 			Name:     endpoint.Name,
 			URL:      endpoint.URL,
 			Success:  false,
@@ -216,7 +213,7 @@ func (h *HTTPMonitor) checkEndpoint(ctx context.Context, endpoint EndpointConfig
 	if endpoint.JSONPath != "" {
 		value, err = extractValueFromJSON(body, endpoint.JSONPath)
 		if err != nil {
-			return EndpointResult{
+			return endpointResult{
 				Name:     endpoint.Name,
 				URL:      endpoint.URL,
 				Success:  false,
@@ -227,7 +224,7 @@ func (h *HTTPMonitor) checkEndpoint(ctx context.Context, endpoint EndpointConfig
 		}
 	}
 
-	return EndpointResult{
+	return endpointResult{
 		Name:     endpoint.Name,
 		URL:      endpoint.URL,
 		Success:  true,
@@ -238,8 +235,8 @@ func (h *HTTPMonitor) checkEndpoint(ctx context.Context, endpoint EndpointConfig
 }
 
 // extractValueFromJSON extracts value from JSON response using JSONPath-like syntax
-func extractValueFromJSON(data []byte, path string) (interface{}, error) {
-	var jsonData interface{}
+func extractValueFromJSON(data []byte, path string) (any, error) {
+	var jsonData any
 	if err := json.Unmarshal(data, &jsonData); err != nil {
 		return nil, fmt.Errorf("failed to parse JSON: %w", err)
 	}
@@ -254,13 +251,13 @@ func extractValueFromJSON(data []byte, path string) (interface{}, error) {
 
 	for _, part := range parts {
 		switch v := current.(type) {
-		case map[string]interface{}:
+		case map[string]any:
 			if val, exists := v[part]; exists {
 				current = val
 			} else {
 				return nil, fmt.Errorf("path not found: %s", path)
 			}
-		case []interface{}:
+		case []any:
 			// Handle array indexing like "items.0.name"
 			if idx, err := parseInt(part); err == nil && idx >= 0 && idx < len(v) {
 				current = v[idx]
@@ -283,9 +280,7 @@ func parseInt(s string) (int, error) {
 }
 
 // evaluateCondition evaluates JavaScript condition with endpoint results
-func evaluateCondition(condition string, results []EndpointResult) (bool, error) {
-	vm := goja.New()
-
+func evaluateCondition(condition string, results []endpointResult) (bool, error) {
 	// Create results object for JavaScript
 	resultsObj := make(map[string]any)
 	for _, result := range results {
@@ -297,6 +292,8 @@ func evaluateCondition(condition string, results []EndpointResult) (bool, error)
 			"duration": result.Duration.Milliseconds(),
 		}
 	}
+
+	vm := goja.New()
 
 	// Set global variables
 	vm.Set("results", resultsObj)

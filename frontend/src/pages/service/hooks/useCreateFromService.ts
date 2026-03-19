@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useServiceTableStore } from "../store/useServiceTableStore";
-import { getServices } from "@/shared/api/services/services";
+import { getServices } from "@/shared/api/gen/services/services";
 import { toast } from "sonner";
 import type { WebCreateUpdateServiceRequest } from "@/shared/types/model";
 

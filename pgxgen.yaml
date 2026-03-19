@@ -1,0 +1,375 @@
+version: 1
+sqlc:
+  - schema_dir: sql/migrations
+    models:
+      replace_sqlc_nullable_types: true
+      move:
+        output_dir: internal/models
+        output_file_name: models_gen.go
+        package_name: models
+        package_path: github.com/sxwebdev/sentinel/internal/models
+        imports:
+          - path: github.com/sxwebdev/sentinel/internal/models
+            go_type: NotificationProviderType
+          - path: github.com/sxwebdev/sentinel/internal/models
+            go_type: AgentStatusType
+          - path: github.com/sxwebdev/sentinel/internal/models
+            go_type: ProjectSettings
+          - path: github.com/sxwebdev/sentinel/internal/models
+            go_type: AgentKindType
+          - path: github.com/sxwebdev/sentinel/internal/models
+            go_type: Tags
+          - path: github.com/sxwebdev/sentinel/internal/models
+            go_type: AgentConfig
+          - path: github.com/sxwebdev/sentinel/internal/models
+            go_type: ResourcePayload
+          - path: github.com/sxwebdev/sentinel/internal/models
+            go_type: ResourceKindType
+          - path: github.com/sxwebdev/sentinel/internal/models
+            go_type: UserRole
+    crud:
+      auto_remove_generated_files: true
+      exclude_table_name_from_methods: true
+      tables:
+        # users
+        users:
+          output_dir: sql/queries/users
+          primary_column: id
+          methods:
+            create:
+              skip_columns:
+                - created_at
+                - updated_at
+              returning: "*"
+            update:
+              skip_columns:
+                - id
+                - password
+                - role
+                - created_at
+              returning: "*"
+              column_values:
+                updated_at: CURRENT_TIMESTAMP
+            delete:
+            get:
+              name: GetByID
+
+        # projects
+        projects:
+          output_dir: sql/queries/projects
+          primary_column: id
+          methods:
+            create:
+              skip_columns:
+                - created_at
+                - updated_at
+              returning: "*"
+            update:
+              skip_columns:
+                - id
+                - created_at
+              returning: "*"
+              column_values:
+                updated_at: CURRENT_TIMESTAMP
+            delete:
+            get:
+              name: GetByID
+            find:
+              name: GetAll
+
+        # agents
+        agents:
+          output_dir: sql/queries/agents
+          primary_column: id
+          methods:
+            create:
+              skip_columns:
+                - fingerprint
+                - status
+                - system_info
+                - last_seen_at
+                - created_at
+                - updated_at
+              returning: "*"
+            delete:
+              where:
+                project_id:
+            get:
+              name: GetByID
+
+        # resources
+        resources:
+          output_dir: sql/queries/resources
+          primary_column: id
+          methods:
+            create:
+              skip_columns:
+                - created_at
+                - updated_at
+              returning: "*"
+            delete:
+            get:
+              name: GetByID
+            find:
+              name: GetAll
+              where:
+                project_id:
+
+        # resource_agents
+        resource_agents:
+          output_dir: sql/queries/resource_agents
+          primary_column: id
+          methods:
+            create:
+              returning: "*"
+            delete:
+            get:
+              name: GetByID
+            find:
+              name: GetAll
+
+        # monitor_agents
+        monitor_agents:
+          output_dir: sql/queries/monitor_agents
+          primary_column: id
+          methods:
+            create:
+              returning: "*"
+            delete:
+            get:
+              name: GetByID
+            find:
+              name: GetAll
+
+        # monitors
+        monitors:
+          output_dir: sql/queries/monitors
+          primary_column: id
+          methods:
+            create:
+              skip_columns:
+                - created_at
+                - updated_at
+              returning: "*"
+            delete:
+            get:
+              name: GetByID
+            find:
+              name: GetAll
+
+        # monitor_revisions
+        monitor_revisions:
+          output_dir: sql/queries/monitor_revisions
+          primary_column: id
+          methods:
+            create:
+              skip_columns:
+                - created_at
+                - updated_at
+              returning: "*"
+            delete:
+            get:
+              name: GetByID
+            find:
+              name: GetAll
+
+        # monitor_checks
+        monitor_checks:
+          output_dir: sql/queries/monitor_checks
+          primary_column: id
+          methods:
+            create:
+              skip_columns:
+                - created_at
+                - updated_at
+              returning: "*"
+            delete:
+            get:
+              name: GetByID
+            find:
+              name: GetAll
+
+        # monitor_states
+        monitor_states:
+          output_dir: sql/queries/monitor_states
+          primary_column: id
+          methods:
+            create:
+              skip_columns:
+                - created_at
+                - updated_at
+              returning: "*"
+            delete:
+            get:
+              name: GetByID
+            find:
+              name: GetAll
+
+        # incidents
+        incidents:
+          output_dir: sql/queries/incidents
+          primary_column: id
+          methods:
+            create:
+              skip_columns:
+                - duration
+                - started_at
+                - resolved_at
+                - updated_at
+                - created_at
+              returning: "*"
+              column_values:
+                error: sqlc.arg(incident_error)
+            delete:
+            get:
+              name: GetByID
+
+        # incident_events
+        incident_events:
+          output_dir: sql/queries/incident_events
+          primary_column: id
+          methods:
+            create:
+              skip_columns:
+                - created_at
+                - updated_at
+              returning: "*"
+            delete:
+            get:
+              name: GetByID
+            find:
+              name: GetAll
+
+        # notification_providers
+        notification_providers:
+          output_dir: sql/queries/notification_providers
+          primary_column: id
+          methods:
+            create:
+              skip_columns:
+                - created_at
+                - updated_at
+              returning: "*"
+            delete:
+            get:
+              name: GetByID
+            find:
+              name: GetAll
+              where:
+                project_id:
+
+        # notification_history
+        notification_history:
+          output_dir: sql/queries/notification_history
+          primary_column: id
+          methods:
+            create:
+              skip_columns:
+                - status
+                - response
+                - attempts
+                - error_message
+                - last_attempt_at
+                - sent_at
+                - created_at
+                - updated_at
+              returning: "*"
+
+        # alert_policies
+        alert_policies:
+          output_dir: sql/queries/alert_policies
+          primary_column: id
+          methods:
+            create:
+              skip_columns:
+                - created_at
+                - updated_at
+              returning: "*"
+            delete:
+            get:
+              name: GetByID
+            find:
+              name: GetAll
+
+        # alerts
+        alerts:
+          output_dir: sql/queries/alerts
+          primary_column: id
+          methods:
+            create:
+              skip_columns:
+                - created_at
+                - updated_at
+              returning: "*"
+            delete:
+            get:
+              name: GetByID
+            find:
+              name: GetAll
+
+        # maintenance_windows
+        maintenance_windows:
+          output_dir: sql/queries/maintenance_windows
+          primary_column: id
+          methods:
+            create:
+              skip_columns:
+                - created_at
+                - updated_at
+              returning: "*"
+            delete:
+            get:
+              name: GetByID
+            find:
+              name: GetAll
+
+    constants:
+      tables:
+        projects:
+          output_dir: internal/store/repos/repo_projects
+          include_column_names: true
+        agents:
+          output_dir: internal/store/repos/repo_agents
+          include_column_names: true
+        resources:
+          output_dir: internal/store/repos/repo_resources
+          include_column_names: true
+        resource_agents:
+          output_dir: internal/store/repos/repo_resource_agents
+          include_column_names: true
+        monitor_agents:
+          output_dir: internal/store/repos/repo_monitor_agents
+          include_column_names: true
+        monitors:
+          output_dir: internal/store/repos/repo_monitors
+          include_column_names: true
+        monitor_revisions:
+          output_dir: internal/store/repos/repo_monitor_revisions
+          include_column_names: true
+        monitor_states:
+          output_dir: internal/store/repos/repo_monitor_states
+          include_column_names: true
+        monitor_checks:
+          output_dir: internal/store/repos/repo_monitor_checks
+          include_column_names: true
+        incidents:
+          output_dir: internal/store/repos/repo_incidents
+          include_column_names: true
+        incident_events:
+          output_dir: internal/store/repos/repo_incident_events
+          include_column_names: true
+        notification_providers:
+          output_dir: internal/store/repos/repo_notification_providers
+          include_column_names: true
+        notification_history:
+          output_dir: internal/store/repos/repo_notification_history
+          include_column_names: true
+        alert_policies:
+          output_dir: internal/store/repos/repo_alert_policies
+          include_column_names: true
+        alerts:
+          output_dir: internal/store/repos/repo_alerts
+          include_column_names: true
+        maintenance_windows:
+          output_dir: internal/store/repos/repo_maintenance_windows
+          include_column_names: true

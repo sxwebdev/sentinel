@@ -23,7 +23,6 @@ import type { WebServiceDTO } from "@/shared/types/model";
 interface ServiceOverviewProps {
   serviceDetailData: WebServiceDTO;
   onCheckService: (serviceId: string) => void;
-  setResolveIncident: (value: boolean) => void;
 }
 
 export const ServiceOverview = ({
@@ -41,11 +40,11 @@ export const ServiceOverview = ({
               className={cn(
                 "text-xs font-semibold md:text-sm",
                 serviceDetailData?.status === "up" &&
-                  "bg-emerald-100 text-emerald-600",
+                  "bg-emerald-100 text-emerald-600 dark:bg-emerald-600 dark:text-emerald-100",
                 serviceDetailData?.status === "down" &&
-                  "bg-rose-100 text-rose-600",
+                  "bg-rose-100 text-rose-600 dark:bg-rose-600 dark:text-rose-100",
                 serviceDetailData?.status === "unknown" &&
-                  "bg-yellow-100 text-yellow-600",
+                  "bg-yellow-100 text-yellow-600 dark:bg-yellow-600 dark:text-yellow-100",
               )}
             >
               {serviceDetailData?.status?.toLocaleUpperCase() ?? ""}
@@ -104,6 +103,7 @@ export const ServiceOverview = ({
 
             <Button
               size="sm"
+              variant="secondary"
               className={cn("ml-auto", isMobile && "w-full")}
               disabled={!serviceDetailData?.is_enabled}
               onClick={() => onCheckService(serviceDetailData?.id ?? "")}

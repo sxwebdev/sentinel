@@ -1,36 +1,31 @@
 import type {
-  DbutilsFindResponseWithCountStorageIncident,
+  StorecmnFindResponseWithCountModelsIncident,
   GetServicesIdIncidentsParams,
-  StorageIncident,
+  ModelsIncident,
   WebServiceDTO,
-  StorageServiceStats,
+  ServiceStats,
 } from "@/shared/types/model";
 import { create } from "zustand";
 
 interface ServiceDetailStore {
-  deleteIncident: StorageIncident | null;
+  deleteIncident: ModelsIncident | null;
   serviceDetailData: WebServiceDTO | null;
-  resolveIncident: boolean;
-  incidentsData: DbutilsFindResponseWithCountStorageIncident | null;
+  incidentsData: StorecmnFindResponseWithCountModelsIncident | null;
   filters: GetServicesIdIncidentsParams;
-  serviceStatsData: StorageServiceStats | null;
+  serviceStatsData: ServiceStats | null;
   setFilters: (value: Partial<ServiceDetailStore["filters"]>) => void;
-  setDeleteIncident: (deleteIncident: StorageIncident | null) => void;
-  setResolveIncident: (resolveIncident: boolean) => void;
+  setDeleteIncident: (deleteIncident: ModelsIncident | null) => void;
   setServiceDetailData: (serviceDetailData: WebServiceDTO | null) => void;
   setIncidentsData: (
-    incidentsData: DbutilsFindResponseWithCountStorageIncident | null,
+    incidentsData: StorecmnFindResponseWithCountModelsIncident | null,
   ) => void;
-  setServiceStatsData: (serviceStatsData: StorageServiceStats | null) => void;
-  setUpdateServiceStatsData: (
-    serviceStatsData: StorageServiceStats | null,
-  ) => void;
+  setServiceStatsData: (serviceStatsData: ServiceStats | null) => void;
+  setUpdateServiceStatsData: (serviceStatsData: ServiceStats | null) => void;
 }
 
 const initialState = {
   deleteIncident: null,
   serviceDetailData: null,
-  resolveIncident: false,
   incidentsData: null,
 
   filters: {
@@ -45,7 +40,6 @@ export const useServiceDetailStore = create<ServiceDetailStore>((set) => ({
   setDeleteIncident: (deleteIncident) => set({ deleteIncident }),
   setFilters: (filters) =>
     set((state) => ({ filters: { ...state.filters, ...filters } })),
-  setResolveIncident: (resolveIncident) => set({ resolveIncident }),
   setServiceDetailData: (serviceDetailData) => set({ serviceDetailData }),
   setIncidentsData: (incidentsData) => set({ incidentsData }),
   setServiceStatsData: (serviceStatsData) => set({ serviceStatsData }),

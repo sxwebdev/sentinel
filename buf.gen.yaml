@@ -1,0 +1,19 @@
+version: v2
+managed:
+  enabled: true
+  override:
+    - file_option: go_package_prefix
+      value: github.com/sxwebdev/sentinel/internal/hub/hubserver/api
+plugins:
+  - remote: buf.build/protocolbuffers/go:v1.36.9
+    out: internal/hub/hubserver/api
+    opt: paths=source_relative
+  - remote: buf.build/connectrpc/go:v1.18.1
+    out: internal/hub/hubserver/api
+    opt: paths=source_relative
+  - remote: buf.build/bufbuild/es:v2.9.0
+    out: frontend/src/api/gen
+    opt: target=ts
+  - remote: buf.build/connectrpc/query-es:v2.2.0
+    out: frontend/src/api/gen
+    opt: target=ts

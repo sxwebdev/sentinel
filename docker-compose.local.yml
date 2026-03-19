@@ -1,5 +1,6 @@
 services:
   sentinel:
+    container_name: sentinel
     build:
       context: .
       dockerfile: Dockerfile
@@ -7,6 +8,7 @@ services:
         VERSION: local-dev
         COMMIT_HASH: local
         BUILD_DATE: local
+    command: ["hub", "start", "--config", "./config.yaml"]
     ports:
       - "8080:8080"
     volumes:

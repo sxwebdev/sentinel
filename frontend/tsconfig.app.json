@@ -10,6 +10,7 @@
     "paths": {
       "@/*": ["./src/*"],
       "@app/*": ["./src/app/*"],
+      "@layouts/*": ["./src/layouts/*"],
       "@processes/*": ["./src/processes/*"],
       "@pages/*": ["./src/pages/*"],
       "@widgets/*": ["./src/widgets/*"],
@@ -29,7 +30,7 @@
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "erasableSyntaxOnly": true,
+    "erasableSyntaxOnly": false,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },

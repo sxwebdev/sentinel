@@ -14,10 +14,13 @@ import (
 )
 
 var (
-	appName    = "sentinel"
-	version    = "local"
-	commitHash = "unknown"
-	buildDate  = "unknown"
+	appName        = "sentinel"
+	version        = "local"
+	commitHash     = "unknown"
+	buildDate      = "unknown"
+	envHubPrefix   = "SENTINEL_"
+	envAgentPrefix = "SENTINEL_AGENT_"
+	sqliteDBFile   = "db.sqlite"
 )
 
 func getBuildVersion() string {
@@ -43,15 +46,29 @@ func main() {
 
 	l := logger.NewExtended(defaultLoggerOpts()...)
 
+	// check if os args constains agent command
+	if len(os.Args) > 1 && os.Args[1] == "agent" {
+		appName = "sentinel-agent"
+	}
+
 	app := &cli.Command{
 		Name:    appName,
 		Usage:   "A CLI application for " + appName,
 		Version: getBuildVersion(),
 		Suggest: true,
 		Commands: []*cli.Command{
-			startCMD(),
+			hubStartCMD(),
+			agentCMD(),
 			configCMD(),
+			migrationsCMD(),
 			versionCMD(),
+			{
+				Name: "migratedb",
+				Commands: []*cli.Command{
+					exportCmd(),
+					importCmd(),
+				},
+			},
 		},
 	}
 

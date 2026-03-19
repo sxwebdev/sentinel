@@ -9,86 +9,288 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IncidentsRouteImport } from './routes/incidents'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as ServiceService_idRouteImport } from './routes/service/$service_id'
+import { Route as PublicRouteImport } from './routes/_public'
+import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
+import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as PublicLoginRouteImport } from './routes/_public/login'
+import { Route as PublicInitsystemRouteImport } from './routes/_public/initsystem'
+import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedAgentsRouteImport } from './routes/_authenticated/agents'
+import { Route as AuthenticatedSettingsIndexRouteImport } from './routes/_authenticated/settings/index'
+import { Route as AuthenticatedSettingsNotificationsHistoryRouteImport } from './routes/_authenticated/settings/notifications-history'
+import { Route as AuthenticatedSettingsNotificationsRouteImport } from './routes/_authenticated/settings/notifications'
+import { Route as AuthenticatedServiceService_idRouteImport } from './routes/_authenticated/service/$service_id'
 
-const IncidentsRoute = IncidentsRouteImport.update({
-  id: '/incidents',
-  path: '/incidents',
+const PublicRoute = PublicRouteImport.update({
+  id: '/_public',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
+const AuthenticatedRoute = AuthenticatedRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
-const ServiceService_idRoute = ServiceService_idRouteImport.update({
-  id: '/service/$service_id',
-  path: '/service/$service_id',
-  getParentRoute: () => rootRouteImport,
+const PublicLoginRoute = PublicLoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => PublicRoute,
 } as any)
+const PublicInitsystemRoute = PublicInitsystemRouteImport.update({
+  id: '/initsystem',
+  path: '/initsystem',
+  getParentRoute: () => PublicRoute,
+} as any)
+const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedAgentsRoute = AuthenticatedAgentsRouteImport.update({
+  id: '/agents',
+  path: '/agents',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedSettingsIndexRoute =
+  AuthenticatedSettingsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedSettingsRoute,
+  } as any)
+const AuthenticatedSettingsNotificationsHistoryRoute =
+  AuthenticatedSettingsNotificationsHistoryRouteImport.update({
+    id: '/notifications-history',
+    path: '/notifications-history',
+    getParentRoute: () => AuthenticatedSettingsRoute,
+  } as any)
+const AuthenticatedSettingsNotificationsRoute =
+  AuthenticatedSettingsNotificationsRouteImport.update({
+    id: '/notifications',
+    path: '/notifications',
+    getParentRoute: () => AuthenticatedSettingsRoute,
+  } as any)
+const AuthenticatedServiceService_idRoute =
+  AuthenticatedServiceService_idRouteImport.update({
+    id: '/service/$service_id',
+    path: '/service/$service_id',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/incidents': typeof IncidentsRoute
-  '/service/$service_id': typeof ServiceService_idRoute
+  '/agents': typeof AuthenticatedAgentsRoute
+  '/settings': typeof AuthenticatedSettingsRouteWithChildren
+  '/initsystem': typeof PublicInitsystemRoute
+  '/login': typeof PublicLoginRoute
+  '/': typeof AuthenticatedIndexRoute
+  '/service/$service_id': typeof AuthenticatedServiceService_idRoute
+  '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
+  '/settings/notifications-history': typeof AuthenticatedSettingsNotificationsHistoryRoute
+  '/settings/': typeof AuthenticatedSettingsIndexRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/incidents': typeof IncidentsRoute
-  '/service/$service_id': typeof ServiceService_idRoute
+  '/agents': typeof AuthenticatedAgentsRoute
+  '/initsystem': typeof PublicInitsystemRoute
+  '/login': typeof PublicLoginRoute
+  '/': typeof AuthenticatedIndexRoute
+  '/service/$service_id': typeof AuthenticatedServiceService_idRoute
+  '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
+  '/settings/notifications-history': typeof AuthenticatedSettingsNotificationsHistoryRoute
+  '/settings': typeof AuthenticatedSettingsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/incidents': typeof IncidentsRoute
-  '/service/$service_id': typeof ServiceService_idRoute
+  '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/_public': typeof PublicRouteWithChildren
+  '/_authenticated/agents': typeof AuthenticatedAgentsRoute
+  '/_authenticated/settings': typeof AuthenticatedSettingsRouteWithChildren
+  '/_public/initsystem': typeof PublicInitsystemRoute
+  '/_public/login': typeof PublicLoginRoute
+  '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/_authenticated/service/$service_id': typeof AuthenticatedServiceService_idRoute
+  '/_authenticated/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
+  '/_authenticated/settings/notifications-history': typeof AuthenticatedSettingsNotificationsHistoryRoute
+  '/_authenticated/settings/': typeof AuthenticatedSettingsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/incidents' | '/service/$service_id'
+  fullPaths:
+    | '/agents'
+    | '/settings'
+    | '/initsystem'
+    | '/login'
+    | '/'
+    | '/service/$service_id'
+    | '/settings/notifications'
+    | '/settings/notifications-history'
+    | '/settings/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/incidents' | '/service/$service_id'
-  id: '__root__' | '/' | '/incidents' | '/service/$service_id'
+  to:
+    | '/agents'
+    | '/initsystem'
+    | '/login'
+    | '/'
+    | '/service/$service_id'
+    | '/settings/notifications'
+    | '/settings/notifications-history'
+    | '/settings'
+  id:
+    | '__root__'
+    | '/_authenticated'
+    | '/_public'
+    | '/_authenticated/agents'
+    | '/_authenticated/settings'
+    | '/_public/initsystem'
+    | '/_public/login'
+    | '/_authenticated/'
+    | '/_authenticated/service/$service_id'
+    | '/_authenticated/settings/notifications'
+    | '/_authenticated/settings/notifications-history'
+    | '/_authenticated/settings/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  IncidentsRoute: typeof IncidentsRoute
-  ServiceService_idRoute: typeof ServiceService_idRoute
+  AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  PublicRoute: typeof PublicRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/incidents': {
-      id: '/incidents'
-      path: '/incidents'
-      fullPath: '/incidents'
-      preLoaderRoute: typeof IncidentsRouteImport
+    '/_public': {
+      id: '/_public'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof PublicRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof AuthenticatedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/': {
+      id: '/_authenticated/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
-    '/service/$service_id': {
-      id: '/service/$service_id'
+    '/_public/login': {
+      id: '/_public/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof PublicLoginRouteImport
+      parentRoute: typeof PublicRoute
+    }
+    '/_public/initsystem': {
+      id: '/_public/initsystem'
+      path: '/initsystem'
+      fullPath: '/initsystem'
+      preLoaderRoute: typeof PublicInitsystemRouteImport
+      parentRoute: typeof PublicRoute
+    }
+    '/_authenticated/settings': {
+      id: '/_authenticated/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/agents': {
+      id: '/_authenticated/agents'
+      path: '/agents'
+      fullPath: '/agents'
+      preLoaderRoute: typeof AuthenticatedAgentsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/settings/': {
+      id: '/_authenticated/settings/'
+      path: '/'
+      fullPath: '/settings/'
+      preLoaderRoute: typeof AuthenticatedSettingsIndexRouteImport
+      parentRoute: typeof AuthenticatedSettingsRoute
+    }
+    '/_authenticated/settings/notifications-history': {
+      id: '/_authenticated/settings/notifications-history'
+      path: '/notifications-history'
+      fullPath: '/settings/notifications-history'
+      preLoaderRoute: typeof AuthenticatedSettingsNotificationsHistoryRouteImport
+      parentRoute: typeof AuthenticatedSettingsRoute
+    }
+    '/_authenticated/settings/notifications': {
+      id: '/_authenticated/settings/notifications'
+      path: '/notifications'
+      fullPath: '/settings/notifications'
+      preLoaderRoute: typeof AuthenticatedSettingsNotificationsRouteImport
+      parentRoute: typeof AuthenticatedSettingsRoute
+    }
+    '/_authenticated/service/$service_id': {
+      id: '/_authenticated/service/$service_id'
       path: '/service/$service_id'
       fullPath: '/service/$service_id'
-      preLoaderRoute: typeof ServiceService_idRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedServiceService_idRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
   }
 }
 
+interface AuthenticatedSettingsRouteChildren {
+  AuthenticatedSettingsNotificationsRoute: typeof AuthenticatedSettingsNotificationsRoute
+  AuthenticatedSettingsNotificationsHistoryRoute: typeof AuthenticatedSettingsNotificationsHistoryRoute
+  AuthenticatedSettingsIndexRoute: typeof AuthenticatedSettingsIndexRoute
+}
+
+const AuthenticatedSettingsRouteChildren: AuthenticatedSettingsRouteChildren = {
+  AuthenticatedSettingsNotificationsRoute:
+    AuthenticatedSettingsNotificationsRoute,
+  AuthenticatedSettingsNotificationsHistoryRoute:
+    AuthenticatedSettingsNotificationsHistoryRoute,
+  AuthenticatedSettingsIndexRoute: AuthenticatedSettingsIndexRoute,
+}
+
+const AuthenticatedSettingsRouteWithChildren =
+  AuthenticatedSettingsRoute._addFileChildren(
+    AuthenticatedSettingsRouteChildren,
+  )
+
+interface AuthenticatedRouteChildren {
+  AuthenticatedAgentsRoute: typeof AuthenticatedAgentsRoute
+  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRouteWithChildren
+  AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedServiceService_idRoute: typeof AuthenticatedServiceService_idRoute
+}
+
+const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedAgentsRoute: AuthenticatedAgentsRoute,
+  AuthenticatedSettingsRoute: AuthenticatedSettingsRouteWithChildren,
+  AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+  AuthenticatedServiceService_idRoute: AuthenticatedServiceService_idRoute,
+}
+
+const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
+  AuthenticatedRouteChildren,
+)
+
+interface PublicRouteChildren {
+  PublicInitsystemRoute: typeof PublicInitsystemRoute
+  PublicLoginRoute: typeof PublicLoginRoute
+}
+
+const PublicRouteChildren: PublicRouteChildren = {
+  PublicInitsystemRoute: PublicInitsystemRoute,
+  PublicLoginRoute: PublicLoginRoute,
+}
+
+const PublicRouteWithChildren =
+  PublicRoute._addFileChildren(PublicRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
-  IncidentsRoute: IncidentsRoute,
-  ServiceService_idRoute: ServiceService_idRoute,
+  AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  PublicRoute: PublicRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

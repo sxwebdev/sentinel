@@ -30,11 +30,18 @@ go.work.sum
 .vite
 .DS_Store
 
+# AI
+/.claude
+/.agents
+
 # Editor/IDE
 # .idea/
 # .vscode/
 
 data
+data-agent
 build
 config.yaml
+config-agent.yaml
 dist
+.tmp

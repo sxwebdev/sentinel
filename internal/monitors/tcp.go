@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sxwebdev/sentinel/internal/storage"
+	"github.com/sxwebdev/sentinel/internal/models"
 	"github.com/sxwebdev/sentinel/internal/utils"
 )
 
@@ -21,20 +21,19 @@ type TCPConfig struct {
 
 // TCPMonitor monitors TCP endpoints
 type TCPMonitor struct {
-	BaseMonitor
+	baseMonitor
 	conf TCPConfig
 }
 
-// NewTCPMonitor creates a new TCP monitor
-func NewTCPMonitor(svc storage.Service) (*TCPMonitor, error) {
-	// Extract TCP config
-	conf, err := GetConfig[TCPConfig](svc.Config, storage.ServiceProtocolTypeTCP)
+// newTCPMonitor creates a new TCP monitor
+func newTCPMonitor(params MonitorParams) (*TCPMonitor, error) {
+	conf, err := GetConfig[TCPConfig](params.Config, models.ServiceProtocolTypeTCP)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get TCP config: %w", err)
 	}
 
 	monitor := &TCPMonitor{
-		BaseMonitor: NewBaseMonitor(svc),
+		baseMonitor: newBaseMonitor(params.ServiceName, params.Protocol, params.Timeout),
 		conf:        conf,
 	}
 
@@ -49,7 +48,7 @@ func (t *TCPMonitor) Check(ctx context.Context) error {
 	}
 	endpoint := t.conf.Endpoint
 
-	timeout := t.config.Timeout
+	timeout := t.timeout
 	if timeout <= 0 {
 		timeout = 5 * time.Second
 	}

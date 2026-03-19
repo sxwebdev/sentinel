@@ -1,0 +1,158 @@
+package servers
+
+import (
+	"context"
+	"net/http"
+	"time"
+
+	"connectrpc.com/authn"
+	"connectrpc.com/connect"
+	"connectrpc.com/grpcreflect"
+	"github.com/sxwebdev/rbacconnect"
+	"github.com/sxwebdev/sentinel/internal/alertresolver"
+	"github.com/sxwebdev/sentinel/internal/apiserver"
+	"github.com/sxwebdev/sentinel/internal/config"
+	"github.com/sxwebdev/sentinel/internal/hub/hubserver"
+	"github.com/sxwebdev/sentinel/internal/models"
+	"github.com/sxwebdev/sentinel/internal/services/baseservices"
+	"github.com/sxwebdev/xutils/syncutil"
+	"github.com/tkcrm/mx/logger"
+	"go.akshayshah.org/connectproto"
+	"golang.org/x/net/http2"
+	"golang.org/x/net/http2/h2c"
+	"google.golang.org/protobuf/encoding/protojson"
+)
+
+type Servers struct {
+	httpServer *http.Server
+}
+
+func New(
+	gCtx context.Context,
+	l logger.Logger,
+	serverCfg config.ServerConfig,
+	bs *baseservices.BaseServices,
+	ar *alertresolver.AlertResolver,
+	systemInfo *models.SystemInfo,
+	availableUpdateData *syncutil.Locker[models.AvailableUpdate],
+) *Servers {
+	as := apiserver.New(gCtx, l, bs, systemInfo, availableUpdateData)
+
+	hs := hubserver.New(gCtx, l, bs, ar)
+
+	mux := http.NewServeMux()
+
+	opts := []connect.HandlerOption{
+		connectproto.WithJSON(
+			protojson.MarshalOptions{EmitUnpopulated: true},
+			protojson.UnmarshalOptions{DiscardUnknown: true},
+		),
+	}
+
+	var rpcBases []string
+
+	// register hubserver handler
+	hubServerPath, hubServerhandler := hs.RegisterHandler(opts...)
+	rpcBases = append(rpcBases, hubServerPath)
+	mux.Handle(
+		"/api"+hubServerPath,
+		withCORS(
+			http.StripPrefix("/api", hubserver.
+				NewInterceptor(l, bs).
+				ConnectRPCAuthMiddleware().
+				Wrap(hubServerhandler),
+			),
+			serverCfg.AllowedOrigins,
+		),
+	)
+
+	rbacProvider := rbacconnect.NewProvider(apiserver.UserPolicy())
+	rbacRoleExtractor := rbacconnect.RoleExtractorFunc(func(ctx context.Context) ([]rbacconnect.Role, error) {
+		ud, ok := authn.GetInfo(ctx).(*apiserver.UserDataContext)
+		if !ok || ud == nil || ud.User == nil {
+			return []rbacconnect.Role{apiserver.UserRoleAnonymous}, nil
+		}
+
+		roles := []rbacconnect.Role{ud.User.Role}
+
+		if ud.Project == nil {
+			roles = append(roles, apiserver.UserRoleSetup)
+		}
+
+		return roles, nil
+	})
+
+	rbacInterceptor := rbacconnect.NewInterceptor(rbacProvider, rbacconnect.Options{
+		RoleExtractor: rbacRoleExtractor,
+	})
+
+	asMiddlewares := apiserver.NewMiddlewares(bs, rbacProvider)
+
+	// register all apiserver handlers
+	for _, srv := range as.AllServers() {
+		path, h := srv.RegisterHandler(
+			append(opts, connect.WithInterceptors(rbacInterceptor))...,
+		)
+		rpcBases = append(rpcBases, path)
+		mux.Handle(
+			"/api"+path,
+			withCORS(http.StripPrefix("/api", asMiddlewares.Auth().Wrap(h)), serverCfg.AllowedOrigins),
+		)
+	}
+
+	// init gRPC reflection
+	allServerNames := append(as.AllServerNames(), hs.Name())
+	ref := grpcreflect.NewStaticReflector(allServerNames...)
+
+	// gRPC reflection handlers
+	v1Path, v1Handler := grpcreflect.NewHandlerV1(ref)
+	v1aPath, v1aHandler := grpcreflect.NewHandlerV1Alpha(ref)
+	mux.Handle("/api"+v1Path, http.StripPrefix("/api", v1Handler))
+	mux.Handle("/api"+v1aPath, http.StripPrefix("/api", v1aHandler))
+
+	// register spa server
+	mux.Handle("/", spaFileServer("index.html"))
+
+	final := &pathRewriter{
+		next:       mux,
+		rpcBases:   rpcBases,
+		reflection: []string{v1Path, v1aPath},
+	}
+
+	return &Servers{
+		httpServer: &http.Server{
+			Addr:              serverCfg.Addr,
+			Handler:           h2c.NewHandler(withSecurityHeaders(final), &http2.Server{}),
+			ReadHeaderTimeout: time.Second * 10,
+		},
+	}
+}
+
+// Name returns the name of the servers
+func (s *Servers) Name() string { return "servers" }
+
+// Start starts the servers
+func (s *Servers) Start(ctx context.Context) error {
+	errChan := make(chan error, 1)
+	go func() {
+		if err := s.httpServer.ListenAndServe(); err != nil {
+			errChan <- err
+		}
+	}()
+
+	select {
+	case err := <-errChan:
+		return err
+	case <-ctx.Done():
+	}
+
+	return nil
+}
+
+// Stop stops the servers
+func (s *Servers) Stop(ctx context.Context) error {
+	if s.httpServer == nil {
+		return nil
+	}
+	return s.httpServer.Shutdown(ctx)
+}

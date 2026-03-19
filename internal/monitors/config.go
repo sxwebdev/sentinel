@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/sxwebdev/sentinel/internal/storage"
+	"github.com/sxwebdev/sentinel/internal/models"
 )
 
 type Config struct {
@@ -15,12 +15,12 @@ type Config struct {
 }
 
 // convertFlatConfigToMonitorConfig converts JSON config object to proper MonitorConfig structure
-func (s *Config) Validate(protocol storage.ServiceProtocolType) error {
+func (s *Config) Validate(protocol models.ServiceProtocolType) error {
 	v := validator.New(validator.WithRequiredStructEnabled())
 
 	// Validate and convert based on protocol
 	switch protocol {
-	case storage.ServiceProtocolTypeHTTP:
+	case models.ServiceProtocolTypeHTTP:
 		if s.HTTP == nil {
 			return fmt.Errorf("HTTP config is required for HTTP protocol")
 		}
@@ -31,7 +31,7 @@ func (s *Config) Validate(protocol storage.ServiceProtocolType) error {
 		}
 
 		return nil
-	case storage.ServiceProtocolTypeTCP:
+	case models.ServiceProtocolTypeTCP:
 		if s.TCP == nil {
 			return fmt.Errorf("TCP config is required for TCP protocol")
 		}
@@ -42,7 +42,7 @@ func (s *Config) Validate(protocol storage.ServiceProtocolType) error {
 		}
 
 		return nil
-	case storage.ServiceProtocolTypeGRPC:
+	case models.ServiceProtocolTypeGRPC:
 		if s.GRPC == nil {
 			return fmt.Errorf("gRPC config is required for gRPC protocol")
 		}
@@ -58,7 +58,7 @@ func (s *Config) Validate(protocol storage.ServiceProtocolType) error {
 	}
 }
 
-func GetConfig[T any](cfg map[string]any, protocol storage.ServiceProtocolType) (T, error) {
+func GetConfig[T any](cfg map[string]any, protocol models.ServiceProtocolType) (T, error) {
 	var c T
 
 	if cfg == nil {
@@ -83,10 +83,18 @@ func GetConfig[T any](cfg map[string]any, protocol storage.ServiceProtocolType) 
 // ConvertToMap converts the config to a map[string]any
 func (c *Config) ConvertToMap() map[string]any {
 	return map[string]any{
-		string(storage.ServiceProtocolTypeHTTP): c.HTTP,
-		string(storage.ServiceProtocolTypeTCP):  c.TCP,
-		string(storage.ServiceProtocolTypeGRPC): c.GRPC,
+		string(models.ServiceProtocolTypeHTTP): c.HTTP,
+		string(models.ServiceProtocolTypeTCP):  c.TCP,
+		string(models.ServiceProtocolTypeGRPC): c.GRPC,
 	}
+}
+
+func (c *Config) ConvertToJSONRawMessage() (json.RawMessage, error) {
+	data, err := json.Marshal(c.ConvertToMap())
+	if err != nil {
+		return nil, err
+	}
+	return json.RawMessage(data), nil
 }
 
 // ConvertFromMap converts a map[string]any to Config

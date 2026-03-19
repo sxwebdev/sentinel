@@ -1,6 +1,5 @@
 export const ActivityIndicatorSVG = ({ active = true, size = 16 }) => {
   const color = active ? "#3b82f6" : "#ef4444";
-  const pulseColor = active ? "#3b82f6" : "#ef4444";
 
   return (
     <svg
@@ -9,7 +8,7 @@ export const ActivityIndicatorSVG = ({ active = true, size = 16 }) => {
       viewBox="0 0 32 32"
       style={{ display: "inline-block", verticalAlign: "middle" }}
     >
-      <circle cx="16" cy="16" r="8" fill={pulseColor} opacity="0.3">
+      <circle cx="16" cy="16" r="8" fill={color} opacity="0.3">
         <animate
           attributeName="r"
           values="8;15"
