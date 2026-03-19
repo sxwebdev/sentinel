@@ -3,12 +3,12 @@ package apiserver
 import (
 	"connectrpc.com/grpchealth"
 	"connectrpc.com/grpcreflect"
+	"github.com/sxwebdev/rbacconnect"
 	"github.com/sxwebdev/sentinel/internal/hub/hubserver/api/sentinel/agents/v1/agentsv1connect"
 	"github.com/sxwebdev/sentinel/internal/hub/hubserver/api/sentinel/auth/v1/authv1connect"
 	"github.com/sxwebdev/sentinel/internal/hub/hubserver/api/sentinel/notifications/v1/notificationsv1connect"
 	"github.com/sxwebdev/sentinel/internal/hub/hubserver/api/sentinel/system/v1/systemv1connect"
 	"github.com/sxwebdev/sentinel/internal/models"
-	"github.com/sxwebdev/sentinel/pkg/rbacconnect"
 )
 
 const (

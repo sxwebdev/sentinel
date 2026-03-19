@@ -1,6 +1,6 @@
 module github.com/sxwebdev/sentinel
 
-go 1.25.1
+go 1.26.1
 
 require (
 	connectrpc.com/authn v0.2.0
@@ -23,9 +23,11 @@ require (
 	github.com/samber/lo v1.52.0
 	github.com/shirou/gopsutil/v4 v4.25.9
 	github.com/stretchr/testify v1.11.1
+	github.com/sxwebdev/rbacconnect v0.0.0-20260319195955-76bed06585bf
 	github.com/sxwebdev/tokenmanager v0.0.0-20251005001529-91c1410e16c1
 	github.com/sxwebdev/xconfig v0.2.0
 	github.com/sxwebdev/xconfig/decoders/xconfigyaml v0.0.0-20250917185517-9fc0b932f57a
+	github.com/sxwebdev/xutils v0.0.0-20260317161736-aa491c9bd787
 	github.com/tkcrm/modules v0.0.0-20250909093305-a0b86c209cc5
 	github.com/tkcrm/mx v0.2.34
 	github.com/tkcrm/mx/clients/connectrpc_client v0.0.0-20250618055556-3f77aaa9ddbd

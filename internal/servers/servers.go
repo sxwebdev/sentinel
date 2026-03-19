@@ -8,13 +8,13 @@ import (
 	"connectrpc.com/authn"
 	"connectrpc.com/connect"
 	"connectrpc.com/grpcreflect"
+	"github.com/sxwebdev/rbacconnect"
 	"github.com/sxwebdev/sentinel/internal/alertresolver"
 	"github.com/sxwebdev/sentinel/internal/apiserver"
 	"github.com/sxwebdev/sentinel/internal/hub/hubserver"
 	"github.com/sxwebdev/sentinel/internal/models"
 	"github.com/sxwebdev/sentinel/internal/services/baseservices"
-	"github.com/sxwebdev/sentinel/pkg/locker"
-	"github.com/sxwebdev/sentinel/pkg/rbacconnect"
+	"github.com/sxwebdev/xutils/syncutil"
 	"github.com/tkcrm/mx/logger"
 	"go.akshayshah.org/connectproto"
 	"golang.org/x/net/http2"
@@ -33,7 +33,7 @@ func New(
 	bs *baseservices.BaseServices,
 	ar *alertresolver.AlertResolver,
 	systemInfo *models.SystemInfo,
-	availableUpdateData *locker.Locker[models.AvailableUpdate],
+	availableUpdateData *syncutil.Locker[models.AvailableUpdate],
 ) *Servers {
 	as := apiserver.New(gCtx, l, bs, systemInfo, availableUpdateData)
 

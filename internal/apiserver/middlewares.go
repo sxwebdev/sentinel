@@ -9,10 +9,10 @@ import (
 
 	"connectrpc.com/authn"
 	"connectrpc.com/connect"
+	"github.com/sxwebdev/rbacconnect"
 	"github.com/sxwebdev/sentinel/internal/models"
 	"github.com/sxwebdev/sentinel/internal/services/auth"
 	"github.com/sxwebdev/sentinel/internal/services/baseservices"
-	"github.com/sxwebdev/sentinel/pkg/rbacconnect"
 	"github.com/sxwebdev/tokenmanager"
 )
 

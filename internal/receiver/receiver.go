@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/sxwebdev/sentinel/internal/models"
-	"github.com/sxwebdev/sentinel/pkg/broker"
+	"github.com/sxwebdev/xutils/broker"
 )
 
 type TriggerServiceEventType int

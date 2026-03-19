@@ -12,7 +12,7 @@ import (
 	"github.com/sxwebdev/sentinel/internal/hub/hubserver/api/sentinel/system/v1/systemv1connect"
 	"github.com/sxwebdev/sentinel/internal/models"
 	"github.com/sxwebdev/sentinel/internal/services/baseservices"
-	"github.com/sxwebdev/sentinel/pkg/locker"
+	"github.com/sxwebdev/xutils/syncutil"
 	"github.com/tkcrm/mx/logger"
 	"github.com/tkcrm/mx/transport/connectrpc_transport"
 )
@@ -54,7 +54,7 @@ func New(
 	logger logger.Logger,
 	bs *baseservices.BaseServices,
 	systemInfo *models.SystemInfo,
-	availableUpdateData *locker.Locker[models.AvailableUpdate],
+	availableUpdateData *syncutil.Locker[models.AvailableUpdate],
 ) *Server {
 	s := &Server{
 		systemServer:        newSystemServer(bs, systemInfo, availableUpdateData),

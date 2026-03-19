@@ -30,6 +30,10 @@ go.work.sum
 .vite
 .DS_Store
 
+# AI
+/.claude
+/.agents
+
 # Editor/IDE
 # .idea/
 # .vscode/

@@ -11,14 +11,14 @@ import (
 	"github.com/sxwebdev/sentinel/internal/store"
 	"github.com/sxwebdev/sentinel/internal/store/repos/repo_notification_history"
 	"github.com/sxwebdev/sentinel/internal/utils"
-	"github.com/sxwebdev/sentinel/pkg/loop"
+	"github.com/sxwebdev/xutils/loopper"
 	"github.com/tkcrm/mx/logger"
 )
 
 type Sender struct {
 	logger logger.Logger
 	store  *store.Store
-	looper *loop.Loop
+	looper *loopper.Loopper
 
 	dispatcher *dispatcher.Dispatcher
 }
@@ -30,11 +30,11 @@ func newSender(l logger.Logger, store *store.Store, dispatcher *dispatcher.Dispa
 		dispatcher: dispatcher,
 	}
 
-	s.looper = loop.New(
+	s.looper = loopper.New(
 		s.initSender,
-		loop.WithLeading(),
-		loop.WithPeriod(time.Second*5),
-		loop.WithContextTimeout(time.Second*30),
+		loopper.WithLeading(),
+		loopper.WithPeriod(time.Second*5),
+		loopper.WithContextTimeout(time.Second*30),
 	)
 
 	return s

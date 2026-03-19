@@ -3,7 +3,7 @@ package models
 import (
 	"fmt"
 
-	"github.com/sxwebdev/sentinel/pkg/rbacconnect"
+	"github.com/sxwebdev/rbacconnect"
 )
 
 // GetID returns the ID of the user

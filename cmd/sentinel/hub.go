@@ -21,11 +21,11 @@ import (
 	"github.com/sxwebdev/sentinel/internal/store/badgerdb"
 	updater "github.com/sxwebdev/sentinel/internal/updated"
 	"github.com/sxwebdev/sentinel/internal/utils"
-	"github.com/sxwebdev/sentinel/pkg/locker"
 	"github.com/sxwebdev/sentinel/pkg/migrator"
 	"github.com/sxwebdev/sentinel/pkg/sqlite"
 	"github.com/sxwebdev/sentinel/sql"
 	"github.com/sxwebdev/tokenmanager"
+	"github.com/sxwebdev/xutils/syncutil"
 	"github.com/tkcrm/mx/launcher"
 	"github.com/tkcrm/mx/logger"
 	"github.com/tkcrm/mx/service"
@@ -190,7 +190,7 @@ func hubStartCMD() *cli.Command {
 					// Initialize scheduler
 					sched := scheduler.New(l, rc, baseServices, ar)
 
-					availableUpdateData := locker.New(models.AvailableUpdate{})
+					availableUpdateData := syncutil.NewLocker(models.AvailableUpdate{})
 
 					// Initialize upgrader if configured
 					updater, err := updater.New(l, conf.Updater, version, availableUpdateData)

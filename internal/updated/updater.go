@@ -5,7 +5,7 @@ import (
 
 	"github.com/sxwebdev/sentinel/internal/config"
 	"github.com/sxwebdev/sentinel/internal/models"
-	"github.com/sxwebdev/sentinel/pkg/locker"
+	"github.com/sxwebdev/xutils/syncutil"
 	"github.com/tkcrm/mx/logger"
 )
 
@@ -14,14 +14,14 @@ type Updater struct {
 	config config.Updater
 
 	version             string
-	availableUpdateData *locker.Locker[models.AvailableUpdate]
+	availableUpdateData *syncutil.Locker[models.AvailableUpdate]
 }
 
 func New(
 	l logger.Logger,
 	cfg config.Updater,
 	version string,
-	availableUpdateData *locker.Locker[models.AvailableUpdate],
+	availableUpdateData *syncutil.Locker[models.AvailableUpdate],
 ) (*Updater, error) {
 	return &Updater{
 		logger:              l,

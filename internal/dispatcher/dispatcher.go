@@ -3,7 +3,7 @@ package dispatcher
 import (
 	"context"
 
-	"github.com/sxwebdev/sentinel/pkg/broker"
+	"github.com/sxwebdev/xutils/broker"
 )
 
 type Dispatcher struct {

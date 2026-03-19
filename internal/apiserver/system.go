@@ -10,14 +10,14 @@ import (
 	"github.com/sxwebdev/sentinel/internal/models"
 	"github.com/sxwebdev/sentinel/internal/servers/ptconverts"
 	"github.com/sxwebdev/sentinel/internal/services/baseservices"
-	"github.com/sxwebdev/sentinel/pkg/locker"
+	"github.com/sxwebdev/xutils/syncutil"
 )
 
 type SystemServer struct {
 	bs *baseservices.BaseServices
 
 	systemInfo          *models.SystemInfo
-	availableUpdateData *locker.Locker[models.AvailableUpdate]
+	availableUpdateData *syncutil.Locker[models.AvailableUpdate]
 
 	systemv1connect.UnimplementedSystemServiceHandler
 }
@@ -25,7 +25,7 @@ type SystemServer struct {
 func newSystemServer(
 	bs *baseservices.BaseServices,
 	systemInfo *models.SystemInfo,
-	availableUpdateData *locker.Locker[models.AvailableUpdate],
+	availableUpdateData *syncutil.Locker[models.AvailableUpdate],
 ) *SystemServer {
 	return &SystemServer{
 		bs:                  bs,
