@@ -82,6 +82,9 @@ format: ## Format code
 	go fmt ./...
 	goimports -w .
 
+fmt:
+	gofumpt -l -w .
+
 docker-push: ## Build and push Docker image
 	docker buildx build --platform linux/amd64 --push \
 		--build-arg VERSION=`git describe --tags --abbrev=0 || echo "0.0.0"` \

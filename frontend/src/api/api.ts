@@ -21,7 +21,7 @@ export const VITE_SERVER_API_BASE_URL =
 const skipAuthMethods = ["RefreshToken", "Authorization"];
 
 const authInterceptor: Interceptor = (next) => async (req) => {
-  const { session, refreshToken } = useAuthStore.getState();
+  const { session } = useAuthStore.getState();
   const { selectedProjectId } = useProjectStore.getState();
 
   if (selectedProjectId) {
@@ -41,12 +41,16 @@ const authInterceptor: Interceptor = (next) => async (req) => {
       !skipAuthMethods.includes(req.method.name)
     ) {
       try {
-        await refreshToken();
-        if (!session?.accessToken) {
+        await useAuthStore.getState().refreshToken();
+        const freshSession = useAuthStore.getState().session;
+        if (!freshSession?.accessToken) {
           throw new Error("No access token");
         }
 
-        req.header.set("Authorization", `Bearer ${session?.accessToken}`);
+        req.header.set(
+          "Authorization",
+          `Bearer ${freshSession.accessToken}`,
+        );
         return await next(req);
       } catch (refreshError) {
         console.error("Failed to refresh token:", refreshError);
@@ -55,16 +59,6 @@ const authInterceptor: Interceptor = (next) => async (req) => {
     }
     throw error;
   }
-
-  // try {
-  //   return await next(req);
-  // } catch (error) {
-  //   if (error instanceof ConnectError && error.code === Code.Unauthenticated) {
-  //     clear();
-  //     window.location.href = "/login";
-  //   }
-  //   throw error;
-  // }
 };
 
 export const connectTransport = createConnectTransport({

@@ -30,32 +30,13 @@ func (s *Service[TUser]) Authorization(ctx context.Context, email, password stri
 	user, err := s.userStore.GetByEmail(ctx, email)
 	if err != nil {
 		if errors.Is(err, storecmn.ErrNotFound) {
-			return nil, storecmn.ErrUserNotFound
+			return nil, ErrIncorrectEmailOrPassword
 		}
 		return nil, fmt.Errorf("get user by email error: %w", err)
 	}
 
 	if !IsCorrectPassword(user.GetPassword(), password) {
 		return nil, ErrIncorrectEmailOrPassword
-	}
-
-	return s.authorization(ctx, user, additionalData)
-}
-
-func (s *Service[TUser]) AuthorizationByEmail(ctx context.Context, email string, additionalData SessionData) (
-	*AuthResponse[TUser], error,
-) {
-	if email == "" {
-		return nil, ErrEmptyEmail
-	}
-
-	// get user
-	user, err := s.userStore.GetByEmail(ctx, email)
-	if err != nil {
-		if errors.Is(err, storecmn.ErrNotFound) {
-			return nil, storecmn.ErrUserNotFound
-		}
-		return nil, fmt.Errorf("get user by email error: %w", err)
 	}
 
 	return s.authorization(ctx, user, additionalData)

@@ -4,7 +4,7 @@ import type { User } from "@/api/gen/sentinel/users/v1/users_pb";
 import { type AuthorizationResponse } from "@/api/gen/sentinel/auth/v1/auth_pb";
 import {
   AuthorizationRequestSchema,
-  AuthenticateRequestSchema,
+  GetCurrentUserRequestSchema,
   RefreshTokenRequestSchema,
   LogoutRequestSchema,
   DeviceInfoSchema,
@@ -132,7 +132,7 @@ export const useAuthStore = create<AuthStoreState>()(
                 refreshTokenExpiredAt: timestampDate(
                   res.refreshTokenExpiredAt,
                 ).toISOString(),
-                deviceId: currentSession.deviceId,
+                deviceId: res.deviceId || currentSession.deviceId,
               };
               set({ session: currentSession, isAuthenticated: true });
             } catch (e) {
@@ -146,12 +146,10 @@ export const useAuthStore = create<AuthStoreState>()(
             }
           }
 
-          // Authenticate to fetch user
+          // Fetch current user
           try {
-            const res = await authClient.authenticate(
-              createMsg(AuthenticateRequestSchema, {
-                accessToken: currentSession.accessToken,
-              }),
+            const res = await authClient.getCurrentUser(
+              createMsg(GetCurrentUserRequestSchema, {}),
             );
             set({ user: res.user, isAuthenticated: true, isLoading: false });
           } catch (e) {
@@ -163,7 +161,7 @@ export const useAuthStore = create<AuthStoreState>()(
               toast.error(e.rawMessage);
             } else {
               toast.error(
-                `Failed to authenticate user ${(e as Error)?.message}`,
+                `Failed to fetch current user: ${(e as Error)?.message}`,
               );
             }
             set({ isLoading: false });
@@ -254,7 +252,7 @@ export const useAuthStore = create<AuthStoreState>()(
               refreshTokenExpiredAt: timestampDate(
                 res.refreshTokenExpiredAt,
               ).toISOString(),
-              deviceId: session.deviceId,
+              deviceId: res.deviceId || session.deviceId,
             };
             set({ session: newSession, isAuthenticated: true });
             return;

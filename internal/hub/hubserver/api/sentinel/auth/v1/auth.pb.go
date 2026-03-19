@@ -418,28 +418,27 @@ func (x *AuthorizationResponse) GetUser() *v1.User {
 	return nil
 }
 
-// Authenticate
-type AuthenticateRequest struct {
+// GetCurrentUser
+type GetCurrentUserRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	AccessToken   string                 `protobuf:"bytes,1,opt,name=access_token,json=accessToken,proto3" json:"access_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *AuthenticateRequest) Reset() {
-	*x = AuthenticateRequest{}
+func (x *GetCurrentUserRequest) Reset() {
+	*x = GetCurrentUserRequest{}
 	mi := &file_sentinel_auth_v1_auth_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *AuthenticateRequest) String() string {
+func (x *GetCurrentUserRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*AuthenticateRequest) ProtoMessage() {}
+func (*GetCurrentUserRequest) ProtoMessage() {}
 
-func (x *AuthenticateRequest) ProtoReflect() protoreflect.Message {
+func (x *GetCurrentUserRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_sentinel_auth_v1_auth_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -451,39 +450,32 @@ func (x *AuthenticateRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use AuthenticateRequest.ProtoReflect.Descriptor instead.
-func (*AuthenticateRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use GetCurrentUserRequest.ProtoReflect.Descriptor instead.
+func (*GetCurrentUserRequest) Descriptor() ([]byte, []int) {
 	return file_sentinel_auth_v1_auth_proto_rawDescGZIP(), []int{5}
 }
 
-func (x *AuthenticateRequest) GetAccessToken() string {
-	if x != nil {
-		return x.AccessToken
-	}
-	return ""
-}
-
-type AuthenticateResponse struct {
+type GetCurrentUserResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	User          *v1.User               `protobuf:"bytes,2,opt,name=user,proto3" json:"user,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *AuthenticateResponse) Reset() {
-	*x = AuthenticateResponse{}
+func (x *GetCurrentUserResponse) Reset() {
+	*x = GetCurrentUserResponse{}
 	mi := &file_sentinel_auth_v1_auth_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *AuthenticateResponse) String() string {
+func (x *GetCurrentUserResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*AuthenticateResponse) ProtoMessage() {}
+func (*GetCurrentUserResponse) ProtoMessage() {}
 
-func (x *AuthenticateResponse) ProtoReflect() protoreflect.Message {
+func (x *GetCurrentUserResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_sentinel_auth_v1_auth_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -495,12 +487,12 @@ func (x *AuthenticateResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use AuthenticateResponse.ProtoReflect.Descriptor instead.
-func (*AuthenticateResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use GetCurrentUserResponse.ProtoReflect.Descriptor instead.
+func (*GetCurrentUserResponse) Descriptor() ([]byte, []int) {
 	return file_sentinel_auth_v1_auth_proto_rawDescGZIP(), []int{6}
 }
 
-func (x *AuthenticateResponse) GetUser() *v1.User {
+func (x *GetCurrentUserResponse) GetUser() *v1.User {
 	if x != nil {
 		return x.User
 	}
@@ -558,6 +550,7 @@ type RefreshTokenResponse struct {
 	RefreshToken          string                 `protobuf:"bytes,2,opt,name=refresh_token,json=refreshToken,proto3" json:"refresh_token,omitempty"`
 	AccessTokenExpiredAt  *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=access_token_expired_at,json=accessTokenExpiredAt,proto3" json:"access_token_expired_at,omitempty"`
 	RefreshTokenExpiredAt *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=refresh_token_expired_at,json=refreshTokenExpiredAt,proto3" json:"refresh_token_expired_at,omitempty"`
+	DeviceId              string                 `protobuf:"bytes,5,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
 	unknownFields         protoimpl.UnknownFields
 	sizeCache             protoimpl.SizeCache
 }
@@ -618,6 +611,13 @@ func (x *RefreshTokenResponse) GetRefreshTokenExpiredAt() *timestamppb.Timestamp
 		return x.RefreshTokenExpiredAt
 	}
 	return nil
+}
+
+func (x *RefreshTokenResponse) GetDeviceId() string {
+	if x != nil {
+		return x.DeviceId
+	}
+	return ""
 }
 
 // Active sessions
@@ -977,18 +977,18 @@ const file_sentinel_auth_v1_auth_proto_rawDesc = "" +
 	"\x10_organization_id\"\x86\x01\n" +
 	"\x15AuthorizationResponse\x12@\n" +
 	"\fauth_payload\x18\x01 \x01(\v2\x1d.sentinel.auth.v1.AuthPayloadR\vauthPayload\x12+\n" +
-	"\x04user\x18\x02 \x01(\v2\x17.sentinel.users.v1.UserR\x04user\"8\n" +
-	"\x13AuthenticateRequest\x12!\n" +
-	"\faccess_token\x18\x01 \x01(\tR\vaccessToken\"C\n" +
-	"\x14AuthenticateResponse\x12+\n" +
+	"\x04user\x18\x02 \x01(\v2\x17.sentinel.users.v1.UserR\x04user\"\x17\n" +
+	"\x15GetCurrentUserRequest\"E\n" +
+	"\x16GetCurrentUserResponse\x12+\n" +
 	"\x04user\x18\x02 \x01(\v2\x17.sentinel.users.v1.UserR\x04user\":\n" +
 	"\x13RefreshTokenRequest\x12#\n" +
-	"\rrefresh_token\x18\x01 \x01(\tR\frefreshToken\"\x86\x02\n" +
+	"\rrefresh_token\x18\x01 \x01(\tR\frefreshToken\"\xa3\x02\n" +
 	"\x14RefreshTokenResponse\x12!\n" +
 	"\faccess_token\x18\x01 \x01(\tR\vaccessToken\x12#\n" +
 	"\rrefresh_token\x18\x02 \x01(\tR\frefreshToken\x12Q\n" +
 	"\x17access_token_expired_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\x14accessTokenExpiredAt\x12S\n" +
-	"\x18refresh_token_expired_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\x15refreshTokenExpiredAt\"\x17\n" +
+	"\x18refresh_token_expired_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\x15refreshTokenExpiredAt\x12\x1b\n" +
+	"\tdevice_id\x18\x05 \x01(\tR\bdeviceId\"\x17\n" +
 	"\x15ActiveSessionsRequest\"O\n" +
 	"\x16ActiveSessionsResponse\x125\n" +
 	"\bsessions\x18\x01 \x03(\v2\x19.sentinel.auth.v1.SessionR\bsessions\"3\n" +
@@ -1005,10 +1005,10 @@ const file_sentinel_auth_v1_auth_proto_rawDesc = "" +
 	"\n" +
 	"DeviceType\x12\x1b\n" +
 	"\x17DEVICE_TYPE_UNSPECIFIED\x10\x00\x12\x13\n" +
-	"\x0fDEVICE_TYPE_WEB\x10\x012\xc6\x05\n" +
+	"\x0fDEVICE_TYPE_WEB\x10\x012\xcc\x05\n" +
 	"\vAuthService\x12b\n" +
-	"\rAuthorization\x12&.sentinel.auth.v1.AuthorizationRequest\x1a'.sentinel.auth.v1.AuthorizationResponse\"\x00\x12_\n" +
-	"\fAuthenticate\x12%.sentinel.auth.v1.AuthenticateRequest\x1a&.sentinel.auth.v1.AuthenticateResponse\"\x00\x12_\n" +
+	"\rAuthorization\x12&.sentinel.auth.v1.AuthorizationRequest\x1a'.sentinel.auth.v1.AuthorizationResponse\"\x00\x12e\n" +
+	"\x0eGetCurrentUser\x12'.sentinel.auth.v1.GetCurrentUserRequest\x1a(.sentinel.auth.v1.GetCurrentUserResponse\"\x00\x12_\n" +
 	"\fRefreshToken\x12%.sentinel.auth.v1.RefreshTokenRequest\x1a&.sentinel.auth.v1.RefreshTokenResponse\"\x00\x12M\n" +
 	"\x06Logout\x12\x1f.sentinel.auth.v1.LogoutRequest\x1a .sentinel.auth.v1.LogoutResponse\"\x00\x12e\n" +
 	"\x0eActiveSessions\x12'.sentinel.auth.v1.ActiveSessionsRequest\x1a(.sentinel.auth.v1.ActiveSessionsResponse\"\x00\x12b\n" +
@@ -1037,8 +1037,8 @@ var file_sentinel_auth_v1_auth_proto_goTypes = []any{
 	(*AuthorizationRequest)(nil),         // 3: sentinel.auth.v1.AuthorizationRequest
 	(*AuthPayload)(nil),                  // 4: sentinel.auth.v1.AuthPayload
 	(*AuthorizationResponse)(nil),        // 5: sentinel.auth.v1.AuthorizationResponse
-	(*AuthenticateRequest)(nil),          // 6: sentinel.auth.v1.AuthenticateRequest
-	(*AuthenticateResponse)(nil),         // 7: sentinel.auth.v1.AuthenticateResponse
+	(*GetCurrentUserRequest)(nil),        // 6: sentinel.auth.v1.GetCurrentUserRequest
+	(*GetCurrentUserResponse)(nil),       // 7: sentinel.auth.v1.GetCurrentUserResponse
 	(*RefreshTokenRequest)(nil),          // 8: sentinel.auth.v1.RefreshTokenRequest
 	(*RefreshTokenResponse)(nil),         // 9: sentinel.auth.v1.RefreshTokenResponse
 	(*ActiveSessionsRequest)(nil),        // 10: sentinel.auth.v1.ActiveSessionsRequest
@@ -1061,19 +1061,19 @@ var file_sentinel_auth_v1_auth_proto_depIdxs = []int32{
 	18, // 5: sentinel.auth.v1.AuthPayload.refresh_token_expired_at:type_name -> google.protobuf.Timestamp
 	4,  // 6: sentinel.auth.v1.AuthorizationResponse.auth_payload:type_name -> sentinel.auth.v1.AuthPayload
 	19, // 7: sentinel.auth.v1.AuthorizationResponse.user:type_name -> sentinel.users.v1.User
-	19, // 8: sentinel.auth.v1.AuthenticateResponse.user:type_name -> sentinel.users.v1.User
+	19, // 8: sentinel.auth.v1.GetCurrentUserResponse.user:type_name -> sentinel.users.v1.User
 	18, // 9: sentinel.auth.v1.RefreshTokenResponse.access_token_expired_at:type_name -> google.protobuf.Timestamp
 	18, // 10: sentinel.auth.v1.RefreshTokenResponse.refresh_token_expired_at:type_name -> google.protobuf.Timestamp
 	2,  // 11: sentinel.auth.v1.ActiveSessionsResponse.sessions:type_name -> sentinel.auth.v1.Session
 	3,  // 12: sentinel.auth.v1.AuthService.Authorization:input_type -> sentinel.auth.v1.AuthorizationRequest
-	6,  // 13: sentinel.auth.v1.AuthService.Authenticate:input_type -> sentinel.auth.v1.AuthenticateRequest
+	6,  // 13: sentinel.auth.v1.AuthService.GetCurrentUser:input_type -> sentinel.auth.v1.GetCurrentUserRequest
 	8,  // 14: sentinel.auth.v1.AuthService.RefreshToken:input_type -> sentinel.auth.v1.RefreshTokenRequest
 	16, // 15: sentinel.auth.v1.AuthService.Logout:input_type -> sentinel.auth.v1.LogoutRequest
 	10, // 16: sentinel.auth.v1.AuthService.ActiveSessions:input_type -> sentinel.auth.v1.ActiveSessionsRequest
 	12, // 17: sentinel.auth.v1.AuthService.DeleteSession:input_type -> sentinel.auth.v1.DeleteSessionRequest
 	14, // 18: sentinel.auth.v1.AuthService.TerminateAllSessions:input_type -> sentinel.auth.v1.TerminateAllSessionsRequest
 	5,  // 19: sentinel.auth.v1.AuthService.Authorization:output_type -> sentinel.auth.v1.AuthorizationResponse
-	7,  // 20: sentinel.auth.v1.AuthService.Authenticate:output_type -> sentinel.auth.v1.AuthenticateResponse
+	7,  // 20: sentinel.auth.v1.AuthService.GetCurrentUser:output_type -> sentinel.auth.v1.GetCurrentUserResponse
 	9,  // 21: sentinel.auth.v1.AuthService.RefreshToken:output_type -> sentinel.auth.v1.RefreshTokenResponse
 	17, // 22: sentinel.auth.v1.AuthService.Logout:output_type -> sentinel.auth.v1.LogoutResponse
 	11, // 23: sentinel.auth.v1.AuthService.ActiveSessions:output_type -> sentinel.auth.v1.ActiveSessionsResponse

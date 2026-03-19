@@ -8,7 +8,7 @@ import "sentinel/users/v1/users.proto";
 service AuthService {
   /* Auth */
   rpc Authorization(AuthorizationRequest) returns (AuthorizationResponse) {};
-  rpc Authenticate(AuthenticateRequest) returns (AuthenticateResponse) {};
+  rpc GetCurrentUser(GetCurrentUserRequest) returns (GetCurrentUserResponse) {};
   rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse) {};
   rpc Logout(LogoutRequest) returns (LogoutResponse) {};
 
@@ -61,9 +61,9 @@ message AuthorizationResponse {
   sentinel.users.v1.User user = 2;
 }
 
-// Authenticate
-message AuthenticateRequest { string access_token = 1; }
-message AuthenticateResponse { sentinel.users.v1.User user = 2; }
+// GetCurrentUser
+message GetCurrentUserRequest {}
+message GetCurrentUserResponse { sentinel.users.v1.User user = 2; }
 
 // Refresh token
 message RefreshTokenRequest { string refresh_token = 1; }
@@ -72,6 +72,7 @@ message RefreshTokenResponse {
   string refresh_token = 2;
   google.protobuf.Timestamp access_token_expired_at = 3;
   google.protobuf.Timestamp refresh_token_expired_at = 4;
+  string device_id = 5;
 }
 
 // Active sessions

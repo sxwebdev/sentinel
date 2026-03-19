@@ -98,19 +98,23 @@ func checkPassword(password, passwordConfirm string) error {
 		return errors.New("password length must be less or equal 50 symbols")
 	}
 
-	// if err := IsWeakPassword(password); err != nil {
-	// 	return err
-	// }
+	if err := IsWeakPassword(password); err != nil {
+		return err
+	}
 
 	return nil
 }
 
-func generateHashFromPassword(password string) (string, error) {
+func generateHashFromPassword(password string, cost int) (string, error) {
 	if password == "" {
 		return "", fmt.Errorf("password is empty")
 	}
 
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if cost == 0 {
+		cost = bcrypt.DefaultCost
+	}
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), cost)
 	if err != nil {
 		return "", fmt.Errorf("cannot hash password: %w", err)
 	}

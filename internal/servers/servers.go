@@ -11,6 +11,7 @@ import (
 	"github.com/sxwebdev/rbacconnect"
 	"github.com/sxwebdev/sentinel/internal/alertresolver"
 	"github.com/sxwebdev/sentinel/internal/apiserver"
+	"github.com/sxwebdev/sentinel/internal/config"
 	"github.com/sxwebdev/sentinel/internal/hub/hubserver"
 	"github.com/sxwebdev/sentinel/internal/models"
 	"github.com/sxwebdev/sentinel/internal/services/baseservices"
@@ -29,7 +30,7 @@ type Servers struct {
 func New(
 	gCtx context.Context,
 	l logger.Logger,
-	addr string,
+	serverCfg config.ServerConfig,
 	bs *baseservices.BaseServices,
 	ar *alertresolver.AlertResolver,
 	systemInfo *models.SystemInfo,
@@ -61,6 +62,7 @@ func New(
 				ConnectRPCAuthMiddleware().
 				Wrap(hubServerhandler),
 			),
+			serverCfg.AllowedOrigins,
 		),
 	)
 
@@ -94,7 +96,7 @@ func New(
 		rpcBases = append(rpcBases, path)
 		mux.Handle(
 			"/api"+path,
-			withCORS(http.StripPrefix("/api", asMiddlewares.Auth().Wrap(h))),
+			withCORS(http.StripPrefix("/api", asMiddlewares.Auth().Wrap(h)), serverCfg.AllowedOrigins),
 		)
 	}
 
@@ -119,8 +121,8 @@ func New(
 
 	return &Servers{
 		httpServer: &http.Server{
-			Addr:              addr,
-			Handler:           h2c.NewHandler(final, &http2.Server{}),
+			Addr:              serverCfg.Addr,
+			Handler:           h2c.NewHandler(withSecurityHeaders(final), &http2.Server{}),
 			ReadHeaderTimeout: time.Second * 10,
 		},
 	}

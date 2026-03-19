@@ -42,7 +42,7 @@ func New(
 	dispatcher *dispatcher.Dispatcher,
 	systemInfo *models.SystemInfo,
 ) *BaseServices {
-	usersService := users.New(st)
+	usersService := users.New(st, authConfig.BcryptCost)
 
 	systemService := system.New(st, usersService)
 

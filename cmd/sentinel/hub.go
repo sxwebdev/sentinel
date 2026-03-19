@@ -198,7 +198,7 @@ func hubStartCMD() *cli.Command {
 						return fmt.Errorf("failed to initialize upgrader: %w", err)
 					}
 
-					srv := servers.New(ctx, l, conf.Server.Addr, baseServices, ar, systemInfo, availableUpdateData)
+					srv := servers.New(ctx, l, conf.Server, baseServices, ar, systemInfo, availableUpdateData)
 
 					// register services
 					ln.ServicesRunner().Register(

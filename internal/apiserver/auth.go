@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"connectrpc.com/connect"
 	authpbv1 "github.com/sxwebdev/sentinel/internal/hub/hubserver/api/sentinel/auth/v1"
@@ -16,7 +17,8 @@ import (
 )
 
 type AuthServer struct {
-	baseServices *baseservices.BaseServices
+	baseServices     *baseservices.BaseServices
+	loginRateLimiter *loginRateLimiter
 
 	authv1connect.UnimplementedAuthServiceHandler
 }
@@ -25,7 +27,8 @@ func newAuthServer(
 	baseServices *baseservices.BaseServices,
 ) *AuthServer {
 	return &AuthServer{
-		baseServices: baseServices,
+		baseServices:     baseServices,
+		loginRateLimiter: newLoginRateLimiter(5, time.Minute),
 	}
 }
 
@@ -51,6 +54,10 @@ func (s *AuthServer) Authorization(
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("email is required"))
 	}
 
+	if !s.loginRateLimiter.isAllowed(req.Msg.GetEmail()) {
+		return nil, connect.NewError(connect.CodeResourceExhausted, fmt.Errorf("too many login attempts, please try again later"))
+	}
+
 	deviceInfo := req.Msg.GetDeviceInfo()
 	if deviceInfo == nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("device info is required"))
@@ -69,6 +76,7 @@ func (s *AuthServer) Authorization(
 
 	data, err := s.baseServices.Auth().Authorization(ctx, req.Msg.GetEmail(), req.Msg.GetPassword(), sessData)
 	if err != nil {
+		s.loginRateLimiter.recordFailure(req.Msg.GetEmail())
 		return nil, connect.NewError(connect.CodeUnauthenticated, err)
 	}
 
@@ -89,33 +97,19 @@ func (s *AuthServer) Authorization(
 }
 
 /*
-Authenticate
+GetCurrentUser
 */
-func (s *AuthServer) Authenticate(
+func (s *AuthServer) GetCurrentUser(
 	ctx context.Context,
-	req *connect.Request[authpbv1.AuthenticateRequest],
-) (*connect.Response[authpbv1.AuthenticateResponse], error) {
-	if req.Msg.GetAccessToken() == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("access token is required"))
-	}
-
-	claims, err := s.baseServices.Auth().Manager().Authenticate(ctx, req.Msg.GetAccessToken())
+	_ *connect.Request[authpbv1.GetCurrentUserRequest],
+) (*connect.Response[authpbv1.GetCurrentUserResponse], error) {
+	userData, err := getUserDataContext(ctx)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("invalid access token: %w", err))
+		return nil, newConnectError(err)
 	}
 
-	if claims == nil {
-		return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("empty claims"))
-	}
-
-	// get user
-	user, err := s.baseServices.Users().GetByID(ctx, claims.UserID)
-	if err != nil {
-		return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("get user id: %w", err))
-	}
-
-	resp := &authpbv1.AuthenticateResponse{
-		User: ptconverts.ConvertUserToProto(user),
+	resp := &authpbv1.GetCurrentUserResponse{
+		User: ptconverts.ConvertUserToProto(userData.User),
 	}
 
 	res := connect.NewResponse(resp)
@@ -143,6 +137,7 @@ func (s *AuthServer) RefreshToken(
 		RefreshToken:          data.SessionPair.RefreshToken,
 		AccessTokenExpiredAt:  timestamppb.New(data.AccessTokenData.Expiry),
 		RefreshTokenExpiredAt: timestamppb.New(data.RefreshTokenData.Expiry),
+		DeviceId:              data.RefreshTokenData.AdditionalData.DeviceInfo.DeviceID,
 	})
 
 	return res, nil

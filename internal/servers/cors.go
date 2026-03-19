@@ -7,7 +7,7 @@ import (
 	"github.com/rs/cors"
 )
 
-func withCORS(connectHandler http.Handler) http.Handler {
+func withCORS(connectHandler http.Handler, allowedOrigins []string) http.Handler {
 	exposedHeaders := connectcors.ExposedHeaders()
 	exposedHeaders = append(exposedHeaders, "Rpc-Error-Code")
 
@@ -15,7 +15,7 @@ func withCORS(connectHandler http.Handler) http.Handler {
 	allowedHeaders = append(allowedHeaders, "Authorization", "Origin", "Access-Control-Allow-Origin", "Accept", "Options", "X-Project-ID")
 
 	c := cors.New(cors.Options{
-		AllowedOrigins: []string{"*"}, // Allow all origins
+		AllowedOrigins: allowedOrigins,
 		AllowedMethods: connectcors.AllowedMethods(),
 		AllowedHeaders: allowedHeaders,
 		ExposedHeaders: exposedHeaders,

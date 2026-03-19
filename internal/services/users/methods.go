@@ -56,7 +56,7 @@ func (s *Service) Create(ctx context.Context, params CreateParams) (*models.User
 		return nil, err
 	}
 
-	hashedPassword, err := generateHashFromPassword(params.Password)
+	hashedPassword, err := generateHashFromPassword(params.Password, s.bcryptCost)
 	if err != nil {
 		return nil, err
 	}

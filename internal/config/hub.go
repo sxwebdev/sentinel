@@ -27,14 +27,16 @@ func (c *ConfigHub) HubDataDir() string {
 
 // ServerConfig holds web server configuration
 type ServerConfig struct {
-	Addr string     `yaml:"addr" default:":8080"`
-	Auth AuthConfig `yaml:"auth"`
+	Addr           string     `yaml:"addr" default:":8080"`
+	Auth           AuthConfig `yaml:"auth"`
+	AllowedOrigins []string   `yaml:"allowed_origins"`
 }
 
 // AuthConfig holds authentication settings
 type AuthConfig struct {
 	AccessTokenSecretKey  string `json:"access_token_secret_key"`
 	RefreshTokenSecretKey string `json:"refresh_token_secret_key"`
+	BcryptCost            int    `yaml:"bcrypt_cost" json:"-" default:"12" validate:"min=10,max=16"`
 }
 
 // UserAuth represents a user with basic auth credentials

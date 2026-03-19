@@ -36,9 +36,9 @@ const (
 	// AuthServiceAuthorizationProcedure is the fully-qualified name of the AuthService's Authorization
 	// RPC.
 	AuthServiceAuthorizationProcedure = "/sentinel.auth.v1.AuthService/Authorization"
-	// AuthServiceAuthenticateProcedure is the fully-qualified name of the AuthService's Authenticate
-	// RPC.
-	AuthServiceAuthenticateProcedure = "/sentinel.auth.v1.AuthService/Authenticate"
+	// AuthServiceGetCurrentUserProcedure is the fully-qualified name of the AuthService's
+	// GetCurrentUser RPC.
+	AuthServiceGetCurrentUserProcedure = "/sentinel.auth.v1.AuthService/GetCurrentUser"
 	// AuthServiceRefreshTokenProcedure is the fully-qualified name of the AuthService's RefreshToken
 	// RPC.
 	AuthServiceRefreshTokenProcedure = "/sentinel.auth.v1.AuthService/RefreshToken"
@@ -59,7 +59,7 @@ const (
 type AuthServiceClient interface {
 	// Auth
 	Authorization(context.Context, *connect.Request[v1.AuthorizationRequest]) (*connect.Response[v1.AuthorizationResponse], error)
-	Authenticate(context.Context, *connect.Request[v1.AuthenticateRequest]) (*connect.Response[v1.AuthenticateResponse], error)
+	GetCurrentUser(context.Context, *connect.Request[v1.GetCurrentUserRequest]) (*connect.Response[v1.GetCurrentUserResponse], error)
 	RefreshToken(context.Context, *connect.Request[v1.RefreshTokenRequest]) (*connect.Response[v1.RefreshTokenResponse], error)
 	Logout(context.Context, *connect.Request[v1.LogoutRequest]) (*connect.Response[v1.LogoutResponse], error)
 	// Sessions
@@ -85,10 +85,10 @@ func NewAuthServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 			connect.WithSchema(authServiceMethods.ByName("Authorization")),
 			connect.WithClientOptions(opts...),
 		),
-		authenticate: connect.NewClient[v1.AuthenticateRequest, v1.AuthenticateResponse](
+		getCurrentUser: connect.NewClient[v1.GetCurrentUserRequest, v1.GetCurrentUserResponse](
 			httpClient,
-			baseURL+AuthServiceAuthenticateProcedure,
-			connect.WithSchema(authServiceMethods.ByName("Authenticate")),
+			baseURL+AuthServiceGetCurrentUserProcedure,
+			connect.WithSchema(authServiceMethods.ByName("GetCurrentUser")),
 			connect.WithClientOptions(opts...),
 		),
 		refreshToken: connect.NewClient[v1.RefreshTokenRequest, v1.RefreshTokenResponse](
@@ -127,7 +127,7 @@ func NewAuthServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 // authServiceClient implements AuthServiceClient.
 type authServiceClient struct {
 	authorization        *connect.Client[v1.AuthorizationRequest, v1.AuthorizationResponse]
-	authenticate         *connect.Client[v1.AuthenticateRequest, v1.AuthenticateResponse]
+	getCurrentUser       *connect.Client[v1.GetCurrentUserRequest, v1.GetCurrentUserResponse]
 	refreshToken         *connect.Client[v1.RefreshTokenRequest, v1.RefreshTokenResponse]
 	logout               *connect.Client[v1.LogoutRequest, v1.LogoutResponse]
 	activeSessions       *connect.Client[v1.ActiveSessionsRequest, v1.ActiveSessionsResponse]
@@ -140,9 +140,9 @@ func (c *authServiceClient) Authorization(ctx context.Context, req *connect.Requ
 	return c.authorization.CallUnary(ctx, req)
 }
 
-// Authenticate calls sentinel.auth.v1.AuthService.Authenticate.
-func (c *authServiceClient) Authenticate(ctx context.Context, req *connect.Request[v1.AuthenticateRequest]) (*connect.Response[v1.AuthenticateResponse], error) {
-	return c.authenticate.CallUnary(ctx, req)
+// GetCurrentUser calls sentinel.auth.v1.AuthService.GetCurrentUser.
+func (c *authServiceClient) GetCurrentUser(ctx context.Context, req *connect.Request[v1.GetCurrentUserRequest]) (*connect.Response[v1.GetCurrentUserResponse], error) {
+	return c.getCurrentUser.CallUnary(ctx, req)
 }
 
 // RefreshToken calls sentinel.auth.v1.AuthService.RefreshToken.
@@ -174,7 +174,7 @@ func (c *authServiceClient) TerminateAllSessions(ctx context.Context, req *conne
 type AuthServiceHandler interface {
 	// Auth
 	Authorization(context.Context, *connect.Request[v1.AuthorizationRequest]) (*connect.Response[v1.AuthorizationResponse], error)
-	Authenticate(context.Context, *connect.Request[v1.AuthenticateRequest]) (*connect.Response[v1.AuthenticateResponse], error)
+	GetCurrentUser(context.Context, *connect.Request[v1.GetCurrentUserRequest]) (*connect.Response[v1.GetCurrentUserResponse], error)
 	RefreshToken(context.Context, *connect.Request[v1.RefreshTokenRequest]) (*connect.Response[v1.RefreshTokenResponse], error)
 	Logout(context.Context, *connect.Request[v1.LogoutRequest]) (*connect.Response[v1.LogoutResponse], error)
 	// Sessions
@@ -196,10 +196,10 @@ func NewAuthServiceHandler(svc AuthServiceHandler, opts ...connect.HandlerOption
 		connect.WithSchema(authServiceMethods.ByName("Authorization")),
 		connect.WithHandlerOptions(opts...),
 	)
-	authServiceAuthenticateHandler := connect.NewUnaryHandler(
-		AuthServiceAuthenticateProcedure,
-		svc.Authenticate,
-		connect.WithSchema(authServiceMethods.ByName("Authenticate")),
+	authServiceGetCurrentUserHandler := connect.NewUnaryHandler(
+		AuthServiceGetCurrentUserProcedure,
+		svc.GetCurrentUser,
+		connect.WithSchema(authServiceMethods.ByName("GetCurrentUser")),
 		connect.WithHandlerOptions(opts...),
 	)
 	authServiceRefreshTokenHandler := connect.NewUnaryHandler(
@@ -236,8 +236,8 @@ func NewAuthServiceHandler(svc AuthServiceHandler, opts ...connect.HandlerOption
 		switch r.URL.Path {
 		case AuthServiceAuthorizationProcedure:
 			authServiceAuthorizationHandler.ServeHTTP(w, r)
-		case AuthServiceAuthenticateProcedure:
-			authServiceAuthenticateHandler.ServeHTTP(w, r)
+		case AuthServiceGetCurrentUserProcedure:
+			authServiceGetCurrentUserHandler.ServeHTTP(w, r)
 		case AuthServiceRefreshTokenProcedure:
 			authServiceRefreshTokenHandler.ServeHTTP(w, r)
 		case AuthServiceLogoutProcedure:
@@ -261,8 +261,8 @@ func (UnimplementedAuthServiceHandler) Authorization(context.Context, *connect.R
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("sentinel.auth.v1.AuthService.Authorization is not implemented"))
 }
 
-func (UnimplementedAuthServiceHandler) Authenticate(context.Context, *connect.Request[v1.AuthenticateRequest]) (*connect.Response[v1.AuthenticateResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("sentinel.auth.v1.AuthService.Authenticate is not implemented"))
+func (UnimplementedAuthServiceHandler) GetCurrentUser(context.Context, *connect.Request[v1.GetCurrentUserRequest]) (*connect.Response[v1.GetCurrentUserResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("sentinel.auth.v1.AuthService.GetCurrentUser is not implemented"))
 }
 
 func (UnimplementedAuthServiceHandler) RefreshToken(context.Context, *connect.Request[v1.RefreshTokenRequest]) (*connect.Response[v1.RefreshTokenResponse], error) {

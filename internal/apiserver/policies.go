@@ -33,7 +33,6 @@ func UserPolicy() *rbacconnect.Policy {
 
 	allowAnonProcs := []string{
 		authv1connect.AuthServiceAuthorizationProcedure,
-		authv1connect.AuthServiceAuthenticateProcedure,
 		authv1connect.AuthServiceRefreshTokenProcedure,
 		systemv1connect.SystemServiceCheckIsInitializedProcedure,
 		systemv1connect.SystemServiceInitializeProcedure,
